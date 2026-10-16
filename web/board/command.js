@@ -124,7 +124,7 @@ function fillSortieChoices() {
     ? agents
         .map(
           (c) => `<label class="choice"><input type="checkbox" name="sortie-only" value="${esc(c.id)}" checked>
-            <span class="choice-name">${esc(c.name)}</span><span class="choice-at">${esc(c.at || '')} ${esc(v.nodes[c.at]?.title || '')}</span>
+            <span class="choice-name">${esc(c.name)}</span><span class="choice-at">${esc(c.at || '')} ${esc((c.at && Object.hasOwn(v.nodes, c.at) ? v.nodes[c.at].title : '') || '')}</span>
             ${c.sortie ? '<span class="choice-busy">出撃中</span>' : ''}</label>`,
         )
         .join('')

@@ -55,7 +55,7 @@ test('amend: 計画は変えられるが、歴史は書き換えられない', (
 
   const write = (m) => {
     writeFileSync(join(dir, 'next.map.json'), JSON.stringify(m, null, 2));
-    return masume(['amend', 'next.map.json', '--dir', dir, '--as', 'gm']);
+    return masume(['amend', 'next.map.json', '--dir', dir, '--as', 'gm'], { cwd: dir }); // 地図のパスはカレント基準（§24.2）
   };
 
   // 通過済みのマスを消す → だめ

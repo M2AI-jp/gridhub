@@ -1,0 +1,20 @@
+=== S6: node --test tests/e2e/S6.test.mjs ===
+✔ §25.1 すべての応答に X-Frame-Options・CSP frame-ancestors・nosniff (170.509584ms)
+✔ §25.2 POST の本文は 64KB まで: 超えたら 413（全部を読み切らず、Content-Length が大きければ読む前に断る） (221.071666ms)
+✔ §25.3 /api/battle の同時実行: 動いている間は 409 E_BUSY。ボス戦は1本だけ (3585.795625ms)
+✔ §25.3 ハンコからのボス戦も同じ扱い: 動いている間は /api/battle が 409 E_BUSY (3093.088042ms)
+✔ §25.3 stop() で、動いているボス戦（とその判定）も止まる (3391.349375ms)
+✔ §25.4 serve は SIGHUP でも、出撃中の子（軍師とエージェント）を片づけて終わる (1866.153917ms)
+✔ §25.4 mcp も SIGHUP で、仕事中の子（語り部と GM）を片づけて終わる (2897.227291ms)
+✔ §25.5 MCP の願いの長さは、HTTP と同じく trim 後のコードポイント数で 1〜2000 (243.967875ms)
+✔ §25.6 --host 0.0.0.0 / :: のとき、表示する URL は http://127.0.0.1:<port>/ で、開ける (345.4055ms)
+ℹ tests 9
+ℹ suites 0
+ℹ pass 9
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 72463.400833
+
+(exit 0, 72504ms)

@@ -1,0 +1,5 @@
+軍師（Claude Sonnet サブエージェント）P3 の報告
+宣言判定: P3 突破（seq 173）。--no-boss を付け忘れ、最後に G6 に着いたので G6 のボス戦が自動で始まり勝利（seq 174）。
+続けて全員が GOAL4 にそろい、GOAL4 のボス戦が自動で始まって全滅（seq 175。189判定中 B3「ボス戦のボタン」だけ落ちた）。
+変更: src/party/boss.js（新規）, agents.js, patrol.js, prompt.js, src/commands/party.js
+素振り: P1+P2+P3 18/18、G4・SOLO・S4・Q1 も通過。日誌 seq 176。

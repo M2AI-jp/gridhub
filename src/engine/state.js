@@ -204,7 +204,6 @@ export function reduceEvent(state, event) {
     case 'note':
       if (character) {
         character.lastNote = data.text;
-        character.epoch++;
       }
       break;
     // 知らないイベントは、前方互換のため無視する。

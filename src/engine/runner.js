@@ -1,8 +1,58 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { constants } from 'node:os';
+import { StringDecoder } from 'node:string_decoder';
 import { MasumeError } from './errors.js';
 
 const OUTPUT_LIMIT = 100 * 1024;
+const activeChecks = new Set();
+
+function killGroup(child) {
+  if (!child.pid) return;
+  try {
+    process.kill(-child.pid, 'SIGKILL');
+  } catch {
+    child.kill('SIGKILL');
+  }
+}
+
+export function killActiveChecks() {
+  for (const child of activeChecks) killGroup(child);
+}
+
+// 保存出力とは別に、各ストリームの全行を読む。通常の長い行は保持しない。
+function blameReader(blamed) {
+  const decoder = new StringDecoder('utf8');
+  let line = '';
+  let ignored = false;
+  const prefix = 'MASUME_BLAME:';
+  const flush = () => {
+    if (!ignored && line.startsWith(prefix)) {
+      for (const id of line.slice(prefix.length).split(/[,\s]+/u)) {
+        if (id) blamed.add(id);
+      }
+    }
+    line = '';
+    ignored = false;
+  };
+  const read = (text) => {
+    for (const char of text) {
+      if (char === '\n' || char === '\r') {
+        flush();
+      } else if (!ignored) {
+        if (line === '' && (char === ' ' || char === '\t')) continue;
+        line += char;
+        if (line.length <= prefix.length && !prefix.startsWith(line)) {
+          line = '';
+          ignored = true;
+        }
+      }
+    }
+  };
+  return {
+    write(bytes) { read(decoder.write(bytes)); },
+    end() { read(decoder.end()); flush(); },
+  };
+}
 
 function clipUtf8(text, limit) {
   const bytes = Buffer.from(text, 'utf8');
@@ -20,12 +70,18 @@ function runCommand(root, character, node, run, timeout) {
     let truncated = false;
     let timedOut = false;
     let launchError = null;
+    let shellCode;
+    let pipeTimer;
+    const blamed = new Set();
+    const env = { ...process.env, MASUME_ROOT: root, MASUME_CHARACTER: character, MASUME_NODE: node };
+    delete env.NODE_TEST_CONTEXT;
     const child = spawn('/bin/sh', ['-c', run], {
       cwd: root,
-      env: { ...process.env, MASUME_ROOT: root, MASUME_CHARACTER: character, MASUME_NODE: node },
+      env,
       detached: true,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
+    activeChecks.add(child);
     const capture = (bytes) => {
       const remaining = OUTPUT_LIMIT - size;
       const kept = bytes.subarray(0, remaining);
@@ -33,23 +89,30 @@ function runCommand(root, character, node, run, timeout) {
       size += kept.length;
       if (bytes.length > remaining) truncated = true;
     };
-    child.stdout.on('data', capture);
-    child.stderr.on('data', capture);
+    for (const stream of [child.stdout, child.stderr]) {
+      const reader = blameReader(blamed);
+      stream.on('data', (bytes) => { reader.write(bytes); capture(bytes); });
+      stream.on('end', () => reader.end());
+    }
     child.on('error', (error) => { launchError = error; });
     const timer = setTimeout(() => {
       timedOut = true;
       // シェルの子孫も止め、判定終了後に書き込みが続かないようにする。
-      try {
-        process.kill(-child.pid, 'SIGKILL');
-      } catch {
-        child.kill('SIGKILL');
-      }
+      killGroup(child);
     }, timeout);
+    child.on('exit', (status, signal) => {
+      clearTimeout(timer);
+      shellCode = status ?? (signal ? 128 + (constants.signals[signal] ?? 0) : 1);
+      // exit はシェルの終了、close は子孫も共有するパイプの終了。
+      pipeTimer = setTimeout(() => killGroup(child), 1000);
+    });
     child.on('close', (status, signal) => {
       clearTimeout(timer);
+      clearTimeout(pipeTimer);
+      activeChecks.delete(child);
       const duration = Math.round(performance.now() - start);
       const code = timedOut ? 124 : launchError ? 127
-        : status ?? (signal ? 128 + (constants.signals[signal] ?? 0) : 1);
+        : shellCode ?? status ?? (signal ? 128 + (constants.signals[signal] ?? 0) : 1);
       const heading = clipUtf8(`=== ${node}: ${run} ===\n`, OUTPUT_LIMIT - 512);
       const detail = timedOut ? '\n判定が制限時間を超えました'
         : launchError ? `\n判定を起動できませんでした: ${launchError.code ?? '不明'}` : '';
@@ -61,15 +124,12 @@ function runCommand(root, character, node, run, timeout) {
       const output = Buffer.concat([
         heading, clipUtf8(body, available - marker.length), marker, ending,
       ]);
-      // 見出しのコマンド文字列ではなく、判定そのものの出力から責任者を読む。
-      const blamed = [...body.matchAll(/^[ \t]*MASUME_BLAME:[ \t]*([^\r\n]*)/gmu)]
-        .flatMap((match) => match[1].split(/[,\s]+/u).filter(Boolean));
-      resolve({ code, output, blamed });
+      resolve({ code, output, blamed: [...blamed] });
     });
   });
 }
 
-export async function runChecks(root, character, segment, map) {
+export async function runChecks(root, character, segment, map, { beforeRun } = {}) {
   const seconds = Number(process.env.MASUME_CHECK_TIMEOUT || 600);
   if (!Number.isFinite(seconds) || seconds <= 0 || seconds * 1000 > 2 ** 31 - 1) {
     throw new MasumeError('E_USAGE', 'MASUME_CHECK_TIMEOUT は有効な正の秒数で指定してください');
@@ -80,6 +140,7 @@ export async function runChecks(root, character, segment, map) {
   const blamed = [];
   let failed = null;
   for (const node of segment) {
+    await beforeRun?.(node);
     const result = await runCommand(root, character, node, map.nodes[node].check.run, seconds * 1000);
     ran.push(node);
     outputs.push(result.output);

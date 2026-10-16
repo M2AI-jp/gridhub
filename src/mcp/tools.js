@@ -102,7 +102,7 @@ export const TOOLS = [
     title: '願いから冒険をはじめる',
     description: '「メモアプリのようなアプリを作りたい」のような願いから、GM の LLM に地図をつくらせて冒険をはじめる。時間がかかる。冒険の書がすでにあるときは失敗する。',
     properties: {
-      wish: str(`作りたいものの願い（1〜${MAX_WISH}文字）`, { maxLength: MAX_WISH }),
+      wish: str(`作りたいものの願い（前後の空白を除いて1〜${MAX_WISH}コードポイント）`),
       gm: { type: 'string', enum: GMS, description: '地図をつくる GM の LLM（claude または codex）' },
       model: str('GM のモデル名（省略可）'),
     },
@@ -110,7 +110,7 @@ export const TOOLS = [
     argv: (a) => ['quest', ...(a.gm !== undefined ? [`--gm=${a.gm}`] : []), ...(a.model !== undefined ? [`--model=${a.model}`] : []), '--', a.wish],
     validate: (a) => {
       if (a.wish.trim() === '') throw invalid('wish が空です');
-      if (a.wish.length > MAX_WISH) throw invalid(`wish は${MAX_WISH}文字までです`);
+      if ([...a.wish.trim()].length > MAX_WISH) throw invalid(`wish は${MAX_WISH}文字までです`);
       if (a.gm !== undefined && !GMS.includes(a.gm)) {
         throw invalid(`gm は ${GMS.join(' か ')} だけ指定できます（cmd: は受け付けません）: ${a.gm}`);
       }

@@ -9,6 +9,9 @@ export async function run(argv, ctx) {
   }
   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
   if (options.json) console.log(JSON.stringify(result));
-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
+  else {
+    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
+    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
+  }
   return 0;
 }

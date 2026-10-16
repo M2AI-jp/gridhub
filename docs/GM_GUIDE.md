@@ -97,6 +97,19 @@ masume serve                               # 盤面を開く
 
 コンテキストが尽きたら、新しいセッションで同じ指示を出せば再開できる（指令書と日誌がセーブデータから復元する）。
 
+### エージェントの箱（サンドボックス）を確かめる
+
+判定が手元にサーバーを立てる（`127.0.0.1` で listen する）なら、エージェントの箱の中でもそれができるかを出撃の前に確かめる。
+Codex の `-s workspace-write` は既定でネットワークを閉じているので、listen が `EPERM` で落ち、素振りも宣言判定も通らない（キャラクターのせいではないのにレベルが下がる）。
+そのときは、その出撃だけアダプタを差し替える:
+
+```sh
+MASUME_AGENT_OVERRIDE='cmd:codex exec -C . -s workspace-write -c sandbox_workspace_write.network_access=true --skip-git-repo-check -' \
+  masume party --only engine,server
+```
+
+マスメ自身の第4章では、伝令（窓口のサーバー）と地図職人（偽物の Linear・Jira を立てる判定）がこれにあたった。
+
 ---
 
 ## 例: 「ことづけのようなアプリを作りたい」

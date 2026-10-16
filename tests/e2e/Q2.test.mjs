@@ -12,7 +12,8 @@ test('init: AGENTS.md・CLAUDE.md・.gitignore を置く。何度やっても重
   assert.equal(r.code, 0, r.all);
   const agents = readFileSync(join(dir, 'AGENTS.md'), 'utf8');
   const bin = join(ROOT, 'bin', 'masume.js');
-  for (const w of ['マスメ', `node "${bin}" brief`, 'check', '--as', 'note', '--no-boss', '縄張り', '封印', 'git', join(ROOT, 'docs', 'RULEBOOK.md')]) assert.ok(agents.includes(w), `AGENTS.md に「${w}」`);
+  // 第4章 §27.8: コマンドは単一引用符で引用する（ROOT に ' は無い前提）
+  for (const w of ['マスメ', `node '${bin}' brief`, 'check', '--as', 'note', '--no-boss', '縄張り', '封印', 'git', join(ROOT, 'docs', 'RULEBOOK.md')]) assert.ok(agents.includes(w), `AGENTS.md に「${w}」`);
   const claude = readFileSync(join(dir, 'CLAUDE.md'), 'utf8');
   assert.match(claude.split('\n')[0], /マスメ/);
   assert.match(claude, /^@AGENTS\.md$/m);

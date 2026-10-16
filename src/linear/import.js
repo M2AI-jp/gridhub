@@ -84,6 +84,9 @@ export function importLinear(text, options = {}) {
  */
 export function mapFromRecords(records, { questId, title } = {}) {
   const active = records.filter((record) => !DONE.has(record.status.trim().toLowerCase()));
+  if (active.length === 0) {
+    throw new MasumeError('E_NOTHING', '取り込める issue がありません', 1);
+  }
   const characters = [];
   const byName = new Map();
   const ids = new Set();
@@ -117,7 +120,14 @@ export function mapFromRecords(records, { questId, title } = {}) {
     const created = record.created.trim() === '' ? 0 : Date.parse(record.created);
     if (!Number.isFinite(created)) invalid(`${id} の Created が日時ではありません`);
     const labels = record.labels;
-    const node ={ type: 'task', title: record.title, detail: record.detail, labels, check: placeholder(id) };
+    const fullTitle = record.title.trim() === '' ? id : record.title;
+    const titlePoints = [...fullTitle];
+    const node = {
+      type: 'task', title: titlePoints.slice(0, 80).join(''),
+      detail: titlePoints.length > 80
+        ? `${fullTitle}${record.detail ? `\n\n${record.detail}` : ''}` : record.detail,
+      labels, check: placeholder(id),
+    };
     if (record.estimate.trim() !== '') {
       node.estimate = Number(record.estimate);
       if (!Number.isFinite(node.estimate)) invalid(`${id} の Estimate が数値ではありません`);
@@ -151,11 +161,14 @@ export function mapFromRecords(records, { questId, title } = {}) {
   for (let suffix = 1; Object.hasOwn(nodes, goal); suffix++) goal = `GOAL-${suffix}`;
   nodes[goal] = { type: 'gate', title: 'あがり', check: placeholder(goal) };
   for (const character of characters) character.path.push(goal);
+  const normalizedQuestId = (questId ?? records[0].id.trim().split('-')[0])
+    .toUpperCase().replace(/[^A-Z0-9]/gu, '').replace(/^[0-9]+/u, '').slice(0, 10);
+  const projectTitle = title ?? (records[0].project || 'インポートした冒険');
   const map = {
     masume: 1,
     quest: {
-      id: questId ?? (records[0]?.id.trim().split('-')[0] ?? '').toUpperCase(),
-      title: title ?? (records[0]?.project || 'インポートした冒険'),
+      id: normalizedQuestId.length >= 2 ? normalizedQuestId : 'QUEST',
+      title: [...(projectTitle.trim() === '' ? 'インポートした冒険' : projectTitle)].slice(0, 80).join(''),
       pitch: `完了・取消済みなどの issue を ${records.length - active.length} 件省きました。判定は GM が作成してください。`,
       goal,
     },

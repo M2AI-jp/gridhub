@@ -5,6 +5,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { masume, masumeEnv, spawnMasume, newToy, view, char, readLog, fakeAgent, waitUntil } from '../helpers2.mjs';
 
+/** シェルの単一引用符（第4章 §26.6: パスに $ " ` があっても、そのまま貼って動く） */
+const sq = (s) => `'${String(s).replace(/'/g, `'\\''`)}'`;
+
 test('--dry-run: claude と codex のコマンド、何も記録しない', async () => {
   const dir = newToy();
   const before = readLog(dir).length;
@@ -28,8 +31,8 @@ test('プロンプトに入れること', async () => {
   const { prompt, MASUME_BIN } = JSON.parse(readFileSync(join(dir, 'record-a-1.json'), 'utf8'));
   const brief = masume(['brief', 'a', '--dir', dir]).out;
   for (const w of ['戦士アリス', '剣をとぐ', 'node checks/flag.mjs A1', 'a/**', '現在のマスだけ', '縄張り', '封印', 'git']) assert.ok(prompt.includes(w), `プロンプトに「${w}」`);
-  assert.ok(prompt.includes(`node "${MASUME_BIN}" check a --as a --no-boss --dir "${dir}"`), '宣言判定のコマンドそのまま');
-  assert.ok(prompt.includes(`node "${MASUME_BIN}" note a`), '日誌のコマンド');
+  assert.ok(prompt.includes(`node ${sq(MASUME_BIN)} check a --as a --no-boss --dir ${sq(dir)}`), '宣言判定のコマンドそのまま');
+  assert.ok(prompt.includes(`node ${sq(MASUME_BIN)} note a`), '日誌のコマンド');
   assert.match(prompt, /1つ突破したら/);
   assert.ok(brief.split('\n').filter((l) => l.includes('剣をとぐ')).every((l) => prompt.includes(l.trim())), '指令書の行が入っている');
 });

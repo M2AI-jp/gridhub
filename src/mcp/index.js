@@ -187,16 +187,18 @@ export function serveMcp({ root, bin, repo, cwd, env, version = '0.1.0', input =
   return new Promise((resolve) => {
     const shutdown = (signal) => {
       closed = true;
-      killAll(signal === 'SIGINT' ? 'SIGINT' : 'SIGTERM');
+      killAll(signal === 'SIGINT' || signal === 'SIGHUP' ? 'SIGINT' : 'SIGTERM');
       rl.close();
       process.off('SIGINT', onSignal);
       process.off('SIGTERM', onSignal);
+      process.off('SIGHUP', onSignal);
       // 子が止まるのを少し待ってから抜ける
       setTimeout(resolve, 200, 0);
     };
     const onSignal = (signal) => shutdown(signal);
     process.on('SIGINT', onSignal);
     process.on('SIGTERM', onSignal);
+    process.on('SIGHUP', onSignal);
     output.on?.('error', () => shutdown('SIGTERM')); // 相手が先に閉じた（EPIPE）
     rl.once('close', async () => {
       if (closed) return;
@@ -205,6 +207,7 @@ export function serveMcp({ root, bin, repo, cwd, env, version = '0.1.0', input =
       closed = true;
       process.off('SIGINT', onSignal);
       process.off('SIGTERM', onSignal);
+      process.off('SIGHUP', onSignal);
       resolve(0);
     });
   });

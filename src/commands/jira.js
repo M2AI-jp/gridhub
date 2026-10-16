@@ -5,7 +5,7 @@ import { parseArgs, usage } from '../linear/cli.js';
 import { createClient } from '../jira/client.js';
 import { planPush, pullMap, pushIssues, readJiraState, resolveProject } from '../jira/sync.js';
 
-const USAGE = 'つかいかた: jira push [--project KEY] [--dry-run] / jira pull --project KEY --out <map.json>';
+const USAGE = 'つかいかた: jira push [--project KEY] [--dry-run] / jira pull --project KEY --out <map.json> [--quest-id KEY] [--title T]';
 
 function gameRoot({ options, cwd, env }) {
   const root = options.dir !== undefined ? resolve(cwd, options.dir)
@@ -17,6 +17,7 @@ function gameRoot({ options, cwd, env }) {
 async function push(parsed) {
   const { options, env } = parsed;
   if (options.out !== undefined) usage('--out は pull だけで使います');
+  if (options['quest-id'] !== undefined || options.title !== undefined) usage('--quest-id と --title は pull だけで使います');
   const root = gameRoot(parsed);
   const view = buildView(root);
   if (!view.integrity.ok) {
@@ -49,7 +50,10 @@ async function push(parsed) {
     console.log(summary);
   }
   if (result.stuck.length > 0) {
-    for (const entry of result.stuck) console.error(`[E_JIRA_TRANSITION] ${entry.message}`);
+    for (const entry of result.stuck) {
+      if (entry.code === 'E_JIRA_TRANSITION') console.error(`[E_JIRA_TRANSITION] ${entry.message}`);
+    }
+    console.error(`飛ばしたマス: ${result.stuck.map((entry) => `${entry.id}（${entry.reason}）`).join('、')}`);
     return 1;
   }
   return 0;
@@ -61,7 +65,7 @@ async function pull(parsed) {
   if (!options.project) usage('--project で Jira のプロジェクトキー（例: NOTE）を指定してください');
   if (!options.out) usage('--out で地図の下書きの出力先を指定してください');
   const client = createClient({ env });
-  const { map, count } = await pullMap(client, { project: options.project });
+  const { map, count } = await pullMap(client, { project: options.project, questId: options['quest-id'], title: options.title });
   const output = resolve(cwd, options.out);
   writeFileSync(output, `${JSON.stringify(map, null, 2)}\n`, 'utf8');
   if (options.json) console.log(JSON.stringify({ ok: true, file: output, issues: count }));
@@ -70,7 +74,7 @@ async function pull(parsed) {
 }
 
 export async function run(argv, ctx) {
-  const parsed = parseArgs(argv, ctx, { project: 'string', out: 'string', 'dry-run': 'boolean' });
+  const parsed = parseArgs(argv, ctx, { project: 'string', out: 'string', 'dry-run': 'boolean', 'quest-id': 'string', title: 'string' });
   const { args, options } = parsed;
   for (const key of ['project', 'out']) {
     if (options[key] === '') usage(`--${key} に空文字は指定できません`);

@@ -108,34 +108,44 @@ export async function pushIssues({ root, view, client, saved, plan, target, log 
     ensureSuccess(created, `プロジェクト「${target.project}」の作成`);
     project = created.project;
   }
+  if (!project?.id) throw fail('E_LINEAR_API', 'Linear のプロジェクトの返事に id がありません', 1);
 
   const state = { team: target.team, project: { id: project.id, name: project.name }, issues: { ...saved.issues } };
-  writeLinearState(root, state);
+  writeLinearState(root, client.assertPublic(state));
 
   let created = 0;
   let updated = 0;
+  const skipped = [];
   for (const entry of plan) {
     const stateId = states.get(entry.status).id;
     const known = state.issues[entry.id];
-    if (known?.id) {
-      const result = (await client.request('MasumeIssueUpdate', {
-        id: known.id, input: { title: entry.title, description: entry.description, stateId },
-      })).issueUpdate;
-      ensureSuccess(result, `${entry.id} の更新`);
-      updated++;
-      log(`更新 ${entry.id} → ${known.identifier ?? result.issue?.identifier ?? known.id}`);
-    } else {
-      const result = (await client.request('MasumeIssueCreate', {
-        input: { teamId: team.id, projectId: project.id, title: entry.title, description: entry.description, stateId },
-      })).issueCreate;
-      ensureSuccess(result, `${entry.id} の作成`);
-      state.issues[entry.id] = { id: result.issue.id, identifier: result.issue.identifier };
-      writeLinearState(root, state); // 途中で止まっても、作った issue を二重に作らない
-      created++;
-      log(`作成 ${entry.id} → ${result.issue.identifier}${result.issue.url ? ` ${result.issue.url}` : ''}`);
+    try {
+      if (known?.id) {
+        const result = (await client.request('MasumeIssueUpdate', {
+          id: known.id, input: { title: entry.title, description: entry.description, stateId },
+        })).issueUpdate;
+        ensureSuccess(result, `${entry.id} の更新`);
+        updated++;
+        log(`更新 ${entry.id} → ${known.identifier ?? result.issue?.identifier ?? known.id}`);
+      } else {
+        const result = (await client.request('MasumeIssueCreate', {
+          input: { teamId: team.id, projectId: project.id, title: entry.title, description: entry.description, stateId },
+        })).issueCreate;
+        ensureSuccess(result, `${entry.id} の作成`);
+        if (typeof result.issue?.id !== 'string' || !result.issue.id) {
+          throw fail('E_LINEAR_API', `Linear が ${entry.id} の issue を作った返事に id がありません`, 1);
+        }
+        state.issues[entry.id] = { id: result.issue.id, identifier: result.issue.identifier };
+        writeLinearState(root, client.assertPublic(state)); // 途中で止まっても、作った issue を二重に作らない
+        created++;
+        log(`作成 ${entry.id} → ${result.issue.identifier}${result.issue.url ? ` ${result.issue.url}` : ''}`);
+      }
+    } catch (error) {
+      if (!error?.skipReason) throw error;
+      skipped.push({ id: entry.id, reason: error.skipReason });
     }
   }
-  return { team: target.team, project: state.project, created, updated, issues: state.issues };
+  return { team: target.team, project: state.project, created, updated, skipped, issues: state.issues };
 }
 
 // ---- pull ----
@@ -156,7 +166,7 @@ export async function pullRecords(client, { team, project }) {
     id: issue.identifier ?? '',
     title: issue.title ?? '',
     detail: issue.description ?? '',
-    status: issue.state?.name ?? '',
+    status: ['completed', 'canceled'].includes(issue.state?.type) ? 'Done' : (issue.state?.name ?? ''),
     assignee: issue.assignee?.name ?? '',
     labels: (issue.labels?.nodes ?? []).map((label) => String(label.name).trim()).filter(Boolean),
     estimate: issue.estimate == null ? '' : String(issue.estimate),
@@ -165,10 +175,8 @@ export async function pullRecords(client, { team, project }) {
   }));
 }
 
-export async function pullMap(client, { team, project }) {
+export async function pullMap(client, { team, project, questId, title }) {
   const records = await pullRecords(client, { team, project });
-  if (records.length === 0) {
-    throw fail('E_LINEAR_EMPTY', `チーム ${team}${project ? `・プロジェクト「${project}」` : ''} に issue が1件もありません`, 1);
-  }
-  return { map: mapFromRecords(records), count: records.length };
+  const map = client.assertPublic(mapFromRecords(records, { questId, title }));
+  return { map, count: records.length };
 }

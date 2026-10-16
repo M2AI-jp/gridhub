@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { MasumeError, buildView, findRoot, logFile } from '../engine/index.js';
 import { resolveAgent } from '../party/agents.js';
-import { Party } from '../party/patrol.js';
+import { Party, needsSeal } from '../party/patrol.js';
 import { buildPrompt } from '../party/prompt.js';
 
 const DEFAULTS = { agent: 'claude', parallel: 3, rounds: 40 };
@@ -64,15 +64,25 @@ function timeoutSeconds(env) {
 
 // 標準出力が詰まらないうちに終わる（子プロセスが残っていても待たない）
 function exitAfterFlush(code) {
+  process.exitCode = code;
   let left = 2;
   const done = () => {
     if (--left === 0) process.exit(code);
   };
+  // 出力先が閉じていてコールバックが来なくても、終わる
+  setTimeout(() => process.exit(code), 1000).unref();
   process.stdout.write('', done);
   process.stderr.write('', done);
 }
 
+// 出力先が閉じても（`| head` など。EPIPE）落ちない。出撃中のエージェントの帰還を記録するまで終わらない（§26.1）
+function survive(stream) {
+  stream.on('error', () => {});
+}
+
 export async function run(argv, ctx) {
+  survive(process.stdout);
+  survive(process.stderr);
   const options = parseOptions(argv);
   const cwd = ctx.cwd ?? process.cwd();
   const env = ctx.env ?? process.env;
@@ -128,6 +138,10 @@ function dryRun({ root, bin, view, agent, only }) {
     if (c.kind !== 'agent' || c.status !== 'working' || c.at === null || c.sortie) continue;
     if (view.nodes[c.at]?.check?.kind === 'stamp') continue;
     if (only && !only.has(c.id)) continue;
+    if (needsSeal(view.nodes[c.at])) {
+      console.log(`未封印: ${c.at}（${c.id} は出撃させません）`);
+      continue;
+    }
     planned++;
     console.log(`出撃予定: ${c.id} ${agent.display}`);
     const prompt = buildPrompt({ root, bin, view, characterId: c.id });

@@ -1,5 +1,5 @@
 // 盤面のまわり: なかま一覧・冒険の書（ログ）・マスの詳細（issue）・キャラクターシート・台帳（Linear風）。
-import { esc, hl } from './sketch.js';
+import { esc, hl, own, byId } from './sketch.js';
 import { spriteMarkup, jobJa, STATUS_JA } from './render.js';
 
 export const LINEAR = { cleared: 'Done', current: 'In Progress', waiting: 'In Review', ready: 'In Review', stale: 'Todo', open: 'Todo', fog: 'Backlog' };
@@ -20,7 +20,7 @@ function agentLabel(c) {
 export function renderParty(view, sprites, selectedChar) {
   const cards = view.characters
     .map((c) => {
-      const node = c.at ? view.nodes[c.at] : null;
+      const node = c.at ? own(view.nodes, c.at) : null;
       const pct = Math.round(Math.max(0, Math.min(1, c.xp / (c.xp_next || 1))) * 100);
       const progress = c.path.length ? Math.round((c.pos / c.path.length) * 100) : 0;
       return `<button class="party-card${selectedChar === c.id ? ' selected' : ''}" data-char="${esc(c.id)}" style="--hl:${hl(c.color)}" aria-label="${esc(c.name)}のキャラクターシートを開く">
@@ -29,7 +29,7 @@ export function renderParty(view, sprites, selectedChar) {
           <span class="pc-name">${esc(c.name)}</span>
           <span class="pc-meta">${esc(agentLabel(c))}・${esc(jobJa(c.job))}・<b>Lv${c.level}</b></span>
           <span class="pc-xp" title="経験値 ${c.xp}/${c.xp_next}"><i style="width:${pct}%"></i></span>
-          <span class="pc-where" data-status="${c.status}">${esc(CHAR_STATUS[c.status] || c.status)}${node ? ` @ ${esc(c.at)} ${esc(node.title)}` : ''}</span>
+          <span class="pc-where" data-status="${esc(c.status)}">${esc(own(CHAR_STATUS, c.status) || c.status)}${node ? ` @ ${esc(c.at)} ${esc(node.title)}` : ''}</span>
           ${c.sortie ? `<span class="pc-sortie">⏳ 出撃中（${esc(c.sortie.agent)}${c.sortie.model ? ' ' + esc(c.sortie.model) : ''}）</span>` : ''}
           <span class="pc-progress" aria-label="道のり ${progress}%"><i style="width:${progress}%"></i></span>
         </span>
@@ -62,7 +62,7 @@ export function renderLog(view, freshSeq = -1) {
     .map((e) => {
       const cls = e.ok === true ? 'ok' : e.ok === false ? 'ng' : 'info';
       return `<li class="log-entry ${cls}${e.seq > freshSeq && freshSeq >= 0 ? ' fresh' : ''}" data-seq="${e.seq}" data-type="${esc(e.type)}"${e.node ? ` data-node="${esc(e.node)}"` : ''}>
-        <span class="le-mark">${MARK[e.type] || '・'}</span>
+        <span class="le-mark">${own(MARK, e.type) || '・'}</span>
         <span class="le-text">${esc(e.text)}</span>
         <span class="le-meta">#${e.seq}・${esc(fmtTime(e.ts))}${e.actor ? `・${esc(e.actor)}` : ''}</span>
       </li>`;
@@ -72,12 +72,13 @@ export function renderLog(view, freshSeq = -1) {
 }
 
 function milestone(view, id) {
-  const n = view.nodes[id];
+  const n = own(view.nodes, id);
+  if (!n) return '';
   if (n.type === 'gate') return n.title;
   const owner = view.characters.find((c) => c.id === n.owner);
   if (!owner) return '';
   const i = owner.path.indexOf(id);
-  for (let k = i; k < owner.path.length; k++) if (view.nodes[owner.path[k]]?.type === 'gate') return view.nodes[owner.path[k]].title;
+  for (let k = i; k < owner.path.length; k++) if (own(view.nodes, owner.path[k])?.type === 'gate') return own(view.nodes, owner.path[k]).title;
   return '';
 }
 
@@ -95,12 +96,12 @@ function relatedLog(view, id) {
 }
 
 export function renderNodeDrawer(view, id, { live }) {
-  const n = view.nodes[id];
+  const n = own(view.nodes, id);
   if (!n) return '';
-  const chars = Object.fromEntries(view.characters.map((c) => [c.id, c]));
+  const chars = byId(view.characters);
   const people = (n.members || []).map((m) => chars[m]).filter(Boolean);
-  const kind = n.type === 'gate' ? (view.quest.goal === id ? 'あがり（最後の結合ゲート）' : '結合ゲート（ボス戦）') : n.type === 'camp' ? '宿屋（セーブポイント）' : 'マス（タスク）';
-  const status = LINEAR[n.state];
+  const kind = n.type === 'gate' ? (view.quest?.goal === id ? 'あがり（最後の結合ゲート）' : '結合ゲート（ボス戦）') : n.type === 'camp' ? '宿屋（セーブポイント）' : 'マス（タスク）';
+  const status = own(LINEAR, n.state) || 'Backlog';
   const sealTxt = n.type === 'camp' || n.check?.kind === 'stamp' ? '—' : n.seal_broken ? '封印が破れています（GMが再封印するか、元に戻す）' : n.sealed ? '封印済み' : '未封印（GMの封印待ち）';
   const owner = n.owner ? chars[n.owner] : null;
   let action = '';
@@ -116,7 +117,7 @@ export function renderNodeDrawer(view, id, { live }) {
     .join('');
   return `<div class="drawer-head">
       <span class="issue-id">${esc(id)}</span>
-      <span class="status-pill" data-status="${esc(status)}">${esc(status)}・${esc(STATUS_JA[n.state] || n.state)}</span>
+      <span class="status-pill" data-status="${esc(status)}">${esc(status)}・${esc(own(STATUS_JA, n.state) || n.state)}</span>
       <button class="close" data-close aria-label="閉じる">✕</button>
     </div>
     <h3 class="issue-title">${esc(n.title)}</h3>
@@ -164,10 +165,10 @@ export function renderCharDrawer(view, id, sprites) {
   if (!c) return '';
   const steps = c.path
     .map((nid, i) => {
-      const n = view.nodes[nid];
+      const n = own(view.nodes, nid);
       const st = n?.state || 'fog';
       const here = c.at === nid;
-      return `<li class="step" data-state="${st}" data-node="${esc(nid)}"${here ? ' aria-current="step"' : ''}><span class="dot"></span><span class="step-id">${esc(nid)}</span><span class="step-title">${esc(n?.title || '')}</span></li>`;
+      return `<li class="step" data-state="${esc(st)}" data-node="${esc(nid)}"${here ? ' aria-current="step"' : ''}><span class="dot"></span><span class="step-id">${esc(nid)}</span><span class="step-title">${esc(n?.title || '')}</span></li>`;
     })
     .join('');
   const visionTxt = c.vision > 0 ? `${c.vision}マス先まで` : '現在のマスだけ';
@@ -185,9 +186,9 @@ export function renderCharDrawer(view, id, sprites) {
     </div>
     <dl class="props">
       <dt>担当モジュール</dt><dd>${esc(c.module || '—')}</dd>
-      <dt>いまの場所</dt><dd>${c.at ? `${esc(c.at)} ${esc(view.nodes[c.at]?.title || '')}` : 'あがり'}（${esc(CHAR_STATUS[c.status] || c.status)}）</dd>
+      <dt>いまの場所</dt><dd>${c.at ? `${esc(c.at)} ${esc(own(view.nodes, c.at)?.title || '')}` : 'あがり'}（${esc(own(CHAR_STATUS, c.status) || c.status)}）</dd>
       <dt>視界</dt><dd>${visionTxt}</dd>
-      <dt>セーブポイント</dt><dd>${esc(c.checkpoint ? `${c.checkpoint} ${view.nodes[c.checkpoint]?.title || ''}` : 'ふりだし')}</dd>
+      <dt>セーブポイント</dt><dd>${esc(c.checkpoint ? `${c.checkpoint} ${own(view.nodes, c.checkpoint)?.title || ''}` : 'ふりだし')}</dd>
       <dt>縄張り</dt><dd>${(c.territory || []).map((t) => `<code>${esc(t)}</code>`).join(' ') || '—'}</dd>
       <dt>戦績</dt><dd>突破 ${c.clears} ・ 失敗 ${c.fails}</dd>
       ${c.last_note ? `<dt>日誌</dt><dd class="note">「${esc(c.last_note)}」</dd>` : ''}
@@ -207,17 +208,17 @@ const STATUS_ICON = {
 };
 
 export function renderLedger(view, sprites) {
-  const chars = Object.fromEntries(view.characters.map((c) => [c.id, c]));
+  const chars = byId(view.characters);
   const groups = Object.fromEntries(LINEAR_ORDER.map((s) => [s, []]));
   for (const [id, n] of Object.entries(view.nodes)) {
     if (n.type === 'camp') continue;
-    groups[LINEAR[n.state] || 'Backlog'].push([id, n]);
+    groups[own(LINEAR, n.state) || 'Backlog'].push([id, n]);
   }
   const rows = (list) =>
     list
       .map(([id, n]) => {
         const people = (n.members || []).map((m) => chars[m]).filter(Boolean);
-        const status = LINEAR[n.state];
+        const status = own(LINEAR, n.state) || 'Backlog';
         return `<tr data-node="${esc(id)}" data-status="${esc(status)}" tabindex="0">
           <td class="st"><svg viewBox="0 0 14 14" width="14" height="14" class="st-icon" data-status="${esc(status)}">${STATUS_ICON[status]}</svg></td>
           <td class="id">${esc(id)}</td>

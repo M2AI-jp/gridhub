@@ -106,7 +106,12 @@ async function alignStatus(client, key, status) {
   if (!transition) {
     throw fail('E_JIRA_TRANSITION', `${key} を Status「${status}」（${CATEGORY[status]}）にする遷移が見つかりません（今は ${current?.fields?.status?.name ?? '不明'}）`, 1);
   }
-  await client.request('POST', `${issuePath(key)}/transitions`, { transition: { id: transition.id } });
+  try {
+    await client.request('POST', `${issuePath(key)}/transitions`, { transition: { id: transition.id } });
+  } catch (error) {
+    if (error?.status === 400) throw fail('E_JIRA_TRANSITION', 'Jira が遷移を拒みました（HTTP 400）', 1);
+    throw error;
+  }
   return true;
 }
 
@@ -120,51 +125,47 @@ export async function pushIssues({ root, client, saved, plan, project, log = () 
   }
 
   const state = { project, issues: { ...saved.issues } };
-  writeJiraState(root, state);
+  writeJiraState(root, client.assertPublic(state));
 
   let created = 0;
   let updated = 0;
   let transitioned = 0;
   const stuck = [];
   for (const entry of plan) {
-    const known = state.issues[entry.id];
     let key;
-    if (known?.key) {
-      key = known.key;
-      try {
+    try {
+      const known = state.issues[entry.id];
+      if (known?.key) {
+        key = known.key;
         await client.request('PUT', issuePath(key), {
           fields: { summary: entry.summary, description: adf(entry.description), labels: entry.labels },
         });
-      } catch (error) {
-        if (error?.status === 404) {
-          throw fail('E_JIRA', `${entry.id} の issue ${key} が Jira に見つかりません。作り直すなら .masume/jira.json の issues から ${entry.id} を消してください`);
-        }
-        throw error;
+        updated++;
+        log(`更新 ${entry.id} → ${key}`);
+      } else {
+        const result = await client.request('POST', '/rest/api/3/issue', {
+          fields: {
+            project: { key: project }, summary: entry.summary, description: adf(entry.description),
+            issuetype: { name: 'Task' }, labels: entry.labels,
+          },
+        });
+        if (!result?.key) throw fail('E_JIRA_API', `Jira が ${entry.id} の issue を作った返事に key がありません`, 1);
+        key = result.key;
+        state.issues[entry.id] = { key: result.key, id: result.id };
+        writeJiraState(root, client.assertPublic(state)); // 遷移に失敗しても、作った issue を二重に作らない
+        created++;
+        log(`作成 ${entry.id} → ${key}`);
       }
-      updated++;
-      log(`更新 ${entry.id} → ${key}`);
-    } else {
-      const result = await client.request('POST', '/rest/api/3/issue', {
-        fields: {
-          project: { key: project }, summary: entry.summary, description: adf(entry.description),
-          issuetype: { name: 'Task' }, labels: entry.labels,
-        },
-      });
-      if (!result?.key) throw fail('E_JIRA_API', `Jira が ${entry.id} の issue を作った返事に key がありません`, 1);
-      key = result.key;
-      state.issues[entry.id] = { key: result.key, id: result.id };
-      writeJiraState(root, state); // 途中で止まっても、作った issue を二重に作らない
-      created++;
-      log(`作成 ${entry.id} → ${key}`);
-    }
-    try {
       if (await alignStatus(client, key, entry.status)) {
         transitioned++;
         log(`遷移 ${entry.id} → ${entry.status}`);
       }
     } catch (error) {
-      if (error?.code !== 'E_JIRA_TRANSITION') throw error;
-      stuck.push({ id: entry.id, key, status: entry.status, message: `${entry.id}: ${error.message}` });
+      const reason = error?.status === 404 ? 'issue が見つかりません'
+        : error?.status === 403 ? '権限がありません'
+          : error?.code === 'E_JIRA_TRANSITION' ? '遷移が拒まれたか、利用できる遷移がありません' : null;
+      if (!reason) throw error;
+      stuck.push({ id: entry.id, key, status: entry.status, code: error.code, reason, message: `${entry.id}: ${reason}` });
     }
   }
   return { project, projectName: found?.name ?? project, created, updated, transitioned, stuck, issues: state.issues };
@@ -228,8 +229,9 @@ export async function pullRecords(client, project) {
   };
 }
 
-export async function pullMap(client, { project }) {
+export async function pullMap(client, { project, questId, title }) {
   const { records } = await pullRecords(client, project);
-  if (records.length === 0) throw fail('E_JIRA_EMPTY', `プロジェクト ${project} に issue が1件もありません`, 1);
-  return { map: mapFromRecords(records), count: records.length };
+  // ADF の text を連結した結果も、保存前に秘密が無いことを確かめる。
+  const map = client.assertPublic(mapFromRecords(records, { questId, title }));
+  return { map, count: records.length };
 }

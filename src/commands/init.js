@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { MasumeError } from '../engine/index.js';
-import { printSetup, setupProject } from '../quest/setup.js';
+import { fileEntry, printSetup, setupProject } from '../quest/setup.js';
 
 const USAGE = '使い方: masume init [--dir D] [--agent claude|codex] [--force] [--json]';
 
@@ -31,7 +31,7 @@ export async function run(argv, ctx) {
   const cwd = ctx.cwd ?? process.cwd();
   const result = setupProject({ root: resolve(cwd, values.dir ?? '.'), agent: values.agent, force: Boolean(values.force) }, ctx);
   if (values.json) {
-    console.log(JSON.stringify({ ok: true, root: result.root, files: result.files.map(({ file, written }) => ({ file, written })) }));
+    console.log(JSON.stringify({ ok: true, root: result.root, files: result.files.map(fileEntry) }));
   } else {
     printSetup((text) => console.log(text), result);
   }

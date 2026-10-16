@@ -1,0 +1,14 @@
+=== G6: node --test tests/e2e/G6.test.mjs ===
+✔ (a) NODE_TEST_CONTEXT つきの serve に /api/battle を送っても、落ちる node --test の判定は gate_failed（gate_cleared にならない） (1626.906167ms)
+✔ (a) ハンコから始まるボス戦も同じ: 落ちる node --test の判定は gate_failed (2002.681625ms)
+✔ (b) パーティがボス戦の判定中に SIGINT を受けると、party が終わったあと、判定は動かない（マーカーが作られない） (4441.626375ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8118.432583
+
+(exit 0, 8156ms)

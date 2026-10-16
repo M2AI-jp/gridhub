@@ -2,22 +2,22 @@
 import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import * as engine from '../engine/index.js';
-import { gmCommand, parseGm, runGm, tail } from './adapter.js';
+import { gmCommand, gmTimeoutSeconds, parseGm, runGm, tail } from './adapter.js';
 import { inspectMap, MAP_FILE } from './inspect.js';
 import { buildPrompt, buildRetryPrompt } from './prompt.js';
-import { AGENT_KINDS, printSetup, setupProject } from './setup.js';
+import { AGENT_KINDS, fileEntry, printSetup, setupProject } from './setup.js';
 
 const { MasumeError } = engine;
 const DEFAULT_RETRIES = 2;
-const DEFAULT_TIMEOUT_SECONDS = 1800;
 const PROMPT_HEAD_LINES = 40;
 
-const quote = (text) => (/^[\w./:@=+,-]+$/u.test(text) ? text : JSON.stringify(text));
-/** 地図ファイルの「書かれた時刻」の指紋。同じ中身を書き直しても変わる */
+/** そのまま貼って動くように、シェルの単一引用符で引用する（$ " ` や空白があっても安全） */
+const quote = (text) => (/^[\w./:@=+,-]+$/u.test(text) ? text : `'${text.replaceAll("'", "'\\''")}'`);
+/** 地図ファイルの「書かれた時刻」の指紋。同じ中身を書き直しても変わる（書き直しは別の inode になることもある） */
 const stampOfFile = (file) => {
   try {
-    const { mtimeNs, size } = statSync(file, { bigint: true });
-    return `${mtimeNs}:${size}`;
+    const { mtimeNs, ctimeNs, ino, size } = statSync(file, { bigint: true });
+    return `${mtimeNs}:${ctimeNs}:${ino}:${size}`;
   } catch {
     return null;
   }
@@ -129,14 +129,17 @@ export async function runQuest(opts, ctx) {
   } catch (error) {
     throw new MasumeError('E_USAGE', `--dir の場所を作れません: ${root}（${error.message}）`);
   }
-  writeFileSync(join(root, 'WISH.md'), `# 願い\n\n${opts.wish}\n`);
+  // 願い（WISH.md）は冒険が生まれたときに書く。GM が失敗したときに、前の願いを消さないため（§27.6）
   const logFile = join(root, 'quest.log');
-  const timeoutSeconds = Number(env.MASUME_GM_TIMEOUT) > 0 ? Number(env.MASUME_GM_TIMEOUT) : DEFAULT_TIMEOUT_SECONDS;
+  const timeoutSeconds = gmTimeoutSeconds(env.MASUME_GM_TIMEOUT);
 
   const mapFile = join(root, MAP_FILE);
-  let previousStamp = stampOfFile(mapFile);
   let prompt = original;
   let inspection;
+  // GM を呼ぶたびに、その間に地図が書き換わったことを確かめる（§27.1）。
+  // ただし前の回が「地図は正しいが、警告だけ」（判定ファイルが足りない）だったときは、
+  // 直すのは判定ファイルで、地図を書き直さなくてよい（その地図は前の回の GM が書いたもの）
+  let mustWriteMap = true;
 
   for (let round = 0; ; round++) {
     const promptFile = join(root, `quest-prompt-${round + 1}.txt`);
@@ -154,6 +157,7 @@ export async function runQuest(opts, ctx) {
     say(round === 0
       ? `GM を呼びます（${gm.kind}${model ? ` ${model}` : ''}）。地図ができるまで数分かかることがあります\n  GM の出力: ${logFile}`
       : `GM をもう一度呼びます（${round}回目のやり直し）`);
+    const stampBefore = stampOfFile(mapFile);
     const result = await runGm(command, {
       cwd: root, env: gmEnv, prompt, logFile, heading: `GM ${round + 1}回目`, timeoutSeconds,
     });
@@ -163,14 +167,14 @@ export async function runQuest(opts, ctx) {
     }
 
     inspection = inspectMap(root);
-    const currentStamp = stampOfFile(mapFile);
-    // 前から置いてあった地図を、GM が一度も書き直さなかったときは「書かれなかった」とみなす
-    const untouched = round === 0 && previousStamp !== null && currentStamp === previousStamp;
+    // 前から置いてあった地図（や、前の回に書かれた不正な地図）を、GM が書き直さなかったときは「書かれなかった」とみなす
+    const untouched = mustWriteMap && stampBefore !== null && stampOfFile(mapFile) === stampBefore;
     const missing = inspection.missing || untouched;
 
     const problems = missing ? [] : inspection.errors;
     const warnings = missing ? [] : inspection.warnings;
     if (!missing && problems.length === 0 && warnings.length === 0) break;
+    mustWriteMap = missing || problems.length > 0;
 
     if (round >= retries) {
       if (missing) {
@@ -188,6 +192,11 @@ export async function runQuest(opts, ctx) {
 
   const { head } = engine.newGame(root, mapFile, { actor: opts.actor, force: Boolean(opts.force) });
   const wish = recordWish(root, { actor: opts.actor, text: opts.wish, gm: gm.kind, model });
+  try {
+    writeFileSync(join(root, 'WISH.md'), `# 願い\n\n${opts.wish}\n`);
+  } catch (error) {
+    say(`※ WISH.md を書けませんでした（${error.message}）。願いは冒険の書に記録してあります`);
+  }
   const jumon = engine.jumonOf((wish?.hash) ?? head.hash);
   const summary = summarize(root, engine.buildView(root), jumon, wish?.seq ?? head.seq);
   summary.setup = prepareProject(root, { gm: opts.gm, override, ctx });
@@ -196,7 +205,7 @@ export async function runQuest(opts, ctx) {
     const { setup, ...rest } = summary;
     out(JSON.stringify({
       ok: true, root, ...rest,
-      setup: setup.error ? { ok: false, error: setup.error } : { ok: true, files: setup.files.map(({ file, written }) => ({ file, written })) },
+      setup: setup.error ? { ok: false, error: setup.error } : { ok: true, files: setup.files.map(fileEntry) },
       files: { map: mapFile, wish: join(root, 'WISH.md'), log: logFile },
     }));
   } else {

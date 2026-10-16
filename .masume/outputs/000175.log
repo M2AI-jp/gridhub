@@ -1,0 +1,112 @@
+=== GOAL4: node --test tests/e2e/GOAL4.test.mjs ===
+✖ 第1章〜第4章のすべての判定が、まとめて本当に通る (158224.389959ms)
+✔ マスメ自身と、残っているすべての冒険の書が正常 (161.451791ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 1
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 158434.930041
+
+✖ failing tests:
+
+test at tests/e2e/GOAL4.test.mjs:19:1
+✖ 第1章〜第4章のすべての判定が、まとめて本当に通る (158224.389959ms)
+  AssertionError [ERR_ASSERTION]: ✔ §26.3 現在のマスが未封印のキャラクターは出撃させず、止まる理由に 未封印: <マスID> と seal の案内を出す (1191.2785ms)
+  ✔ §26.4 タイムアウトで止めるとき、SIGTERM を無視する孫も残さない (4201.692ms)
+  ✔ §26.4 SIGINT で止めるときも、SIGTERM を無視する孫を残さない (2718.201667ms)
+  ✔ §26.4 ボス戦の判定中に SIGINT を受けたら、その判定（と子孫）も止める (4076.941667ms)
+  ✔ §26.5 プロンプトのファイルは sortie を記録する前に書く（書けなくても、帰還のない出撃が残らない） (225.666042ms)
+  ✔ §26.6 プロンプトに書くコマンドは、パスに $ " ` があっても、そのまま貼って動く (806.610125ms)
+  ✔ 願いから地図が生まれ、冒険が始まる (323.173042ms)
+  ✔ GM の地図が壊れていたら、エラーを見せて直させる (409.87425ms)
+  ✔ GM が失敗したら E_GM (179.128375ms)
+  ✔ --dry-run と MASUME_GM_OVERRIDE (231.847125ms)
+  ✔ init: AGENTS.md・CLAUDE.md・.gitignore を置く。何度やっても重ならない (201.024167ms)
+  ✔ init: 既にある AGENTS.md は --force なしでは触らない。冒険の書があれば party.json (187.594834ms)
+  ✔ quest のあとには支度が済んでいる (134.070917ms)
+  ✔ §27.1 GM を呼ぶたびに地図が書き換わったことを確かめる: 置いてあった古い地図は、やり直しでも受け入れない (418.538708ms)
+  ✔ §27.2 GM のシェルが終わって1秒たってもパイプが閉じないなら、プロセスグループを SIGKILL して終了コードどおりに扱う (3885.467417ms)
+  ✔ §27.3 SIGINT・SIGTERM・SIGHUP では、GM のプロセスグループに SIGTERM、2秒後に SIGKILL（止まらない孫も残さない） (6060.374542ms)
+  ✔ §27.4 GM の出力は UTF-8 として正しく読む（途中で切れたマルチバイトを壊さない） (1116.773583ms)
+  ✔ §27.4 quest.log と手元に残す GM の出力は最大 2MB (121.7395ms)
+  ✔ §27.5 MASUME_GM_TIMEOUT は 1〜86400 秒に丸める（巨大な値で即時間切れにならない） (1889.6425ms)
+  ✔ §27.6 --force で GM が失敗したら WISH.md を元のままにする。新しい願いは冒険が生まれたときに書く (404.772208ms)
+  ✔ §27.7 init: 外を指す・ぶら下がった symlink には書かない（書きません: <ファイル>（<理由>）） (293.174292ms)
+  ✔ §27.7 init: 実体がルートの中にある symlink には書く（symlink はそのまま） (42.855958ms)
+  ✔ §27.7 init: CLAUDE.md が AGENTS.md と同じ実体なら CLAUDE.md は書かない（規則を消さない） (45.910208ms)
+  ✔ §27.8 AGENTS.md に書くコマンドは、パスに $ " ` があっても、そのまま貼って動く (711.263375ms)
+  ✔ 静的配信・API・健康診断 (29.777209ms)
+  ✔ ディレクトリの外には出られない (8.382542ms)
+  ✔ getView は Promise でもよく、例外は 500 の JSON になる (4.741167ms)
+  ✔ stop() で確実に閉じる (3.43225ms)
+  ✔ 接続すると hello、ログが伸びると change が全員に届く (414.728ms)
+  ✔ 監視ファイルが置き換えられても（rename で書き直されても）change が届く (415.754292ms)
+  ✔ stop() は開いている SSE 接続も閉じる (8.19525ms)
+  ✔ watchFile が無くても SSE は hello を返す (7.061542ms)
+  ✔ 窓口の作法: X-Masume・Origin・壊れたJSON・失敗の返し方・判定出力 (33.208333ms)
+  ✔ あがりの演出: 最後のハンコでボス戦が別プロセスで始まり、盤面がライブで更新される (2057.118542ms)
+  ✔ ロビー: 冒険の書が無くても開き、願いから冒険が生まれると知らせる (270.001167ms)
+  ✔ 出撃の窓口: パーティを起動し、様子を見せ、止められる (2129.785708ms)
+  ✔ 初期化・道具の一覧・資料 (486.277667ms)
+  ✔ 道具で遊ぶ: 指令書を読み、宣言判定し、日誌を書く (947.496833ms)
+  ✔ 冒険の書が無くても起動し、願いから冒険を始められる（cmd: は受け付けない） (261.797291ms)
+  ✔ §25.1 すべての応答に X-Frame-Options・CSP frame-ancestors・nosniff (189.514333ms)
+  ✔ §25.2 POST の本文は 64KB まで: 超えたら 413（全部を読み切らず、Content-Length が大きければ読む前に断る） (166.839958ms)
+  ✔ §25.3 /api/battle の同時実行: 動いている間は 409 E_BUSY。ボス戦は1本だけ (3645.310833ms)
+  ✔ §25.3 ハンコからのボス戦も同じ扱い: 動いている間は /api/battle が 409 E_BUSY (3222.386ms)
+  ✔ §25.3 stop() で、動いているボス戦（とその判定）も止まる (3368.449666ms)
+  ✔ §25.4 serve は SIGHUP でも、出撃中の子（軍師とエージェント）を片づけて終わる (1867.507208ms)
+  ✔ §25.4 mcp も SIGHUP で、仕事中の子（語り部と GM）を片づけて終わる (2903.911125ms)
+  ✔ §25.5 MCP の願いの長さは、HTTP と同じく trim 後のコードポイント数で 1〜2000 (246.065625ms)
+  ✔ §25.6 --host 0.0.0.0 / :: のとき、表示する URL は http://127.0.0.1:<port>/ で、開ける (350.731042ms)
+  ✔ validate: 1人だけの地図なら、あがりのゲートはメンバー1人でよい (42.466459ms)
+  ✔ validate: あがり以外のゲート、2人以上の地図のあがりは、従来どおり2人以上 (164.265ms)
+  ✔ 1人だけの冒険: あがりのボス戦をその1人で戦い、負ければ戻され、勝てばあがる (1288.654542ms)
+  ✔ import linear: 担当者1人の CSV から、1人で始められる地図を作る (335.223625ms)
+  ✔ import linear: 担当者が空だけの CSV でも、名無し1人で始められる (342.9705ms)
+  ℹ tests 189
+  ℹ suites 0
+  ℹ pass 188
+  ℹ fail 1
+  ℹ cancelled 0
+  ℹ skipped 0
+  ℹ todo 0
+  ℹ duration_ms 158181.242875
+  
+  ✖ failing tests:
+  
+  test at tests/e2e/B3.test.mjs:38:1
+  ✖ ハンコとボス戦のボタンは、本物の盤面では X-Masume 付きで POST する (1414.731625ms)
+    AssertionError [ERR_ASSERTION]: ボス戦のボタン
+    
+    false !== true
+    
+        at TestContext.<anonymous> (file:///Users/amano/dev/masume/tests/e2e/B3.test.mjs:88:12)
+        at async Test.run (node:internal/test_runner/test:1069:7)
+        at async Test.processPendingSubtests (node:internal/test_runner/test:752:7) {
+      generatedMessage: false,
+      code: 'ERR_ASSERTION',
+      actual: false,
+      expected: true,
+      operator: 'strictEqual'
+    }
+  
+  
+  1 !== 0
+  
+      at TestContext.<anonymous> (file:///Users/amano/dev/masume/tests/e2e/GOAL4.test.mjs:27:10)
+      at Test.runInAsyncScope (node:async_hooks:214:14)
+      at Test.run (node:internal/test_runner/test:1062:25)
+      at Test.start (node:internal/test_runner/test:959:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:332:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 1,
+    expected: 0,
+    operator: 'strictEqual'
+  }
+
+(exit 1, 158476ms)

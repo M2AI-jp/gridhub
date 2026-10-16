@@ -1,4 +1,4 @@
-// 伝令が起こす長い仕事（語り部・パーティ）の子プロセス管理（CONTRACTS §15）。
+// 伝令が起こす長い仕事（語り部・パーティ・ボス戦）の子プロセス管理（CONTRACTS §15・§25）。
 // 子は独自のプロセスグループで動かす。端末の Ctrl-C は伝令にだけ届き、伝令が SIGINT を1回だけ伝える
 // （軍師は2回目の SIGINT でエージェントを即 SIGKILL するので、二重に届かないようにする）。
 import { spawn } from 'node:child_process';
@@ -58,23 +58,26 @@ export class ChildJob {
   }
 
   /**
-   * 子を起動する。出力は logFile に追記する。起動できたら解決し、できなければ拒否する。
+   * 子を起動する。logFile があれば出力を追記し、無ければ捨てる。起動できたら解決し、できなければ拒否する。
    * 呼び出し側の「動いていないか」の確認から spawn までに await を挟まないこと（二重起動を防ぐ）。
    */
   start(args, { cwd, logFile, heading }) {
     if (this.running) throw Object.assign(new Error('すでに動いています'), { code: 'E_BUSY' });
 
-    mkdirSync(dirname(logFile), { recursive: true });
-    const fd = openSync(logFile, 'a');
+    let fd;
+    if (logFile !== undefined) {
+      mkdirSync(dirname(logFile), { recursive: true });
+      fd = openSync(logFile, 'a');
+    }
     let child;
     try {
-      if (heading) writeSync(fd, heading);
+      if (heading && fd !== undefined) writeSync(fd, heading);
       const env = { ...process.env };
       // 入れ子の判定（node --test）が何も走らずに通ってしまわないように
       delete env.NODE_TEST_CONTEXT;
-      child = spawn(process.execPath, args, { cwd, env, stdio: ['ignore', fd, fd], detached: true });
+      child = spawn(process.execPath, args, { cwd, env, stdio: ['ignore', fd ?? 'ignore', fd ?? 'ignore'], detached: true });
     } finally {
-      closeSync(fd);
+      if (fd !== undefined) closeSync(fd);
     }
 
     this.child = child;
@@ -87,7 +90,7 @@ export class ChildJob {
     const finish = (code, note) => {
       if (finished) return;
       finished = true;
-      if (note) {
+      if (note && logFile !== undefined) {
         try { appendFileSync(logFile, `\n${note}\n`); } catch { /* ログに書けなくても状態は進める */ }
       }
       if (this.child === child) {

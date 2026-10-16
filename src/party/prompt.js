@@ -21,6 +21,11 @@ function briefText(root, bin, id, report) {
   return lines.join('\n');
 }
 
+/** シェルの単一引用符（CONTRACTS §26.6）。パスに $ " ` や空白があっても、そのまま貼って動く。 */
+export const sq = (text) => `'${String(text).replace(/'/gu, `'\\''`)}'`;
+// 安全な文字だけなら、そのまま。それ以外（キャラクターIDに変わった文字があるとき）は引用符で包む。
+const word = (text) => (/^[A-Za-z0-9_.@%+=:,/-]+$/u.test(text) ? text : sq(text));
+
 export function buildPrompt({ root, bin, view, characterId }) {
   const report = brief(root, characterId);
   const { character, current } = report;
@@ -33,9 +38,10 @@ export function buildPrompt({ root, bin, view, characterId }) {
   const run = current?.check?.kind === 'cmd' ? current.check.run : null;
   const q = view.quest;
   const id = characterId;
-  const declare = `node "${bin}" check ${id} --as ${id} --no-boss --dir "${root}"`;
-  const note = `node "${bin}" note ${id} "<申し送り>" --as ${id} --dir "${root}"`;
-  const briefAgain = `node "${bin}" brief ${id} --dir "${root}"`;
+  const who = word(id);
+  const declare = `node ${sq(bin)} check ${who} --as ${who} --no-boss --dir ${sq(root)}`;
+  const note = `node ${sq(bin)} note ${who} '<申し送り>' --as ${who} --dir ${sq(root)}`;
+  const briefAgain = `node ${sq(bin)} brief ${who} --dir ${sq(root)}`;
 
   const lines = [
     `あなたは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）の冒険に参加しているキャラクター「${character.name}」（ID: ${id}）です。`,
@@ -70,7 +76,7 @@ export function buildPrompt({ root, bin, view, characterId }) {
       ? `2. 素振り（判定コマンドを自分で走らせる。何度走らせてもよく、記録されない）:\n\n       ${run}\n\n   通るまで直す。`
       : '2. 素振り（指令書の判定コマンドを自分で走らせる。何度走らせてもよく、記録されない）。通るまで直す。',
     `3. 素振りが通ったら、宣言判定（公式の判定。記録される。素振りが通ってからにする）:\n\n       ${declare}\n\n   - 通ると「判定成功」と出て、1マス進む。\n   - 落ちるとレベルが下がり、前のマスに巻き戻されることがある（累積判定: 宿屋より後の自分のマスの判定をまとめて走らせる）。失敗の出力を読み、\`${briefAgain}\` で現在のマスを確かめ直して、直してから素振りをやり直す。\n   - 結合ゲート（ボス戦）に着いたら「待機」になる。ボス戦は軍師（パーティ）がやるので、あなたは何もしなくてよい。`,
-    `4. 日誌（次の自分への申し送りを短く。何を作ったか、次のマスで気をつけること）:\n\n       ${note}`,
+    `4. 日誌（次の自分への申し送りを短く。何を作ったか、次のマスで気をつけること。\`<申し送り>\` を書き換える。単一引用符 ' で囲んであるので、文の中に ' を入れたいときは '\\'' と書く）:\n\n       ${note}`,
     '',
     '## 止まる条件',
     '',

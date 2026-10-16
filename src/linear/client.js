@@ -1,7 +1,9 @@
 import { MasumeError } from '../engine/index.js';
+import { endpointUrl, publicPayload, waitForRetry } from './http.js';
 
 export const DEFAULT_URL = 'https://api.linear.app/graphql';
 const TIMEOUT_MS = 30000;
+const MAX_RETRIES = 3;
 
 // operationName は CONTRACTS §16 の表のとおり。文書は本物の Linear API の形に合わせている。
 export const DOCUMENTS = {
@@ -63,43 +65,65 @@ function failure(code, message, exitCode) {
 
 /** キーは値だけを持ち、メッセージやログには出さない。 */
 export function createClient({ env, fetchImpl = globalThis.fetch }) {
-  const key = (env.LINEAR_API_KEY ?? '').trim();
+  const rawKey = env.LINEAR_API_KEY ?? '';
+  if (!/^[\x20-\x7E]*$/u.test(rawKey)) {
+    throw failure('E_LINEAR_AUTH', 'LINEAR_API_KEY は印字可能な ASCII で指定してください', 2);
+  }
+  const key = rawKey.trim();
   if (!key) throw failure('E_LINEAR_AUTH', 'LINEAR_API_KEY が設定されていません。Linear の API キーを環境変数に入れてください', 2);
-  const url = env.MASUME_LINEAR_URL || DEFAULT_URL;
+  const url = endpointUrl(env.MASUME_LINEAR_URL || DEFAULT_URL);
+  const assertPublic = (value) => publicPayload(value, [rawKey, key], 'LINEAR');
 
   async function request(operationName, variables = {}, query = DOCUMENTS[operationName]) {
-    let response;
-    try {
-      response = await fetchImpl(url, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', authorization: key },
-        body: JSON.stringify({ query, variables, operationName }),
-        signal: AbortSignal.timeout(TIMEOUT_MS),
-      });
-    } catch (error) {
-      throw failure('E_LINEAR_NETWORK', `Linear に届きません（${operationName}）: ${error?.cause?.code ?? error?.message ?? error}`, 1);
+    for (let attempt = 0; ; attempt++) {
+      let response;
+      let text;
+      try {
+        response = await fetchImpl(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: key },
+          body: JSON.stringify({ query, variables, operationName }),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+        text = await response.text();
+      } catch {
+        // fetch の例外にはヘッダーや URL が含まれ得るので転記しない。
+        throw failure('E_LINEAR_NETWORK', 'Linear との通信が完了しませんでした', 1);
+      }
+      if (response.status === 429 && attempt < MAX_RETRIES) {
+        await waitForRetry(response.headers.get('retry-after'));
+        continue;
+      }
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = undefined;
+      }
+      const errors = Array.isArray(payload?.errors) ? payload.errors : [];
+      // 本文は分類だけに使い、秘密が反射され得るメッセージを出力しない。
+      const notFound = errors.some((entry) => /not found|could not find/iu.test(
+        `${entry?.message ?? ''} ${entry?.extensions?.userPresentableMessage ?? ''}`,
+      ));
+      let error;
+      if (response.status === 401) {
+        error = failure('E_LINEAR_AUTH', 'Linear に認証されませんでした。LINEAR_API_KEY を確かめてください', 2);
+      } else if (response.status === 403) {
+        error = failure('E_LINEAR_API', 'Linear の操作に必要な権限がありません', 1);
+        error.skipReason = '権限がありません';
+      } else if (!response.ok || errors.length > 0) {
+        error = failure('E_LINEAR_API', `Linear がエラーを返しました（HTTP ${response.status}）`, 1);
+        if (notFound || response.status === 404) error.skipReason = 'issue が見つかりません';
+      } else if (!payload || typeof payload.data !== 'object' || payload.data === null) {
+        error = failure('E_LINEAR_API', 'Linear の返事を読めません', 1);
+      }
+      if (error) {
+        error.status = response.status;
+        throw error;
+      }
+      return assertPublic(payload.data);
     }
-    const text = await response.text();
-    let payload;
-    try {
-      payload = JSON.parse(text);
-    } catch {
-      payload = undefined;
-    }
-    const messages = Array.isArray(payload?.errors)
-      ? payload.errors.map((entry) => entry?.message).filter(Boolean).join(' / ') : '';
-    if (response.status === 401 || response.status === 403) {
-      throw failure('E_LINEAR_AUTH', `Linear に認証されませんでした${messages ? `: ${messages}` : ''}。LINEAR_API_KEY を確かめてください`, 2);
-    }
-    if (!response.ok) {
-      throw failure('E_LINEAR_API', `Linear がエラーを返しました（${operationName}, HTTP ${response.status}）${messages ? `: ${messages}` : ''}`, 1);
-    }
-    if (messages) throw failure('E_LINEAR_API', `Linear がエラーを返しました（${operationName}）: ${messages}`, 1);
-    if (!payload || typeof payload.data !== 'object' || payload.data === null) {
-      throw failure('E_LINEAR_API', `Linear の返事を読めません（${operationName}）`, 1);
-    }
-    return payload.data;
   }
 
-  return { url, request };
+  return { url, request, assertPublic };
 }

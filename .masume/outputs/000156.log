@@ -1,0 +1,31 @@
+=== M6: node --test tests/e2e/M6.test.mjs ===
+✔ 28.1 Linear: 印字できない API キーは E_LINEAR_AUTH/2。キーはどこにも出ず、通信もしない (490.271709ms)
+✔ 28.1 Jira: 印字できない API トークンは E_JIRA_AUTH/2。トークンはどこにも出ず、通信もしない (395.983375ms)
+✔ 28.1 URL に userinfo（user:password@）があれば E_USAGE/2。パスワードは出ず、通信もしない (400.97525ms)
+✔ 28.1（対照）正しいキー・トークンでつながらないときも、秘密は出ず E_*_NETWORK/1 (179.183542ms)
+✔ 28.2 応答の本文の読み込み中に切れたら E_LINEAR_NETWORK / E_JIRA_NETWORK（終了コード1） (524.282042ms)
+✔ 28.2 途中まで進んでから（2つ目以降の要求で）切れても、同じ契約のコードで終わる (302.899958ms)
+✔ 28.3 Linear: 429 は retry-after に従って待ち、再試行して最後まで同期する (1176.697167ms)
+✔ 28.3 Linear: 作成が 429 でも、3回まで再試行すれば重複せずに終わる (3189.36525ms)
+✔ 28.3 Linear: 429 が続くときは再試行を打ち切る（1回目 + 最大3回 = 4回まで） (3178.068ms)
+✔ 28.3 Linear: 作成の結果の issue が null なら E_LINEAR_API/1（TypeError にしない） (174.720042ms)
+✔ 28.4 Linear: 消えた issue（not found）があっても残りを最後まで同期し、飛ばしたマスをまとめて出す（終了コード1） (233.215375ms)
+✔ 28.4 Linear: not found が HTTP 400 で返っても、同じように飛ばして最後まで同期する (239.143792ms)
+✔ 28.4 Jira: issue が消えて(404)・権限が無くて(403)も、残りを最後まで同期する。403 は「権限」と書く (255.775584ms)
+✔ 28.4 Jira: 遷移が拒まれても(400)そのマスを飛ばし、ほかのマスの作成・遷移は最後まで進む (193.649417ms)
+✔ 28.5 linear pull: state.type が completed / canceled の issue は、状態の名前が何でも省く (109.743708ms)
+✔ 28.6 import linear: 長い・空のタイトルとプロジェクト名でも validate に通る下書きになる (151.573083ms)
+✔ 28.6 import linear: quest.id は英大文字と数字だけの2〜10文字になる（MY_PROJ → MYPROJ）。--quest-id / --title が優先 (363.868291ms)
+✔ 28.6 linear pull: 長い・空のタイトルとプロジェクト名でも validate に通る。--quest-id / --title が使える (172.316333ms)
+✔ 28.6 jira pull: キー MY_PROJ・長い/空の summary・長いプロジェクト名でも validate に通る。--quest-id / --title が使える (217.879916ms)
+✔ 28.6 取り込める issue が1件も無ければ E_NOTHING/1「取り込める issue がありません」（下書きは書かない） (332.504541ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12338.933333
+
+(exit 0, 12378ms)

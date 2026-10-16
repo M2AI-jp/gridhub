@@ -1,7 +1,7 @@
 // 語り部の支度（CONTRACTS §21）: よそのプロジェクトでも、エージェントがマスメのルールを守れるように
 // AGENTS.md・CLAUDE.md・.gitignore・.masume/party.json を置く。init と quest のあとの両方から呼ばれる。
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { lstatSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
+import { dirname, join, sep } from 'node:path';
 import { MasumeError } from '../engine/index.js';
 
 export const AGENT_KINDS = ['claude', 'codex'];
@@ -14,9 +14,12 @@ const CLAUDE_MD = `このプロジェクトはマスメで進めています。A
 @AGENTS.md
 `;
 
-/** AGENTS.md の中身。コマンドはそのまま打てるよう、bin の絶対パスを埋める */
+/** シェルの単一引用符で引用する（$ " ` や空白や ' が入っていても、そのまま貼って動く。§27.8） */
+export const shellQuote = (text) => `'${String(text).replaceAll("'", "'\\''")}'`;
+
+/** AGENTS.md の中身。コマンドはそのまま打てるよう、bin の絶対パスを（引用して）埋める */
 export function agentsMd({ bin, rulebook }) {
-  const masume = `node "${bin}"`;
+  const masume = `node ${shellQuote(bin)}`;
   return `# AGENTS.md — このプロジェクトで働くエージェントへ
 
 このプロジェクトは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）で進めています。
@@ -77,15 +80,60 @@ export function agentsMd({ bin, rulebook }) {
 `;
 }
 
-function writeNew(file, text, force) {
-  if (existsSync(file) && !force) return false;
-  writeFileSync(file, text);
+/**
+ * root の中の rel に書いてよいか調べる（§27.7）。
+ *  - 書いてよい: { path, exists } … path は実際に書く場所（symlink なら実体。symlink 自体は残す）
+ *  - 書かない:   { reason }       … 外を指す・ぶら下がった・ふつうのファイルでない symlink など
+ * 実体がルートの中にあるときだけ書く。ルートの外のファイルを、init の書き込みで壊さないため。
+ */
+function writableTarget(root, rootReal, rel) {
+  const file = join(root, rel);
+  const inside = (path) => path === rootReal || path.startsWith(`${rootReal}${sep}`);
+  const parentInside = () => {
+    try {
+      return inside(realpathSync(dirname(file)));
+    } catch {
+      return true; // 親がまだ無い。作るのは自分（ルートの中）
+    }
+  };
+  let info;
+  try {
+    info = lstatSync(file);
+  } catch (error) {
+    if (error.code !== 'ENOENT') return { reason: `調べられません: ${error.code ?? error.message}` };
+    return parentInside() ? { path: file, exists: false } : { reason: 'ルートの外を指すフォルダの中です' };
+  }
+  if (info.isSymbolicLink()) {
+    let real;
+    try {
+      real = realpathSync(file);
+    } catch (error) {
+      return { reason: error.code === 'ELOOP' ? 'リンクが輪になっています' : 'リンク先がありません（ぶら下がったリンクです）' };
+    }
+    if (!inside(real)) return { reason: 'ルートの外を指すリンクです' };
+    if (!statSync(real).isFile()) return { reason: 'リンク先がふつうのファイルではありません' };
+    return { path: real, exists: true };
+  }
+  if (!info.isFile()) return { reason: 'ふつうのファイルではありません' };
+  return parentInside() ? { path: file, exists: true } : { reason: 'ルートの外を指すフォルダの中です' };
+}
+
+/** 既存のファイルは force のときだけ書き直す。新しいファイルは、書く直前に現れた何かを踏まないよう wx で作る */
+function writeNew(target, text, force) {
+  if (target.exists && !force) return false;
+  try {
+    if (target.exists) writeFileSync(target.path, text);
+    else writeFileSync(target.path, text, { flag: 'wx' });
+  } catch (error) {
+    if (error.code === 'EEXIST') return false; // 書く直前にだれかが作った。そのまま残す
+    throw error;
+  }
   return true;
 }
 
 /** .gitignore に足りない行だけを足す。足した行を返す（無ければ空） */
-function ensureIgnore(file) {
-  const before = existsSync(file) ? readFileSync(file, 'utf8') : '';
+function ensureIgnore(target) {
+  const before = target.exists ? readFileSync(target.path, 'utf8') : '';
   const have = new Set(before.split(/\r?\n/u).map((l) => l.trim()));
   const missing = IGNORE_LINES.filter((l) => !have.has(l));
   if (missing.length === 0) return [];
@@ -93,24 +141,37 @@ function ensureIgnore(file) {
   const lead = before === '' || before.endsWith('\n') ? '' : eol;
   const gap = before.trim() === '' ? '' : eol;
   const heading = have.has(IGNORE_HEADING) ? [] : [IGNORE_HEADING];
-  writeFileSync(file, `${before}${lead}${gap}${[...heading, ...missing].join(eol)}${eol}`);
+  const text = `${before}${lead}${gap}${[...heading, ...missing].join(eol)}${eol}`;
+  if (target.exists) writeFileSync(target.path, text);
+  else writeFileSync(target.path, text, { flag: 'wx' });
   return missing;
 }
 
 /** 既にある party.json のほかの項目（model など）は残して、agent だけ合わせる */
-function writePartyJson(file, agent) {
+function writePartyJson(target, agent) {
   let current = {};
   try {
-    const parsed = JSON.parse(readFileSync(file, 'utf8'));
+    const parsed = JSON.parse(readFileSync(target.path, 'utf8'));
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) current = parsed;
   } catch {}
   const next = { ...current, agent, parallel: Number.isInteger(current.parallel) ? current.parallel : PARALLEL };
-  writeFileSync(file, `${JSON.stringify(next)}\n`);
+  writeFileSync(target.path, `${JSON.stringify(next)}\n`);
 }
+
+const sameFile = (a, b) => {
+  try {
+    const x = statSync(a);
+    const y = statSync(b);
+    return x.dev === y.dev && x.ino === y.ino;
+  } catch {
+    return false;
+  }
+};
 
 /**
  * opts: { root, agent, force }   ctx: { bin, root（リポジトリ） }
- * 戻り値: { root, files: [{ file, written, note }] }（file は root からの相対パス）
+ * 戻り値: { root, files: [{ file, written, note, reason }] }（file は root からの相対パス）
+ * reason があるファイルは「書きません」（symlink が外を指す・ぶら下がっている・AGENTS.md と同じ実体 など）
  */
 export function setupProject({ root, agent, force = false }, ctx) {
   if (agent !== undefined && agent !== null && !AGENT_KINDS.includes(agent)) {
@@ -121,36 +182,70 @@ export function setupProject({ root, agent, force = false }, ctx) {
   } catch (error) {
     throw new MasumeError('E_USAGE', `--dir の場所を作れません: ${root}（${error.message}）`);
   }
+  const rootReal = realpathSync(root);
   const files = [];
+  const refuse = (file, reason) => files.push({ file, written: false, note: '', reason });
 
   const rulebook = join(ctx.root, 'docs', 'RULEBOOK.md');
-  const wroteAgents = writeNew(join(root, 'AGENTS.md'), agentsMd({ bin: ctx.bin, rulebook }), force);
-  files.push({ file: 'AGENTS.md', written: wroteAgents, note: wroteAgents ? '' : '（--force で書き直せます）' });
+  const agentsTarget = writableTarget(root, rootReal, 'AGENTS.md');
+  if (agentsTarget.reason) refuse('AGENTS.md', agentsTarget.reason);
+  else {
+    const wrote = writeNew(agentsTarget, agentsMd({ bin: ctx.bin, rulebook }), force);
+    files.push({ file: 'AGENTS.md', written: wrote, note: wrote ? '' : '（--force で書き直せます）' });
+  }
 
-  const claudeFile = join(root, 'CLAUDE.md');
-  const keptClaude = existsSync(claudeFile) && !force;
-  const wroteClaude = writeNew(claudeFile, CLAUDE_MD, force);
-  const claudeNote = keptClaude && !/^@AGENTS\.md\s*$/mu.test(readFileSync(claudeFile, 'utf8'))
-    ? '（Claude Code に AGENTS.md を読ませるなら、CLAUDE.md に @AGENTS.md の行を足してください）'
-    : wroteClaude ? '' : '（--force で書き直せます）';
-  files.push({ file: 'CLAUDE.md', written: wroteClaude, note: claudeNote });
+  const claudeTarget = writableTarget(root, rootReal, 'CLAUDE.md');
+  if (claudeTarget.reason) refuse('CLAUDE.md', claudeTarget.reason);
+  else if (claudeTarget.exists && sameFile(claudeTarget.path, join(root, 'AGENTS.md'))) {
+    // CLAUDE.md が AGENTS.md の別名（symlink など）。書くと AGENTS.md の規則が消えてしまう
+    refuse('CLAUDE.md', 'AGENTS.md と同じファイルです。書くと AGENTS.md の規則が消えます');
+  } else {
+    const kept = claudeTarget.exists && !force;
+    const wrote = writeNew(claudeTarget, CLAUDE_MD, force);
+    const note = kept && !/^@AGENTS\.md\s*$/mu.test(readFileSync(claudeTarget.path, 'utf8'))
+      ? '（Claude Code に AGENTS.md を読ませるなら、CLAUDE.md に @AGENTS.md の行を足してください）'
+      : wrote ? '' : '（--force で書き直せます）';
+    files.push({ file: 'CLAUDE.md', written: wrote, note });
+  }
 
-  const added = ensureIgnore(join(root, '.gitignore'));
-  files.push({ file: '.gitignore', written: added.length > 0, note: added.length > 0 ? `（足した行: ${added.join(' ')}）` : '（必要な行はもうあります）' });
+  const ignoreTarget = writableTarget(root, rootReal, '.gitignore');
+  if (ignoreTarget.reason) refuse('.gitignore', ignoreTarget.reason);
+  else {
+    const added = ensureIgnore(ignoreTarget);
+    files.push({ file: '.gitignore', written: added.length > 0, note: added.length > 0 ? `（足した行: ${added.join(' ')}）` : '（必要な行はもうあります）' });
+  }
 
   if (agent) {
-    if (existsSync(join(root, '.masume', 'log.jsonl'))) {
-      writePartyJson(join(root, '.masume', 'party.json'), agent);
-      files.push({ file: '.masume/party.json', written: true, note: `（agent: ${agent}, parallel: ${PARALLEL}）` });
-    } else {
+    const partyFile = join('.masume', 'party.json');
+    if (!statOk(join(root, '.masume', 'log.jsonl'))) {
       files.push({ file: '.masume/party.json', written: false, note: '（冒険の書がまだ無いので書きません）' });
+    } else {
+      const partyTarget = writableTarget(root, rootReal, partyFile);
+      if (partyTarget.reason) refuse('.masume/party.json', partyTarget.reason);
+      else {
+        writePartyJson(partyTarget, agent);
+        files.push({ file: '.masume/party.json', written: true, note: `（agent: ${agent}, parallel: ${PARALLEL}）` });
+      }
     }
   }
   return { root, files };
 }
 
+/** 冒険の書の本体があるか（symlink でも、あれば） */
+function statOk(file) {
+  try {
+    return statSync(file).isFile();
+  } catch {
+    return false;
+  }
+}
+
+/** --json 用の1ファイル分（書かなかった理由があれば reason も） */
+export const fileEntry = ({ file, written, reason }) => (reason ? { file, written, reason } : { file, written });
+
 export function printSetup(say, { files }) {
-  for (const { file, written, note } of files) {
-    say(written ? `書きました: ${file}${note}` : `${file} はそのまま${note}`);
+  for (const { file, written, note, reason } of files) {
+    if (reason) say(`書きません: ${file}（${reason}）`);
+    else say(written ? `書きました: ${file}${note}` : `${file} はそのまま${note}`);
   }
 }

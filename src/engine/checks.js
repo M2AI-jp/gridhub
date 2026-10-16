@@ -3,10 +3,10 @@ import { resolve } from 'node:path';
 import { sha256 } from './canonical.js';
 import { MasumeError } from './errors.js';
 import { containedFile } from './paths.js';
-import { gitInfo, runChecks } from './runner.js';
+import { gitInfo, killActiveChecks, runChecks } from './runner.js';
 import { gateParty, isSealed, readyGate, reduceEvent, replay, sealFiles } from './state.js';
 import {
-  appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+  appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLockAsync, writeDurable,
 } from './store.js';
 
 function checkTarget(state, target) {
@@ -57,6 +57,43 @@ function brokenSeal(root, state, segment) {
   return null;
 }
 
+function requireSealed(root, state, segment, { actor, character, previous }) {
+  const broken = brokenSeal(root, state, segment);
+  if (!broken) return;
+  appendEventsLocked(root, [{ type: 'seal_broken', data: { character, ...broken } }],
+    { actor, previous });
+  throw new MasumeError('E_SEAL_BROKEN', `${broken.node} の封印が破れています`);
+}
+
+function requireUnchanged(state, before, target) {
+  if (state.revision !== before.revision
+    || before.members.some((id) => state.characters[id]?.epoch !== before.epochs[id])) {
+    throw new MasumeError('E_CONFLICT', `${target} の状態が判定中に変わりました。もう一度判定してください`);
+  }
+}
+
+async function withCheckSignals(operation) {
+  let interrupted = null;
+  const handlers = Object.entries({ SIGINT: 130, SIGTERM: 143, SIGHUP: 129 }).map(([signal, code]) => {
+    const handler = () => {
+      interrupted ??= new MasumeError('E_INTERRUPTED', `判定を中断しました（${signal}）`, code);
+      killActiveChecks();
+    };
+    process.on(signal, handler);
+    return [signal, handler];
+  });
+  const requireRunning = () => {
+    if (interrupted) throw interrupted;
+  };
+  try {
+    const result = await operation(requireRunning);
+    requireRunning();
+    return result;
+  } finally {
+    for (const [signal, handler] of handlers) process.off(signal, handler);
+  }
+}
+
 function readyAfter(state, members) {
   return [...new Set(members.map((id) => readyGate(state, id)).filter((gate) => gate !== null))];
 }
@@ -72,34 +109,45 @@ async function fightReady(root, result, gates, { actor, boss }) {
   return result;
 }
 
-export async function check(root, target, { actor = defaultActor(), boss = true } = {}) {
+async function runCheck(root, target, { actor = defaultActor(), boss = true }, requireRunning) {
   root = resolve(root);
-  const before = withLock(root, actor, () => {
+  const before = await withLockAsync(root, actor, () => {
     const snapshot = requireHealthy(inspectLog(root));
     const state = replay(root, snapshot.events);
     const selection = checkTarget(state, target);
-    const broken = brokenSeal(root, state, selection.segment);
-    if (broken) {
-      appendEventsLocked(root, [{ type: 'seal_broken', data: { character: selection.gate ? null : target, ...broken } }],
-        { actor, previous: snapshot.events.at(-1) });
-      throw new MasumeError('E_SEAL_BROKEN', `${broken.node} の封印が破れています`);
-    }
+    requireSealed(root, state, selection.segment, {
+      actor, character: selection.gate ? null : target, previous: snapshot.events.at(-1),
+    });
     return {
-      ...selection, map: state.map, revision: state.revision,
+      ...selection, map: state.map, revision: state.revision, sealState: state,
       epochs: Object.fromEntries(selection.members.map((id) => [id, state.characters[id].epoch])),
     };
-  });
+  }, requireRunning);
 
   // 判定中はロックを持たず、他キャラクターや日誌の書き込みを妨げない。
-  const result = await runChecks(root, target, before.segment, before.map);
+  const result = await runChecks(root, target, before.segment, before.map, {
+    async beforeRun(node) {
+      requireRunning();
+      await withLockAsync(root, actor, () => {
+        const snapshot = requireHealthy(inspectLog(root));
+        const state = replay(root, snapshot.events);
+        requireUnchanged(state, before, target);
+        requireSealed(root, before.sealState, [node], {
+          actor, character: before.gate ? null : target, previous: snapshot.events.at(-1),
+        });
+      }, requireRunning);
+    },
+  });
+  requireRunning();
   const git = gitInfo(root);
-  const committed = withLock(root, actor, () => {
+  const committed = await withLockAsync(root, actor, () => {
     const snapshot = requireHealthy(inspectLog(root));
     const state = replay(root, snapshot.events);
-    if (state.revision !== before.revision
-      || before.members.some((id) => state.characters[id]?.epoch !== before.epochs[id])) {
-      throw new MasumeError('E_CONFLICT', `${target} の状態が判定中に変わりました。もう一度判定してください`);
-    }
+    requireUnchanged(state, before, target);
+    // 判定開始時の封印と比較し、実行中の書き換えを再封印でも隠せないようにする。
+    requireSealed(root, before.sealState, before.segment, {
+      actor, character: before.gate ? null : target, previous: snapshot.events.at(-1),
+    });
     const seq = snapshot.events.at(-1).seq + 1;
     const output = `outputs/${String(seq).padStart(6, '0')}.log`;
     mkdirSync(resolve(root, '.masume', 'outputs'), { recursive: true });
@@ -133,13 +181,14 @@ export async function check(root, target, { actor = defaultActor(), boss = true 
       result: { exitCode: passed ? 0 : 1, events },
       gates: passed ? readyAfter(state, before.members) : [],
     };
-  });
+  }, requireRunning);
   return fightReady(root, committed.result, committed.gates, { actor, boss });
 }
 
-export async function stamp(root, nodeId, { actor = defaultActor(), as = actor, boss = true } = {}) {
+async function runStamp(root, nodeId, { actor = defaultActor(), as = actor, boss = true }, requireRunning) {
+  requireRunning();
   root = resolve(root);
-  const result = withLock(root, actor, () => {
+  const result = await withLockAsync(root, actor, () => {
     const snapshot = requireHealthy(inspectLog(root));
     const state = replay(root, snapshot.events);
     const node = state.map.nodes[nodeId];
@@ -154,6 +203,14 @@ export async function stamp(root, nodeId, { actor = defaultActor(), as = actor, 
     }], { actor, previous: snapshot.events.at(-1) });
     reduceEvent(state, events[0]);
     return { exitCode: 0, events, ready: readyGate(state, owner.id) };
-  });
+  }, requireRunning);
   return fightReady(root, result, result.ready === null ? [] : [result.ready], { actor, boss });
+}
+
+export async function check(root, target, options = {}) {
+  return withCheckSignals((requireRunning) => runCheck(root, target, options, requireRunning));
+}
+
+export async function stamp(root, nodeId, options = {}) {
+  return withCheckSignals((requireRunning) => runStamp(root, nodeId, options, requireRunning));
 }

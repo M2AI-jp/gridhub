@@ -1,0 +1,3778 @@
+OpenAI Codex v0.153.4
+--------
+workdir: /Users/amano/dev/masume
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: ultra
+reasoning summaries: none
+session id: 01a146a8-d061-7bc3-92b0-1bbbb6147a33
+--------
+user
+あなたは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）の冒険に参加しているキャラクター「書記」（ID: engine）です。
+
+冒険: マスメ — マスメでマスメをつくる — 5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。
+作業場所（ゲームのルート。ここで作業する）: /Users/amano/dev/masume
+
+マスメでは、作るものを「マス」に分け、キャラクターが1マスずつ進みます。マスを突破できるのは、封印された判定（E2Eテスト）に通ったときだけで、「できました」という自己申告では進めません。
+あなたの仕事は、いまのマス（E7「地図と記録の作法を正す」）の1つだけを実装して宣言判定に通し、そこで止まって報告することです。先のマスには手を出しません。
+
+## 指令書
+
+次は `masume brief engine` の出力です。現在のマス・判定・視界・仲間・自分の前の日誌が書いてあります。
+
+指令書: 書記（engine / agent）
+Lv7 / 経験値 3/8 / 視界 4マス先 / 作業中
+担当: 冒険の書（セーブデータ）・ルールエンジン・CLI
+縄張り: src/engine/**、src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load,sortie,return,wish}.js
+現在のマス: E7「地図と記録の作法を正す」（task）
+CONTRACTS §24: 突破済みゲートのメンバーを変える amend を断る・amend のパスはカレント基準・note で epoch を上げない・seal --all の保留・ゲートの封印破りの文・new --force で同期の対応表を残す。
+判定: node --test tests/e2e/E7.test.mjs
+封印: 封印済み
+失敗時の戻り先: @camp
+視界に入っている先のマス:
+  G6「結合: 総点検（判定の誠実さ）」（gate）
+  GOAL4「あがり（第4章）: 総点検」（gate）
+霧の中: 0マス
+仲間:
+  賢者クロード（board）: GOAL4 / ゲートで待機中 / Lv6
+  伝令（server）: G6 / ゲートで待機中 / Lv7
+  語り部（teller）: Q3 / 作業中 / Lv5
+  軍師（party）: P3 / 作業中 / Lv4
+  地図職人（gmkit）: GOAL4 / ゲートで待機中 / Lv5
+  絵師（assets）: GOAL4 / ゲートで待機中 / Lv4
+  勇者（あなた）（player）: GOAL4 / ゲートで待機中 / Lv4
+自分の日誌（新しい順）:
+  seq 162 2026-10-16T21:40:17.693Z: E6「判定の誠実さを守る」を突破。checks.jsで起動直前・記録直前の封印照合と中断時の無記録、runner.jsで全出力BLAME・シェル終了コード保持・終了後1秒の子孫停止・NODE_TEST_CONTEXT除去、store.jsで中断可能なロック待機を実装。E6の15件とE2/E3の12件が成功し、ロック待機中の3シグナルをcheck/stamp両APIで模擬検証（6件成功）。宣言は --no-boss で成功。次はE7（契約§24）。E7は未着手。
+  seq 136 2026-10-16T21:33:41.004Z: GM: 第4章 §24.2（amend の地図のパスはカレント基準）に合わせて E4 の判定の呼び出しを直し、封印し直した。E4 の中身の意図は変えていない
+  seq 75 2026-10-16T07:06:39.266Z: E5 突破（出撃/帰還/願いの記録）。実装は src/engine/sortie.js（recordSortie/recordReturn/recordWish と sortieStatus）、view.js（characters[].sortie・sorties とログ日本語）、brief.js、src/commands/{sortie,return,wish}.js。再生（reduceEvent）は wish/sortie/returned を無視するので盤面の状態は変わらない。出撃中は sortie の seq を data.sortie に持つ returned が無いこと。CLI の既定 actor は --as > MASUME_ACTOR > API既定(party/party/gm)。次は G3 で仲間待ち。
+  seq 67 2026-10-16T07:04:13.953Z: 出撃: Sonnet（claude-sonnet-5-5）の子セッションがこのキャラクターを演じる
+  seq 47 2026-10-16T06:15:54.269Z: GM: GM の依頼で書記の縄張り src/engine/map.js の validateMap を直した。CONTRACTS §2 の例外: キャラクターが1人だけの地図で、quest.goal のゲートがその1人の道にあれば E_GATE_MEMBERS にしない。goal 以外のゲート・2人以上の地図のあがりは従来どおり2人以上。ゲームの進行（ready・ボス戦・巻き戻し）はそのままで1人のゲートでも動く。判定は tests/e2e/SOLO.test.mjs（GOAL がまとめて走らせる）。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: びあぐ ゆえぐ ぞげき けなぐ（seq 164）
+
+## 守ること
+
+- 現在のマスだけをやる。指令書に出ていない先のマス（霧の向こう）の内容は実装しない。
+- 自分の縄張りの中だけを編集する。縄張り: src/engine/**、src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load,sortie,return,wish}.js。縄張りの外のファイルを作らない・編集しない。必要なら最終報告の「GMへの依頼」に書く。
+- 封印された判定ファイル（tests/e2e/E7.test.mjs、tests/helpers.mjs、tests/helpers2.mjs、tests/helpers3.mjs）と、地図（*.map.json）と、冒険の書（.masume/）は編集しない。封印を破ると記録され、判定できなくなる。
+- 判定のほうがおかしい（契約や指令書どおりに作っても通らない）と思ったら、判定を直さず、宣言もせずに、そこで止まって報告する。
+- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。
+- マスメのコマンドは brief / check / note だけを使う。new / seal / amend / load / repair / stamp / party / quest などは使わない。
+- 判定を通すために、テストの意図を回避する実装（テスト環境の検出、出力の決め打ち）をしない。
+- 外部パッケージを勝手に増やさない。本物の外部サービスや課金・秘密の鍵を使わない。
+
+## 進め方
+
+1. 上の指令書の「現在のマス」の内容を読み、実装する。
+2. 素振り（判定コマンドを自分で走らせる。何度走らせてもよく、記録されない）:
+
+       node --test tests/e2e/E7.test.mjs
+
+   通るまで直す。
+3. 素振りが通ったら、宣言判定（公式の判定。記録される。素振りが通ってからにする）:
+
+       node "/Users/amano/dev/masume/bin/masume.js" check engine --as engine --no-boss --dir "/Users/amano/dev/masume"
+
+   - 通ると「判定成功」と出て、1マス進む。
+   - 落ちるとレベルが下がり、前のマスに巻き戻されることがある（累積判定: 宿屋より後の自分のマスの判定をまとめて走らせる）。失敗の出力を読み、`node "/Users/amano/dev/masume/bin/masume.js" brief engine --dir "/Users/amano/dev/masume"` で現在のマスを確かめ直して、直してから素振りをやり直す。
+   - 結合ゲート（ボス戦）に着いたら「待機」になる。ボス戦は軍師（パーティ）がやるので、あなたは何もしなくてよい。
+4. 日誌（次の自分への申し送りを短く。何を作ったか、次のマスで気をつけること）:
+
+       node "/Users/amano/dev/masume/bin/masume.js" note engine "<申し送り>" --as engine --dir "/Users/amano/dev/masume"
+
+## 止まる条件
+
+- 現在のマスを1つ突破したら（宣言判定が「判定成功」になったら）、日誌を書いて、そこで止まる。次のマスには進まない。
+- 宣言判定に2回失敗したら、そこで止まる。なぜ落ちたかを報告する。
+- 結合ゲートに着いて待機になったら、そこで止まる。
+- 判定や契約がおかしくて進めないと分かったら、そこで止まる。
+
+止まったら、次の形で短く報告して終わる:
+
+    ## 報告書 書記 <マスID>
+    - 変更したファイル:
+    - 判定の結果（最後の数行）:
+    - 申し送り（次のマスの自分へ）:
+    - GMへの依頼（契約の不足・縄張りの外で必要なこと）:
+
+codex
+私は書記（engine）として、E7だけを実装します。まずSSoTである `docs/RULEBOOK.md`、`docs/CONTRACTS.md`、`docs/SAVE_FORMAT.md` と現在の地図・指令書を読み、提示された指示と照合します。編集は指定された縄張り内に限り、素振り成功後に許可済みの `check --no-boss` と `note` で進行を記録します。完了条件はE7の宣言成功と日誌の記録で、その時点で停止します。
+
+exec
+/bin/zsh -lc "pwd; rg --files -g 'AGENTS.md' -g 'RULEBOOK.md' -g 'CONTRACTS.md' -g 'SAVE_FORMAT.md' -g 'masume.map.json' -g 'package.json'" in /Users/amano/dev/masume
+ succeeded in 0ms:
+/Users/amano/dev/masume
+package.json
+AGENTS.md
+docs/SAVE_FORMAT.md
+docs/CONTRACTS.md
+docs/RULEBOOK.md
+demos/mcp-tutorial/AGENTS.md
+quests/masume.map.json
+examples/omikuji/CONTRACTS.md
+
+exec
+/bin/zsh -lc 'cat AGENTS.md docs/RULEBOOK.md' in /Users/amano/dev/masume
+ succeeded in 0ms:
+# AGENTS.md — このリポジトリで働くエージェントへ
+
+ここは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）を、**マスメ自身のルールで**作っているリポジトリです。
+あなたは盤上のキャラクターの1人です。地図は `quests/masume.map.json`、ルールは `docs/RULEBOOK.md`。
+
+## 絶対ルール
+
+1. **現在のマスだけ**を実装する。指令書に出ていない先のマスには手を出さない（霧の向こう）。
+2. **縄張り**（`docs/CONTRACTS.md` §1 と地図の `territory`）の外のファイルを作らない・編集しない。
+   必要なら最終報告の「GMへの依頼」に書く。
+3. `tests/**` `docs/**` `bin/**` `schema/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` は **GM の縄張り**。
+   判定ファイルは封印されているので、**絶対に編集しない**（改変は「封印破り」として記録される）。
+4. 外部パッケージを追加しない。Node.js 20+ の標準ライブラリだけ。ESM。
+5. git の書き込み操作（commit / push / reset / checkout / stash など）をしない。GM がやる。
+6. 判定コマンドを自分で走らせ、通ることを確かめてから報告する。通らなければ通らないと正直に書く。
+   判定を通すためにテストの意図を回避するような実装（テスト環境の検出、出力の決め打ち）はしない。
+7. 契約（`docs/CONTRACTS.md`）が足りない・矛盾していると思ったら、勝手に解釈を広げず、自然な最小の解釈で実装して報告に書く。
+
+## 読む順番
+
+1. `docs/RULEBOOK.md`（ゲームのルール）
+2. `docs/CONTRACTS.md`（モジュール間の約束。あなたの担当の節は全部）
+3. 書記（engine）は `docs/SAVE_FORMAT.md` も
+4. 地図職人（gmkit）は `docs/GM_GUIDE.md` も
+
+## 指令書と宣言判定
+
+マスメ本体（書記の担当）が動くようになったら:
+
+```sh
+node bin/masume.js brief <あなたのID>      # 指令書
+node <判定コマンド>                          # 素振り（何度でも）
+node bin/masume.js check <あなたのID> --as <あなたのID>   # 宣言判定（GMに指示されたときだけ）
+node bin/masume.js note <あなたのID> "申し送り" --as <あなたのID>
+```
+
+本体がまだ無いあいだは、GM が渡す指令書（プロンプト）があなたの現在のマスです。
+
+## 最終報告の形
+
+```
+## 報告書 <キャラ名> <マスID>
+- 変更したファイル:
+- 判定コマンドの結果（最後の数行）:
+- 申し送り（次のマスの自分へ）:
+- GMへの依頼（契約の不足・縄張りの外で必要なこと）:
+```
+# マスメ ルールブック（rules 1）
+
+> 5mm方眼ノートに描いたすごろくで、ソフトウェア開発を進めるゲーム。
+> Linear や Jira の「文字だけのタスク」に、**盤面・駒・セーブデータ**という「状態」を持たせる。
+
+小学生のころ、方眼ノートにマス目を引いて、すごろく兼RPGを作って兄弟で遊んだ。
+マスメはそれを開発に持ち込む。人間も LLM エージェントも、同じ盤面を見て「いまどこにいて、次に何をして、どこで合流するか」を共有する。
+
+---
+
+## 0. なぜゲームにするのか
+
+LLM エージェントに開発を任せると、だいたい次のことが起きる。
+
+| 起きること | マスメのルール |
+| --- | --- |
+| コンテキストが切れると、どこまでやったか分からなくなる | 進捗は**冒険の書**（追記専用のセーブデータ）にだけ記録される。`masume brief` を読めば誰でも再開できる |
+| 「できました」と言うが、実は動いていない | 進めるのは**判定（E2E）に通ったときだけ**。自己申告では1マスも進めない |
+| テストを書き換えて通してしまう | 判定ファイルは GM が**封印**する。改変すると「封印が破れている」と記録され、判定できない |
+| 頼んでいない所まで手を出して全体を壊す | 見えるのは**視界**の範囲だけ（霧）。触ってよいのは**縄張り**だけ |
+| 後から別の変更で、前にできたことが壊れる | 判定は**累積**。宿屋（セーブポイント）以降のマスの判定を毎回まとめて再実行する |
+| モジュールを結合したら動かない | 道は一本道ではない。要所に**結合ゲート（ボス戦）**があり、仲間が全員そろってから結合E2Eで戦う |
+| セーブデータ自体が壊れる・食い違う | 冒険の書は**ハッシュの鎖**。1文字でも改ざんされると「呪われています」と検出され、修復・ロードできる |
+| いまの状態を短く伝えられない | **ふっかつのじゅもん**（12文字）で「その時点の盤面」を一意に指せる |
+
+Git/GitHub はコードの履歴を守る。マスメは**「誰が・どこまで・何を検証済みか」という進行の履歴**を守る。
+
+---
+
+## 1. 登場するもの
+
+| ゲーム | 開発での意味 | Linear でいうと |
+| --- | --- | --- |
+| **冒険（クエスト）** | 作りたいプロダクト全体 | Project |
+| **地図**（`*.map.json`） | 開発ロードマップ全体。GM が作る | Project の issue 群と依存関係 |
+| **キャラクター（駒）** | 完成させるべき**モジュール1つ**を担当するエージェント（または人間） | Assignee |
+| **道** | そのキャラクターが通る一方通行のマスの列（`path`） | Assignee ごとの issue の並び |
+| **マス（task）** | 1つのタスク。1回のコンテキストで終わる大きさ | Issue |
+| **結合ゲート（gate）** | 複数の道が合流する、結合E2Eテストのマス。ボス戦 | Milestone |
+| **宿屋（camp）** | セーブポイント。失敗してもここより前には戻らない | Cycle の区切り |
+| **あがり（goal）** | 全員が合流する最後の結合ゲート。完成 | Project 完了 |
+| **GM** | 地図を描き、判定（E2E）を書いて封印する人。実装はしない | PM / テックリード |
+| **勇者（人間）** | 人間にしかできないマス（契約・鍵・決済・承認）を**ハンコ**で進める | 人間の Assignee |
+| **冒険の書**（`.masume/`） | セーブデータ。追記専用のイベントログ | Issue の履歴 |
+
+盤面は 5mm 方眼ノートとして描かれる。マスは 4×4 目（2cm角）、道は蛍光ペン、判定に通ったマスには赤ペンの**はなまる**、巻き戻されたマスには**消しゴムの跡**が残る。
+
+---
+
+## 2. 1ターンの流れ（キャラクター）
+
+1. **指令書を読む** — `masume brief <自分のID>`
+   いまのマス・判定コマンド・視界に入っている先のマス・仲間の位置・前の自分の日誌・ふっかつのじゅもん が出る。
+2. **実装する** — 現在のマスの内容だけ。縄張りの中だけ。
+3. **素振り** — 判定コマンドを自分で何度走らせてもよい（記録されない）。
+4. **宣言判定** — `masume check <自分のID>`。これが公式の判定で、冒険の書に記録される。
+5. **日誌** — `masume note <自分のID> "次の自分への申し送り"`（任意だが強く推奨）。
+
+> 素振りは自由、宣言は一発勝負。TRPG で「判定します」と宣言してからダイスを振るのと同じ。
+
+---
+
+## 3. 判定
+
+- 判定はすべて**コマンド**（E2Eテスト）で行う。終了コード 0 なら成功。
+  例外は人間のマス（`stamp`）で、これは人間のハンコで成功になる。
+- 判定コマンドは地図に書かれ、地図は冒険の書に**ハッシュ付きで凍結**される。キャラクターは変えられない。
+- 判定が参照するファイル（`check.seal`）は GM が**封印**する（ハッシュを記録）。
+  - 封印前のマスは判定できない（`未封印` → GM に依頼）。
+  - 封印後にファイルが変わっていたら判定できない（`封印が破れています` が記録される）。GM が再封印するか、元に戻す。
+- **累積判定**: 宣言判定では、直近のセーブポイント（宿屋・突破済みゲート・ふりだし）より後の、自分の道のマスの判定を**古い順にすべて**走らせる。どれか1つでも落ちたら失敗。
+  - 「前にできていたことを壊していない」ことまで含めて、はじめて1マス進める。
+
+## 4. 成功・経験値・レベル・視界
+
+- 成功すると 1 マス進み、そのマスの経験値（task 1 / gate 3 / camp 0）を得る。
+- 経験値が `レベル + 1` に達するとレベルアップ（余りは繰り越し）。最大 Lv9。
+- **視界** = `min(レベル − 1, 4)` マス先まで。Lv1 は現在のマスしか見えない。
+  - 指令書には視界の外のマスのタイトルは**出ない**（霧）。
+  - 信頼は実績で増える。失敗すると視界が狭まり、小さく確実に進むことを強いられる。
+- 宿屋に着くと自動で休んで（判定なし）通過し、そこがセーブポイントになる。
+
+## 5. 失敗・レベルダウン・巻き戻し
+
+宣言判定に失敗すると:
+
+1. **レベル −1**（最低 Lv1）、経験値は 0 に。
+2. **所定の位置まで戻される**。所定の位置は、落ちたマスの `rollback_to` で決まる。
+   - `@camp`（既定）… 直近のセーブポイントの次のマス
+   - `@here` … 落ちたマスそのもの
+   - マスID … 同じ道の、それより前のマス
+   - ただし**セーブポイントより前には戻らない**。
+3. 戻った位置から失敗地点までに通過していたマスは**消しゴムで消される**（`stale`：要再検証）。
+4. 消されたマスは、もう一度判定に通れば元に戻る。ただし**経験値は入らない**。
+
+> 巻き戻されるのは「コード」ではなく「できた、という主張」。コードが正しければ再判定はすぐ通る。正しくなければ、どこで壊れたかが盤面に出る。
+
+## 6. 結合ゲート（合流・ボス戦・解散）
+
+- ゲートは複数の道に同じIDで現れるマス。そこを通る全キャラクターが**メンバー**。
+  - 例外: キャラクターが1人だけの冒険では、**あがり**のゲートだけはその1人で戦う（ほかのゲートは置けない）。
+- ゲートに着いたキャラクターは**待機**する。
+- メンバー全員がそろうと、そろえた最後の判定（またはハンコ）の直後に**自動でボス戦**（ゲートの判定）が始まる（`--no-boss` で保留、あとで `masume check <gateId>`）。
+- **勝利**: 全員が経験値 3 を得て、ゲートの次のマスへ進む（**解散**）。ゲートは全員のセーブポイントになる。
+- **敗北**: 判定の出力に `MASUME_BLAME: <id>,<id>` 行があれば、そのキャラクターだけが責任を負う（**差し戻し**）。無ければメンバー全員（**全滅**）。
+  - 責任を負ったキャラクターはレベル −1、直近のセーブポイントの次まで戻り、その間のマスは消しゴムで消される。
+  - 責任のないキャラクターはゲートで待ち続ける。
+- ゲートの判定は「そのゲートの結合E2E」だけを走らせる。
+
+## 7. 人間のマス（ハンコ）
+
+- `check.kind: "stamp"` のマスは、指定された人間（`by`）の**ハンコ**で成功になる。
+  - `masume stamp <nodeId> --as <humanId>` または盤面の「ハンコを押す」ボタン。
+- 人間のマスは、アカウント作成・契約・支払い・本番鍵・デザイン承認など、人間にしかできない／人間が決めるべきことに使う。
+- ハンコで最後のメンバーがゲートにそろえば、そのままボス戦が始まる。
+
+## 8. セーブデータ（冒険の書）
+
+- `.masume/log.jsonl` に**追記だけ**される。1行1イベント。各行は前の行のハッシュを含む（ハッシュの鎖）。
+- 盤面の状態は、イベントを最初から再生して毎回つくり直す（状態ファイルはただのキャッシュ）。
+- `masume verify` で鎖・地図・判定ログの改ざんを検出する。壊れていたら「呪われています（seq N）」。
+- `masume repair` で、壊れた所から後ろを退避して鎖を直す。
+- **ふっかつのじゅもん**: 最新イベントのハッシュから作る 12 文字のひらがな（例: `ゆうて いみや おうき むこう`）。
+  - コミットメッセージ・PR・Linear のコメント・日誌に書いておけば、「その時点の盤面」を一意に指せる。
+  - `masume verify --jumon "..."` で、その状態が冒険の書に実在するか確かめられる。
+  - `masume load "..."` でその時点の状態に戻せる（戻したこと自体も記録される）。
+- 書き込みはロックで1人ずつ。判定中に盤面が動いたら、その判定は無効（もう一度）。
+
+## 9. 地図の改訂
+
+- 計画は変わる。`masume amend <新しい地図>` で地図を改訂できる。
+- ただし**歴史は書き換えられない**: すでに通過したマスを消したり、判定を変えたり、その前に新しいマスを差し込んだりはできない。
+  タイトル・説明・ラベル・見積もりの修正だけは許される。
+- 新しいキャラクター（新しいモジュール）を途中から加えるのは自由。
+
+## 10. 状態と Linear のステータス
+
+| マスの状態 | 盤面の見え方 | Linear |
+| --- | --- | --- |
+| `fog` 霧 | 鉛筆の下書き | Backlog |
+| `open` 視界の中 | ボールペン | Todo |
+| `current` 駒がいる | 蛍光ペンで塗られ、駒が立つ | In Progress |
+| `waiting` / `ready` ゲートで待機 | 「待機中 2/3」 | In Review |
+| `cleared` 突破 | 赤ペンのはなまる | Done |
+| `stale` 消された | 消しゴムの跡 | Todo（要再検証） |
+
+`masume export linear` で Linear 形式（CSV/JSON）に書き出せる。`masume import linear` で既存の Linear CSV から地図の下書きを作れる。
+
+---
+
+## 11. 役割の分離（いちばん大事なルール）
+
+- **GM** は地図を描き、判定を書いて封印する。**実装しない。**
+- **キャラクター**は実装する。**判定を書かない・変えない。**
+- **人間（勇者）**は、人間にしかできないマスと、最後の「あがり」の手前でハンコを押す。
+
+この分離があるから、エージェントの「できました」がそのまま信用できる。
+
+詳しい仕様: [SAVE_FORMAT.md](SAVE_FORMAT.md)（セーブデータ） / [CONTRACTS.md](CONTRACTS.md)（地図・CLI・API） / [GM_GUIDE.md](GM_GUIDE.md)（「xxxのようなアプリを作りたい」から地図を作る手順）
+
+exec
+/bin/zsh -lc 'cat docs/CONTRACTS.md' in /Users/amano/dev/masume
+ succeeded in 0ms:
+# 契約書（CONTRACTS） — モジュール間の約束
+
+各キャラクター（モジュール担当）は、この契約だけを頼りに並行して作る。結合ゲートでこの契約が守られているかが判定される。
+契約を変えたいときは GM に依頼する（自分で変えない）。
+
+- 実行環境: Node.js 20 以上、ESM（`"type": "module"`）、**外部パッケージなし**（標準ライブラリだけ）。
+- 文字コード UTF-8、改行 LF。ユーザー向けの文言は日本語。
+
+---
+
+## 1. リポジトリと縄張り
+
+| 縄張り | 持ち主 |
+| --- | --- |
+| `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` | GM（判定と契約。キャラクターは編集禁止） |
+| `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load}.js` | 書記 `engine` |
+| `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
+| `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
+| `web/assets/sprites/**`、`web/assets/icons/**`、`web/assets/sheet.html` | 絵師 `assets` |
+| `web/**`（上の絵師の場所を除く） | 盤面 `board`（賢者クロード） |
+
+### サブコマンドの形
+
+`bin/masume.js` が `src/commands/<name>.js` を読み込み、次を呼ぶ:
+
+```js
+export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) { return 0; /* 終了コード */ }
+```
+
+- `ctx.bin` = `bin/masume.js` の絶対パス、`ctx.root` = リポジトリの絶対パス（ゲームのルートではない）。
+- 例外に `code`（例 `'E_UNSEALED'`）と `exitCode` を付けて投げると、受付係が `[E_UNSEALED] メッセージ` を stderr に出して終了する。
+- 終了コード: `0` 成功 / `1` 判定失敗・地図が不正 / `2` 使い方の誤り・前提不足（未封印・待機中など） / `3` 冒険の書が呪われている。
+- 共通オプション: `--dir <root>`、`--as <actor>`、`--json`（機械向け出力。stdout に JSON だけを出す）。
+
+---
+
+## 2. 地図（map）
+
+```jsonc
+{
+  "masume": 1,
+  "quest": { "id": "MSM", "title": "マスメ", "pitch": "一言で", "goal": "GOAL" },
+  "characters": [
+    {
+      "id": "engine",                // /^[a-z][a-z0-9-]{0,23}$/
+      "name": "書記",
+      "kind": "agent",               // "agent" | "human"
+      "agent": "codex",              // 任意。codex / claude / human など
+      "job": "scribe",               // 絵の種類（§10 の12職業）
+      "color": "yellow",             // 蛍光ペン（§10 の8色）
+      "module": "セーブデータとルール", // 任意。担当モジュールの説明
+      "territory": ["src/engine/**"], // 任意。縄張り（globの配列）
+      "path": ["E1", "E2", "C1", "E3", "G1", "GOAL"]  // 一方通行の道
+    }
+  ],
+  "nodes": {
+    "E1": {
+      "type": "task",                // "task" | "gate" | "camp"
+      "title": "冒険の書をひらく",      // 1〜80文字
+      "detail": "やることと合格条件",    // 任意
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/E1.test.mjs", "seal": ["tests/e2e/E1.test.mjs"] },
+      "xp": 1,                       // 任意。0〜10。既定 task 1 / gate 3 / camp 0
+      "rollback_to": "@camp",        // 任意。task のみ。"@camp"(既定) | "@here" | 同じ道の前のマスID
+      "estimate": 3,                 // 任意（Linear の見積もり）
+      "labels": ["engine"]           // 任意
+    },
+    "H1": { "type": "task", "title": "遊んでみる", "check": { "kind": "stamp", "by": "player" } },
+    "C1": { "type": "camp", "title": "宿屋" },
+    "G1": { "type": "gate", "title": "結合: 盤面に冒険が映る", "check": { "kind": "cmd", "run": "…", "seal": ["…"] } }
+  }
+}
+```
+
+- ゲートのメンバー = そのゲートIDを `path` に含むキャラクター全員（地図には書かない）。
+- ゲートのメンバーは2人以上。ただし**キャラクターが1人だけの地図では、あがり（`quest.goal`）のゲートはメンバー1人でよい**（1人の冒険も、あがりの結合E2Eで終わる）。goal 以外のゲートは、1人だけの地図でも2人以上が必要（つまり1人だけの地図に置けるゲートはあがりだけ）。
+- `check.seal` は判定ファイルの一覧（ルートからの相対パス）。空配列・省略なら、判定は地図に書かれたコマンドだけで成立し、封印イベントは不要。
+- `check.kind: "stamp"` は task だけ。`by` は `kind: "human"` のキャラクターID。gate と camp は stamp にできない。
+
+### 検証（`validateMap` / `masume validate`）のエラーコード
+
+| code | 条件 |
+| --- | --- |
+| `E_FORMAT` | `masume !== 1`、quest/characters/nodes の形・型が違う、必須項目がない、title が空や80文字超、quest.id が `/^[A-Z][A-Z0-9]{1,9}$/` でない |
+| `E_ID` | キャラクターIDやマスIDの形が違う（マスID `/^[A-Za-z][A-Za-z0-9_-]{0,31}$/`） |
+| `E_DUP_CHAR` | キャラクターIDの重複 |
+| `E_UNKNOWN_NODE` | `path` に存在しないマスID |
+| `E_DUP_IN_PATH` | 1つの `path` に同じマスが2回 |
+| `E_SHARED_TASK` | task / camp が2つ以上の `path` に出てくる |
+| `E_GATE_MEMBERS` | gate が2つ未満の `path` にしか出てこない（例外: キャラクターが1人だけの地図で、`quest.goal` のゲートがその1人の `path` に出てくるときはエラーにしない） |
+| `E_ORPHAN` | どの `path` にも出てこないマス |
+| `E_CYCLE` | 全 `path` の「前→次」をつないだグラフに閉路がある（ゲートの順番が道ごとに食い違うなど） |
+| `E_CHECK` | task/gate に check が無い・形が違う、camp に check がある、gate が stamp、stamp の by が人間でない |
+| `E_ROLLBACK` | rollback_to が task 以外にある、`@camp`/`@here`/同じ道の前のマス 以外 |
+| `E_GOAL` | quest.goal が無い・gate でない・全キャラクターの `path` の最後でない |
+
+警告（エラーではない）: `W_JOB`（知らない職業）、`W_COLOR`（知らない色）。
+
+`validateMap(map)` は `{ ok, errors:[{code, path, message}], warnings:[{code, path, message}] }` を返す。
+`masume validate <file>` は1件1行 `[CODE] path: message` を出し、エラーがあれば終了コード1。`--json` なら上のオブジェクト。
+
+---
+
+## 3. CLI
+
+| コマンド | 担当 | 挙動 |
+| --- | --- | --- |
+| `new <map> [--force]` | 書記 | 地図を検証（エラーなら1）→ `.masume/` を作る（既にあれば `--force` なしで `E_EXISTS`/2）→ genesis → **seal ファイルが存在するマスを自動封印**（マスごとに `sealed`）。stdout に `ふっかつのじゅもん: <じゅもん>` を含める |
+| `validate <map>` | 書記 | §2 |
+| `seal <nodeId…>` / `seal --all` | 書記 | 指定したマスの封印。ファイルが無ければ `E_SEAL_MISSING`/2（何も記録しない）。`--all` は seal を持つマスのうち**ファイルがそろっているものだけ**を封印し、そろっていないマスは「保留」として表示して飛ばす（終了コード0） |
+| `check <characterId\|gateId> [--no-boss]` | 書記 | §4.3〜4.5。成功0 / 判定失敗1 / 前提不足2 |
+| `stamp <nodeId> --as <humanId>` | 書記 | §4.6 |
+| `status [--json]` | 書記 | 人間向けの盤面要約。`--json` は §5 のビュー |
+| `brief <characterId> [--json]` | 書記 | §6 の指令書 |
+| `log [--tail N] [--json]` | 書記 | イベント一覧（`--json` はイベント行の配列） |
+| `verify [--jumon "…"] [--json]` | 書記 | SAVE_FORMAT §6。正常なら `冒険の書は正常です`（0）、呪いなら `呪われています` と最初の seq（3）。`--jumon` はそのじゅもんのイベントがあれば0、無ければ1。`--json` は `{ok, errors:[{seq, code, message}], warnings, head:{seq, hash, jumon}}`（`--jumon` 付きなら `found: {seq}|null` も） |
+| `repair` | 書記 | SAVE_FORMAT §6 |
+| `jumon [--json]` | 書記 | 現在のじゅもん。stdout の最後の行はじゅもんだけ（`--json` は `{seq, hash, jumon}`） |
+| `note <characterId> <text…>` | 書記 | `note` イベント（残りの引数を半角スペースでつないだものが text）。知らないキャラは `E_UNKNOWN`/2 |
+| `amend <map>` | 書記 | §4.8 |
+| `load <seq\|じゅもん>` | 書記 | §4.9 |
+| `serve [--port 5005] [--host 127.0.0.1]` | 伝令 | §8。起動したら stdout に `盤面: http://127.0.0.1:<port>/` を出して動き続ける。`--port 0` は空きポート |
+| `export linear [--format csv\|json] [--out file]` | 地図職人 | §9 |
+| `import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` | 地図職人 | §9 |
+
+エラーは `[CODE] メッセージ` の形で stderr に出す（受付係に任せてよい）。使うコード:
+`E_USAGE` `E_NO_GAME`（冒険の書が見つからない） `E_EXISTS` `E_INVALID_MAP` `E_UNKNOWN`（そんなキャラ/マスはない） `E_UNSEALED` `E_SEAL_BROKEN` `E_SEAL_MISSING` `E_NEEDS_STAMP` `E_STAMP` `E_PARTY_INCOMPLETE` `E_DONE`（もうあがっている） `E_CONFLICT` `E_CURSED` `E_AMEND_HISTORY` `E_LOAD`。
+
+判定に失敗したときは、落ちたマスの判定出力の末尾（最大40行）も stdout に出す（なぜ落ちたかをその場で読めるように）。
+
+判定まわりの stdout には次の言葉を含める（人間と LLM が読むため）:
+成功 `判定成功` / 失敗 `判定失敗` / ゲート勝利 `結合ゲート突破` / ゲート敗北（全員）`全滅` / ゲート敗北（一部）`差し戻し` / 封印破り `封印が破れています` / 未封印 `未封印` / ハンコ待ち `ハンコ` / 仲間待ち `揃っていません`。
+
+---
+
+## 4. ルール（再生で導く状態）
+
+### 4.1 キャラクターの状態
+
+| 項目 | 意味 |
+| --- | --- |
+| `pos` | いまいる `path` の添字。`path.length` ならあがり（done） |
+| `level` / `xp` | 初期 1 / 0。`xp_next = level + 1`。xp が xp_next 以上ならレベルアップ（xp -= xp_next、最大 Lv9） |
+| `checkpoint` | `pos` より前で最後に通過した camp か gate の添字。無ければ -1（ふりだし） |
+| `status` | `working`（task の上）/ `waiting`（gate の上）/ `done` |
+| `clears` / `fails` | 判定成功で通過したマス数（再検証も含む）/ 失敗回数 |
+| `epoch` | このキャラクターの状態が変わるたびに +1（楽観ロック用） |
+
+`vision = min(level - 1, 4)`。
+
+マスの状態: 通過済み（cleared）の集合、消された（stale）の集合、封印（node → {path: sha256}）、`clears`/`fails` 回数。
+
+### 4.2 到着処理
+
+`pos` が進んだら、`path[pos]` が camp の間はそれを cleared にして `checkpoint = pos`、`pos++` を繰り返す。
+`path[pos]` が gate なら `status = waiting`、task なら `working`、末尾を越えたら `done`。
+
+### 4.3 宣言判定（task）
+
+`check <characterId>` で、キャラクターが task の上にいるとき:
+
+1. マスが stamp なら `E_NEEDS_STAMP`/2。
+2. **区間** = 添字 `checkpoint+1 .. pos` の task のうち `kind: "cmd"` のもの（stamp は飛ばす）。
+3. 区間の全マスの封印を確かめる。seal が空なら封印済み扱い。`sealed` 記録が無い、または記録のファイル集合が現在の `check.seal` と違う → `E_UNSEALED`/2（記録しない）。
+   ファイルのハッシュが違う・ファイルが無い → `seal_broken` を記録して `E_SEAL_BROKEN`/2。
+4. 区間のマスの `check.run` を古い順に `/bin/sh -c` で実行（cwd = ルート、環境変数に `MASUME_ROOT` `MASUME_CHARACTER` `MASUME_NODE` を追加、タイムアウト `MASUME_CHECK_TIMEOUT` 秒・既定600）。最初の失敗で止める。
+   出力は `=== <nodeId>: <run> ===` の見出しの後に stdout+stderr、最後に `(exit <code>, <ms>ms)`。1マス100KBまで。
+5. 全部成功 → `check_passed`。効果: 現在のマスを cleared（stale だったなら stale を外すだけで **xp なし**、そうでなければ xp を得る）、`pos++`、到着処理。
+6. 失敗 → `check_failed{failed: F}`。効果:
+   - `level = max(1, level-1)`、`xp = 0`、`fails++`
+   - 戻り先 `t`: F の `rollback_to` が `@here` → F の添字 / `@camp`（既定）→ `checkpoint+1` / マスID → その添字。ただし `t < checkpoint+1` なら `checkpoint+1`。
+   - 添字 `t .. pos-1` で cleared のマスを stale にする（cleared から外す）。`pos = t`、到着処理。
+
+### 4.4 ゲート（合流）
+
+- メンバー全員が `status: waiting` でそのゲートにいる状態を **ready** という。
+- `check` / `stamp` の効果でゲートが ready になったら、`--no-boss` が無ければ**そのコマンドの中で続けて**ボス戦（4.5）を行う。
+- `check <gateId>`、またはそのゲートで待機中のキャラクターIDでの `check` は、ready ならボス戦、そうでなければ `E_PARTY_INCOMPLETE`/2（来ていない仲間の名前を出す）。
+
+### 4.5 ボス戦
+
+1. ゲートの封印を確かめる（4.3 と同じ）。
+2. ゲートの `check.run` だけを実行。
+3. 成功 → `gate_cleared`。効果: ゲートを cleared。各メンバー: xp を得る、`pos++`（`checkpoint` はゲート）、到着処理。
+4. 失敗 → `gate_failed{blamed}`。blamed = 出力中の `MASUME_BLAME: a,b` 行（カンマ・空白区切り、複数行可）のIDのうちメンバーであるもの。空ならメンバー全員。
+   効果: blamed の各メンバー: `level-1`（最低1）、`xp = 0`、`fails++`、`t = checkpoint+1`、添字 `t .. pos-1` の cleared を stale に、`pos = t`、到着処理。
+   blamed でないメンバーは待機のまま。
+
+終了コードは、そのコマンドで最後に行った判定の結果（成功0 / 失敗1）。
+
+### 4.6 ハンコ
+
+`stamp <nodeId> --as <humanId>`: マスが stamp の task で、`by === humanId`、持ち主がいまそのマスにいる → `stamped`（効果は 4.3 の5と同じ。そのあとゲートが ready ならボス戦）。それ以外は `E_STAMP`/2。
+
+### 4.7 楽観ロック
+
+判定コマンドを走らせる前に、関係するキャラクター（ゲートならメンバー全員）の `epoch` を覚えておき、追記直前に読み直して違えば `E_CONFLICT`/2（記録しない）。
+
+### 4.8 地図の改訂（amend）
+
+新しい地図を検証（エラーなら `E_INVALID_MAP`/1）したうえで:
+- `quest.id` は同じ。既存のキャラクターは消せない（追加はよい）。
+- 各キャラクターについて、新しい `path` は古い `path[0 .. pos-1]`（通過済み）と同じIDで始まる。
+- 通過済みのマスは、`title` `detail` `labels` `estimate` 以外を変えてはいけない。
+- 違反は `E_AMEND_HISTORY`/1。
+- 成功 → `.masume/maps/000N.json` を書き、`amended{version:N}` を記録。新しく増えたマス・封印の無いマスのうち seal ファイルが存在するものは自動封印。
+- 封印は `{node → files}` で、ファイル集合が新しい `check.seal` と違えば未封印に戻る。
+
+### 4.9 ロード
+
+`load <S>`（seq の数字、またはじゅもん）: `0 <= S < 現在の seq` でなければ `E_LOAD`/2。`loaded{to_seq:S}` を記録。再生では、状態を「seq 0..S を再生した状態」に置き換える。
+
+---
+
+## 5. ビュー（`status --json` / `buildView(root)` / `GET /api/state`）
+
+3つは**同じ JSON** を返す。
+
+```jsonc
+{
+  "masume": 1,
+  "quest": { …地図の quest },
+  "map_version": 1,
+  "characters": [            // 地図の順
+    { …地図のキャラクター全項目,
+      "pos": 2, "at": "E2",     // at = path[pos]、done なら null
+      "level": 2, "xp": 1, "xp_next": 3, "vision": 1,
+      "status": "working",      // working | waiting | done
+      "checkpoint": "C1",       // マスID か null
+      "clears": 3, "fails": 1,
+      "last_note": "…" | null }
+  ],
+  "nodes": {
+    "E1": { …地図のマス全項目（xp は既定値を補う、task には rollback_to の既定 "@camp" を補う）,
+      "id": "E1",
+      "owner": "engine",        // task/camp の持ち主。gate は null
+      "members": ["engine"],    // gate はメンバー、task/camp は [owner]
+      "state": "cleared",       // 下の表
+      "sealed": true,           // seal 不要なら true
+      "seal_broken": false,     // 最新の seal_broken が最新の sealed より新しい
+      "clears": 1, "fails": 0,  // そのマスで成功した回数 / そのマスが原因で失敗した回数（failed や gate）
+      "last_seq": 12 }          // そのマスに関する最新イベントの seq か null
+  },
+  "log": [ { "seq": 0, "ts": "…", "type": "genesis", "actor": "gm",
+             "character": null, "node": null, "ok": null, "text": "冒険の書がひらかれた" } ],  // 古い順、最新200件
+  "head": { "seq": 12, "hash": "…", "jumon": "ゆうて いみや おうき むこう" },
+  "integrity": { "ok": true, "errors": [] },
+  "finished": false           // goal が cleared
+}
+```
+
+`log[].character` / `node` はイベントの主役（gate のイベントなら `node` = gate、`character` = null）。`ok` は成功 true / 失敗 false / それ以外 null。`text` は人間向けの日本語1行。
+
+### マスの state（上から順に最初に当てはまるもの）
+
+| type | state |
+| --- | --- |
+| task / camp | `cleared` → `stale` → `current`（持ち主の pos）→ `open`（持ち主より前方 vision マス以内）→ `fog` |
+| gate | `cleared` → `ready`（全員待機）→ `waiting`（1人以上待機）→ `open`（いずれかのメンバーの vision 以内）→ `fog` |
+
+---
+
+## 6. 指令書（`brief <id> --json`）
+
+```jsonc
+{
+  "jumon": "…", "seq": 12,
+  "character": { "id", "name", "kind", "module", "territory", "level", "xp", "xp_next", "vision", "status" },
+  "current": { "id", "type", "title", "detail", "check", "sealed", "seal_broken", "rollback_to" } | null,
+  "visible": [ { "id", "type", "title" } ],   // current の先、vision マスまで
+  "fog": 3,                                     // それより先に残っているマスの数
+  "party": [ { "id", "name", "at", "status", "level" } ],  // 自分以外
+  "waiting_for": ["server"],                    // gate で待機中なら、まだ来ていない仲間
+  "notes": [ { "seq", "ts", "text" } ],          // 自分の日誌、新しい順に最大5件
+  "rules": [ "現在のマスだけをやる", … ]          // 守ること（日本語）
+}
+```
+
+テキスト版（`--json` なし）も同じ内容を日本語で出す。**視界の外のマスのタイトルを出してはいけない。**
+
+---
+
+## 7. エンジンのモジュール API（`src/engine/index.js`）
+
+伝令・地図職人・盤面はこれだけを使う。
+
+```js
+export class MasumeError extends Error { /* code, exitCode */ }
+export function findRoot(startDir)                       // → string | null
+export function validateMap(map)                         // → { ok, errors, warnings }
+export function newGame(root, mapPath, { actor, force }) // → { head }
+export function buildView(root)                          // → §5 のビュー（呪いなら integrity.ok=false で可能な限り返す）
+export function brief(root, characterId)                 // → §6
+export async function check(root, target, { actor, boss = true })      // → { exitCode, events }
+export async function stamp(root, nodeId, { actor, as, boss = true })  // → { exitCode, events, ready: gateId|null }
+export function seal(root, nodeIds /* string[] | 'all' */, { actor })  // → { events }
+export function appendEvent(root, type, data, { actor }) // → 追記したイベント
+export function verify(root)                             // → { ok, errors, warnings, head }
+export function repair(root)                             // → { kept, moved, file }
+export function jumonOf(hashHex)                         // → "ゆうて いみや おうき むこう"
+export function logFile(root)                            // → <root>/.masume/log.jsonl の絶対パス
+export function outputFile(root, seq)                    // → 出力ファイルの絶対パス | null
+export function amend(root, mapPath, { actor })
+export function load(root, seqOrJumon, { actor })
+```
+
+`stamp(..., { boss: false })` の戻り値 `ready` は、ハンコの結果 ready になったゲートID（なければ null）。
+
+---
+
+## 8. 伝令（`src/server/index.js`）
+
+```js
+export function createServer({ webRoot, getView, watchFile, onStamp, onBattle, outputFor })  // → http.Server（未listen）+ stop()
+export async function startServer({ root, port = 5005, host = '127.0.0.1', webRoot })     // → { server, url, port, stop }
+```
+
+- `createServer` が返す `http.Server` には `stop(): Promise<void>` を足す（監視・SSE接続・サーバーを全部閉じる）。
+- `getView` は同期でも Promise を返してもよい。
+- `startServer` は engine を使って上を組み立てる（`webRoot` 既定 = リポジトリの `web/`、`watchFile` = `logFile(root)`）。
+
+| メソッド パス | 内容 |
+| --- | --- |
+| `GET /` と静的ファイル | `webRoot` から配る。`index.html`。MIME: html/css/js(mjs)/json/svg/png/woff2/txt。ディレクトリの外は 403 か 404 |
+| `GET /api/state` | `getView()` の JSON。`Cache-Control: no-store`。例外は 500 `{ok:false, code, error}` |
+| `GET /api/health` | `{ok:true, masume:1}` |
+| `GET /api/stream` | Server-Sent Events。接続時 `event: hello`、`watchFile` が変わるたびに `event: change`（data は JSON）。15秒ごとに `: ping` |
+| `GET /api/output/:seq` | `outputFor(seq)` の文字列を `text/plain; charset=utf-8` で。null なら 404、数字でなければ 400 |
+| `POST /api/stamp` | body `{node, as}` → `onStamp({node, as})` の結果を JSON で 200。`startServer` では engine の `stamp(boss:false)` を呼び、ready になったゲートがあれば `bin/masume.js check <gate> --dir <root> --as gm` を**別プロセスで**起動して `{ok:true, ready:<gate>}` を返す |
+| `POST /api/battle` | body `{gate}` → `onBattle({gate})`。`startServer` では ready なら上と同じく別プロセスでボス戦、そうでなければ 409 |
+
+- POST は `X-Masume: 1` ヘッダ必須（無ければ 403）。`Origin` ヘッダがあってホストと違えば 403。JSON が壊れていれば 400。
+- `onStamp`/`onBattle` が `code` 付きの例外を投げたら 409 `{ok:false, code, error}`。
+
+---
+
+## 9. Linear との文通（`src/linear/**`）
+
+### export
+
+`masume export linear [--format json|csv] [--out file]`（既定 json、stdout）。task と gate だけを1件ずつ（camp は出さない）。
+
+| 列 | 内容 |
+| --- | --- |
+| `ID` | マスID |
+| `Title` | title |
+| `Description` | detail + 空行 + `判定: \`<run>\``（stamp なら `判定: <名前>のハンコ`） |
+| `Status` | cleared→`Done` / current→`In Progress` / waiting・ready→`In Review` / stale・open→`Todo` / fog→`Backlog` |
+| `Assignee` | 持ち主の name。gate はメンバーの name を ` & ` でつなぐ |
+| `Project` | quest.title |
+| `Milestone` | 持ち主の道で、そのマス以降にある最初の gate の title（gate はそれ自身） |
+| `Labels` | labels + 持ち主ID（gate は `gate`）+ stale なら `要再検証`。CSV ではカンマ区切りの1セル |
+| `Estimate` | estimate（無ければ空） |
+
+JSON は `[{ "ID", "Title", "Description", "Status", "Assignee", "Project", "Milestone", "Labels": [..], "Estimate" }]`。
+CSV は1行目が `ID,Title,Description,Status,Assignee,Project,Milestone,Labels,Estimate`、RFC 4180 のクォート。
+
+### import
+
+`masume import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` — Linear の CSV（列名は大文字小文字を区別せず `ID`/`Identifier`、`Title`、`Description`、`Status`、`Assignee`、`Labels`、`Estimate`、`Created`/`Created At`、`Project` を探す）から**地図の下書き**を作る。
+
+- `Status` が done / canceled / cancelled / completed / duplicate（大文字小文字無視）の issue は省き、件数を quest.pitch に書く。
+- Assignee ごとに1キャラクター（出てきた順）。空は `nanashi`（名前「名無し」）。ID は名前を小文字英数字にしたもの、作れなければ `c1`,`c2`…。`kind:"agent"`、job と color は §10 の順に巡回。
+- Labels に `E2E` か `gate`（大文字小文字無視）を含む issue は **gate**。メンバー = その issue より `Created` が前の task を持つキャラクター + その issue の Assignee のキャラクター。2人未満なら普通の task。
+- 各道の並びは `Created` の昇順（同じなら ID の数字部分の昇順）。gate は、各メンバーの道で「それより前に作られた task」の後に置く。
+- 最後に `GOAL`（使われていれば `GOAL-1`）「あがり」を全キャラクターの最後に置く。`quest.goal` はそれ。
+- 担当者が1人だけ（残った issue の Assignee がすべて同じ、またはすべて空で `nanashi` だけ）なら、キャラクターは1人で、`GOAL` のメンバーも1人になる（§2 の例外により有効）。このとき `E2E`/`gate` ラベルの issue はメンバーが2人未満なので普通の task になる。
+- 判定はすべて仮置き `{"kind":"cmd","run":"echo \"TODO(GM): <ID> のE2E判定を書く\" && exit 1","seal":[]}`（GM が本物に差し替えるまで通らない）。
+- quest.id は `--quest-id`、無ければ最初の ID の `-` の前を大文字に。title は `--title` > 最初の行の Project > 「インポートした冒険」。
+- 出力した地図は `validateMap` に通ること。
+
+---
+
+## 10. 絵（`web/assets/**`）
+
+### 12の職業（`job`）と並び順
+
+`hero` 勇者 / `warrior` 戦士 / `mage` 魔法使い / `priest` 僧侶 / `thief` 盗賊 / `merchant` 商人 / `sage` 賢者 / `scribe` 書記 / `herald` 伝令 / `cartographer` 地図職人 / `painter` 絵師 / `villager` 村人
+
+### 8色（蛍光ペン `color`）
+
+`yellow #ffe45c` / `pink #ff8fc7` / `green #8ee28a` / `blue #7cc7ff` / `orange #ffb35c` / `purple #c9a2ff` / `mint #7fe3d0` / `gray #c8c8c8`
+
+### インク
+
+ボールペン紺 `#1d2b5c` / 赤ペン `#d94a3a` / 白 `#ffffff`
+
+### 駒の絵（`web/assets/sprites/<job>.svg`）
+
+- 方眼ノートにボールペンで描いた、ちびキャラの立ち絵（台座つき）。線は丸い端、手描きのゆらぎ。
+- `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">`、6000バイト以下。
+- 使ってよい要素: `svg g path circle ellipse rect line polyline polygon title desc`。`<title>` に日本語の職業名。
+- 使ってはいけないもの: `style` 属性、`<style>`、`<script>`、`<text>`、`<image>`、`<foreignObject>`、`href`、外部参照。
+- `fill`/`stroke` の値は `none` `#1d2b5c` `#ffffff` `#d94a3a` `var(--pawn, #ffe45c)` のどれか。体の塗りに `fill="var(--pawn, #ffe45c)"` を必ず使う（盤面が担当色に塗り替える）。
+- `stroke-width` は 3 以下。描画要素は4つ以上。12枚はすべて違う絵。
+- `web/assets/sprites/index.json` = `{"jobs":[{"id":"hero","name":"勇者"}, …]}`（上の順で12件）。
+
+### 道具の絵（`web/assets/icons/<id>.svg`）
+
+`sword` 剣 / `shield` 盾 / `key` 鍵 / `scroll` 巻物 / `chest` 宝箱 / `flag` 旗 / `inn` 宿屋 / `crown` 王冠 / `potion` 薬 / `map` 地図 / `bell` 鐘 / `lantern` ランタン
+
+- 駒と同じ制約。ただし `var(--pawn, #ffe45c)` は必須ではなく、`#ffe45c` も使ってよい。
+- `web/assets/icons/index.json` = `{"icons":[{"id":"sword","name":"剣"}, …]}`（上の順で12件）。
+- `web/assets/sheet.html` = 24枚を並べて見られる一覧ページ（方眼の背景）。
+
+---
+
+## 11. 盤面（`web/`）
+
+- `web/index.html` が盤面。通常は `/api/state` と `/api/stream` を使う。
+- `?fixture=<name>` のときは `web/fixtures/<name>-state.json` を読む（サーバー無しで見られる）。
+- 駒は `web/assets/sprites/<job>.svg` があれば使い、無ければ手描き風の丸い駒で代用する。
+
+---
+
+# 第2章の契約 —「xxxのようなアプリを作りたい」から、エージェントたちがあがるまで
+
+第1章で、ルール・冒険の書・盤面ができた。第2章では、それを**製品の流れ**にする。
+
+```
+願い（masume quest / 盤面の入口） → GM の LLM が地図と最初の判定を書く → 冒険の書が生まれる
+ → パーティ出撃（masume party / 盤面の出撃ボタン） → キャラクターごとにエージェントが出撃し、1マスずつ進む
+ → ゲートでボス戦（パーティが自動で） → 人間のハンコ → あがり
+```
+
+縄張り（第2章で増えるもの）:
+
+| 縄張り | 持ち主 |
+| --- | --- |
+| `src/engine/**`、`src/commands/{sortie,return,wish}.js`（と既存の書記のコマンド） | 書記 `engine` |
+| `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
+| `src/quest/**`、`src/commands/quest.js` | 語り部 `teller`（新） |
+| `src/party/**`、`src/commands/party.js` | 軍師 `party`（新） |
+| `src/linear/**`、`src/commands/{export,import,linear}.js` | 地図職人 `gmkit` |
+| `web/assets/marks/**` | 絵師 `assets` |
+| `web/index.html`、`web/board/**`、`web/fixtures/**` | 盤面 `board`（賢者クロード） |
+| `tests/**`（`tests/helpers2.mjs` を含む）、`docs/**`、`bin/**`、`quests/masume.map.json` ほか | GM |
+
+`bin/masume.js` の受付係には、GM が `sortie` `return` `wish` `quest` `party` `linear` を足しておく。
+
+## 12. 出撃の記録（書記）
+
+### イベント（SAVE_FORMAT に追加）
+
+| type | data | 意味 |
+| --- | --- | --- |
+| `wish` | `{text, gm, model}` | 冒険の始まりの願い（`gm` は `claude` / `codex` / `cmd`、`model` は文字列か null） |
+| `sortie` | `{character, node, agent, model}` | キャラクターにエージェントが出撃した（`node` = そのときの `at`、`agent` は `claude` / `codex` / `cmd` / 自由な名前、`model` は文字列か null） |
+| `returned` | `{sortie, character, node_before, node_after, advanced, code, output, output_hash}` | 出撃したエージェントが帰還した。`sortie` = 出撃イベントの seq、`node_after` = 帰還時の `at`（あがりなら null）、`advanced` = 出撃時より `pos` が進んでいる（またはあがった）、`code` = エージェントの終了コード、`output` = `outputs/sortie-<出撃のseq 6桁>.log`（エージェントの出力。先にファイルを書いてから追記する） |
+
+- これらは盤面の状態（位置・レベル）を変えない。再生では無視してよい（ビューにだけ使う）。
+- `verify` は第1章どおり、`output` を持つイベントの出力ファイルとハッシュを確かめる。
+
+### ビュー（§5 に追加）
+
+- `characters[].sortie` … いま出撃中なら `{seq, agent, model, node, since}`（`since` = 出撃イベントの ts）、そうでなければ `null`。出撃中 = その `sortie` イベントの seq を `data.sortie` に持つ `returned` がまだ無い。
+- `characters[].sorties` … そのキャラクターの `sortie` イベントの数。
+- `log[].text`: `wish` →「願い: <text>」、`sortie` →「<名前> が出撃した（<agent>[ <model>]）」、`returned` →「<名前> が帰還した（<node_before> → <node_after か あがり>、進んだ / 進めなかった）」。`ok` は `sortie`/`wish` は null、`returned` は `advanced`。
+- `brief`（テキスト）は出撃中なら「出撃中: <agent>（seq N から）」の行を出す。`brief --json` に `sortie` を足す（ビューと同じ形か null）。
+
+### CLI
+
+| コマンド | 挙動 |
+| --- | --- |
+| `sortie <characterId> --agent <name> [--model M]` | `sortie` を記録して seq を出す。知らないキャラ `E_UNKNOWN`/2、人間 `E_USAGE`/2、あがり済み `E_DONE`/2、すでに出撃中 `E_BUSY`/2 |
+| `return <characterId> --sortie <seq> --code <n> [--log <file>]` | `outputs/sortie-<seq>.log` に `--log` の中身（無ければ空）を書き、`returned` を記録する。`node_before` は出撃イベントの `node`、`advanced` は出撃時点の `pos`（seq までを再生した状態）と今の `pos` を比べる。その出撃がすでに帰還済み・存在しない・別のキャラなら `E_USAGE`/2 |
+| `wish <text…> [--gm G] [--model M]` | `wish` を記録する |
+
+モジュール API（`src/engine/index.js`）に足す:
+
+```js
+export function recordSortie(root, characterId, { actor = 'party', agent, model = null })        // → event
+export function recordReturn(root, characterId, { actor = 'party', sortie, code, log = '' })     // → event
+export function recordWish(root, { actor = 'gm', text, gm = null, model = null })                // → event
+```
+
+## 13. 軍師（パーティ出撃）
+
+`masume party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--dry-run] [--dir D]`
+
+- 既定: `--agent claude`、`--model` なし（claude は `sonnet`）、`--parallel 3`、`--rounds 40`。`<root>/.masume/party.json`（`{agent, model, parallel}`）があればその値が既定になる。
+- 環境変数 `MASUME_AGENT_OVERRIDE` があれば、`--agent` に関係なくそれを使う（テストや社内ラッパー用）。
+
+### 1巡の流れ
+
+1. ビューを読む。`finished` なら `あがり！` を出して終了コード 0。
+2. ready なゲートがあれば、パーティ自身がボス戦をする（エンジンの `check(root, gateId, {actor: 'party'})` か CLI）。結果を出す。
+3. 候補 = `kind: agent`・`status: working`・出撃中でない・`--only` に含まれる（指定時）・**迷子**でないキャラクター。
+   迷子 = この `party` の実行中に、進めずに帰還したことが2回続いたキャラクター。
+4. 候補もなく、出撃中もいなければ止まる。理由を出して終了コード 2:
+   人間のハンコ待ちのマスがあれば `ハンコ待ち: <マスID>…`、迷子がいれば `迷子: <キャラID>…`、`--rounds` を使い切ったら `巡回の上限`。
+5. 出撃中が `--parallel` 未満の間、候補を1人ずつ出撃させる（1キャラにつき同時に1エージェント）:
+   `sortie` を記録 → エージェントを起動 → 終了したら出力を `outputs/sortie-<seq>.log` に書き → `returned` を記録 → 1. に戻る。
+6. 帰還1回を1巡と数える。
+
+`SIGINT`/`SIGTERM` を受けたら、出撃中のエージェントを止め、それぞれ `code: 130` で `returned` を記録して終了コード 130。
+
+### エージェントの起動（アダプタ）
+
+| agent | コマンド（cwd = ゲームのルート、プロンプトは stdin） |
+| --- | --- |
+| `claude` | `claude -p --model <M または sonnet> --permission-mode bypassPermissions` |
+| `codex` | `codex exec -C <root> -s workspace-write --skip-git-repo-check [-m <M>] -` |
+| `cmd:<command>` | `/bin/sh -c <command>` |
+
+すべてのエージェントに環境変数 `MASUME_DIR`（ゲームのルート）、`MASUME_BIN`（`bin/masume.js` の絶対パス）、`MASUME_CHARACTER`、`MASUME_NODE`（出撃時の `at`）、`MASUME_PROMPT_FILE`（プロンプトを書いたファイル）を渡す。
+1回の出撃のタイムアウトは `MASUME_SORTIE_TIMEOUT` 秒（既定 3600）。超えたら止めて `code: 124`。出力は stdout+stderr を最大 200KB。
+
+`--dry-run` は何も記録・起動せず、候補ごとに `出撃予定: <キャラID> <コマンド>` とプロンプトの先頭を出して終了コード 0。
+
+### プロンプト（日本語）に必ず入れること
+
+- キャラクターの名前と ID、`masume brief <id>` のテキスト全文
+- 守ること: 現在のマスだけをやる / 縄張り（territory）の外を編集しない / 封印された判定ファイルと地図を編集しない / git の書き込み操作をしない
+- 宣言判定のコマンドをそのまま: `node "<MASUME_BIN>" check <id> --as <id> --no-boss --dir "<root>"`（ゲートのボス戦はパーティがする）
+- 日誌のコマンド: `node "<MASUME_BIN>" note <id> "<申し送り>" --as <id> --dir "<root>"`
+- 止まる条件: 現在のマスを1つ突破したら、または宣言判定に2回失敗したら、そこで止まって短く報告する
+
+## 14. 語り部（願いから冒険をつくる）
+
+`masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--dry-run]`
+
+- ルート = `--dir`（無ければ作る）かカレント。冒険の書があれば `--force` なしで `E_EXISTS`/2。
+- 環境変数 `MASUME_GM_OVERRIDE` があれば、`--gm` に関係なくそれを使う。
+- `<root>/WISH.md` に願いを書く。
+- GM のプロンプト（日本語）をつくる。必ず入れること:
+  願いの全文 / `docs/GM_GUIDE.md` の全文 / `docs/CONTRACTS.md` の §2（地図）と §10（職業と色） /
+  指示「ルートに `quest.map.json` を書く。判定ファイル（E2E）は、パーティが止まらずに進めるよう、**できるだけすべての task と gate の分**を書いて `check.seal` に入れる（少なくとも各エージェントの道の最初の task の分は必ず）。判定はいまは落ちること（まだ何も実装されていない）。本物の外部サービスは使わない。アプリそのものは実装しない」
+- GM を起動する（§13 と同じアダプタ。cwd = ルート、プロンプトは stdin。環境変数 `MASUME_DIR` `MASUME_BIN` `MASUME_WISH` `MASUME_PROMPT_FILE`）。GM の出力は `<root>/quest.log` に追記する。
+- GM が終わったら `quest.map.json` を `validateMap` で検査する。エラーなら、エラー（`[CODE] path: message` の行）と「`quest.map.json` を直して」を書いた追いプロンプトで GM をもう一度起動する（`--retries` 回まで、既定 2）。
+- 正しければ `newGame(root, 'quest.map.json')`（存在する判定ファイルは自動で封印）→ `wish` を記録 → 要約（キャラクター・マス・ゲートの数、ふっかつのじゅもん、次の一手 `masume serve` / `masume party`）を出して終了コード 0。
+- 直らなければ `E_INVALID_MAP`/1。GM が 0 以外で終わったら `E_GM`/2。地図が書かれなかったら `E_GM`/2。
+- `--dry-run` は GM を起動せず、GM のコマンドとプロンプトの先頭を出して終了コード 0（何も書かない）。
+
+## 15. 伝令（入口と出撃の窓口）
+
+- `startServer` は、ルートに冒険の書が**まだ無くても**起動する（ロビー）。そのとき `GET /api/state` は 404 `{ok:false, code:'E_NO_GAME'}`。
+  冒険の書が生まれたら `change` を SSE で送る（まだ無いファイルも0.5秒ごとに見張る）。
+- `POST /api/quest` `{wish, gm, model?}`（wish 1〜2000文字、gm は `claude`/`codex`）→ 冒険の書があれば 409 `E_EXISTS`、生成中なら 409 `E_BUSY`、それ以外は `masume quest <wish> --dir <root> --gm <gm> [--model M]` を別プロセスで起動して 202 `{ok:true}`。子プロセスの出力は `<root>/quest.log`。
+- `GET /api/quest` → `{ok:true, running, code, log}`（`code` は終了コードか null、`log` は `quest.log` の末尾200行）。
+- `POST /api/sortie` `{agent, model?, parallel?, only?}`（agent は `claude`/`codex`、parallel は 1〜8、only は 
+……（出力が長いため、中ほどの 72056 バイトを省きました）……
+value === undefined || (equal === -1 && value.startsWith('--'))) usage(`--${key} の値が必要です`);
+      options[key] = value;
+    }
+  }
+  if (options.dir === '' || options.as === '') usage('--dir と --as に空文字は指定できません');
+  const cwd = ctx.cwd ?? process.cwd();
+  const env = ctx.env ?? process.env;
+  return { args, options, cwd, env, actor: options.as ?? (env.MASUME_ACTOR || 'gm') };
+}
+
+export function gameRoot(command, { creating = false, optional = false } = {}) {
+  const { cwd, env, options } = command;
+  const root = options.dir !== undefined ? resolve(cwd, options.dir)
+    : creating ? resolve(cwd)
+      : env.MASUME_DIR ? resolve(cwd, env.MASUME_DIR) : findRoot(cwd);
+  if (!root && !optional) throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません');
+  return root;
+}
+
+export function guardExistingGame(command) {
+  const root = gameRoot(command, { optional: true });
+  if (root && existsSync(logFile(root))) requireHealthy(inspectLog(root));
+}
+
+export function printValidation(result) {
+  for (const { code, path, message } of [...result.errors, ...result.warnings]) {
+    console.log(`[${code}] ${path}: ${message}`);
+  }
+  if (result.ok) console.log('地図は正常です');
+}
+
+export function printCorruption(errors) {
+  if (errors.length > 0) {
+    console.error(`冒険の書は呪われています（seq ${errors[0].seq}）。読めたイベントだけを表示します`);
+  }
+}
+
+function printFailureOutput(root, seq, node) {
+  const file = outputFile(root, seq);
+  if (!file) return;
+  const output = readFileSync(file, 'utf8');
+  // 累積判定では最後の区間が失敗したマス。前の成功出力を混ぜない。
+  const heading = `=== ${node}: `;
+  const boundary = output.lastIndexOf(`\n${heading}`);
+  const failed = boundary >= 0 ? output.slice(boundary + 1) : output;
+  console.log(failed.replace(/\r?\n$/u, '').split(/\r\n|\n|\r/u).slice(-40).join('\n'));
+}
+
+export function printCheckResult(root, result) {
+  for (const { seq, type, data } of result.events) {
+    switch (type) {
+      case 'check_passed':
+        console.log(`判定成功: ${data.character} が ${data.node} を突破しました`);
+        break;
+      case 'check_failed':
+        console.log(`判定失敗: ${data.character} の ${data.failed} が失敗しました`);
+        printFailureOutput(root, seq, data.failed);
+        break;
+      case 'stamped':
+        console.log(`判定成功: ${data.by} が ${data.node} にハンコを押しました`);
+        break;
+      case 'gate_cleared':
+        console.log(`結合ゲート突破: ${data.gate} を ${data.members.join('、')} が突破しました`);
+        break;
+      case 'gate_failed':
+        console.log(`${data.blamed.length === data.members.length ? '全滅' : '差し戻し'}: `
+          + `${data.gate} の判定失敗（${data.blamed.join('、')}）`);
+        printFailureOutput(root, seq, data.gate);
+        break;
+    }
+  }
+}
+import { existsSync } from 'node:fs';
+import { dirname, isAbsolute, normalize, relative, resolve, sep, win32 } from 'node:path';
+
+export function logFile(root) {
+  return resolve(root, '.masume', 'log.jsonl');
+}
+
+export function findRoot(startDir) {
+  let current = resolve(startDir);
+  for (;;) {
+    if (existsSync(logFile(current))) return current;
+    const parent = dirname(current);
+    if (parent === current) return null;
+    current = parent;
+  }
+}
+
+// 地図の seal はゲームルート、map_file/output は .masume からの相対パス。
+export function containedFile(base, file) {
+  if (typeof file !== 'string' || !file || file.includes('\0')
+    || isAbsolute(file) || win32.isAbsolute(file)) return null;
+  const normalized = normalize(file);
+  if (normalized === '..' || normalized.startsWith(`..${sep}`)) return null;
+  const target = resolve(base, file);
+  const rel = relative(resolve(base), target);
+  if (!rel || rel === '..' || rel.startsWith(`..${sep}`) || isAbsolute(rel)) return null;
+  return target;
+}
+// 第3章の判定の共通道具（MCP のクライアント・偽の Jira）。GM の縄張り・封印対象。
+import { spawn } from 'node:child_process';
+import { BIN, listen } from './helpers.mjs';
+
+export * from './helpers2.mjs';
+
+/** masume mcp を起動して、JSON-RPC で話すクライアント */
+export function mcpClient(args = [], { cwd, env = {} } = {}) {
+  const p = spawn(process.execPath, [BIN, 'mcp', ...args], { cwd, env: { ...process.env, NO_COLOR: '1', MASUME_DIR: '', ...env }, stdio: ['pipe', 'pipe', 'pipe'] });
+  let buf = '';
+  let stderr = '';
+  let nextId = 1;
+  const waiting = new Map();
+  const stray = [];
+  p.stdout.setEncoding('utf8');
+  p.stdout.on('data', (d) => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (!line) continue;
+      let msg;
+      try {
+        msg = JSON.parse(line);
+      } catch {
+        stray.push(line);
+        continue;
+      }
+      if (msg.id !== undefined && waiting.has(msg.id)) {
+        waiting.get(msg.id)(msg);
+        waiting.delete(msg.id);
+      } else stray.push(msg);
+    }
+  });
+  p.stderr.on('data', (d) => (stderr += d));
+  const client = {
+    proc: p,
+    stray,
+    stderr: () => stderr,
+    request(method, params = {}, { timeout = 60000 } = {}) {
+      const id = nextId++;
+      return new Promise((res, rej) => {
+        const t = setTimeout(() => rej(new Error(`MCP ${method} が ${timeout}ms 以内に返らない\n${stderr}`)), timeout);
+        waiting.set(id, (msg) => (clearTimeout(t), res(msg)));
+        p.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+      });
+    },
+    notify(method, params = {}) {
+      p.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params }) + '\n');
+    },
+    raw(line) {
+      p.stdin.write(line + '\n');
+    },
+    async call(name, args = {}, opts) {
+      const r = await client.request('tools/call', { name, arguments: args }, opts);
+      if (r.error) throw new Error(`tools/call ${name}: ${JSON.stringify(r.error)}`);
+      return { isError: r.result.isError === true, text: (r.result.content || []).map((c) => c.text).join('\n') };
+    },
+    async start() {
+      const init = await client.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'masume-test', version: '0' } });
+      client.notify('notifications/initialized');
+      return init;
+    },
+    close() {
+      return new Promise((res) => {
+        if (p.exitCode !== null) return res();
+        p.once('exit', () => res());
+        p.stdin.end();
+        setTimeout(() => p.kill('SIGTERM'), 1000);
+      });
+    },
+  };
+  return client;
+}
+
+// ---- 偽の Jira（REST v3） ----
+export const JIRA_ENV = (url) => ({ MASUME_JIRA_URL: url, JIRA_EMAIL: 'gm@example.com', JIRA_API_TOKEN: 'jira_test_token' });
+const AUTH = 'Basic ' + Buffer.from('gm@example.com:jira_test_token').toString('base64');
+
+export async function fakeJira({ seedIssues = [] } = {}) {
+  const http = await import('node:http');
+  const STATUSES = {
+    todo: { name: 'To Do', statusCategory: { key: 'new' } },
+    progress: { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
+    review: { name: 'In Review', statusCategory: { key: 'indeterminate' } },
+    done: { name: 'Done', statusCategory: { key: 'done' } },
+  };
+  const TRANSITIONS = [
+    { id: '11', name: 'To Do', to: STATUSES.todo },
+    { id: '21', name: 'In Progress', to: STATUSES.progress },
+    { id: '31', name: 'In Review', to: STATUSES.review },
+    { id: '41', name: 'Done', to: STATUSES.done },
+  ];
+  const db = { requests: [], projects: [{ id: '10000', key: 'TOY', name: 'おもちゃ' }, { id: '10001', key: 'NOTE', name: 'ノート' }], issues: [], seed: seedIssues };
+  let n = 0;
+  const send = (res, status, body) => {
+    res.statusCode = status;
+    if (body === undefined) return res.end();
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify(body));
+  };
+  const server = http.createServer((req, res) => {
+    let raw = '';
+    req.on('data', (d) => (raw += d));
+    req.on('end', () => {
+      const u = new URL(req.url, 'http://x');
+      let body;
+      try {
+        body = raw ? JSON.parse(raw) : undefined;
+      } catch {}
+      db.requests.push({ method: req.method, path: u.pathname, query: u.search, headers: req.headers, body });
+      if (req.headers.authorization !== AUTH) return send(res, 401, { errorMessages: ['Unauthorized'] });
+      let m;
+      if (req.method === 'GET' && (m = u.pathname.match(/^\/rest\/api\/3\/project\/([^/]+)$/))) {
+        const p = db.projects.find((x) => x.key === m[1]);
+        return p ? send(res, 200, p) : send(res, 404, { errorMessages: ['No project'] });
+      }
+      if (req.method === 'POST' && u.pathname === '/rest/api/3/issue') {
+        n++;
+        const issue = { id: String(20000 + n), key: `${body.fields.project.key}-${n}`, fields: { ...body.fields, status: STATUSES.todo } };
+        db.issues.push(issue);
+        return send(res, 201, { id: issue.id, key: issue.key, self: `http://x/rest/api/3/issue/${issue.id}` });
+      }
+      if ((m = u.pathname.match(/^\/rest\/api\/3\/issue\/([^/]+)(\/transitions)?$/))) {
+        const issue = db.issues.find((x) => x.key === m[1] || x.id === m[1]);
+        if (!issue) return send(res, 404, { errorMessages: ['No issue'] });
+        if (m[2] && req.method === 'GET') return send(res, 200, { transitions: TRANSITIONS });
+        if (m[2] && req.method === 'POST') {
+          const t = TRANSITIONS.find((x) => x.id === body?.transition?.id);
+          if (!t) return send(res, 400, { errorMessages: ['bad transition'] });
+          issue.fields.status = t.to;
+          return send(res, 204);
+        }
+        if (req.method === 'GET') return send(res, 200, { id: issue.id, key: issue.key, fields: { status: issue.fields.status } });
+        if (req.method === 'PUT') {
+          Object.assign(issue.fields, body.fields);
+          return send(res, 204);
+        }
+      }
+      if (req.method === 'POST' && u.pathname === '/rest/api/3/search/jql') {
+        const key = (body?.jql || '').match(/project\s*=\s*"?([A-Z0-9]+)"?/)?.[1];
+        return send(res, 200, { issues: db.seed.filter((i) => i.key.startsWith(key + '-')) });
+      }
+      send(res, 404, { errorMessages: [`no route ${req.method} ${u.pathname}`] });
+    });
+  });
+  const url = await listen(server);
+  return { url, db, close: () => new Promise((r) => (server.closeAllConnections?.(), server.close(() => r()))) };
+}
+
+const adf = (text) => ({ type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] });
+
+/** Linear の見本と同じ中身の Jira の issue（pull 用） */
+export const NOTE_JIRA = [
+  ['NOTE-1', 'ログイン画面を作る', 'メールとパスワードでログインできる', 'To Do', 'new', 'Aki', ['frontend'], '2026-09-01T10:00:00.000+0900'],
+  ['NOTE-2', 'ユーザーAPIを作る', 'POST /users でユーザーを作れる, 重複はエラー', 'In Progress', 'indeterminate', 'Ben', ['backend'], '2026-09-01T11:00:00.000+0900'],
+  ['NOTE-3', 'ノートを保存する', 'ノートを保存して一覧できる', 'To Do', 'new', 'Ben', ['backend'], '2026-09-02T09:00:00.000+0900'],
+  ['NOTE-4', 'エディタ画面を作る', 'Markdown で書ける', 'Backlog', 'new', 'Aki', ['frontend'], '2026-09-02T10:00:00.000+0900'],
+  ['NOTE-5', 'ログインしてノートを保存できる', '結合テスト', 'To Do', 'new', 'Aki', ['E2E'], '2026-09-03T09:00:00.000+0900'],
+// 判定（E2E）の共通道具。GM の縄張り・封印対象。キャラクターは編集しないこと。
+import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync, existsSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const BIN = join(ROOT, 'bin', 'masume.js');
+
+export function tmp(prefix = 'masume-') {
+  return mkdtempSync(join(tmpdir(), prefix));
+}
+
+/** masume CLI を同期で実行する */
+export function masume(args, { cwd = ROOT, env = {}, timeout = 120000 } = {}) {
+  const r = spawnSync(process.execPath, [BIN, ...args], {
+    cwd,
+    env: { ...process.env, NO_COLOR: '1', MASUME_DIR: '', ...env },
+    encoding: 'utf8',
+    timeout,
+  });
+  return { code: r.status, out: r.stdout || '', err: r.stderr || '', all: (r.stdout || '') + (r.stderr || '') };
+}
+
+/** masume CLI を非同期で実行する（並行実行の判定用） */
+export function masumeAsync(args, { cwd = ROOT, env = {} } = {}) {
+  return new Promise((res) => {
+    const p = spawn(process.execPath, [BIN, ...args], { cwd, env: { ...process.env, NO_COLOR: '1', MASUME_DIR: '', ...env } });
+    let out = '';
+    let err = '';
+    p.stdout.on('data', (d) => (out += d));
+    p.stderr.on('data', (d) => (err += d));
+    p.on('close', (code) => res({ code, out, err, all: out + err }));
+  });
+}
+
+/** --json 付きで実行して stdout をパースする */
+export function masumeJson(args, opts) {
+  const r = masume([...args, '--json'], opts);
+  try {
+    r.data = JSON.parse(r.out);
+  } catch {
+    r.data = undefined;
+  }
+  return r;
+}
+
+export function view(dir) {
+  const r = masumeJson(['status', '--dir', dir]);
+  if (r.code !== 0 || !r.data) throw new Error(`status --json に失敗: code=${r.code}\n${r.all}`);
+  return r.data;
+}
+
+export function char(v, id) {
+  return v.characters.find((c) => c.id === id);
+}
+
+export function readLog(dir) {
+  return readFileSync(join(dir, '.masume', 'log.jsonl'), 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((l) => JSON.parse(l));
+}
+
+// ---- 正規化JSON・ハッシュ・じゅもん（SAVE_FORMAT.md を独立に実装） ----
+
+export function canonical(v) {
+  if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
+  if (v && typeof v === 'object') {
+    const keys = Object.keys(v).filter((k) => v[k] !== undefined).sort();
+    return '{' + keys.map((k) => JSON.stringify(k) + ':' + canonical(v[k])).join(',') + '}';
+  }
+  return JSON.stringify(v);
+}
+
+export function sha256(data) {
+  return createHash('sha256').update(data).digest('hex');
+}
+
+export function eventHash(e) {
+  return sha256(canonical({ seq: e.seq, ts: e.ts, type: e.type, actor: e.actor, data: e.data, prev: e.prev }));
+}
+
+export const KANA = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわがぎぐげござじずぜぞだぢづでどばびぶべぼ';
+
+export function jumonOf(hex) {
+  const n = BigInt('0x' + hex.slice(0, 18));
+  const chars = [];
+  for (let i = 0; i < 12; i++) chars.push(KANA[Number((n >> BigInt(66 - 6 * i)) & 63n)]);
+  const s = chars.join('');
+  return `${s.slice(0, 3)} ${s.slice(3, 6)} ${s.slice(6, 9)} ${s.slice(9, 12)}`;
+}
+
+// ---- おもちゃの冒険（エンジンの判定用） ----
+
+const cmd = (id) => ({ kind: 'cmd', run: `node checks/flag.mjs ${id}`, seal: ['checks/flag.mjs'] });
+const task = (id, title) => ({ type: 'task', title, detail: `${title}こと。`, check: cmd(id) });
+
+export function toyMap() {
+  return {
+    masume: 1,
+    quest: { id: 'TOY', title: 'おもちゃの冒険', pitch: '判定用の小さな地図', goal: 'FIN' },
+    characters: [
+      { id: 'a', name: '戦士アリス', kind: 'agent', agent: 'test', job: 'warrior', color: 'yellow', territory: ['a/**'], path: ['A1', 'A2', 'AC', 'A3', 'G1', 'A4', 'FIN'] },
+      { id: 'b', name: '魔法使いボブ', kind: 'agent', agent: 'test', job: 'mage', color: 'blue', territory: ['b/**'], path: ['B1', 'B2', 'G1', 'B3', 'FIN'] },
+      { id: 'h', name: '勇者ひとみ', kind: 'human', agent: 'human', job: 'hero', color: 'pink', path: ['H1', 'FIN'] },
+    ],
+
+exec
+/bin/zsh -lc "sed -n '1,270p' src/engine/state.js; sed -n '1,200p' tests/e2e/E1.test.mjs; sed -n '1,220p' tests/e2e/E4.test.mjs; rg -n 'export function readMapFile|function gateMembers|membersOf' src/engine" in /Users/amano/dev/masume
+ succeeded in 0ms:
+import { readMap } from './store.js';
+
+export const nodeXp = (node) => node.xp ?? (node.type === 'camp' ? 0 : node.type === 'gate' ? 3 : 1);
+export const sealFiles = (node) => node.check?.kind === 'cmd' ? [...new Set(node.check.seal ?? [])] : [];
+
+export function gateMembers(state, gate) {
+  return state.map.characters.filter(({ path }) => path.includes(gate)).map(({ id }) => id);
+}
+
+export function gateParty(state, gate) {
+  const members = state.map.nodes[gate]?.type === 'gate' ? gateMembers(state, gate) : [];
+  const waiting = members.filter((id) => {
+    const character = state.characters[id];
+    const path = state.map.characters.find((entry) => entry.id === id).path;
+    return character.status === 'waiting' && path[character.pos] === gate;
+  });
+  const missing = members.filter((id) => !waiting.includes(id));
+  return { members, waiting, missing, ready: members.length > 0 && missing.length === 0 };
+}
+
+export function readyGate(state, characterId) {
+  const character = state.characters[characterId];
+  if (!character || character.status !== 'waiting') return null;
+  const path = state.map.characters.find(({ id }) => id === characterId).path;
+  const gate = path[character.pos];
+  return gateParty(state, gate).ready ? gate : null;
+}
+
+export function isSealed(node, files) {
+  const paths = sealFiles(node);
+  return paths.length === 0 || (files !== null && files !== undefined
+    && Object.keys(files).length === paths.length && paths.every((path) => Object.hasOwn(files, path)));
+}
+
+function arrive(state, character, seq) {
+  const path = state.map.characters.find(({ id }) => id === character.id).path;
+  while (state.map.nodes[path[character.pos]]?.type === 'camp') {
+    const node = state.nodes[path[character.pos]];
+    node.cleared = true;
+    node.stale = false;
+    node.lastSeq = seq;
+    character.checkpoint = character.pos++;
+  }
+  character.status = character.pos >= path.length ? 'done'
+    : state.map.nodes[path[character.pos]].type === 'gate' ? 'waiting' : 'working';
+}
+
+function initialState(map, version, { arriveNow = true } = {}) {
+  const state = {
+    map,
+    version,
+    revision: 0,
+    characters: Object.create(null),
+    nodes: Object.create(null),
+  };
+  for (const id of Object.keys(map.nodes)) {
+    state.nodes[id] = {
+      cleared: false, stale: false, files: null, sealedSeq: null, brokenSeq: null,
+      clears: 0, fails: 0, lastSeq: null,
+    };
+  }
+  for (const { id } of map.characters) {
+    const character = {
+      id, pos: 0, level: 1, xp: 0, checkpoint: -1, status: 'working',
+      clears: 0, fails: 0, epoch: 0, lastNote: null,
+    };
+    state.characters[id] = character;
+    if (arriveNow) arrive(state, character, 0);
+  }
+  return state;
+}
+
+function amendState(state, map, version, seq) {
+  const next = initialState(map, version, { arriveNow: false });
+  next.revision = seq;
+  for (const id of Object.keys(next.nodes)) {
+    if (state.nodes[id]) next.nodes[id] = state.nodes[id];
+  }
+  for (const id of Object.keys(next.characters)) {
+    if (state.characters[id]) {
+      next.characters[id] = state.characters[id];
+      next.characters[id].epoch++;
+    }
+    arrive(next, next.characters[id], seq);
+  }
+  return next;
+}
+
+function gainXp(character, xp) {
+  character.xp += xp;
+  while (character.level < 9 && character.xp >= character.level + 1) {
+    character.xp -= character.level + 1;
+    character.level++;
+  }
+}
+
+function passTask(state, character, id, seq) {
+  const node = state.nodes[id];
+  if (!node.stale) gainXp(character, nodeXp(state.map.nodes[id]));
+  node.cleared = true;
+  node.stale = false;
+  node.clears++;
+  node.lastSeq = seq;
+  character.clears++;
+  character.pos++;
+  character.epoch++;
+  arrive(state, character, seq);
+}
+
+function rollbackCharacter(state, character, position, seq) {
+  const path = state.map.characters.find(({ id }) => id === character.id).path;
+  for (let i = position; i < character.pos; i++) {
+    const node = state.nodes[path[i]];
+    if (node.cleared) {
+      node.cleared = false;
+      node.stale = true;
+      node.lastSeq = seq;
+    }
+  }
+  character.level = Math.max(1, character.level - 1);
+  character.xp = 0;
+  character.fails++;
+  character.pos = position;
+  character.epoch++;
+  arrive(state, character, seq);
+}
+
+function failTask(state, character, failed, seq) {
+  const path = state.map.characters.find(({ id }) => id === character.id).path;
+  const rollback = state.map.nodes[failed].rollback_to ?? '@camp';
+  const target = rollback === '@camp' ? character.checkpoint + 1
+    : path.indexOf(rollback === '@here' ? failed : rollback);
+  state.nodes[failed].fails++;
+  state.nodes[failed].lastSeq = seq;
+  rollbackCharacter(state, character, Math.max(character.checkpoint + 1, target), seq);
+}
+
+function passGate(state, gate, members, seq) {
+  const node = state.nodes[gate];
+  node.cleared = true;
+  node.stale = false;
+  node.clears++;
+  node.lastSeq = seq;
+  for (const id of members) {
+    const character = state.characters[id];
+    gainXp(character, nodeXp(state.map.nodes[gate]));
+    character.clears++;
+    character.checkpoint = character.pos++;
+    character.epoch++;
+    arrive(state, character, seq);
+  }
+}
+
+// 記録された事実だけを適用する。判定コマンドやファイルの現在の内容には依存しない。
+export function reduceEvent(state, event) {
+  const { type, data, seq } = event;
+  const character = state.characters[data?.character];
+  const node = state.nodes[data?.node];
+  switch (type) {
+    case 'sealed':
+      if (node) {
+        node.files = { ...data.files };
+        node.sealedSeq = seq;
+        node.lastSeq = seq;
+      }
+      break;
+    case 'seal_broken':
+      if (node) {
+        node.brokenSeq = seq;
+        node.lastSeq = seq;
+      }
+      break;
+    case 'check_passed':
+    case 'check_failed':
+      if (character && node) {
+        for (const id of [data.node, ...(data.ran ?? [])]) {
+          if (state.nodes[id]) state.nodes[id].lastSeq = seq;
+        }
+        if (type === 'check_passed') passTask(state, character, data.node, seq);
+        else failTask(state, character, data.failed, seq);
+      }
+      break;
+    case 'stamped':
+      if (character && node) passTask(state, character, data.node, seq);
+      break;
+    case 'gate_cleared':
+    case 'gate_failed': {
+      const gate = state.nodes[data.gate];
+      if (!gate || state.map.nodes[data.gate].type !== 'gate') break;
+      const members = gateMembers(state, data.gate);
+      if (type === 'gate_cleared') {
+        passGate(state, data.gate, members, seq);
+      } else {
+        const blamed = members.filter((id) => (data.blamed ?? []).includes(id));
+        gate.fails++;
+        gate.lastSeq = seq;
+        for (const id of blamed.length ? blamed : members) {
+          const member = state.characters[id];
+          rollbackCharacter(state, member, member.checkpoint + 1, seq);
+        }
+      }
+      break;
+    }
+    case 'note':
+      if (character) {
+        character.lastNote = data.text;
+        character.epoch++;
+      }
+      break;
+    // 知らないイベントは、前方互換のため無視する。
+  }
+  return state;
+}
+
+export function replay(root, events) {
+  const genesis = events[0];
+  if (!genesis || genesis.type !== 'genesis') return null;
+  let state = initialState(readMap(root, genesis.data.map_file), genesis.data.version);
+  // ロードの参照先だけを保存する。過去の loaded を含む時点も、再帰せず復元できる。
+  const targets = new Set(events.filter(({ type }) => type === 'loaded').map(({ data }) => data.to_seq));
+  const snapshots = new Map();
+  for (const event of events) {
+    if (event.type === 'amended') {
+      state = amendState(state, readMap(root, event.data.map_file), event.data.version, event.seq);
+    } else if (event.type === 'loaded') {
+      state = structuredClone(snapshots.get(event.data.to_seq));
+      // epoch まで過去に戻っても、実行中の判定は新しい盤面へ追記できない。
+      state.revision = event.seq;
+    } else {
+      reduceEvent(state, event);
+    }
+    if (targets.has(event.seq)) snapshots.set(event.seq, structuredClone(state));
+  }
+  return state;
+}
+// E1「冒険の書をひらく」— 書記の最初のマス。SAVE_FORMAT.md と CONTRACTS §2/§3 の判定。
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, writeFileSync, appendFileSync, existsSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmp, masume, masumeJson, masumeAsync, readLog, setupToy, toyMap, eventHash, jumonOf, sha256, canonical } from '../helpers.mjs';
+
+const ZERO = '0'.repeat(64);
+
+function writeMap(dir, name, map) {
+  writeFileSync(join(dir, name), JSON.stringify(map, null, 2));
+  return name;
+}
+
+test('validate: 正しい地図は通る', () => {
+  const dir = tmp();
+  setupToy(dir);
+  const r = masume(['validate', 'toy.map.json'], { cwd: dir });
+  assert.equal(r.code, 0, r.all);
+  const j = masumeJson(['validate', 'toy.map.json'], { cwd: dir });
+  assert.equal(j.code, 0, j.all);
+  assert.equal(j.data.ok, true);
+  assert.deepEqual(j.data.errors, []);
+});
+
+test('validate: 壊れた地図はエラーコードで指摘される', () => {
+  const dir = tmp();
+  const cases = [
+    ['E_UNKNOWN_NODE', (m) => m.characters[0].path.splice(1, 0, 'NOPE')],
+    ['E_SHARED_TASK', (m) => m.characters[1].path.splice(0, 0, 'A1')],
+    ['E_GATE_MEMBERS', (m) => { m.nodes.G9 = { type: 'gate', title: 'ひとりのゲート', check: { kind: 'cmd', run: 'true' } }; m.characters[0].path.splice(1, 0, 'G9'); }],
+    ['E_ORPHAN', (m) => { m.nodes.Z9 = { type: 'task', title: '迷子', check: { kind: 'cmd', run: 'true' } }; }],
+    ['E_CYCLE', (m) => {
+      m.nodes.G2 = { type: 'gate', title: '二つ目', check: { kind: 'cmd', run: 'true' } };
+      m.characters[0].path.splice(m.characters[0].path.indexOf('G1') + 1, 0, 'G2');
+      m.characters[1].path.splice(m.characters[1].path.indexOf('G1'), 0, 'G2');
+    }],
+    ['E_ROLLBACK', (m) => { m.nodes.A1.rollback_to = 'A4'; }],
+    ['E_CHECK', (m) => { delete m.nodes.A2.check; }],
+    ['E_CHECK', (m) => { m.nodes.H1.check.by = 'a'; }],
+    ['E_GOAL', (m) => { m.quest.goal = 'A1'; }],
+    ['E_DUP_IN_PATH', (m) => { m.characters[0].path.splice(2, 0, 'A1'); }],
+    ['E_DUP_CHAR', (m) => { m.characters.push({ ...m.characters[1], path: ['FIN'] }); }],
+    ['E_FORMAT', (m) => { m.masume = 2; }],
+    ['E_ID', (m) => { m.characters[0].id = 'Bad Id'; }],
+  ];
+  for (const [code, mutate] of cases) {
+    const m = toyMap();
+    mutate(m);
+    writeMap(dir, 'bad.map.json', m);
+    const r = masume(['validate', 'bad.map.json'], { cwd: dir });
+    assert.equal(r.code, 1, `${code} のとき終了コード1: ${r.all}`);
+    assert.match(r.all, new RegExp(code), `${code} が出力に含まれる: ${r.all}`);
+    const j = masumeJson(['validate', 'bad.map.json'], { cwd: dir });
+    assert.equal(j.data.ok, false);
+    assert.ok(j.data.errors.some((e) => e.code === code), `${code} が errors に含まれる: ${JSON.stringify(j.data.errors)}`);
+  }
+});
+
+test('new: 冒険の書が生まれ、存在する判定ファイルは自動で封印される', () => {
+  const dir = tmp();
+  setupToy(dir);
+  const r = masume(['new', 'toy.map.json'], { cwd: dir });
+  assert.equal(r.code, 0, r.all);
+  assert.match(r.out, /ふっかつのじゅもん/);
+  assert.ok(existsSync(join(dir, '.masume', 'log.jsonl')));
+  assert.ok(existsSync(join(dir, '.masume', 'maps', '0001.json')));
+
+  const log = readLog(dir);
+  assert.equal(log[0].seq, 0);
+  assert.equal(log[0].type, 'genesis');
+  assert.equal(log[0].prev, ZERO);
+  assert.equal(log[0].data.masume, 1);
+  assert.equal(log[0].data.quest_id, 'TOY');
+  assert.equal(log[0].data.map_file, 'maps/0001.json');
+  const map = JSON.parse(readFileSync(join(dir, '.masume', 'maps', '0001.json'), 'utf8'));
+  assert.equal(log[0].data.map_hash, sha256(canonical(map)));
+
+  // 鎖が正しい
+  log.forEach((e, i) => {
+    assert.equal(e.seq, i);
+    assert.equal(e.hash, eventHash(e), `seq ${i} の hash`);
+    if (i > 0) assert.equal(e.prev, log[i - 1].hash, `seq ${i} の prev`);
+  });
+
+  // checks/flag.mjs を使うマスは封印済み、checks/b3.mjs（存在しない）のB3は未封印
+  const sealed = log.filter((e) => e.type === 'sealed');
+  const sealedNodes = sealed.map((e) => e.data.node).sort();
+  assert.deepEqual(sealedNodes, ['A1', 'A2', 'A3', 'A4', 'B1', 'B2', 'FIN', 'G1']);
+  const flagHash = sha256(readFileSync(join(dir, 'checks', 'flag.mjs')));
+  for (const e of sealed) assert.deepEqual(e.data.files, { 'checks/flag.mjs': flagHash });
+
+  // 二重に new はできない
+  const again = masume(['new', 'toy.map.json'], { cwd: dir });
+  assert.equal(again.code, 2, again.all);
+  assert.match(again.all, /E_EXISTS/);
+  // 壊れた地図では始まらない
+  const dir2 = tmp();
+  const bad = toyMap();
+  bad.quest.goal = 'NOPE';
+  writeMap(dir2, 'bad.map.json', bad);
+  const r2 = masume(['new', 'bad.map.json'], { cwd: dir2 });
+  assert.equal(r2.code, 1, r2.all);
+  assert.ok(!existsSync(join(dir2, '.masume', 'log.jsonl')));
+});
+
+test('jumon / verify: ふっかつのじゅもんで状態を指せる', () => {
+  const dir = tmp();
+  setupToy(dir);
+  masume(['new', 'toy.map.json'], { cwd: dir });
+  const log = readLog(dir);
+  const head = log[log.length - 1];
+  const expected = jumonOf(head.hash);
+
+  const j = masume(['jumon'], { cwd: dir });
+  assert.equal(j.code, 0, j.all);
+  assert.equal(j.out.trim().split('\n').pop().trim(), expected);
+  assert.match(expected, /^[ぁ-ん]{3}( [ぁ-ん]{3}){3}$/);
+  const jj = masumeJson(['jumon'], { cwd: dir });
+  assert.deepEqual(jj.data, { seq: head.seq, hash: head.hash, jumon: expected });
+
+  const v = masume(['verify'], { cwd: dir });
+  assert.equal(v.code, 0, v.all);
+  assert.match(v.out, /冒険の書は正常です/);
+  const vj = masumeJson(['verify'], { cwd: dir });
+  assert.equal(vj.data.ok, true);
+  assert.deepEqual(vj.data.head, { seq: head.seq, hash: head.hash, jumon: expected });
+
+  // 過去のじゅもんでも見つかる（空白なし・カタカナでもよい）
+  const past = jumonOf(log[0].hash);
+  const katakana = past.replace(/\s/g, '').replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
+  const f = masumeJson(['verify', '--jumon', katakana], { cwd: dir });
+  assert.equal(f.code, 0, f.all);
+  assert.deepEqual(f.data.found, { seq: 0 });
+  const nf = masume(['verify', '--jumon', 'ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ'], { cwd: dir });
+  assert.equal(nf.code, 1, nf.all);
+});
+
+test('verify / repair: 改ざんは「呪い」として見つかり、修復できる', () => {
+  const dir = tmp();
+  setupToy(dir);
+  masume(['new', 'toy.map.json'], { cwd: dir });
+  for (let i = 0; i < 3; i++) assert.equal(masume(['note', 'a', `日誌${i}`, '--as', 'a'], { cwd: dir }).code, 0);
+  const file = join(dir, '.masume', 'log.jsonl');
+  const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
+  const target = lines.length - 2; // 最後から2つ目の日誌を書き換える
+  const e = JSON.parse(lines[target]);
+  e.data.text = '書き換えた';
+  lines[target] = JSON.stringify(e);
+  writeFileSync(file, lines.join('\n') + '\n');
+
+  const v = masume(['verify'], { cwd: dir });
+  assert.equal(v.code, 3, v.all);
+  assert.match(v.all, /呪われています/);
+  assert.match(v.all, new RegExp(`seq ${target}`));
+  const vj = masumeJson(['verify'], { cwd: dir });
+  assert.equal(vj.data.ok, false);
+  assert.equal(vj.data.errors[0].seq, target);
+  assert.equal(vj.data.errors[0].code, 'E_HASH');
+
+  // 呪われた冒険の書では他のコマンドは動かない
+  const n = masume(['note', 'a', 'もう一行', '--as', 'a'], { cwd: dir });
+  assert.equal(n.code, 3, n.all);
+  assert.match(n.all, /E_CURSED/);
+
+  const rp = masume(['repair'], { cwd: dir });
+  assert.equal(rp.code, 0, rp.all);
+  assert.ok(readdirSync(join(dir, '.masume')).some((f) => /^log\.corrupt-.*\.jsonl$/.test(f)), '退避ファイルがある');
+  assert.equal(masume(['verify'], { cwd: dir }).code, 0);
+  const after = readLog(dir);
+  assert.equal(after.length, target);
+  assert.equal(masume(['note', 'a', '再開', '--as', 'a'], { cwd: dir }).code, 0);
+  assert.equal(masume(['verify'], { cwd: dir }).code, 0);
+});
+
+test('verify / repair: 書きかけで途切れた行も見つかる', () => {
+  const dir = tmp();
+  setupToy(dir);
+  masume(['new', 'toy.map.json'], { cwd: dir });
+  const n = readLog(dir).length;
+  appendFileSync(join(dir, '.masume', 'log.jsonl'), '{"seq":' + n + ',"ts":"2026');
+  const vj = masumeJson(['verify'], { cwd: dir });
+  assert.equal(vj.code, 3);
+  assert.equal(vj.data.errors[0].code, 'E_PARSE');
+  assert.equal(vj.data.errors[0].seq, n);
+  assert.equal(masume(['repair'], { cwd: dir }).code, 0);
+  assert.equal(masume(['verify'], { cwd: dir }).code, 0);
+  assert.equal(readLog(dir).length, n);
+});
+
+test('verify: 地図ファイルの改ざんも見つかる', () => {
+  const dir = tmp();
+  setupToy(dir);
+  masume(['new', 'toy.map.json'], { cwd: dir });
+  const f = join(dir, '.masume', 'maps', '0001.json');
+  const m = JSON.parse(readFileSync(f, 'utf8'));
+  m.nodes.A1.check.run = 'true';
+  writeFileSync(f, JSON.stringify(m, null, 2));
+  const vj = masumeJson(['verify'], { cwd: dir });
+  assert.equal(vj.code, 3, vj.all);
+// E4「時をさかのぼる」— 地図の改訂 amend（歴史は書き換えられない）と、過去の状態のロード load。
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { writeFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import { masume, masumeJson, newToy, toyMap, flag, view, char, readLog, jumonOf } from '../helpers.mjs';
+
+const check = (dir, who) => masume(['check', who, '--dir', dir, '--as', who]);
+
+test('load: seq でも、ふっかつのじゅもんでも、その時の盤面に戻せる', () => {
+  const dir = newToy();
+  flag(dir, 'A1');
+  flag(dir, 'A2');
+  assert.equal(check(dir, 'a').code, 0);
+  const snap = view(dir);
+  const seq1 = snap.head.seq;
+  assert.equal(check(dir, 'a').code, 0);
+  assert.equal(char(view(dir), 'a').at, 'A3');
+
+  const r = masume(['load', String(seq1), '--dir', dir, '--as', 'gm']);
+  assert.equal(r.code, 0, r.all);
+  const ev = readLog(dir).pop();
+  assert.equal(ev.type, 'loaded');
+  assert.deepEqual(ev.data, { to_seq: seq1 });
+  let v = view(dir);
+  assert.deepEqual(v.characters, snap.characters, 'キャラクターはその時の状態');
+  for (const id of Object.keys(snap.nodes)) assert.equal(v.nodes[id].state, snap.nodes[id].state, `${id} の state`);
+  assert.equal(masume(['verify', '--dir', dir]).code, 0, 'ロードしても鎖は正常');
+
+  // 進めてから、じゅもんで戻る
+  assert.equal(check(dir, 'a').code, 0);
+  assert.equal(char(view(dir), 'a').at, 'A3');
+  const spell = jumonOf(readLog(dir)[seq1].hash);
+  const r2 = masume(['load', spell, '--dir', dir, '--as', 'gm']);
+  assert.equal(r2.code, 0, r2.all);
+  v = view(dir);
+  assert.equal(char(v, 'a').at, 'A2');
+
+  // 戻した後も普通に遊べる
+  assert.equal(check(dir, 'a').code, 0);
+  assert.equal(char(view(dir), 'a').at, 'A3');
+
+  // 未来や存在しない所にはロードできない
+  const bad = masume(['load', '9999', '--dir', dir, '--as', 'gm']);
+  assert.equal(bad.code, 2, bad.all);
+  assert.match(bad.all, /E_LOAD/);
+  const badSpell = masume(['load', 'ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ', '--dir', dir, '--as', 'gm']);
+  assert.equal(badSpell.code, 2, badSpell.all);
+});
+
+test('amend: 計画は変えられるが、歴史は書き換えられない', () => {
+  const dir = newToy();
+  flag(dir, 'A1');
+  assert.equal(check(dir, 'a').code, 0); // a は A2 にいる。A1 は通過済み
+
+  const write = (m) => {
+    writeFileSync(join(dir, 'next.map.json'), JSON.stringify(m, null, 2));
+    return masume(['amend', 'next.map.json', '--dir', dir, '--as', 'gm'], { cwd: dir }); // 地図のパスはカレント基準（§24.2）
+  };
+
+  // 通過済みのマスを消す → だめ
+  let m = toyMap();
+  m.characters[0].path = m.characters[0].path.filter((id) => id !== 'A1');
+  delete m.nodes.A1;
+  let r = write(m);
+  assert.equal(r.code, 1, r.all);
+  assert.match(r.all, /E_AMEND_HISTORY/);
+
+  // 通過済みのマスの判定を変える → だめ
+  m = toyMap();
+  m.nodes.A1.check = { kind: 'cmd', run: 'true' };
+  r = write(m);
+  assert.equal(r.code, 1, r.all);
+  assert.match(r.all, /E_AMEND_HISTORY/);
+
+  // 通過済みのマスより前に差し込む → だめ
+  m = toyMap();
+  m.nodes.A0 = { type: 'task', title: '前日の準備', check: { kind: 'cmd', run: 'true' } };
+  m.characters[0].path.unshift('A0');
+  r = write(m);
+  assert.equal(r.code, 1, r.all);
+  assert.match(r.all, /E_AMEND_HISTORY/);
+
+  // キャラクターを消す → だめ
+  m = toyMap();
+  m.characters = m.characters.filter((c) => c.id !== 'b');
+  m.nodes.G1 = undefined;
+  r = write(JSON.parse(JSON.stringify(m)));
+  assert.equal(r.code, 1, r.all);
+
+  // 先のマスを足す・タイトルを直す・仲間を増やす → よい
+  m = toyMap();
+  m.nodes.A1.title = '剣をとぐ（改）';
+  m.nodes.A5 = { type: 'task', title: '宝を持ち帰る', detail: '宝を持ち帰ること。', check: { kind: 'cmd', run: 'node checks/flag.mjs A5', seal: ['checks/flag.mjs'] } };
+  m.characters[0].path.splice(m.characters[0].path.indexOf('FIN'), 0, 'A5');
+  m.nodes.D1 = { type: 'task', title: '道案内をする', check: { kind: 'cmd', run: 'node checks/flag.mjs D1', seal: ['checks/flag.mjs'] } };
+  m.characters.push({ id: 'd', name: '盗賊デイジー', kind: 'agent', agent: 'test', job: 'thief', color: 'green', path: ['D1', 'FIN'] });
+  r = write(m);
+  assert.equal(r.code, 0, r.all);
+  const ev = readLog(dir).filter((e) => e.type === 'amended').pop();
+  assert.equal(ev.data.version, 2);
+  assert.equal(ev.data.map_file, 'maps/0002.json');
+  assert.ok(existsSync(join(dir, '.masume', 'maps', '0002.json')));
+  const v = view(dir);
+  assert.equal(v.map_version, 2);
+  assert.equal(v.nodes.A1.title, '剣をとぐ（改）');
+  assert.equal(v.nodes.A1.state, 'cleared', '通過済みはそのまま');
+  assert.ok(v.nodes.A5, '新しいマス');
+  assert.equal(v.nodes.A5.sealed, true, '判定ファイルがそろっていれば自動で封印');
+  assert.deepEqual(v.nodes.FIN.members, ['a', 'b', 'h', 'd'].filter((x) => v.characters.some((c) => c.id === x)));
+  const d = char(v, 'd');
+  assert.deepEqual([d.at, d.level, d.status], ['D1', 1, 'working'], '新しい仲間はふりだしから');
+  assert.equal(char(v, 'a').at, 'A2', 'a の位置は変わらない');
+  assert.equal(masume(['verify', '--dir', dir]).code, 0);
+
+  // 改訂後も遊べる
+  flag(dir, 'D1');
+  assert.equal(check(dir, 'd').code, 0);
+  assert.equal(char(view(dir), 'd').at, 'FIN');
+
+  // 壊れた地図での改訂は E_INVALID_MAP
+  const broken = toyMap();
+  broken.quest.goal = 'NOPE';
+  const rb = write(broken);
+  assert.equal(rb.code, 1, rb.all);
+  const j = masumeJson(['status', '--dir', dir]);
+  assert.equal(j.data.map_version, 2, '失敗した改訂は記録されない');
+});
+src/engine/map.js:171:export function readMapFile(file) {
+src/engine/state.js:6:export function gateMembers(state, gate) {
+
+codex
+実装を読むと、`amend` は現在ルート基準で地図を読み、突破済みゲートの参加者集合を検証していません。また、`seal --all` は保留対象をCLIへ返さず、`new --force` は同期対応表も削除します。私は契約§24に従ってこの4項目を修正し、補助エージェントが日誌のepochとゲートのログ文を修正します。実際の冒険に対する `new`・`seal`・`amend` は実行せず、挙動は許可された判定が作る一時環境で確認します。
+
+apply patch
+patch: completed
+/Users/amano/dev/masume/src/commands/amend.js
+/Users/amano/dev/masume/src/commands/seal.js
+/Users/amano/dev/masume/src/engine/game.js
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+exec
+/bin/zsh -lc 'git diff -- src/engine/game.js src/engine/state.js src/engine/view.js src/commands/amend.js src/commands/seal.js; node --test tests/e2e/E7.test.mjs' in /Users/amano/dev/masume
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+ succeeded in 13384ms:
+✔ §24.1 突破済みのゲートを通る新しいキャラクターを足す改訂は断られる（途中） (1928.58275ms)
+✔ §24.1 あがったあとに、突破済みのゲートへ加わる新しいキャラクターを足す改訂は断られる (2013.872083ms)
+✔ §24.2 amend <相対パス> は、--dir のルートではなくカレントを基準に読む (485.688625ms)
+✔ §24.3 判定の最中に note を書いても、その判定は E_CONFLICT で捨てられない (2843.304583ms)
+✔ §24.3 ボス戦の最中に、メンバーが note を書いても、ボス戦は E_CONFLICT で捨てられない (3860.128ms)
+✔ §24.4 seal --all は、そろっていないマスを「保留: <マスID>」と表示して飛ばす（終了コード0） (227.84675ms)
+✔ §24.5 ゲートの封印破りは「G1 の封印が破れていた」と記録され、null を出さない (1482.759792ms)
+✔ §24.6 new --force は .masume/linear.json と .masume/jira.json を残し、冒険の書は作り直す (566.424834ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 13457.608
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+codex
+E7の素振りは8件すべて成功しました（失敗0）。契約§24の6項目について、封印された判定で期待動作を確認できています。私は宣言前に、共通処理の変更に関係する既存判定E1・E4を実行します。これらが成功したら、許可済みの宣言判定でE6・E7の累積判定を行い、`--no-boss` でG6のボス戦を保留します。
+
+exec
+/bin/zsh -lc 'node --test tests/e2e/E1.test.mjs tests/e2e/E4.test.mjs' in /Users/amano/dev/masume
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+ succeeded in 4322ms:
+✔ validate: 正しい地図は通る (166.097333ms)
+✔ validate: 壊れた地図はエラーコードで指摘される (1578.737792ms)
+✔ new: 冒険の書が生まれ、存在する判定ファイルは自動で封印される (151.481792ms)
+✔ jumon / verify: ふっかつのじゅもんで状態を指せる (389.000125ms)
+✔ verify / repair: 改ざんは「呪い」として見つかり、修復できる (596.946125ms)
+✔ verify / repair: 書きかけで途切れた行も見つかる (199.622459ms)
+✔ verify: 地図ファイルの改ざんも見つかる (102.812959ms)
+✔ ロック: 8人が同時に日誌を書いても鎖は壊れない (619.401292ms)
+✔ note / log: 日誌が書けて、ログが読める (335.5735ms)
+✔ seal: 封印のやり直しと、無いファイルの封印 (210.812833ms)
+✔ load: seq でも、ふっかつのじゅもんでも、その時の盤面に戻せる (1831.687833ms)
+✔ amend: 計画は変えられるが、歴史は書き換えられない (989.32125ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4404.312334
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+exec
+/bin/zsh -lc "git diff --check -- src/engine/game.js src/engine/state.js src/engine/view.js src/commands/amend.js src/commands/seal.js; sed -n '1,90p' src/commands/check.js; sed -n '1,75p' src/commands/note.js; sed -n '1,60p' src/engine/view.js" in /Users/amano/dev/masume
+ succeeded in 0ms:
+import { check } from '../engine/index.js';
+import { gameRoot, parseArgs, printCheckResult, usage } from '../engine/cli.js';
+
+export async function run(argv, ctx) {
+  const command = parseArgs(argv, ctx, { 'no-boss': 'boolean' });
+  const { args, options, actor } = command;
+  if (args.length !== 1) usage('つかいかた: check <characterId|gateId> [--no-boss]');
+  const root = gameRoot(command);
+  let result;
+  try {
+    result = await check(root, args[0], { actor, boss: !options['no-boss'] });
+  } catch (error) {
+    if (!options.json && error.code === 'E_PARTY_INCOMPLETE') console.log(error.message);
+    throw error;
+  }
+  if (options.json) console.log(JSON.stringify(result));
+  else printCheckResult(root, result);
+  return result.exitCode;
+}
+import { writeNote } from '../engine/game.js';
+import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+
+export async function run(argv, ctx) {
+  const command = parseArgs(argv, ctx);
+  const { args, options, actor } = command;
+  if (args.length < 2) usage('つかいかた: note <characterId> <text…>');
+  const event = writeNote(gameRoot(command), args[0], args.slice(1).join(' '), { actor });
+  if (options.json) console.log(JSON.stringify(event));
+  else console.log(`${args[0]} の日誌を記録しました（seq ${event.seq}）`);
+  return 0;
+}
+import { inspectLog } from './store.js';
+import { sortieStatus } from './sortie.js';
+import { isSealed, nodeXp, replay } from './state.js';
+
+function nodeState(node, progress, members, characters) {
+  if (progress.cleared) return 'cleared';
+  if (node.type !== 'gate') {
+    if (progress.stale) return 'stale';
+    if (members.some((character) => characters[character].at === node.id)) return 'current';
+  } else {
+    const waiting = members.filter((character) => characters[character].at === node.id
+      && characters[character].status === 'waiting').length;
+    if (waiting === members.length && waiting > 0) return 'ready';
+    if (waiting > 0) return 'waiting';
+  }
+  if (members.some((id) => {
+    const character = characters[id];
+    const distance = character.path.indexOf(node.id) - character.pos;
+    return distance > 0 && distance <= character.vision;
+  })) return 'open';
+  return 'fog';
+}
+
+function logEntry(event, map) {
+  const data = event.data ?? {};
+  const character = data.character ?? null;
+  const node = data.gate ?? data.node ?? data.node_before ?? null;
+  const name = map?.characters.find(({ id }) => id === character)?.name ?? character;
+  let ok = null;
+  let text;
+  switch (event.type) {
+    case 'genesis': text = '冒険の書がひらかれた'; break;
+    case 'sealed': text = `${node} の判定ファイルが封印された`; break;
+    case 'seal_broken':
+      text = character === null ? `${node} の封印が破れていた`
+        : `${name} が ${node} の封印破りを見つけた`;
+      break;
+    case 'check_passed':
+      ok = true;
+      text = `${name} が ${node} の判定に成功した`;
+      break;
+    case 'check_failed':
+      ok = false;
+      text = `${name} が ${node} を判定し、${data.failed} で失敗した`;
+      break;
+    case 'gate_cleared':
+      ok = true;
+      text = `${node} の結合ゲート突破。仲間が解散した`;
+      break;
+    case 'gate_failed': {
+      ok = false;
+      const blamed = data.blamed ?? [];
+      const names = blamed.map((id) => map?.characters.find((c) => c.id === id)?.name ?? id);
+      const all = (data.members ?? []).every((id) => blamed.includes(id));
+      text = `${node} のボス戦で${all ? '全滅' : '差し戻し'}: ${names.join('、')}`;
+      break;
+    }
+    case 'stamped': {
+      ok = true;
+      const by = map?.characters.find(({ id }) => id === data.by)?.name ?? data.by;
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+codex
+E1・E4の回帰判定も12件すべて成功し、差分レビューでも契約との不整合は見つかりませんでした。私はこれから指定された `check engine --as engine --no-boss` を実行します。この操作は判定結果を冒険の書に記録し、成功時に書記をE7からG6へ進めます。成功後は日誌を記録し、G6で停止します。
+
+exec
+/bin/zsh -lc 'node "/Users/amano/dev/masume/bin/masume.js" check engine --as engine --no-boss --dir "/Users/amano/dev/masume"' in /Users/amano/dev/masume
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+ succeeded in 34958ms:
+判定成功: engine が E7 を突破しました
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+codex
+宣言判定は「判定成功: engine が E7 を突破しました」と返り、終了コード0でした。私は記録された判定結果と移動先を読み取り確認したうえで、今回の変更とG6での待機を日誌に残します。次のマスの実装やボス戦は、この依頼の完了範囲に含めません。
+
+exec
+/bin/zsh -lc "node --input-type=module -e 'import { readFileSync } from \"node:fs\"; import { resolve } from \"node:path\"; const events = readFileSync(\".masume/log.jsonl\", \"utf8\").trim().split(\"\\n\").map(JSON.parse); const event = events.findLast(e => e.type === \"check_passed\" && e.data.character === \"engine\" && e.data.node === \"E7\"); console.log(JSON.stringify({seq: event.seq, type: event.type, node: event.data.node, ran: event.data.ran})); const output = readFileSync(resolve(\".masume\", event.data.output), \"utf8\"); console.log(output.split(\"\\n\").filter(line => /"'^(===|ℹ (tests|pass|fail)|# (tests|pass|fail)|'"\\(exit)/u.test(line)).join(\"\\n\"));'; node \"/Users/amano/dev/masume/bin/masume.js\" brief engine --dir \"/Users/amano/dev/masume\"" in /Users/amano/dev/masume
+ succeeded in 184ms:
+{"seq":170,"type":"check_passed","node":"E7","ran":["E6","E7"]}
+=== E6: node --test tests/e2e/E6.test.mjs ===
+ℹ tests 15
+ℹ pass 15
+ℹ fail 0
+(exit 0, 21261ms)
+=== E7: node --test tests/e2e/E7.test.mjs ===
+ℹ tests 8
+ℹ pass 8
+ℹ fail 0
+(exit 0, 13473ms)
+指令書: 書記（engine / agent）
+Lv7 / 経験値 4/8 / 視界 4マス先 / ゲートで待機中
+担当: 冒険の書（セーブデータ）・ルールエンジン・CLI
+縄張り: src/engine/**、src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load,sortie,return,wish}.js
+出撃中: cmd（seq 165 から）
+現在のマス: G6「結合: 総点検（判定の誠実さ）」（gate）
+伝令が起動したボス戦が NODE_TEST_CONTEXT に騙されずに負けを記録し、軍師のボス戦を止めたら判定の子孫も消えている。
+判定: node --test tests/e2e/G6.test.mjs
+封印: 封印済み
+視界に入っている先のマス:
+  GOAL4「あがり（第4章）: 総点検」（gate）
+霧の中: 0マス
+仲間:
+  賢者クロード（board）: GOAL4 / ゲートで待機中 / Lv6
+  伝令（server）: G6 / ゲートで待機中 / Lv7
+  語り部（teller）: GOAL4 / ゲートで待機中 / Lv5
+  軍師（party）: P3 / 作業中 / Lv4
+  地図職人（gmkit）: GOAL4 / ゲートで待機中 / Lv5
+  絵師（assets）: GOAL4 / ゲートで待機中 / Lv4
+  勇者（あなた）（player）: GOAL4 / ゲートで待機中 / Lv4
+待っている仲間: 軍師
+自分の日誌（新しい順）:
+  seq 162 2026-10-16T21:40:17.693Z: E6「判定の誠実さを守る」を突破。checks.jsで起動直前・記録直前の封印照合と中断時の無記録、runner.jsで全出力BLAME・シェル終了コード保持・終了後1秒の子孫停止・NODE_TEST_CONTEXT除去、store.jsで中断可能なロック待機を実装。E6の15件とE2/E3の12件が成功し、ロック待機中の3シグナルをcheck/stamp両APIで模擬検証（6件成功）。宣言は --no-boss で成功。次はE7（契約§24）。E7は未着手。
+  seq 136 2026-10-16T21:33:41.004Z: GM: 第4章 §24.2（amend の地図のパスはカレント基準）に合わせて E4 の判定の呼び出しを直し、封印し直した。E4 の中身の意図は変えていない
+  seq 75 2026-10-16T07:06:39.266Z: E5 突破（出撃/帰還/願いの記録）。実装は src/engine/sortie.js（recordSortie/recordReturn/recordWish と sortieStatus）、view.js（characters[].sortie・sorties とログ日本語）、brief.js、src/commands/{sortie,return,wish}.js。再生（reduceEvent）は wish/sortie/returned を無視するので盤面の状態は変わらない。出撃中は sortie の seq を data.sortie に持つ returned が無いこと。CLI の既定 actor は --as > MASUME_ACTOR > API既定(party/party/gm)。次は G3 で仲間待ち。
+  seq 67 2026-10-16T07:04:13.953Z: 出撃: Sonnet（claude-sonnet-5-5）の子セッションがこのキャラクターを演じる
+  seq 47 2026-10-16T06:15:54.269Z: GM: GM の依頼で書記の縄張り src/engine/map.js の validateMap を直した。CONTRACTS §2 の例外: キャラクターが1人だけの地図で、quest.goal のゲートがその1人の道にあれば E_GATE_MEMBERS にしない。goal 以外のゲート・2人以上の地図のあがりは従来どおり2人以上。ゲームの進行（ready・ボス戦・巻き戻し）はそのままで1人のゲートでも動く。判定は tests/e2e/SOLO.test.mjs（GOAL がまとめて走らせる）。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: なわぼ ごぶざ まぢま じわお（seq 170）
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+exec
+/bin/zsh -lc "node \"/Users/amano/dev/masume/bin/masume.js\" note engine 'E7「地図と記録の作法を正す」を突破。契約§24の6項目を実装: 突破済みゲートのメンバー変更拒否、amendのカレント基準、noteのepoch据え置き、seal --allの保留表示、ゲート封印破りのログ文、new --forceのLinear/Jira対応表保持。変更はsrc/engine/{game,state,view}.jsとsrc/commands/{amend,seal}.js。素振りE7は8件、回帰E1/E4は12件成功。--no-bossの宣言seq 170は累積E6 15件・E7 8件成功。G6で軍師待ち。ボス戦は軍師に委ね、次のマスは未着手。' --as engine --dir \"/Users/amano/dev/masume\"" in /Users/amano/dev/masume
+ succeeded in 0ms:
+engine の日誌を記録しました（seq 171）
+
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+codex
+## 報告書 書記 E7
+
+- 変更したファイル: [game.js](/Users/amano/dev/masume/src/engine/game.js)、[state.js](/Users/amano/dev/masume/src/engine/state.js)、[view.js](/Users/amano/dev/masume/src/engine/view.js)、[amend.js](/Users/amano/dev/masume/src/commands/amend.js)、[seal.js](/Users/amano/dev/masume/src/commands/seal.js)。契約§24の6項目を実装しました。
+- 判定の結果: `判定成功: engine が E7 を突破しました`（seq 170）。累積判定はE6が15件、E7が8件成功・失敗0。回帰判定E1・E4も12件成功しました。
+- 申し送り: 日誌をseq 171に記録しました。`brief`でG6・軍師待ちを確認し、停止しました。ボス戦は未実行です。
+- GMへの依頼: ありません。
+diff --git a/src/commands/amend.js b/src/commands/amend.js
+index 8486913979e4135b588e5eba924c3c1f728d9682..b01a2395cf2cdf4092984596701d2a7729022f92
+--- a/src/commands/amend.js
++++ b/src/commands/amend.js
+@@ -1,11 +1,12 @@
++import { resolve } from 'node:path';
+ import { amend } from '../engine/index.js';
+ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+ 
+ export async function run(argv, ctx) {
+   const command = parseArgs(argv, ctx);
+-  const { args, options, actor } = command;
++  const { args, options, actor, cwd } = command;
+   if (args.length !== 1) usage('つかいかた: amend <map>');
+-  const result = amend(gameRoot(command), args[0], { actor });
++  const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
+   if (options.json) console.log(JSON.stringify(result));
+   else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+   return 0;
+diff --git a/src/commands/seal.js b/src/commands/seal.js
+index 80955f718d2c296ba8e8d11f4930887faff7602f..65b97772ccc5baf0369deb3b68ab3f1378b9e6e1
+--- a/src/commands/seal.js
++++ b/src/commands/seal.js
+@@ -9,6 +9,9 @@
+   }
+   const result = seal(gameRoot(command), options.all ? 'all' : args, { actor });
+   if (options.json) console.log(JSON.stringify(result));
+-  else console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++  else {
++    console.log(`${result.events.length}マスの判定ファイルを封印しました`);
++    if (result.pending.length > 0) console.log(`保留: ${result.pending.join('、')}`);
++  }
+   return 0;
+ }
+diff --git a/src/engine/game.js b/src/engine/game.js
+index 7e674c03548da40be766bba8ec9a7fe22598ef79..a6e67d07e22d853d88935f424d4bf26ed28eb27c
+--- a/src/engine/game.js
++++ b/src/engine/game.js
+@@ -5,7 +5,7 @@
+ import { findJumon, headOf } from './jumon.js';
+ import { readMapFile, validateMap } from './map.js';
+ import { containedFile, logFile } from './paths.js';
+-import { isSealed, replay, sealFiles } from './state.js';
++import { gateMembers, isSealed, replay, sealFiles } from './state.js';
+ import {
+   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+ } from './store.js';
+@@ -62,8 +62,11 @@
+   return withLock(root, actor, () => {
+     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
+     if (force) {
++      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
+       for (const entry of readdirSync(directory)) {
+-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
++        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
++          rmSync(resolve(directory, entry), { recursive: true, force: true });
++        }
+       }
+     }
+     mkdirSync(resolve(directory, 'maps'), { recursive: true });
+@@ -89,13 +92,13 @@
+     const ids = nodeIds === 'all'
+       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
+       : [...new Set(nodeIds)];
+-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
+-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
++    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
+     const specifications = collectSeals(root, map, ids, {
+-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
++      skipMissing: () => nodeIds === 'all',
+     });
+     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
+-    return { events };
++    const sealed = new Set(events.map(({ data }) => data.node));
++    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
+   });
+ }
+ 
+@@ -128,13 +131,21 @@
+       }
+     }
+   }
++  for (const [id, node] of Object.entries(state.map.nodes)) {
++    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
++    const previous = gateMembers(state, id);
++    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
++    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
++      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
++    }
++  }
+ }
+ 
+ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
+   root = resolve(root);
+   return withLock(root, actor, () => {
+     const snapshot = requireHealthy(inspectLog(root));
+-    const map = readMapFile(resolve(root, mapPath));
++    const map = readMapFile(mapPath);
+     const validation = validateMap(map);
+     if (!validation.ok) {
+       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors
+
+tokens used
+80,136
+## 報告書 書記 E7
+
+- 変更したファイル: [game.js](/Users/amano/dev/masume/src/engine/game.js)、[state.js](/Users/amano/dev/masume/src/engine/state.js)、[view.js](/Users/amano/dev/masume/src/engine/view.js)、[amend.js](/Users/amano/dev/masume/src/commands/amend.js)、[seal.js](/Users/amano/dev/masume/src/commands/seal.js)。契約§24の6項目を実装しました。
+- 判定の結果: `判定成功: engine が E7 を突破しました`（seq 170）。累積判定はE6が15件、E7が8件成功・失敗0。回帰判定E1・E4も12件成功しました。
+- 申し送り: 日誌をseq 171に記録しました。`brief`でG6・軍師待ちを確認し、停止しました。ボス戦は未実行です。
+- GMへの依頼: ありません。

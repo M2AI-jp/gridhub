@@ -16,7 +16,19 @@ export const HIGHLIGHT = {
 };
 
 export function hl(color) {
-  return HIGHLIGHT[color] || HIGHLIGHT.gray;
+  return own(HIGHLIGHT, color) || HIGHLIGHT.gray;
+}
+
+/** obj が自分で持っている key の値だけ返す（constructor・__proto__ などの名前でも Object の中身を拾わない） */
+export function own(obj, key) {
+  return obj != null && typeof obj === 'object' && Object.hasOwn(obj, key) ? obj[key] : undefined;
+}
+
+/** id で引ける表（プロトタイプなし。どんな id でも自分の値だけが返る） */
+export function byId(list) {
+  const map = Object.create(null);
+  for (const x of list || []) map[x.id] = x;
+  return map;
 }
 
 function hashString(s) {

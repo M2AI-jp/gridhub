@@ -28,35 +28,27 @@ function removeOwnedLock(file, identity) {
   }
 }
 
-// 公開 API は同期。待機は最大15秒、50msごと。判定コマンドはこの中で実行しない。
-export function withLock(root, actor, operation) {
-  const file = resolve(root, '.masume', 'lock');
-  const deadline = Date.now() + 15_000;
-  let descriptor;
-  let identity;
-  for (;;) {
+function tryLock(file) {
+  try {
+    const descriptor = openSync(file, 'wx');
+    return { descriptor, identity: fstatSync(descriptor) };
+  } catch (error) {
+    if (error.code === 'ENOENT') throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません');
+    if (error.code !== 'EEXIST') throw error;
     try {
-      descriptor = openSync(file, 'wx');
-      identity = fstatSync(descriptor);
-      break;
-    } catch (error) {
-      if (error.code === 'ENOENT') throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません');
-      if (error.code !== 'EEXIST') throw error;
-      try {
-        const old = lstatSync(file);
-        if (Date.now() - old.mtimeMs >= 30_000) {
-          const current = lstatSync(file);
-          if (sameFile(old, current) && current.mtimeMs === old.mtimeMs) unlinkSync(file);
-        }
-      } catch (staleError) {
-        if (staleError.code !== 'ENOENT') throw staleError;
+      const old = lstatSync(file);
+      if (Date.now() - old.mtimeMs >= 30_000) {
+        const current = lstatSync(file);
+        if (sameFile(old, current) && current.mtimeMs === old.mtimeMs) unlinkSync(file);
       }
-      if (Date.now() >= deadline) {
-        throw new MasumeError('E_CONFLICT', '書き込みロックを15秒以内に取得できませんでした');
-      }
-      Atomics.wait(sleepBuffer, 0, 0, 50);
+    } catch (staleError) {
+      if (staleError.code !== 'ENOENT') throw staleError;
     }
+    return null;
   }
+}
+
+function runLocked(file, { descriptor, identity }, actor, operation) {
   try {
     writeFileSync(descriptor, JSON.stringify({ pid: process.pid, actor, ts: new Date().toISOString() }));
     fsyncSync(descriptor);
@@ -67,6 +59,36 @@ export function withLock(root, actor, operation) {
     } finally {
       removeOwnedLock(file, identity);
     }
+  }
+}
+
+// 同期 API 用。待機は最大15秒、50msごと。判定コマンドはこの中で実行しない。
+export function withLock(root, actor, operation) {
+  const file = resolve(root, '.masume', 'lock');
+  const deadline = Date.now() + 15_000;
+  for (;;) {
+    const lock = tryLock(file);
+    if (lock) return runLocked(file, lock, actor, operation);
+    if (Date.now() >= deadline) {
+      throw new MasumeError('E_CONFLICT', '書き込みロックを15秒以内に取得できませんでした');
+    }
+    Atomics.wait(sleepBuffer, 0, 0, 50);
+  }
+}
+
+// check/stamp の待機ではシグナルを受け取れるようにする。取得後の操作は同期。
+export async function withLockAsync(root, actor, operation, requireRunning) {
+  const file = resolve(root, '.masume', 'lock');
+  const deadline = Date.now() + 15_000;
+  await new Promise((resolve) => setImmediate(resolve));
+  for (;;) {
+    requireRunning();
+    const lock = tryLock(file);
+    if (lock) return runLocked(file, lock, actor, operation);
+    if (Date.now() >= deadline) {
+      throw new MasumeError('E_CONFLICT', '書き込みロックを15秒以内に取得できませんでした');
+    }
+    await new Promise((resolve) => setTimeout(resolve, 50));
   }
 }
 

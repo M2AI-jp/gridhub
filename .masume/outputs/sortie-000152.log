@@ -1,0 +1,5 @@
+語り部（Claude Sonnet サブエージェント）Q3 の報告
+宣言判定: 突破（seq 166）。GOAL4 で待機。日誌 seq 167。
+変更: src/quest/adapter.js, src/quest/index.js, src/quest/setup.js, src/commands/init.js
+素振り: Q1+Q2+Q3 18/18、G5・S4・S5 も通過。GM の再確認: Q3 11/11。
+契約の解釈（GM 了承）: 前回の地図が正しく警告（判定ファイル不足）だけのやり直しは、地図の書き直しを求めない。MASUME_GM_TIMEOUT が 0 以下・数でないときは既定 1800 秒。

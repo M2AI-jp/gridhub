@@ -31,7 +31,10 @@ function logEntry(event, map) {
   switch (event.type) {
     case 'genesis': text = '冒険の書がひらかれた'; break;
     case 'sealed': text = `${node} の判定ファイルが封印された`; break;
-    case 'seal_broken': text = `${name} が ${node} の封印破りを見つけた`; break;
+    case 'seal_broken':
+      text = character === null ? `${node} の封印が破れていた`
+        : `${name} が ${node} の封印破りを見つけた`;
+      break;
     case 'check_passed':
       ok = true;
       text = `${name} が ${node} の判定に成功した`;

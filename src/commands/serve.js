@@ -44,6 +44,7 @@ export async function run(argv, ctx) {
     const cleanup = () => {
       process.off('SIGINT', shutdown);
       process.off('SIGTERM', shutdown);
+      process.off('SIGHUP', shutdown);
     };
     const shutdown = () => {
       if (stopping) return;
@@ -58,6 +59,7 @@ export async function run(argv, ctx) {
     };
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
+    process.on('SIGHUP', shutdown);
     console.log(`盤面: ${running.url}`);
     if (lobby) console.log('冒険の書はまだありません。盤面の入口で願いを書いて、冒険をはじめてください。');
   });

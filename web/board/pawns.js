@@ -1,7 +1,7 @@
 // 駒。状態が変わったら、道に沿ってマスごとに跳ねて進む（戻されるときは引きずられて戻る）。
 import { pawnPoint, walkPoints, U } from './layout.js';
 import { spriteMarkup } from './render.js';
-import { esc, hl } from './sketch.js';
+import { esc, hl, own } from './sketch.js';
 
 const SIZE = 3.3 * U; // 駒の大きさ（約53px）
 
@@ -30,14 +30,15 @@ export function pawnMarkup(c, sprites) {
 
 /** 駒の座標（同じ場所に何人もいたら少しずらす） */
 function targets(view, lay) {
-  const pts = {};
-  const seen = {};
+  const pts = Object.create(null); // キャラIDが constructor などでも自分の値だけ
+  const seen = new Map();
   for (const c of view.characters) {
     let p = pawnPoint(view, lay, c);
-    const n = view.nodes[c.at];
+    const n = own(view.nodes, c.at);
     if (n && n.type === 'gate') p = { x: p.x - 0.6 * U, y: p.y };
     const key = `${Math.round(p.x)}:${Math.round(p.y)}`;
-    const k = (seen[key] = (seen[key] || 0) + 1) - 1;
+    const k = seen.get(key) || 0;
+    seen.set(key, k + 1);
     pts[c.id] = { x: p.x + k * 0.9 * U, y: p.y + 0.9 * U };
   }
   return pts;
@@ -79,7 +80,7 @@ export class Pawns {
       if (before && from && (before.pos !== c.pos || before.at !== c.at)) {
         const back = c.pos < before.pos;
         const route = walkPoints(view, lay, c, before.pos, c.pos).map((p) => {
-          const n = view.nodes[c.path[Math.min(c.pos, c.path.length - 1)]];
+          const n = own(view.nodes, c.path[Math.min(c.pos, c.path.length - 1)]);
           return { x: p.x - (n?.type === 'gate' ? 0.6 * U : 0), y: p.y + 0.9 * U };
         });
         route[0] = from;

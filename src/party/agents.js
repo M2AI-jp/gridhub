@@ -152,6 +152,8 @@ export function launch({ agent, root, env, prompt, timeoutMs }) {
     }
     if (stopReason === 'timeout') notes.push(`（制限時間 ${Math.round(timeoutMs / 1000)} 秒を超えたので止めました）`);
     if (stopReason === 'interrupt') notes.push('（パーティが中断したので止めました）');
+    // 止めたときは、SIGTERM を無視する孫を残さない（最後に必ず、グループごと SIGKILL）
+    if (stopReason) killGroup('SIGKILL');
     const body = capture.toBuffer();
     const tailNote = notes.length ? Buffer.from(`${body.length && body[body.length - 1] !== 10 ? '\n' : ''}${notes.join('\n')}\n`) : Buffer.alloc(0);
     // パイプを握ったままの孫が残っていないように
@@ -186,6 +188,8 @@ export function launch({ agent, root, env, prompt, timeoutMs }) {
 
   child.on('exit', (status, signal) => {
     exitInfo = { status, signal };
+    // 止めている最中に本体が先に終わったら、SIGTERM を無視する孫がいても、ここで片付ける
+    if (stopReason) killGroup('SIGKILL');
     // 本体が終わったのにパイプが閉じない = 背景に残った孫がいる。少し待って片付ける。
     later(() => {
       killGroup('SIGKILL');
@@ -204,11 +208,13 @@ export function launch({ agent, root, env, prompt, timeoutMs }) {
   function stop(why, { force = false } = {}) {
     if (settled) return;
     stopReason ??= why;
-    killGroup(force ? 'SIGKILL' : 'SIGTERM');
+    // 本体がもう終わっているなら、猶予は要らない（残っているのは孫だけ）
+    const now = force || exitInfo !== null;
+    killGroup(now ? 'SIGKILL' : 'SIGTERM');
     later(() => {
       killGroup('SIGKILL');
       later(finish, 1000);
-    }, force ? 0 : TERM_GRACE_MS);
+    }, now ? 0 : TERM_GRACE_MS);
   }
 
   return { done, stop, pid: child.pid ?? null };

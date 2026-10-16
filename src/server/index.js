@@ -1,5 +1,4 @@
 import { createServer as createHttpServer } from 'node:http';
-import { spawn } from 'node:child_process';
 import { existsSync, mkdirSync, watchFile as watchPath, unwatchFile } from 'node:fs';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -16,6 +15,13 @@ const MIME = {
   '.png': 'image/png',
   '.woff2': 'font/woff2',
   '.txt': 'text/plain; charset=utf-8',
+};
+
+const MAX_POST_BYTES = 64 * 1024;
+const SECURITY_HEADERS = {
+  'X-Frame-Options': 'DENY',
+  'Content-Security-Policy': "frame-ancestors 'none'",
+  'X-Content-Type-Options': 'nosniff',
 };
 
 function send(response, status, body, contentType, headers = {}) {
@@ -45,6 +51,14 @@ function apiError(code, message, status) {
 }
 
 const badRequest = (message) => apiError('E_USAGE', message, 400);
+
+function rejectLargeBody(request, response) {
+  // 本文の残りを待たずに応答し、413 を送ってから接続を閉じる。
+  request.pause();
+  response.setHeader('Connection', 'close');
+  response.once('finish', () => request.destroy());
+  sendError(response, 413, apiError('E_TOO_LARGE', 'POST の本文は 64KB までです'));
+}
 
 const GMS = ['claude', 'codex']; // HTTP から cmd: は受け付けない（任意のコマンド実行になるため）
 const MODEL_PATTERN = /^[A-Za-z0-9][\w.:@/+[\]-]{0,99}$/u;
@@ -263,7 +277,16 @@ export function createServer({
     let value;
     try {
       const chunks = [];
-      for await (const chunk of request) chunks.push(chunk);
+      let size = 0;
+      // 上限で抜けても、413 を送り終わる前にソケットを壊さない。
+      for await (const chunk of request.iterator({ destroyOnReturn: false })) {
+        size += chunk.length;
+        if (size > MAX_POST_BYTES) {
+          rejectLargeBody(request, response);
+          return;
+        }
+        chunks.push(chunk);
+      }
       const text = Buffer.concat(chunks).toString('utf8');
       body = route.optionalBody && !text.trim() ? {} : JSON.parse(text);
     } catch {
@@ -364,6 +387,11 @@ export function createServer({
   }
 
   const server = createHttpServer((request, response) => {
+    for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.setHeader(name, value);
+    if (request.method === 'POST' && Number(request.headers['content-length']) > MAX_POST_BYTES) {
+      rejectLargeBody(request, response);
+      return;
+    }
     handleRequest(request, response).catch((error) => {
       sendError(response, 500, error);
     });
@@ -412,26 +440,37 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const partyLog = join(gameRoot, '.masume', 'party.log');
   const quest = new ChildJob();
   const party = new ChildJob();
+  const battles = new Map();
+  let shuttingDown = false;
 
+  const requireOpen = () => {
+    if (shuttingDown) throw apiError('E_BUSY', '窓口を閉じています');
+  };
   const hasGame = () => existsSync(engine.logFile(gameRoot));
   const requireGame = () => {
     if (!hasGame()) throw apiError('E_NO_GAME', '冒険の書がまだありません。入口で願いを書いて冒険をはじめてください');
   };
 
   function startBattle(gate) {
+    requireOpen();
+    if (battles.has(gate)) throw apiError('E_BUSY', 'この結合ゲートはボス戦の最中です');
+    const battle = new ChildJob();
+    // 起動を待つ前に予約し、ハンコと /api/battle からの同時起動も防ぐ。
+    battles.set(gate, battle);
     // 判定の終了は待たない。子プロセスが冒険の書に結果を記録し、SSE が通知する。
-    return new Promise((resolveSpawn, rejectSpawn) => {
-      const child = spawn(process.execPath, [bin, 'check', gate, '--dir', gameRoot, '--as', 'gm'], {
-        cwd: gameRoot,
-        stdio: 'ignore',
-        detached: true,
+    try {
+      const started = battle.start([bin, 'check', '--dir', gameRoot, '--as', 'gm', '--', gate], { cwd: gameRoot });
+      battle.exited.then(() => {
+        if (battles.get(gate) === battle) battles.delete(gate);
       });
-      child.once('error', rejectSpawn);
-      child.once('spawn', () => {
-        child.unref();
-        resolveSpawn();
+      return started.catch((error) => {
+        if (battles.get(gate) === battle) battles.delete(gate);
+        throw error;
       });
-    });
+    } catch (error) {
+      battles.delete(gate);
+      throw error;
+    }
   }
 
   const job = (running, code, file) => async () => ({
@@ -454,6 +493,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       return file == null ? null : readFile(file, 'utf8');
     },
     onStamp: async ({ node, as }) => {
+      requireOpen();
       requireGame();
       const result = await engine.stamp(gameRoot, node, { actor: as, as, boss: false });
       const ready = result.ready ?? null;
@@ -461,7 +501,9 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       return { ok: true, ready };
     },
     onBattle: async ({ gate }) => {
+      requireOpen();
       requireGame();
+      if (battles.has(gate)) throw apiError('E_BUSY', 'この結合ゲートはボス戦の最中です');
       const view = await engine.buildView(gameRoot);
       if (!view.integrity.ok) throw apiError('E_CURSED', '冒険の書が呪われています');
       if (view.nodes[gate]?.type !== 'gate') throw apiError('E_UNKNOWN', 'その結合ゲートはありません');
@@ -475,6 +517,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     // ---- 入口（語り部）----
     onQuest: async ({ wish, gm, model }) => {
       // 確認から起動までに await を挟まない（同時に2つ起こさないため）
+      requireOpen();
       if (hasGame() || existsSync(join(gameRoot, '.masume'))) {
         throw apiError('E_EXISTS', 'ここにはもう冒険の書があります');
       }
@@ -493,6 +536,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
 
     // ---- 出撃（軍師）----
     onSortie: async ({ agent, model, parallel, only }) => {
+      requireOpen();
       requireGame();
       if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
       if (only !== undefined) {
@@ -502,6 +546,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
         // view を待つあいだに、別の出撃が始まっていないか確かめ直す
         if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
       }
+      requireOpen();
       const args = [
         bin, 'party', '--dir', gameRoot, '--agent', agent,
         ...(model ? ['--model', model] : []),
@@ -520,10 +565,11 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     onPartyStop: () => ({ ok: true, stopped: party.interrupt() }),
   });
 
-  // 伝令が突然終わるときも、子（語り部・軍師）を置き去りにしない（最後の手段。待てないので SIGINT を送るだけ）
+  // 伝令が突然終わるときも、子を置き去りにしない（最後の手段。待てないので SIGINT を送るだけ）
   const onExit = () => {
     quest.interruptNow();
     party.interruptNow();
+    for (const battle of battles.values()) battle.interruptNow();
   };
   process.once('exit', onExit);
 
@@ -551,7 +597,9 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const stopHttp = server.stop;
   let stopping;
   const stop = () => {
-    stopping ??= Promise.all([stopHttp(), quest.terminate(), party.terminate()])
+    shuttingDown = true;
+    stopping ??= Promise.all([stopHttp(), quest.terminate(), party.terminate(),
+      ...[...battles.values()].map((battle) => battle.terminate())])
       .then(() => {})
       .finally(() => process.off('exit', onExit));
     return stopping;
@@ -559,7 +607,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   server.stop = stop;
 
   const actualPort = server.address().port;
-  const urlHost = host.includes(':') ? `[${host}]` : host;
+  const urlHost = host === '0.0.0.0' || host === '::' ? '127.0.0.1' : host.includes(':') ? `[${host}]` : host;
   return {
     server,
     url: `http://${urlHost}:${actualPort}/`,

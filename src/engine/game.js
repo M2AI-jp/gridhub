@@ -5,7 +5,7 @@ import { MasumeError } from './errors.js';
 import { findJumon, headOf } from './jumon.js';
 import { readMapFile, validateMap } from './map.js';
 import { containedFile, logFile } from './paths.js';
-import { isSealed, replay, sealFiles } from './state.js';
+import { gateMembers, isSealed, replay, sealFiles } from './state.js';
 import {
   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
 } from './store.js';
@@ -62,8 +62,11 @@ export function newGame(root, mapPath, { actor = defaultActor(), force = false }
   return withLock(root, actor, () => {
     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
     if (force) {
+      // 同期先の issue との対応は、冒険の書を作り直しても引き継ぐ。
       for (const entry of readdirSync(directory)) {
-        if (entry !== 'lock') rmSync(resolve(directory, entry), { recursive: true, force: true });
+        if (!['lock', 'linear.json', 'jira.json'].includes(entry)) {
+          rmSync(resolve(directory, entry), { recursive: true, force: true });
+        }
       }
     }
     mkdirSync(resolve(directory, 'maps'), { recursive: true });
@@ -89,13 +92,13 @@ export function seal(root, nodeIds, { actor = defaultActor() } = {}) {
     const ids = nodeIds === 'all'
       ? Object.keys(map.nodes).filter((id) => sealFiles(map.nodes[id]).length > 0)
       : [...new Set(nodeIds)];
-    // --all は未封印で材料がまだないマスを保留し、準備済みのマスを封印する。
-    // 個別指定や封印済みファイルの欠落は、全件の追記を中止する。
+    // --all は材料がそろわないマスを保留する。個別指定なら全件の追記を中止する。
     const specifications = collectSeals(root, map, ids, {
-      skipMissing: (id) => nodeIds === 'all' && !isSealed(map.nodes[id], state.nodes[id].files),
+      skipMissing: () => nodeIds === 'all',
     });
     const events = appendEventsLocked(root, specifications, { actor, previous: snapshot.events.at(-1) });
-    return { events };
+    const sealed = new Set(events.map(({ data }) => data.node));
+    return { events, pending: nodeIds === 'all' ? ids.filter((id) => !sealed.has(id)) : [] };
   });
 }
 
@@ -128,13 +131,21 @@ function requireSameHistory(state, map) {
       }
     }
   }
+  for (const [id, node] of Object.entries(state.map.nodes)) {
+    if (node.type !== 'gate' || !state.nodes[id].cleared) continue;
+    const previous = gateMembers(state, id);
+    const next = new Set(map.characters.filter(({ path }) => path.includes(id)).map(({ id }) => id));
+    if (previous.length !== next.size || previous.some((member) => !next.has(member))) {
+      reject(`突破済みのゲートのメンバーは変更できません: ${id}`);
+    }
+  }
 }
 
 export function amend(root, mapPath, { actor = defaultActor() } = {}) {
   root = resolve(root);
   return withLock(root, actor, () => {
     const snapshot = requireHealthy(inspectLog(root));
-    const map = readMapFile(resolve(root, mapPath));
+    const map = readMapFile(mapPath);
     const validation = validateMap(map);
     if (!validation.ok) {
       throw new MasumeError('E_INVALID_MAP', `地図が不正です\n${validation.errors

@@ -323,7 +323,7 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(29, 43, 92,
 @keyframes blink { 50% { opacity: 0.3; } }
 
 /* ---------- トースト ---------- */
-#toast { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 5; pointer-events: none; width: min(560px, calc(100% - 40px)); }
+#toast { position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 6px; z-index: 8; pointer-events: none; width: min(560px, calc(100% - 40px)); }
 .toast {
   display: flex;
   align-items: center;
@@ -510,6 +510,19 @@ body.finished .cover { background-color: #3a2a1f; }
 .notice-card pre { background: var(--cover); color: #eef6fa; padding: 10px 14px; border-radius: 6px; font-family: var(--mono); font-size: 12.5px; overflow: auto; }
 .notice-code { font-family: var(--mono); font-size: 11.5px; color: var(--ink-soft); }
 
+/* 冒険の書が読めない・鎖が切れている（盤面の上の帯。盤面は覆わない） */
+#curse {
+  position: absolute; top: 10px; left: 50%; transform: translateX(-50%) rotate(-0.6deg); z-index: 6;
+  width: min(560px, calc(100% - 32px)); background: #fff; border: 2px solid var(--red); border-radius: 8px;
+  padding: 10px 16px; box-shadow: 4px 4px 0 rgba(200, 40, 40, 0.18); line-height: 1.6;
+}
+#curse strong { font-family: var(--hand); font-size: 18px; color: var(--red); }
+#curse p { margin: 4px 0; font-size: 13px; }
+#curse code { font-family: var(--mono); background: var(--cover); color: #eef6fa; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+#curse small { display: block; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); overflow-wrap: anywhere; }
+body.in-lobby #curse { display: none; }
+@keyframes sheetin { from { transform: translateY(24px); opacity: 0; } }
+
 /* ---------- 狭い画面 ---------- */
 @media (max-width: 1360px) {
   :root { --party-w: 236px; --side-w: 300px; }
@@ -532,6 +545,13 @@ body.finished .cover { background-color: #3a2a1f; }
   .party-foot { display: none; }
   #stage { order: 2; height: 62vh; }
   #side { order: 3; height: 60vh; }
+  /* 詳細は画面の下からせり上がる紙（どこを選んでも画面の中に出る） */
+  #drawer {
+    position: fixed; inset: auto 0 0 0; max-height: min(72vh, 620px); z-index: 30;
+    border-top: 2px solid var(--ink); border-radius: 14px 14px 0 0;
+    box-shadow: 0 -10px 28px rgba(29, 43, 92, 0.28); padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: sheetin 0.25s ease-out;
+  }
   .legend { display: none; }
   #ledger { padding: 16px; }
   .ledger td.ms, .ledger th:nth-child(4) { display: none; }

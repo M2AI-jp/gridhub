@@ -76,7 +76,8 @@ export function layout(view) {
       if (indeg.get(s) === 0) queue.push(s);
     }
   }
-  for (const id of Object.keys(nodes)) if (!topo.includes(id)) topo.push(id); // 閉路があっても描けるように
+  const placed = new Set(topo);
+  for (const id of Object.keys(nodes)) if (!placed.has(id)) topo.push(id); // 閉路があっても描けるように
 
   // 縦の占有範囲（行の番号）
   const rows = (id) => {
@@ -88,7 +89,7 @@ export function layout(view) {
 
   const occupied = new Map(); // col -> [[lo, hi], …]
   const collides = (col, [lo, hi]) => (occupied.get(col) || []).some(([a, b]) => !(hi < a || lo > b));
-  const pos = {};
+  const pos = Object.create(null); // マスIDが constructor などでも、自分の値だけを見る
   for (const id of topo) {
     let col = 0;
     for (const p of preds.get(id)) if (pos[p]) col = Math.max(col, pos[p].col + 1);
@@ -109,7 +110,7 @@ export function layout(view) {
   }
 
   const cols = Math.max(0, ...Object.values(pos).map((p) => p.col)) + 1;
-  const lanes = {};
+  const lanes = Object.create(null);
   for (const c of chars) lanes[c.id] = { index: laneIndex.get(c.id), y: laneY(laneIndex.get(c.id)) };
   const width = LEFT + HEAD_W + 2 * U + cols * COL_W + 4 * U;
   const height = TOP + order.length * LANE_H + 3 * U;
@@ -119,8 +120,8 @@ export function layout(view) {
 /** キャラクターがいる場所の座標（task はマスの上、gate は自分の道の高さ、あがりは goal の中） */
 export function pawnPoint(view, lay, c) {
   const lane = lay.lanes[c.id];
-  const at = c.at ?? view.quest.goal;
-  const p = lay.nodes[at];
+  const at = c.at ?? view.quest?.goal;
+  const p = at != null ? lay.nodes[at] : undefined;
   if (!p) return { x: LEFT + HEAD_W - U, y: lane.y };
   const n = view.nodes[at];
   if (n.type === 'gate' || c.status === 'done') return { x: p.x, y: lane.y };
@@ -136,7 +137,7 @@ export function walkPoints(view, lay, c, fromPos, toPos) {
     const p = lay.nodes[id];
     if (!p) continue;
     const n = view.nodes[id];
-    pts.push(n.type === 'gate' ? { x: p.x, y: lay.lanes[c.id].y } : { x: p.x, y: p.y });
+    pts.push(n?.type === 'gate' ? { x: p.x, y: lay.lanes[c.id].y } : { x: p.x, y: p.y });
   }
   return pts;
 }

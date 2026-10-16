@@ -5,11 +5,15 @@ import { Pawns } from './pawns.js';
 import { renderParty, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
 import { initCommand, showLobby, hideLobby, pollParty, noteSorties } from './command.js';
+import { own } from './sketch.js';
 
 const params = new URLSearchParams(location.search);
-const FIXTURE = params.get('fixture');
-const SCRIPT = params.get('script');
-const LIVE = !FIXTURE;
+// 見本と台本の名前は、この形のときだけ使う（URL の文字列をそのまま取りに行かない・描かない。§29.1）
+const SAFE_NAME = /^[A-Za-z0-9_-]+$/;
+const safeName = (s) => (s != null && SAFE_NAME.test(s) ? s : null);
+const FIXTURE = safeName(params.get('fixture'));
+const SCRIPT = safeName(params.get('script'));
+const LIVE = !params.has('fixture');
 
 const $ = (sel) => document.querySelector(sel);
 const svg = $('#board');
@@ -55,10 +59,10 @@ function ensureSvg() {
 }
 
 function freshMap(prev, view) {
-  const fresh = {};
+  const fresh = Object.create(null);
   if (!prev) return fresh;
   for (const [id, n] of Object.entries(view.nodes)) {
-    const before = prev.nodes[id]?.state;
+    const before = own(prev.nodes, id)?.state;
     if (before === n.state) continue;
     if (n.state === 'cleared') fresh[id] = 'clear';
     else if (n.state === 'stale') fresh[id] = 'erase';
@@ -67,14 +71,28 @@ function freshMap(prev, view) {
   return fresh;
 }
 
-function render(view) {
+/** 伝令から来たビューの形を整える（冒険の書が読めないときは head・quest が null で、配列が空のこともある。§29.2） */
+function normalizeView(v) {
+  const view = v && typeof v === 'object' ? { ...v } : {};
+  view.characters = Array.isArray(view.characters) ? view.characters : [];
+  view.nodes = view.nodes && typeof view.nodes === 'object' && !Array.isArray(view.nodes) ? view.nodes : {};
+  view.log = Array.isArray(view.log) ? view.log : [];
+  if (!view.head || typeof view.head !== 'object') view.head = null;
+  if (!view.quest || typeof view.quest !== 'object') view.quest = null;
+  return view;
+}
+const seqOf = (v) => (Number.isInteger(v?.head?.seq) ? v.head.seq : -1);
+
+function render(input) {
   ensureSvg();
+  const view = normalizeView(input);
   const prev = state.view;
   const prevLay = state.lay;
   const lay = layout(view);
   state.prev = prev;
   state.view = view;
   state.lay = lay;
+  if (view.head) seenHeads.set(view.head.seq, view.head.hash);
   const fresh = freshMap(prev, view);
   const sel = state.selected?.kind === 'node' ? state.selected.id : null;
   $('#paper-layer').innerHTML = paper(view, lay);
@@ -82,26 +100,56 @@ function render(view) {
   $('#head-layer').innerHTML = laneHeads(view, lay, state.sprites);
   $('#node-layer').innerHTML = nodesLayer(view, lay, { fresh, selected: sel });
   pawns.update(view, lay, state.sprites, prev, prevLay);
+  // 盤面の大きさが変わったら（呪われた空の盤面から戻ったときなど）、自分で動かしていなければ合わせ直す
   if (!state.cam) fitCamera({ whole: false });
+  else if (state.cam.auto && (prevLay?.width !== lay.width || prevLay?.height !== lay.height)) fitCamera({ whole: state.cam.auto === 'whole' });
   else applyCamera();
 
   $('#party-list-wrap').innerHTML = renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null);
-  $('#log').innerHTML = renderLog(view, prev ? prev.head.seq : -1);
+  $('#log').innerHTML = renderLog(view, prev ? seqOf(prev) : -1);
   $('#ledger').innerHTML = renderLedger(view, state.sprites);
   $('#jumon').textContent = view.head?.jumon || '—';
   $('#jumon').dataset.seq = view.head?.seq ?? '';
-  const ok = view.integrity?.ok !== false;
+  const ok = view.integrity?.ok !== false && !!view.head && !!view.quest;
   const integ = $('#integrity');
   integ.dataset.ok = String(ok);
   integ.textContent = ok ? 'セーブ正常' : '呪われています';
-  integ.title = ok ? 'ハッシュの鎖は正常です' : (view.integrity.errors || []).map((e) => `seq ${e.seq} ${e.code}`).join('\n');
+  integ.title = ok ? 'ハッシュの鎖は正常です' : curseLines(view).join('\n');
+  renderCurse(view, ok);
   document.body.classList.toggle('finished', !!view.finished);
   document.title = `${view.finished ? '🏁 ' : ''}${view.quest?.title || 'マスメ'} — マスメ`;
   renderDrawer();
   noteSorties(view);
-  if (prev) announce(prev, view);
+  if (prev?.head && view.head && prev.quest?.id === view.quest?.id) announce(prev, view);
   window.__masume.ready = true;
   window.__masume.view = view;
+}
+
+function curseLines(view) {
+  const errors = Array.isArray(view.integrity?.errors) ? view.integrity.errors : [];
+  const lines = errors.slice(0, 3).map((e) => `seq ${e?.seq ?? '?'} ${e?.code ?? ''} ${e?.message ?? ''}`.trim());
+  if (!lines.length) lines.push(view.head ? '冒険の書の中身が読めません' : '冒険の書の先頭から読めません');
+  return lines;
+}
+
+/** 呪いの知らせ（盤面の上の帯。中身はすべてテキストとして入れる） */
+function renderCurse(view, ok) {
+  let el = $('#curse');
+  if (ok) return el?.remove();
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'curse';
+    el.setAttribute('role', 'alert');
+    $('#stage').appendChild(el);
+  }
+  const h = document.createElement('strong');
+  h.textContent = '☠ 冒険の書が呪われています';
+  const p = document.createElement('p');
+  const code = (t) => Object.assign(document.createElement('code'), { textContent: t });
+  p.append(code('masume verify'), ' で呪いの場所を確かめ、', code('masume repair'), ' で直してください（直すと、ここは消えます）。');
+  const detail = document.createElement('small');
+  detail.textContent = curseLines(view).join(' ／ ');
+  el.replaceChildren(h, p, detail);
 }
 
 function renderDrawer() {
@@ -127,7 +175,7 @@ function renderDrawer() {
 
 // ---- 演出（新しく書かれた冒険の書を読み上げる） ----
 function announce(prev, view) {
-  const news = (view.log || []).filter((e) => e.seq > prev.head.seq);
+  const news = (view.log || []).filter((e) => e.seq > seqOf(prev));
   if (!news.length) return;
   let tone = null;
   for (const e of news.slice(-3)) {
@@ -163,12 +211,20 @@ function celebrate(view) {
   setTimeout(() => el.remove(), 7000);
 }
 
+/** 知らせ。文字はすべてテキストとして入れる（HTML として解釈しない）。sticky なら自分では消えない */
 function toast(e) {
   const box = $('#toast');
   const el = document.createElement('div');
-  el.className = `toast ${e.ok === true ? 'ok' : e.ok === false ? 'ng' : 'info'} ${e.type || ''}`;
-  el.innerHTML = `<span class="toast-stamp">${e.ok === true ? (e.type === 'gate_cleared' || e.type === 'finish' ? '★' : '◎') : e.ok === false ? '✗' : '✎'}</span><span>${String(e.text).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c])}</span>`;
+  const type = String(e.type || '').replace(/[^\w-]/g, '');
+  el.className = `toast ${e.ok === true ? 'ok' : e.ok === false ? 'ng' : 'info'}${type ? ` ${type}` : ''}`;
+  const stamp = document.createElement('span');
+  stamp.className = 'toast-stamp';
+  stamp.textContent = e.ok === true ? (e.type === 'gate_cleared' || e.type === 'finish' ? '★' : '◎') : e.ok === false ? '✗' : '✎';
+  const text = document.createElement('span');
+  text.textContent = String(e.text ?? '');
+  el.append(stamp, text);
   box.appendChild(el);
+  if (e.sticky) return;
   setTimeout(() => el.classList.add('out'), 4200);
   setTimeout(() => el.remove(), 5000);
 }
@@ -328,9 +384,20 @@ async function post(path, body) {
     toast({ text: '見本の盤面なので記録はされません（masume serve で開くと本物のハンコが押せます）', ok: null });
     return null;
   }
-  const r = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-masume': '1' }, body: JSON.stringify(body) });
-  const j = await r.json().catch(() => ({}));
-  if (!r.ok || j.ok === false) toast({ text: `できませんでした: ${j.error || r.status}`, ok: false });
+  let r;
+  try {
+    r = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-masume': '1' }, body: JSON.stringify(body) });
+  } catch {
+    // つながらない・途中で切れた（§29.4）。呼んだ側はボタンを押せる状態に戻す
+    toast({ text: 'サーバーに届きません（masume serve が動いているか確かめてください）', ok: false });
+    return { ok: false, code: 'E_NETWORK', error: 'サーバーに届きません' };
+  }
+  const got = await r.json().catch(() => null);
+  const j = got && typeof got === 'object' ? got : {};
+  if (!r.ok || !got || j.ok === false) {
+    toast({ text: `できませんでした: ${j.error || `HTTP ${r.status}`}`, ok: false });
+    return { ...j, ok: false };
+  }
   return j;
 }
 
@@ -365,6 +432,7 @@ function setupInteractions() {
       t.disabled = true;
       const j = await post('api/battle', { gate: t.dataset.battle });
       if (j?.ok) toast({ text: `${t.dataset.battle} のボス戦が始まりました（結合E2Eを実行中）`, ok: null, type: 'battle' });
+      else t.disabled = false; // 始まらなかったら、もう一度押せるように
       return;
     }
     if (t.matches('#copy-jumon')) {
@@ -406,61 +474,110 @@ async function getJson(url) {
   return r.json();
 }
 
-function showNotice(body) {
+/** まだ何も描けていないときだけ出す、盤面の上のお知らせ（中身はすべてテキスト） */
+function showNotice(title, body) {
   let el = $('#notice');
   if (!el) {
     el = document.createElement('div');
     el.id = 'notice';
     $('#view-board').appendChild(el);
   }
-  const code = body?.code || 'E_UNKNOWN';
-  const msg = body?.error || '';
-  const help =
-    code === 'E_CURSED'
-      ? '<p>セーブデータ（ハッシュの鎖）が壊れています。<code>masume verify</code> で場所を確かめ、<code>masume repair</code> で直してください。</p>'
-      : '<p>このフォルダにはまだ冒険の書がありません。地図から始めましょう:</p><pre>masume new quests/tutorial/tutorial.map.json\nmasume serve</pre><p>「xxxのようなアプリを作りたい」から地図を作る手順は <code>docs/GM_GUIDE.md</code>。</p>';
-  el.innerHTML = `<div class="notice-card"><h2>${code === 'E_CURSED' ? '☠ 冒険の書が呪われています' : '冒険の書が見つかりません'}</h2><p class="notice-code">[${code}] ${msg.replace(/[&<>]/g, '')}</p>${help}</div>`;
+  const card = document.createElement('div');
+  card.className = 'notice-card';
+  const h = document.createElement('h2');
+  h.textContent = title;
+  const code = document.createElement('p');
+  code.className = 'notice-code';
+  code.textContent = body ? `[${String(body.code ?? 'E_UNKNOWN')}] ${String(body.error ?? '')}` : '';
+  const help = document.createElement('p');
+  help.textContent = 'masume serve が動いているか確かめてください。つながれば、ひとりでに盤面が出ます。';
+  card.append(h, code, help);
+  el.replaceChildren(card);
 }
 function hideNotice() {
   $('#notice')?.remove();
 }
 
-function setLive(mode, text) {
+function setLive(mode, text, title = '') {
   const el = $('#live');
   el.dataset.mode = mode;
   el.textContent = text;
+  el.title = title;
+}
+
+// 応答の順番（§29.5）: 後から出した読み込みの応答をもう描いていたら、先に出した分は描かない。
+// さらに、同じ冒険で今より古い head.seq のビューでは描き直さない
+let reqNo = 0;
+let appliedNo = 0;
+const seenHeads = new Map(); // 描いたことのある head.seq → hash（別の冒険の鎖かどうかを見分ける）
+let lastText = null; // 最後に描いた応答の本文。同じ中身なら描き直さない（開いている詳細や演出を崩さない）
+
+function isOlder(body) {
+  const cur = seqOf(state.view);
+  const seq = seqOf(body);
+  if (seq < 0 || cur < 0 || seq >= cur) return false;
+  if (body.quest?.id !== state.view.quest?.id) return false; // 別の冒険
+  const known = seenHeads.get(seq);
+  return known === undefined || known === body.head.hash; // 同じ鎖の昔の姿（または分からない）なら古い
+}
+
+function enterLobby() {
+  hideNotice();
+  renderCurse(null, true);
+  showLobby();
+  setLive('lobby', '入口');
+  window.__masume.ready = true;
+  window.__masume.lobby = true;
+  // 次に来る冒険は別の冒険（seq が小さくても描く）
+  state.view = null;
+  seenHeads.clear();
+  lastText = null;
 }
 
 let partyWatched = false;
 async function liveRefresh() {
+  const no = ++reqNo;
+  let r;
+  let text = '';
+  let body = null;
   try {
-    const r = await fetch('api/state', { cache: 'no-store' });
-    const body = await r.json().catch(() => null);
-    if (!r.ok) {
-      if (body?.code === 'E_NO_GAME') {
-        hideNotice();
-        showLobby();
-        setLive('lobby', '入口');
-        window.__masume.ready = true;
-        window.__masume.lobby = true;
-        return;
-      }
-      setLive('off', body?.code === 'E_CURSED' ? '冒険の書が呪われています' : '冒険の書が読めません');
-      showNotice(body);
-      return;
-    }
-    hideNotice();
-    hideLobby();
-    window.__masume.lobby = false;
-    if ($('#live').dataset.mode === 'lobby') setLive('live', 'ライブ');
-    render(body);
-    if (!partyWatched) {
-      partyWatched = true;
-      pollParty();
+    r = await fetch('api/state', { cache: 'no-store' });
+    text = await r.text();
+    try {
+      body = JSON.parse(text);
+    } catch {
+      body = null;
     }
   } catch (err) {
-    setLive('off', '盤面サーバーに届きません');
-    console.warn(err);
+    if (no < appliedNo) return;
+    setLive('off', '盤面サーバーに届きません', String(err?.message || err));
+    if (!state.view && !window.__masume.lobby) showNotice('盤面サーバーに届きません', null);
+    return;
+  }
+  if (no < appliedNo) return; // もっと新しい応答をもう描いた
+  const isView = r.ok && body && typeof body === 'object' && !Array.isArray(body) && body.ok !== false;
+  if (!isView) {
+    if (body?.code === 'E_NO_GAME') {
+      appliedNo = no;
+      return enterLobby();
+    }
+    // 一時的な失敗（§29.3）: 盤面は覆わず、端の表示だけ
+    const why = body && typeof body === 'object' ? `[${String(body.code ?? '')}] ${String(body.error ?? '')}` : `HTTP ${r.status}`;
+    setLive('off', `読み込めません（${r.status}）`, why);
+    if (!state.view && !window.__masume.lobby) showNotice('盤面を読み込めません', body && typeof body === 'object' ? body : { code: `HTTP ${r.status}`, error: '' });
+    return;
+  }
+  appliedNo = no;
+  setLive('live', 'ライブ');
+  if (text === lastText || isOlder(body)) return;
+  lastText = text;
+  hideNotice();
+  hideLobby();
+  window.__masume.lobby = false;
+  render(body);
+  if (!partyWatched) {
+    partyWatched = true;
+    pollParty();
   }
 }
 
@@ -472,10 +589,21 @@ async function startLive() {
     timer = setTimeout(liveRefresh, 120);
   };
   if ('EventSource' in window && !params.has('nostream')) {
-    const es = new EventSource('api/stream');
-    es.addEventListener('hello', () => setLive(window.__masume.lobby ? 'lobby' : 'live', window.__masume.lobby ? '入口' : 'ライブ'));
-    es.addEventListener('change', schedule);
-    es.onerror = () => setLive('off', '再接続中…');
+    const connect = () => {
+      const es = new EventSource('api/stream');
+      // つながった（つなぎ直した）ら読み直す。切れている間に変わった分を取りこぼさない
+      es.addEventListener('hello', schedule);
+      es.addEventListener('change', schedule);
+      es.onerror = () => {
+        setLive('off', '再接続中…');
+        if (es.readyState === EventSource.CLOSED) {
+          // HTTP エラーなどで閉じた EventSource は自分ではつなぎ直さないので、作り直す
+          es.close();
+          setTimeout(connect, 3000);
+        }
+      };
+    };
+    connect();
   }
   // 入口にいる間は冒険の書が生まれるのをこまめに見る。盤面ではときどき読み直す
   setInterval(() => {
@@ -485,7 +613,12 @@ async function startLive() {
 }
 
 async function startFixture() {
+  if (!FIXTURE) {
+    setLive('fixture', '見本: —');
+    throw new Error('見本の名前には英数字・-・_ だけが使えます');
+  }
   setLive('fixture', `見本: ${FIXTURE}`);
+  if (params.has('script') && !SCRIPT) toast({ text: '台本の名前には英数字・-・_ だけが使えます（台本なしで見本を出します）', ok: false, sticky: true });
   if (SCRIPT) {
     const script = await getJson(`fixtures/${SCRIPT}-script.json`);
     const frames = script.frames || [];
@@ -522,7 +655,11 @@ function boardCss() {
   return `svg { ${vars} } ${css}`;
 }
 
-/** 盤面全体を1枚の SVG の文字列にする。1目 = 5mm の実寸 */
+// XML 1.0 で使えない文字（制御文字・対になっていないサロゲート・U+FFFE/FFFF）
+const XML_BAD = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+const xmlText = (s) => String(s).replace(XML_BAD, '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+/** 盤面全体を1枚の SVG の文字列にする。1目 = 5mm の実寸。XML として正しい（§29.6） */
 function exportSvg() {
   if (!state.view || !state.lay) return '';
   const lay = state.lay;
@@ -532,16 +669,19 @@ function exportSvg() {
   const h = lay.height + U;
   const world = $('#world').cloneNode(true);
   world.querySelectorAll('.float-text').forEach((el) => el.remove());
-  const defsEl = svg.querySelector('defs')?.outerHTML || '';
+  // outerHTML は HTML の書き方（&nbsp; など）になるので、XML の書き方で書き出す
+  const ser = new XMLSerializer();
+  const defsEl = svg.querySelector('defs');
   const css = boardCss().replace(/<\/?script/gi, '');
-  return `<?xml version="1.0" encoding="UTF-8"?>
+  const out = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${((w / U) * 5).toFixed(1)}mm" height="${((h / U) * 5).toFixed(1)}mm">
-<title>${(state.view.quest?.title || 'マスメ').replace(/[&<>]/g, '')}</title>
-<style>${css.replace(/]]>/g, ']] >')}</style>
-${defsEl}
-${world.outerHTML}
+<title>${xmlText(state.view.quest?.title || 'マスメ')}</title>
+<style><![CDATA[${css.replace(/]]>/g, ']]]]><![CDATA[>')}]]></style>
+${defsEl ? ser.serializeToString(defsEl) : ''}
+${ser.serializeToString(world)}
 </svg>
 `;
+  return out.replace(XML_BAD, '');
 }
 
 function downloadNotebook() {
@@ -576,7 +716,7 @@ window.__masume = { ready: false, view: null, frame: 0, done: false, render: (v)
     if (LIVE) await startLive();
     else await startFixture();
   } catch (err) {
-    console.error(err);
-    $('#toast').innerHTML = `<div class="toast ng"><span class="toast-stamp">✗</span><span>盤面を読み込めませんでした: ${String(err.message || err)}</span></div>`;
+    console.warn(err);
+    toast({ text: `盤面を読み込めませんでした: ${String(err?.message || err)}`, ok: false, sticky: true });
   }
 })();

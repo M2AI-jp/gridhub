@@ -1,6 +1,6 @@
 // 盤面（SVG）を描く。紙・方眼・道・マス・ゲート・宿屋・名札。駒は pawns.js。
 import { U, CELL, HEAD_W, TOP, LEFT, GATE_W, CAMP, LANE_H } from './layout.js';
-import { INK, hl, rect, box, scribble, line, circle, road, hanamaru, boss, inn, wrap, esc, rng } from './sketch.js';
+import { INK, hl, rect, box, scribble, line, circle, road, hanamaru, boss, inn, wrap, esc, rng, own, byId } from './sketch.js';
 
 export const STATUS_JA = {
   fog: '霧の中',
@@ -33,7 +33,8 @@ export function paper(view, lay) {
   const w = lay.width;
   const h = lay.height;
   const pad = 40 * U;
-  const date = view.log?.length ? new Date(view.log[view.log.length - 1].ts) : new Date();
+  let date = view.log?.length ? new Date(view.log[view.log.length - 1].ts) : new Date();
+  if (Number.isNaN(date.getTime())) date = new Date();
   const ds = `${date.getFullYear()}.${String(date.getMonth() + 1).padStart(2, '0')}.${String(date.getDate()).padStart(2, '0')}`;
   const title = view.quest?.title || '';
   return `
@@ -56,11 +57,12 @@ export function roads(view, lay) {
   let out = '<g id="roads">';
   for (const c of view.characters) {
     const lane = lay.lanes[c.id];
+    if (!lane) continue;
     const pts = [[LEFT + HEAD_W - U, lane.y]];
     for (const id of c.path) {
       const p = lay.nodes[id];
       if (!p) continue;
-      pts.push([p.x, view.nodes[id].type === 'gate' ? lane.y : p.y]);
+      pts.push([p.x, own(view.nodes, id)?.type === 'gate' ? lane.y : p.y]);
     }
     const d = road(pts, `road:${c.id}`, 1.6);
     out += `<path class="road" data-char="${esc(c.id)}" d="${d}" stroke="${hl(c.color)}"/>`;
@@ -109,14 +111,14 @@ const JOB_JA = {
   sage: '賢者', scribe: '書記', herald: '伝令', cartographer: '地図職人', painter: '絵師', villager: '村人',
 };
 export function jobJa(job) {
-  return JOB_JA[job] || job || '';
+  return own(JOB_JA, job) || job || '';
 }
 
 /** 駒の絵（sprites[job] があれば色を差し替えて埋め込む。無ければ手描きの丸い駒） */
 export function spriteMarkup(sprites, c, x, y, size, seedTag = 'pawn') {
   const color = hl(c.color);
-  const src = sprites && sprites[c.job];
-  if (src) {
+  const src = sprites instanceof Map ? sprites.get(c.job) : own(sprites, c.job);
+  if (typeof src === 'string') {
     const inner = src.replace(/var\(--pawn,\s*#ffe45c\)/g, color);
     return `<svg x="${x}" y="${y}" width="${size}" height="${size}" viewBox="0 0 64 64" class="sprite">${inner}</svg>`;
   }
@@ -167,14 +169,15 @@ function eraser(x, y, w, h, seed) {
   </g>`;
 }
 
-export function nodesLayer(view, lay, { fresh = {}, selected = null } = {}) {
+export function nodesLayer(view, lay, { fresh = null, selected = null } = {}) {
   let out = '<g id="nodes">';
-  const charById = Object.fromEntries(view.characters.map((c) => [c.id, c]));
+  const charById = byId(view.characters);
   for (const [id, n] of Object.entries(view.nodes)) {
     const p = lay.nodes[id];
     if (!p) continue;
     const isSel = selected === id ? ' selected' : '';
-    const fr = fresh[id] ? ` fresh-${fresh[id]}` : '';
+    const f = own(fresh, id);
+    const fr = typeof f === 'string' ? ` fresh-${f}` : '';
     if (n.type === 'gate') out += gateMarkup(view, lay, id, n, p, charById, isSel + fr);
     else if (n.type === 'camp') out += campMarkup(id, n, p, charById, isSel + fr);
     else out += taskMarkup(id, n, p, charById, isSel + fr);
@@ -213,7 +216,7 @@ function taskMarkup(id, n, p, chars, extra) {
   if (n.fails > 0 && st !== 'cleared') inner += `<text class="hand fail-tally" x="${x + CELL - 3}" y="${y + CELL - 4}" text-anchor="end">${'✗'.repeat(Math.min(n.fails, 3))}</text>`;
   inner += sealMark(n, x + CELL - 0.2 * U, y + 0.25 * U);
   inner += titleLines(n, p.x, y + CELL + 0.95 * U, pencil ? 'cell-title pencil-text' : 'cell-title');
-  return `<g class="node task${extra}" data-node="${esc(id)}" data-state="${st}" data-owner="${esc(n.owner || '')}" tabindex="0" role="button" aria-label="${esc(id)} ${esc(n.title)}（${STATUS_JA[st] || st}）">${inner}</g>`;
+  return `<g class="node task${extra}" data-node="${esc(id)}" data-state="${esc(st)}" data-owner="${esc(n.owner || '')}" tabindex="0" role="button" aria-label="${esc(id)} ${esc(n.title)}（${esc(own(STATUS_JA, st) || st)}）">${inner}</g>`;
 }
 
 function campMarkup(id, n, p, chars, extra) {
@@ -227,7 +230,7 @@ function campMarkup(id, n, p, chars, extra) {
   if (st === 'cleared') inner += `<text class="hand camp-done stamp-in" x="${p.x + CAMP / 2 + 2}" y="${y + 6}">休</text>`;
   inner += `<text class="hand camp-label" x="${p.x}" y="${y - 4}" text-anchor="middle">セーブ</text>`;
   inner += titleLines(n, p.x, y + CAMP + 0.95 * U, pencil ? 'cell-title pencil-text' : 'cell-title', 6);
-  return `<g class="node camp${extra}" data-node="${esc(id)}" data-state="${st}" data-owner="${esc(n.owner || '')}" tabindex="0" role="button" aria-label="宿屋 ${esc(n.title)}">${inner}</g>`;
+  return `<g class="node camp${extra}" data-node="${esc(id)}" data-state="${esc(st)}" data-owner="${esc(n.owner || '')}" tabindex="0" role="button" aria-label="宿屋 ${esc(n.title)}">${inner}</g>`;
 }
 
 function gateMarkup(view, lay, id, n, p, chars, extra) {
@@ -281,7 +284,7 @@ function gateMarkup(view, lay, id, n, p, chars, extra) {
   }
   if (n.fails > 0 && st !== 'cleared') inner += `<text class="hand fail-tally" x="${x + 4}" y="${p.bottom - 6}">${'✗'.repeat(Math.min(n.fails, 3))}</text>`;
   inner += sealMark(n, x + 0.6 * U, p.bottom - 0.7 * U);
-  return `<g class="node gate${isGoal ? ' goal' : ''}${extra}" data-node="${esc(id)}" data-state="${st}" tabindex="0" role="button" aria-label="結合ゲート ${esc(id)} ${esc(n.title)}（${STATUS_JA[st] || st}）">${inner}</g>`;
+  return `<g class="node gate${isGoal ? ' goal' : ''}${extra}" data-node="${esc(id)}" data-state="${esc(st)}" tabindex="0" role="button" aria-label="結合ゲート ${esc(id)} ${esc(n.title)}（${esc(own(STATUS_JA, st) || st)}）">${inner}</g>`;
 }
 
 export { LANE_H };

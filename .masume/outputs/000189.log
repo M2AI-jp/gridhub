@@ -1,0 +1,13 @@
+=== GOAL4: node --test tests/e2e/GOAL4.test.mjs ===
+✔ 第1章〜第4章のすべての判定が、まとめて本当に通る (159709.034416ms)
+✔ マスメ自身と、残っているすべての冒険の書が正常 (162.618375ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 159920.155958
+
+(exit 0, 159958ms)

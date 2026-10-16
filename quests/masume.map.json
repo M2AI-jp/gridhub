@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "マスメ — マスメでマスメをつくる",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。",
-    "goal": "GOAL3"
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。",
+    "goal": "GOAL4"
   },
   "characters": [
     {
@@ -32,7 +32,9 @@
         "G4",
         "GOAL2",
         "B6",
-        "GOAL3"
+        "GOAL3",
+        "B7",
+        "GOAL4"
       ]
     },
     {
@@ -61,7 +63,11 @@
         "G4",
         "GOAL2",
         "G5",
-        "GOAL3"
+        "GOAL3",
+        "E6",
+        "E7",
+        "G6",
+        "GOAL4"
       ]
     },
     {
@@ -90,7 +96,10 @@
         "GOAL2",
         "S5",
         "G5",
-        "GOAL3"
+        "GOAL3",
+        "S6",
+        "G6",
+        "GOAL4"
       ]
     },
     {
@@ -112,7 +121,9 @@
         "GOAL2",
         "Q2",
         "G5",
-        "GOAL3"
+        "GOAL3",
+        "Q3",
+        "GOAL4"
       ]
     },
     {
@@ -132,7 +143,10 @@
         "P2",
         "G4",
         "GOAL2",
-        "GOAL3"
+        "GOAL3",
+        "P3",
+        "G6",
+        "GOAL4"
       ]
     },
     {
@@ -159,7 +173,9 @@
         "M4",
         "GOAL2",
         "M5",
-        "GOAL3"
+        "GOAL3",
+        "M6",
+        "GOAL4"
       ]
     },
     {
@@ -182,7 +198,8 @@
         "GOAL",
         "A3",
         "GOAL2",
-        "GOAL3"
+        "GOAL3",
+        "GOAL4"
       ]
     },
     {
@@ -199,7 +216,8 @@
         "H2",
         "GOAL2",
         "H3",
-        "GOAL3"
+        "GOAL3",
+        "GOAL4"
       ]
     }
   ],
@@ -850,6 +868,176 @@
         "run": "node --test tests/e2e/GOAL3.test.mjs",
         "seal": [
           "tests/e2e/GOAL3.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      }
+    },
+    "E6": {
+      "type": "task",
+      "title": "判定の誠実さを守る",
+      "detail": "CONTRACTS §23: 封印を起動の直前と記録の直前にも確かめる・BLAME は出力の全体から・成否は終了コードで・NODE_TEST_CONTEXT を渡さない・シグナルで判定の子を残さない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/E6.test.mjs",
+        "seal": [
+          "tests/e2e/E6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "engine",
+        "review"
+      ]
+    },
+    "E7": {
+      "type": "task",
+      "title": "地図と記録の作法を正す",
+      "detail": "CONTRACTS §24: 突破済みゲートのメンバーを変える amend を断る・amend のパスはカレント基準・note で epoch を上げない・seal --all の保留・ゲートの封印破りの文・new --force で同期の対応表を残す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/E7.test.mjs",
+        "seal": [
+          "tests/e2e/E7.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "review"
+      ]
+    },
+    "S6": {
+      "type": "task",
+      "title": "窓口を守る",
+      "detail": "CONTRACTS §25: 枠への埋め込みを断るヘッダ・POST 本文の上限・ボス戦の二重起動の防止と後始末・SIGHUP・MCP の願いの長さ・0.0.0.0 の表示 URL。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/S6.test.mjs",
+        "seal": [
+          "tests/e2e/S6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "server",
+        "review"
+      ]
+    },
+    "P3": {
+      "type": "task",
+      "title": "出撃の後始末をする",
+      "detail": "CONTRACTS §26: EPIPE で落ちない・E_BUSY で巻き添えにしない・未封印のマスに出撃しない・孫まで止める・プロンプトを先に書く・パスの引用。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/P3.test.mjs",
+        "seal": [
+          "tests/e2e/P3.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "party",
+        "review"
+      ]
+    },
+    "Q3": {
+      "type": "task",
+      "title": "GM の後始末と支度の安全",
+      "detail": "CONTRACTS §27: 古い地図を受け入れない・GM の終わり方とシグナル・出力の UTF-8 と上限・タイムアウトの丸め・WISH.md・init の symlink・引用。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/Q3.test.mjs",
+        "seal": [
+          "tests/e2e/Q3.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "quest",
+        "review"
+      ]
+    },
+    "M6": {
+      "type": "task",
+      "title": "同期を守る",
+      "detail": "CONTRACTS §28: 秘密を出さない・通信の途中の切断・429 の再試行・消えた issue や拒まれた遷移を飛ばして続ける・pull の完了の省き方・タイトルや ID の整え方。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/M6.test.mjs",
+        "seal": [
+          "tests/e2e/M6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "gmkit",
+        "review"
+      ]
+    },
+    "B7": {
+      "type": "task",
+      "title": "表示を守る",
+      "detail": "CONTRACTS §29: URL からの XSS を断つ・読めないビュー・一時的な失敗・POST の失敗・SSE のつなぎ直し・書き出しの XML・狭い画面の詳細・プロトタイプ名。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/B7.test.mjs",
+        "seal": [
+          "tests/e2e/B7.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "ui",
+        "review"
+      ]
+    },
+    "G6": {
+      "type": "gate",
+      "title": "結合: 総点検（判定の誠実さ）",
+      "detail": "伝令が起動したボス戦が NODE_TEST_CONTEXT に騙されずに負けを記録し、軍師のボス戦を止めたら判定の子孫も消えている。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/G6.test.mjs",
+        "seal": [
+          "tests/e2e/G6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      }
+    },
+    "GOAL4": {
+      "type": "gate",
+      "title": "あがり（第4章）: 総点検",
+      "detail": "第1章〜第4章のすべての判定がまとめて通り、すべての冒険の書が正常。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/GOAL4.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL4.test.mjs",
           "tests/helpers.mjs",
           "tests/helpers2.mjs",
           "tests/helpers3.mjs"

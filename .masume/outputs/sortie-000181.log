@@ -1,0 +1,3288 @@
+OpenAI Codex v0.153.4
+--------
+workdir: /Users/amano/dev/masume
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR] (network access enabled)
+reasoning effort: ultra
+reasoning summaries: none
+session id: 01a146b7-f2cb-7ea0-b2f7-f56ab0bac72e
+--------
+user
+あなたは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）の冒険に参加しているキャラクター「地図職人」（ID: gmkit）です。
+
+冒険: マスメ — マスメでマスメをつくる — 5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。
+作業場所（ゲームのルート。ここで作業する）: /Users/amano/dev/masume
+
+マスメでは、作るものを「マス」に分け、キャラクターが1マスずつ進みます。マスを突破できるのは、封印された判定（E2Eテスト）に通ったときだけで、「できました」という自己申告では進めません。
+あなたの仕事は、いまのマス（M6「同期を守る」）の1つだけを実装して宣言判定に通し、そこで止まって報告することです。先のマスには手を出しません。
+
+## 指令書
+
+次は `masume brief gmkit` の出力です。現在のマス・判定・視界・仲間・自分の前の日誌が書いてあります。
+
+指令書: 地図職人（gmkit / agent）
+Lv4 / 経験値 0/5 / 視界 3マス先 / 作業中
+担当: 地図づくりの道具（サンプル地図・チュートリアル・Linear連携）
+縄張り: src/linear/**、src/jira/**、src/commands/{export,import,linear,jira}.js、quests/kotozuke.*、quests/tutorial/**
+現在のマス: M6「同期を守る」（task）
+CONTRACTS §28: 秘密を出さない・通信の途中の切断・429 の再試行・消えた issue や拒まれた遷移を飛ばして続ける・pull の完了の省き方・タイトルや ID の整え方。
+判定: node --test tests/e2e/M6.test.mjs
+封印: 封印済み
+失敗時の戻り先: @camp
+視界に入っている先のマス:
+  GOAL4「あがり（第4章）: 総点検」（gate）
+霧の中: 0マス
+仲間:
+  賢者クロード（board）: GOAL4 / ゲートで待機中 / Lv5
+  書記（engine）: GOAL4 / ゲートで待機中 / Lv6
+  伝令（server）: GOAL4 / ゲートで待機中 / Lv6
+  語り部（teller）: Q3 / 作業中 / Lv4
+  軍師（party）: GOAL4 / ゲートで待機中 / Lv4
+  絵師（assets）: GOAL4 / ゲートで待機中 / Lv3
+  勇者（あなた）（player）: GOAL4 / ゲートで待機中 / Lv3
+自分の日誌（新しい順）:
+  seq 157 2026-10-16T21:39:52.232Z: M6完了。CONTRACTS §28に従い、Linear/Jiraの秘密保護（不正な認証値・userinfo拒否、API応答とADF連結後の漏出防止）、本文切断のNETWORK分類、Linearの429最大3回再試行、issue欠落・403・Jira遷移400のスキップ継続を実装。import/pullは80コードポイントのタイトル・全文detail保持・quest.id正規化・E_NOTHINGに統一し、pullに--quest-id/--titleを追加。M6は20/20成功、M3/M4/M5/SOLOを含め32/32成功。宣言判定は1回で成功。GOAL4で待機し、ボス戦は軍師に引き継ぐ。
+  seq 120 2026-10-16T12:03:53.930Z: M5完了。src/jira/{client,sync}.js と src/commands/jira.js を追加（src/linear の export/import/cli を再利用、既存は無変更）。push は GET project（404→E_JIRA/2）→マスごとに POST/PUT issue→GET status→statusCategory が違えば遷移（In Review/In Progress は名前が合う遷移を優先）。.masume/jira.json は {project, issues:{ID:{key,id}}} で、作成のたびに書く（途中で止まっても二重に作らない）。--project が jira.json と食い違えば E_USAGE/2。遷移が無いマスは E_JIRA_TRANSITION を stderr に出して最後まで進め、終了コード1。認証が足りなければ E_JIRA_AUTH/2（401/403 も）、API/通信エラーは E_JIRA_API/E_JIRA_NETWORK で1、429 は Retry-After で2回まで再試行。pull は GET project で名前を引き（地図の title）、POST search/jql を nextPageToken でページ送り、ADF は text を連結（段落・リストは改行）、statusCategory done は Done 扱いで省く。トークンは出力・ログ・jira.json に出さない。M1〜M4・G2・SOLO は通ったまま。次はあがり GOAL3（gate）。全員がそろうまで待機。
+  seq 77 2026-10-16T07:07:57.150Z: M4完了。src/linear/{client,sync}.js と src/commands/linear.js を追加し、import.js を recordsFromCsv/mapFromRecords に分けた（CSV importと pull が同じ規則を使う。M3/SOLO は通ったまま）。push は MasumeTeams→MasumeProjects(無ければ Create)→マスごとに IssueCreate/IssueUpdate、.masume/linear.json は作成のたびに書く（途中で止まっても二重に作らない）。--team/--project が linear.json と食い違うときは E_USAGE/2 で止める。状態が写せなければ何も作る前に E_LINEAR_STATE。pull は MasumeIssues をページ送り（pageInfo があれば after で続ける）。キーは出力・ログ・linear.json に出さない。E_LINEAR_AUTH/2、API・通信エラーは E_LINEAR_API / E_LINEAR_NETWORK で終了コード1、issue 0件は E_LINEAR_EMPTY/1。次はあがり GOAL2（gate）。全員がそろうまで待機。
+  seq 70 2026-10-16T07:04:14.144Z: 出撃: Sonnet（claude-sonnet-5-5）の子セッションがこのキャラクターを演じる
+  seq 46 2026-10-16T06:15:54.202Z: GM: M3 の依頼（担当者0/1人の import）への回答。CONTRACTS §2 に例外を足した: キャラクターが1人だけの地図では、あがり（quest.goal）のゲートはメンバー1人でよい。goal 以外のゲートは従来どおり2人以上。§9 にも追記（担当者1人／全員空なら1人の地図になる）。src/linear のコードは変えていない（validateMap の例外だけで、担当者1人の CSV から validate と new に通る地図が出る）。地図は変えずに判定 tests/e2e/SOLO.test.mjs（sha256 1d8d168172e2b850551b8bcffb1c1912d7e639ffe72437c66b7586d8c46c482b）を足した。GOAL の数え方を「17個」から「地図のマスが封印する17個 + 足した判定（SOLO）の一覧照合」に変え、GOAL を再封印した（GOAL.test.mjs sha256 64ca2552…）。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: いへし のとの ういな ぬぢる（seq 180）
+
+## 守ること
+
+- 現在のマスだけをやる。指令書に出ていない先のマス（霧の向こう）の内容は実装しない。
+- 自分の縄張りの中だけを編集する。縄張り: src/linear/**、src/jira/**、src/commands/{export,import,linear,jira}.js、quests/kotozuke.*、quests/tutorial/**。縄張りの外のファイルを作らない・編集しない。必要なら最終報告の「GMへの依頼」に書く。
+- 封印された判定ファイル（tests/e2e/M6.test.mjs、tests/helpers.mjs、tests/helpers2.mjs、tests/helpers3.mjs）と、地図（*.map.json）と、冒険の書（.masume/）は編集しない。封印を破ると記録され、判定できなくなる。
+- 判定のほうがおかしい（契約や指令書どおりに作っても通らない）と思ったら、判定を直さず、宣言もせずに、そこで止まって報告する。
+- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。
+- マスメのコマンドは brief / check / note だけを使う。new / seal / amend / load / repair / stamp / party / quest などは使わない。
+- 判定を通すために、テストの意図を回避する実装（テスト環境の検出、出力の決め打ち）をしない。
+- 外部パッケージを勝手に増やさない。本物の外部サービスや課金・秘密の鍵を使わない。
+
+## 進め方
+
+1. 上の指令書の「現在のマス」の内容を読み、実装する。
+2. 素振り（判定コマンドを自分で走らせる。何度走らせてもよく、記録されない）:
+
+       node --test tests/e2e/M6.test.mjs
+
+   通るまで直す。
+3. 素振りが通ったら、宣言判定（公式の判定。記録される。素振りが通ってからにする）:
+
+       node '/Users/amano/dev/masume/bin/masume.js' check gmkit --as gmkit --no-boss --dir '/Users/amano/dev/masume'
+
+   - 通ると「判定成功」と出て、1マス進む。
+   - 落ちるとレベルが下がり、前のマスに巻き戻されることがある（累積判定: 宿屋より後の自分のマスの判定をまとめて走らせる）。失敗の出力を読み、`node '/Users/amano/dev/masume/bin/masume.js' brief gmkit --dir '/Users/amano/dev/masume'` で現在のマスを確かめ直して、直してから素振りをやり直す。
+   - 結合ゲート（ボス戦）に着いたら「待機」になる。ボス戦は軍師（パーティ）がやるので、あなたは何もしなくてよい。
+4. 日誌（次の自分への申し送りを短く。何を作ったか、次のマスで気をつけること。`<申し送り>` を書き換える。単一引用符 ' で囲んであるので、文の中に ' を入れたいときは '\'' と書く）:
+
+       node '/Users/amano/dev/masume/bin/masume.js' note gmkit '<申し送り>' --as gmkit --dir '/Users/amano/dev/masume'
+
+## 止まる条件
+
+- 現在のマスを1つ突破したら（宣言判定が「判定成功」になったら）、日誌を書いて、そこで止まる。次のマスには進まない。
+- 宣言判定に2回失敗したら、そこで止まる。なぜ落ちたかを報告する。
+- 結合ゲートに着いて待機になったら、そこで止まる。
+- 判定や契約がおかしくて進めないと分かったら、そこで止まる。
+
+止まったら、次の形で短く報告して終わる:
+
+    ## 報告書 地図職人 <マスID>
+    - 変更したファイル:
+    - 判定の結果（最後の数行）:
+    - 申し送り（次のマスの自分へ）:
+    - GMへの依頼（契約の不足・縄張りの外で必要なこと）:
+
+codex
+私は地図職人（gmkit）として、M6だけを対象に作業します。まずSSoTである `docs/RULEBOOK.md`、`docs/CONTRACTS.md`、`docs/GM_GUIDE.md` を指定順に読み、現在の指令書と照合します。ユーザーの指示ではM6ですが、日誌には過去の完了記録があるため、現在位置は `brief` で確認します。
+
+編集は許可された縄張り内に限り、素振り成功後に、明示された `check` と `note` で進行を記録します。この2コマンドによる冒険の書への記録が副作用です。M6の宣言成功と日誌記録を完了条件として、そこで止まります。
+exec
+/bin/zsh -lc pwd in /Users/amano/dev/masume
+ succeeded in 0ms:
+/Users/amano/dev/masume
+
+exec
+/bin/zsh -lc 'cat docs/RULEBOOK.md' in /Users/amano/dev/masume
+ succeeded in 0ms:
+# マスメ ルールブック（rules 1）
+
+> 5mm方眼ノートに描いたすごろくで、ソフトウェア開発を進めるゲーム。
+> Linear や Jira の「文字だけのタスク」に、**盤面・駒・セーブデータ**という「状態」を持たせる。
+
+小学生のころ、方眼ノートにマス目を引いて、すごろく兼RPGを作って兄弟で遊んだ。
+マスメはそれを開発に持ち込む。人間も LLM エージェントも、同じ盤面を見て「いまどこにいて、次に何をして、どこで合流するか」を共有する。
+
+---
+
+## 0. なぜゲームにするのか
+
+LLM エージェントに開発を任せると、だいたい次のことが起きる。
+
+| 起きること | マスメのルール |
+| --- | --- |
+| コンテキストが切れると、どこまでやったか分からなくなる | 進捗は**冒険の書**（追記専用のセーブデータ）にだけ記録される。`masume brief` を読めば誰でも再開できる |
+| 「できました」と言うが、実は動いていない | 進めるのは**判定（E2E）に通ったときだけ**。自己申告では1マスも進めない |
+| テストを書き換えて通してしまう | 判定ファイルは GM が**封印**する。改変すると「封印が破れている」と記録され、判定できない |
+| 頼んでいない所まで手を出して全体を壊す | 見えるのは**視界**の範囲だけ（霧）。触ってよいのは**縄張り**だけ |
+| 後から別の変更で、前にできたことが壊れる | 判定は**累積**。宿屋（セーブポイント）以降のマスの判定を毎回まとめて再実行する |
+| モジュールを結合したら動かない | 道は一本道ではない。要所に**結合ゲート（ボス戦）**があり、仲間が全員そろってから結合E2Eで戦う |
+| セーブデータ自体が壊れる・食い違う | 冒険の書は**ハッシュの鎖**。1文字でも改ざんされると「呪われています」と検出され、修復・ロードできる |
+| いまの状態を短く伝えられない | **ふっかつのじゅもん**（12文字）で「その時点の盤面」を一意に指せる |
+
+Git/GitHub はコードの履歴を守る。マスメは**「誰が・どこまで・何を検証済みか」という進行の履歴**を守る。
+
+---
+
+## 1. 登場するもの
+
+| ゲーム | 開発での意味 | Linear でいうと |
+| --- | --- | --- |
+| **冒険（クエスト）** | 作りたいプロダクト全体 | Project |
+| **地図**（`*.map.json`） | 開発ロードマップ全体。GM が作る | Project の issue 群と依存関係 |
+| **キャラクター（駒）** | 完成させるべき**モジュール1つ**を担当するエージェント（または人間） | Assignee |
+| **道** | そのキャラクターが通る一方通行のマスの列（`path`） | Assignee ごとの issue の並び |
+| **マス（task）** | 1つのタスク。1回のコンテキストで終わる大きさ | Issue |
+| **結合ゲート（gate）** | 複数の道が合流する、結合E2Eテストのマス。ボス戦 | Milestone |
+| **宿屋（camp）** | セーブポイント。失敗してもここより前には戻らない | Cycle の区切り |
+| **あがり（goal）** | 全員が合流する最後の結合ゲート。完成 | Project 完了 |
+| **GM** | 地図を描き、判定（E2E）を書いて封印する人。実装はしない | PM / テックリード |
+| **勇者（人間）** | 人間にしかできないマス（契約・鍵・決済・承認）を**ハンコ**で進める | 人間の Assignee |
+| **冒険の書**（`.masume/`） | セーブデータ。追記専用のイベントログ | Issue の履歴 |
+
+盤面は 5mm 方眼ノートとして描かれる。マスは 4×4 目（2cm角）、道は蛍光ペン、判定に通ったマスには赤ペンの**はなまる**、巻き戻されたマスには**消しゴムの跡**が残る。
+
+---
+
+## 2. 1ターンの流れ（キャラクター）
+
+1. **指令書を読む** — `masume brief <自分のID>`
+   いまのマス・判定コマンド・視界に入っている先のマス・仲間の位置・前の自分の日誌・ふっかつのじゅもん が出る。
+2. **実装する** — 現在のマスの内容だけ。縄張りの中だけ。
+3. **素振り** — 判定コマンドを自分で何度走らせてもよい（記録されない）。
+4. **宣言判定** — `masume check <自分のID>`。これが公式の判定で、冒険の書に記録される。
+5. **日誌** — `masume note <自分のID> "次の自分への申し送り"`（任意だが強く推奨）。
+
+> 素振りは自由、宣言は一発勝負。TRPG で「判定します」と宣言してからダイスを振るのと同じ。
+
+---
+
+## 3. 判定
+
+- 判定はすべて**コマンド**（E2Eテスト）で行う。終了コード 0 なら成功。
+  例外は人間のマス（`stamp`）で、これは人間のハンコで成功になる。
+- 判定コマンドは地図に書かれ、地図は冒険の書に**ハッシュ付きで凍結**される。キャラクターは変えられない。
+- 判定が参照するファイル（`check.seal`）は GM が**封印**する（ハッシュを記録）。
+  - 封印前のマスは判定できない（`未封印` → GM に依頼）。
+  - 封印後にファイルが変わっていたら判定できない（`封印が破れています` が記録される）。GM が再封印するか、元に戻す。
+- **累積判定**: 宣言判定では、直近のセーブポイント（宿屋・突破済みゲート・ふりだし）より後の、自分の道のマスの判定を**古い順にすべて**走らせる。どれか1つでも落ちたら失敗。
+  - 「前にできていたことを壊していない」ことまで含めて、はじめて1マス進める。
+
+## 4. 成功・経験値・レベル・視界
+
+- 成功すると 1 マス進み、そのマスの経験値（task 1 / gate 3 / camp 0）を得る。
+- 経験値が `レベル + 1` に達するとレベルアップ（余りは繰り越し）。最大 Lv9。
+- **視界** = `min(レベル − 1, 4)` マス先まで。Lv1 は現在のマスしか見えない。
+  - 指令書には視界の外のマスのタイトルは**出ない**（霧）。
+  - 信頼は実績で増える。失敗すると視界が狭まり、小さく確実に進むことを強いられる。
+- 宿屋に着くと自動で休んで（判定なし）通過し、そこがセーブポイントになる。
+
+## 5. 失敗・レベルダウン・巻き戻し
+
+宣言判定に失敗すると:
+
+1. **レベル −1**（最低 Lv1）、経験値は 0 に。
+2. **所定の位置まで戻される**。所定の位置は、落ちたマスの `rollback_to` で決まる。
+   - `@camp`（既定）… 直近のセーブポイントの次のマス
+   - `@here` … 落ちたマスそのもの
+   - マスID … 同じ道の、それより前のマス
+   - ただし**セーブポイントより前には戻らない**。
+3. 戻った位置から失敗地点までに通過していたマスは**消しゴムで消される**（`stale`：要再検証）。
+4. 消されたマスは、もう一度判定に通れば元に戻る。ただし**経験値は入らない**。
+
+> 巻き戻されるのは「コード」ではなく「できた、という主張」。コードが正しければ再判定はすぐ通る。正しくなければ、どこで壊れたかが盤面に出る。
+
+## 6. 結合ゲート（合流・ボス戦・解散）
+
+- ゲートは複数の道に同じIDで現れるマス。そこを通る全キャラクターが**メンバー**。
+  - 例外: キャラクターが1人だけの冒険では、**あがり**のゲートだけはその1人で戦う（ほかのゲートは置けない）。
+- ゲートに着いたキャラクターは**待機**する。
+- メンバー全員がそろうと、そろえた最後の判定（またはハンコ）の直後に**自動でボス戦**（ゲートの判定）が始まる（`--no-boss` で保留、あとで `masume check <gateId>`）。
+- **勝利**: 全員が経験値 3 を得て、ゲートの次のマスへ進む（**解散**）。ゲートは全員のセーブポイントになる。
+- **敗北**: 判定の出力に `MASUME_BLAME: <id>,<id>` 行があれば、そのキャラクターだけが責任を負う（**差し戻し**）。無ければメンバー全員（**全滅**）。
+  - 責任を負ったキャラクターはレベル −1、直近のセーブポイントの次まで戻り、その間のマスは消しゴムで消される。
+  - 責任のないキャラクターはゲートで待ち続ける。
+- ゲートの判定は「そのゲートの結合E2E」だけを走らせる。
+
+## 7. 人間のマス（ハンコ）
+
+- `check.kind: "stamp"` のマスは、指定された人間（`by`）の**ハンコ**で成功になる。
+  - `masume stamp <nodeId> --as <humanId>` または盤面の「ハンコを押す」ボタン。
+- 人間のマスは、アカウント作成・契約・支払い・本番鍵・デザイン承認など、人間にしかできない／人間が決めるべきことに使う。
+- ハンコで最後のメンバーがゲートにそろえば、そのままボス戦が始まる。
+
+## 8. セーブデータ（冒険の書）
+
+- `.masume/log.jsonl` に**追記だけ**される。1行1イベント。各行は前の行のハッシュを含む（ハッシュの鎖）。
+- 盤面の状態は、イベントを最初から再生して毎回つくり直す（状態ファイルはただのキャッシュ）。
+- `masume verify` で鎖・地図・判定ログの改ざんを検出する。壊れていたら「呪われています（seq N）」。
+- `masume repair` で、壊れた所から後ろを退避して鎖を直す。
+- **ふっかつのじゅもん**: 最新イベントのハッシュから作る 12 文字のひらがな（例: `ゆうて いみや おうき むこう`）。
+  - コミットメッセージ・PR・Linear のコメント・日誌に書いておけば、「その時点の盤面」を一意に指せる。
+  - `masume verify --jumon "..."` で、その状態が冒険の書に実在するか確かめられる。
+  - `masume load "..."` でその時点の状態に戻せる（戻したこと自体も記録される）。
+- 書き込みはロックで1人ずつ。判定中に盤面が動いたら、その判定は無効（もう一度）。
+
+## 9. 地図の改訂
+
+- 計画は変わる。`masume amend <新しい地図>` で地図を改訂できる。
+- ただし**歴史は書き換えられない**: すでに通過したマスを消したり、判定を変えたり、その前に新しいマスを差し込んだりはできない。
+  タイトル・説明・ラベル・見積もりの修正だけは許される。
+- 新しいキャラクター（新しいモジュール）を途中から加えるのは自由。
+
+## 10. 状態と Linear のステータス
+
+| マスの状態 | 盤面の見え方 | Linear |
+| --- | --- | --- |
+| `fog` 霧 | 鉛筆の下書き | Backlog |
+| `open` 視界の中 | ボールペン | Todo |
+| `current` 駒がいる | 蛍光ペンで塗られ、駒が立つ | In Progress |
+| `waiting` / `ready` ゲートで待機 | 「待機中 2/3」 | In Review |
+| `cleared` 突破 | 赤ペンのはなまる | Done |
+| `stale` 消された | 消しゴムの跡 | Todo（要再検証） |
+
+`masume export linear` で Linear 形式（CSV/JSON）に書き出せる。`masume import linear` で既存の Linear CSV から地図の下書きを作れる。
+
+---
+
+## 11. 役割の分離（いちばん大事なルール）
+
+- **GM** は地図を描き、判定を書いて封印する。**実装しない。**
+- **キャラクター**は実装する。**判定を書かない・変えない。**
+- **人間（勇者）**は、人間にしかできないマスと、最後の「あがり」の手前でハンコを押す。
+
+この分離があるから、エージェントの「できました」がそのまま信用できる。
+
+詳しい仕様: [SAVE_FORMAT.md](SAVE_FORMAT.md)（セーブデータ） / [CONTRACTS.md](CONTRACTS.md)（地図・CLI・API） / [GM_GUIDE.md](GM_GUIDE.md)（「xxxのようなアプリを作りたい」から地図を作る手順）
+
+exec
+/bin/zsh -lc 'cat docs/CONTRACTS.md' in /Users/amano/dev/masume
+ succeeded in 0ms:
+# 契約書（CONTRACTS） — モジュール間の約束
+
+各キャラクター（モジュール担当）は、この契約だけを頼りに並行して作る。結合ゲートでこの契約が守られているかが判定される。
+契約を変えたいときは GM に依頼する（自分で変えない）。
+
+- 実行環境: Node.js 20 以上、ESM（`"type": "module"`）、**外部パッケージなし**（標準ライブラリだけ）。
+- 文字コード UTF-8、改行 LF。ユーザー向けの文言は日本語。
+
+---
+
+## 1. リポジトリと縄張り
+
+| 縄張り | 持ち主 |
+| --- | --- |
+| `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` | GM（判定と契約。キャラクターは編集禁止） |
+| `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load}.js` | 書記 `engine` |
+| `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
+| `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
+| `web/assets/sprites/**`、`web/assets/icons/**`、`web/assets/sheet.html` | 絵師 `assets` |
+| `web/**`（上の絵師の場所を除く） | 盤面 `board`（賢者クロード） |
+
+### サブコマンドの形
+
+`bin/masume.js` が `src/commands/<name>.js` を読み込み、次を呼ぶ:
+
+```js
+export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) { return 0; /* 終了コード */ }
+```
+
+- `ctx.bin` = `bin/masume.js` の絶対パス、`ctx.root` = リポジトリの絶対パス（ゲームのルートではない）。
+- 例外に `code`（例 `'E_UNSEALED'`）と `exitCode` を付けて投げると、受付係が `[E_UNSEALED] メッセージ` を stderr に出して終了する。
+- 終了コード: `0` 成功 / `1` 判定失敗・地図が不正 / `2` 使い方の誤り・前提不足（未封印・待機中など） / `3` 冒険の書が呪われている。
+- 共通オプション: `--dir <root>`、`--as <actor>`、`--json`（機械向け出力。stdout に JSON だけを出す）。
+
+---
+
+## 2. 地図（map）
+
+```jsonc
+{
+  "masume": 1,
+  "quest": { "id": "MSM", "title": "マスメ", "pitch": "一言で", "goal": "GOAL" },
+  "characters": [
+    {
+      "id": "engine",                // /^[a-z][a-z0-9-]{0,23}$/
+      "name": "書記",
+      "kind": "agent",               // "agent" | "human"
+      "agent": "codex",              // 任意。codex / claude / human など
+      "job": "scribe",               // 絵の種類（§10 の12職業）
+      "color": "yellow",             // 蛍光ペン（§10 の8色）
+      "module": "セーブデータとルール", // 任意。担当モジュールの説明
+      "territory": ["src/engine/**"], // 任意。縄張り（globの配列）
+      "path": ["E1", "E2", "C1", "E3", "G1", "GOAL"]  // 一方通行の道
+    }
+  ],
+  "nodes": {
+    "E1": {
+      "type": "task",                // "task" | "gate" | "camp"
+      "title": "冒険の書をひらく",      // 1〜80文字
+      "detail": "やることと合格条件",    // 任意
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/E1.test.mjs", "seal": ["tests/e2e/E1.test.mjs"] },
+      "xp": 1,                       // 任意。0〜10。既定 task 1 / gate 3 / camp 0
+      "rollback_to": "@camp",        // 任意。task のみ。"@camp"(既定) | "@here" | 同じ道の前のマスID
+      "estimate": 3,                 // 任意（Linear の見積もり）
+      "labels": ["engine"]           // 任意
+    },
+    "H1": { "type": "task", "title": "遊んでみる", "check": { "kind": "stamp", "by": "player" } },
+    "C1": { "type": "camp", "title": "宿屋" },
+    "G1": { "type": "gate", "title": "結合: 盤面に冒険が映る", "check": { "kind": "cmd", "run": "…", "seal": ["…"] } }
+  }
+}
+```
+
+- ゲートのメンバー = そのゲートIDを `path` に含むキャラクター全員（地図には書かない）。
+- ゲートのメンバーは2人以上。ただし**キャラクターが1人だけの地図では、あがり（`quest.goal`）のゲートはメンバー1人でよい**（1人の冒険も、あがりの結合E2Eで終わる）。goal 以外のゲートは、1人だけの地図でも2人以上が必要（つまり1人だけの地図に置けるゲートはあがりだけ）。
+- `check.seal` は判定ファイルの一覧（ルートからの相対パス）。空配列・省略なら、判定は地図に書かれたコマンドだけで成立し、封印イベントは不要。
+- `check.kind: "stamp"` は task だけ。`by` は `kind: "human"` のキャラクターID。gate と camp は stamp にできない。
+
+### 検証（`validateMap` / `masume validate`）のエラーコード
+
+| code | 条件 |
+| --- | --- |
+| `E_FORMAT` | `masume !== 1`、quest/characters/nodes の形・型が違う、必須項目がない、title が空や80文字超、quest.id が `/^[A-Z][A-Z0-9]{1,9}$/` でない |
+| `E_ID` | キャラクターIDやマスIDの形が違う（マスID `/^[A-Za-z][A-Za-z0-9_-]{0,31}$/`） |
+| `E_DUP_CHAR` | キャラクターIDの重複 |
+| `E_UNKNOWN_NODE` | `path` に存在しないマスID |
+| `E_DUP_IN_PATH` | 1つの `path` に同じマスが2回 |
+| `E_SHARED_TASK` | task / camp が2つ以上の `path` に出てくる |
+| `E_GATE_MEMBERS` | gate が2つ未満の `path` にしか出てこない（例外: キャラクターが1人だけの地図で、`quest.goal` のゲートがその1人の `path` に出てくるときはエラーにしない） |
+| `E_ORPHAN` | どの `path` にも出てこないマス |
+| `E_CYCLE` | 全 `path` の「前→次」をつないだグラフに閉路がある（ゲートの順番が道ごとに食い違うなど） |
+| `E_CHECK` | task/gate に check が無い・形が違う、camp に check がある、gate が stamp、stamp の by が人間でない |
+| `E_ROLLBACK` | rollback_to が task 以外にある、`@camp`/`@here`/同じ道の前のマス 以外 |
+| `E_GOAL` | quest.goal が無い・gate でない・全キャラクターの `path` の最後でない |
+
+警告（エラーではない）: `W_JOB`（知らない職業）、`W_COLOR`（知らない色）。
+
+`validateMap(map)` は `{ ok, errors:[{code, path, message}], warnings:[{code, path, message}] }` を返す。
+`masume validate <file>` は1件1行 `[CODE] path: message` を出し、エラーがあれば終了コード1。`--json` なら上のオブジェクト。
+
+---
+
+## 3. CLI
+
+| コマンド | 担当 | 挙動 |
+| --- | --- | --- |
+| `new <map> [--force]` | 書記 | 地図を検証（エラーなら1）→ `.masume/` を作る（既にあれば `--force` なしで `E_EXISTS`/2）→ genesis → **seal ファイルが存在するマスを自動封印**（マスごとに `sealed`）。stdout に `ふっかつのじゅもん: <じゅもん>` を含める |
+| `validate <map>` | 書記 | §2 |
+| `seal <nodeId…>` / `seal --all` | 書記 | 指定したマスの封印。ファイルが無ければ `E_SEAL_MISSING`/2（何も記録しない）。`--all` は seal を持つマスのうち**ファイルがそろっているものだけ**を封印し、そろっていないマスは「保留」として表示して飛ばす（終了コード0） |
+| `check <characterId\|gateId> [--no-boss]` | 書記 | §4.3〜4.5。成功0 / 判定失敗1 / 前提不足2 |
+| `stamp <nodeId> --as <humanId>` | 書記 | §4.6 |
+| `status [--json]` | 書記 | 人間向けの盤面要約。`--json` は §5 のビュー |
+| `brief <characterId> [--json]` | 書記 | §6 の指令書 |
+| `log [--tail N] [--json]` | 書記 | イベント一覧（`--json` はイベント行の配列） |
+| `verify [--jumon "…"] [--json]` | 書記 | SAVE_FORMAT §6。正常なら `冒険の書は正常です`（0）、呪いなら `呪われています` と最初の seq（3）。`--jumon` はそのじゅもんのイベントがあれば0、無ければ1。`--json` は `{ok, errors:[{seq, code, message}], warnings, head:{seq, hash, jumon}}`（`--jumon` 付きなら `found: {seq}|null` も） |
+| `repair` | 書記 | SAVE_FORMAT §6 |
+| `jumon [--json]` | 書記 | 現在のじゅもん。stdout の最後の行はじゅもんだけ（`--json` は `{seq, hash, jumon}`） |
+| `note <characterId> <text…>` | 書記 | `note` イベント（残りの引数を半角スペースでつないだものが text）。知らないキャラは `E_UNKNOWN`/2 |
+| `amend <map>` | 書記 | §4.8 |
+| `load <seq\|じゅもん>` | 書記 | §4.9 |
+| `serve [--port 5005] [--host 127.0.0.1]` | 伝令 | §8。起動したら stdout に `盤面: http://127.0.0.1:<port>/` を出して動き続ける。`--port 0` は空きポート |
+| `export linear [--format csv\|json] [--out file]` | 地図職人 | §9 |
+| `import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` | 地図職人 | §9 |
+
+エラーは `[CODE] メッセージ` の形で stderr に出す（受付係に任せてよい）。使うコード:
+`E_USAGE` `E_NO_GAME`（冒険の書が見つからない） `E_EXISTS` `E_INVALID_MAP` `E_UNKNOWN`（そんなキャラ/マスはない） `E_UNSEALED` `E_SEAL_BROKEN` `E_SEAL_MISSING` `E_NEEDS_STAMP` `E_STAMP` `E_PARTY_INCOMPLETE` `E_DONE`（もうあがっている） `E_CONFLICT` `E_CURSED` `E_AMEND_HISTORY` `E_LOAD`。
+
+判定に失敗したときは、落ちたマスの判定出力の末尾（最大40行）も stdout に出す（なぜ落ちたかをその場で読めるように）。
+
+判定まわりの stdout には次の言葉を含める（人間と LLM が読むため）:
+成功 `判定成功` / 失敗 `判定失敗` / ゲート勝利 `結合ゲート突破` / ゲート敗北（全員）`全滅` / ゲート敗北（一部）`差し戻し` / 封印破り `封印が破れています` / 未封印 `未封印` / ハンコ待ち `ハンコ` / 仲間待ち `揃っていません`。
+
+---
+
+## 4. ルール（再生で導く状態）
+
+### 4.1 キャラクターの状態
+
+| 項目 | 意味 |
+| --- | --- |
+| `pos` | いまいる `path` の添字。`path.length` ならあがり（done） |
+| `level` / `xp` | 初期 1 / 0。`xp_next = level + 1`。xp が xp_next 以上ならレベルアップ（xp -= xp_next、最大 Lv9） |
+| `checkpoint` | `pos` より前で最後に通過した camp か gate の添字。無ければ -1（ふりだし） |
+| `status` | `working`（task の上）/ `waiting`（gate の上）/ `done` |
+| `clears` / `fails` | 判定成功で通過したマス数（再検証も含む）/ 失敗回数 |
+| `epoch` | このキャラクターの状態が変わるたびに +1（楽観ロック用） |
+
+`vision = min(level - 1, 4)`。
+
+マスの状態: 通過済み（cleared）の集合、消された（stale）の集合、封印（node → {path: sha256}）、`clears`/`fails` 回数。
+
+### 4.2 到着処理
+
+`pos` が進んだら、`path[pos]` が camp の間はそれを cleared にして `checkpoint = pos`、`pos++` を繰り返す。
+`path[pos]` が gate なら `status = waiting`、task なら `working`、末尾を越えたら `done`。
+
+### 4.3 宣言判定（task）
+
+`check <characterId>` で、キャラクターが task の上にいるとき:
+
+1. マスが stamp なら `E_NEEDS_STAMP`/2。
+2. **区間** = 添字 `checkpoint+1 .. pos` の task のうち `kind: "cmd"` のもの（stamp は飛ばす）。
+3. 区間の全マスの封印を確かめる。seal が空なら封印済み扱い。`sealed` 記録が無い、または記録のファイル集合が現在の `check.seal` と違う → `E_UNSEALED`/2（記録しない）。
+   ファイルのハッシュが違う・ファイルが無い → `seal_broken` を記録して `E_SEAL_BROKEN`/2。
+4. 区間のマスの `check.run` を古い順に `/bin/sh -c` で実行（cwd = ルート、環境変数に `MASUME_ROOT` `MASUME_CHARACTER` `MASUME_NODE` を追加、タイムアウト `MASUME_CHECK_TIMEOUT` 秒・既定600）。最初の失敗で止める。
+   出力は `=== <nodeId>: <run> ===` の見出しの後に stdout+stderr、最後に `(exit <code>, <ms>ms)`。1マス100KBまで。
+5. 全部成功 → `check_passed`。効果: 現在のマスを cleared（stale だったなら stale を外すだけで **xp なし**、そうでなければ xp を得る）、`pos++`、到着処理。
+6. 失敗 → `check_failed{failed: F}`。効果:
+   - `level = max(1, level-1)`、`xp = 0`、`fails++`
+   - 戻り先 `t`: F の `rollback_to` が `@here` → F の添字 / `@camp`（既定）→ `checkpoint+1` / マスID → その添字。ただし `t < checkpoint+1` なら `checkpoint+1`。
+   - 添字 `t .. pos-1` で cleared のマスを stale にする（cleared から外す）。`pos = t`、到着処理。
+
+### 4.4 ゲート（合流）
+
+- メンバー全員が `status: waiting` でそのゲートにいる状態を **ready** という。
+- `check` / `stamp` の効果でゲートが ready になったら、`--no-boss` が無ければ**そのコマンドの中で続けて**ボス戦（4.5）を行う。
+- `check <gateId>`、またはそのゲートで待機中のキャラクターIDでの `check` は、ready ならボス戦、そうでなければ `E_PARTY_INCOMPLETE`/2（来ていない仲間の名前を出す）。
+
+### 4.5 ボス戦
+
+1. ゲートの封印を確かめる（4.3 と同じ）。
+2. ゲートの `check.run` だけを実行。
+3. 成功 → `gate_cleared`。効果: ゲートを cleared。各メンバー: xp を得る、`pos++`（`checkpoint` はゲート）、到着処理。
+4. 失敗 → `gate_failed{blamed}`。blamed = 出力中の `MASUME_BLAME: a,b` 行（カンマ・空白区切り、複数行可）のIDのうちメンバーであるもの。空ならメンバー全員。
+   効果: blamed の各メンバー: `level-1`（最低1）、`xp = 0`、`fails++`、`t = checkpoint+1`、添字 `t .. pos-1` の cleared を stale に、`pos = t`、到着処理。
+   blamed でないメンバーは待機のまま。
+
+終了コードは、そのコマンドで最後に行った判定の結果（成功0 / 失敗1）。
+
+### 4.6 ハンコ
+
+`stamp <nodeId> --as <humanId>`: マスが stamp の task で、`by === humanId`、持ち主がいまそのマスにいる → `stamped`（効果は 4.3 の5と同じ。そのあとゲートが ready ならボス戦）。それ以外は `E_STAMP`/2。
+
+### 4.7 楽観ロック
+
+判定コマンドを走らせる前に、関係するキャラクター（ゲートならメンバー全員）の `epoch` を覚えておき、追記直前に読み直して違えば `E_CONFLICT`/2（記録しない）。
+
+### 4.8 地図の改訂（amend）
+
+新しい地図を検証（エラーなら `E_INVALID_MAP`/1）したうえで:
+- `quest.id` は同じ。既存のキャラクターは消せない（追加はよい）。
+- 各キャラクターについて、新しい `path` は古い `path[0 .. pos-1]`（通過済み）と同じIDで始まる。
+- 通過済みのマスは、`title` `detail` `labels` `estimate` 以外を変えてはいけない。
+- 違反は `E_AMEND_HISTORY`/1。
+- 成功 → `.masume/maps/000N.json` を書き、`amended{version:N}` を記録。新しく増えたマス・封印の無いマスのうち seal ファイルが存在するものは自動封印。
+- 封印は `{node → files}` で、ファイル集合が新しい `check.seal` と違えば未封印に戻る。
+
+### 4.9 ロード
+
+`load <S>`（seq の数字、またはじゅもん）: `0 <= S < 現在の seq` でなければ `E_LOAD`/2。`loaded{to_seq:S}` を記録。再生では、状態を「seq 0..S を再生した状態」に置き換える。
+
+---
+
+## 5. ビュー（`status --json` / `buildView(root)` / `GET /api/state`）
+
+3つは**同じ JSON** を返す。
+
+```jsonc
+{
+  "masume": 1,
+  "quest": { …地図の quest },
+  "map_version": 1,
+  "characters": [            // 地図の順
+    { …地図のキャラクター全項目,
+      "pos": 2, "at": "E2",     // at = path[pos]、done なら null
+      "level": 2, "xp": 1, "xp_next": 3, "vision": 1,
+      "status": "working",      // working | waiting | done
+      "checkpoint": "C1",       // マスID か null
+      "clears": 3, "fails": 1,
+      "last_note": "…" | null }
+  ],
+  "nodes": {
+    "E1": { …地図のマス全項目（xp は既定値を補う、task には rollback_to の既定 "@camp" を補う）,
+      "id": "E1",
+      "owner": "engine",        // task/camp の持ち主。gate は null
+      "members": ["engine"],    // gate はメンバー、task/camp は [owner]
+      "state": "cleared",       // 下の表
+      "sealed": true,           // seal 不要なら true
+      "seal_broken": false,     // 最新の seal_broken が最新の sealed より新しい
+      "clears": 1, "fails": 0,  // そのマスで成功した回数 / そのマスが原因で失敗した回数（failed や gate）
+      "last_seq": 12 }          // そのマスに関する最新イベントの seq か null
+  },
+  "log": [ { "seq": 0, "ts": "…", "type": "genesis", "actor": "gm",
+             "character": null, "node": null, "ok": null, "text": "冒険の書がひらかれた" } ],  // 古い順、最新200件
+  "head": { "seq": 12, "hash": "…", "jumon": "ゆうて いみや おうき むこう" },
+  "integrity": { "ok": true, "errors": [] },
+  "finished": false           // goal が cleared
+}
+```
+
+`log[].character` / `node` はイベントの主役（gate のイベントなら `node` = gate、`character` = null）。`ok` は成功 true / 失敗 false / それ以外 null。`text` は人間向けの日本語1行。
+
+### マスの state（上から順に最初に当てはまるもの）
+
+| type | state |
+| --- | --- |
+| task / camp | `cleared` → `stale` → `current`（持ち主の pos）→ `open`（持ち主より前方 vision マス以内）→ `fog` |
+| gate | `cleared` → `ready`（全員待機）→ `waiting`（1人以上待機）→ `open`（いずれかのメンバーの vision 以内）→ `fog` |
+
+---
+
+## 6. 指令書（`brief <id> --json`）
+
+```jsonc
+{
+  "jumon": "…", "seq": 12,
+  "character": { "id", "name", "kind", "module", "territory", "level", "xp", "xp_next", "vision", "status" },
+  "current": { "id", "type", "title", "detail", "check", "sealed", "seal_broken", "rollback_to" } | null,
+  "visible": [ { "id", "type", "title" } ],   // current の先、vision マスまで
+  "fog": 3,                                     // それより先に残っているマスの数
+  "party": [ { "id", "name", "at", "status", "level" } ],  // 自分以外
+  "waiting_for": ["server"],                    // gate で待機中なら、まだ来ていない仲間
+  "notes": [ { "seq", "ts", "text" } ],          // 自分の日誌、新しい順に最大5件
+  "rules": [ "現在のマスだけをやる", … ]          // 守ること（日本語）
+}
+```
+
+テキスト版（`--json` なし）も同じ内容を日本語で出す。**視界の外のマスのタイトルを出してはいけない。**
+
+---
+
+## 7. エンジンのモジュール API（`src/engine/index.js`）
+
+伝令・地図職人・盤面はこれだけを使う。
+
+```js
+export class MasumeError extends Error { /* code, exitCode */ }
+export function findRoot(startDir)                       // → string | null
+export function validateMap(map)                         // → { ok, errors, warnings }
+export function newGame(root, mapPath, { actor, force }) // → { head }
+export function buildView(root)                          // → §5 のビュー（呪いなら integrity.ok=false で可能な限り返す）
+export function brief(root, characterId)                 // → §6
+export async function check(root, target, { actor, boss = true })      // → { exitCode, events }
+export async function stamp(root, nodeId, { actor, as, boss = true })  // → { exitCode, events, ready: gateId|null }
+export function seal(root, nodeIds /* string[] | 'all' */, { actor })  // → { events }
+export function appendEvent(root, type, data, { actor }) // → 追記したイベント
+export function verify(root)                             // → { ok, errors, warnings, head }
+export function repair(root)                             // → { kept, moved, file }
+export function jumonOf(hashHex)                         // → "ゆうて いみや おうき むこう"
+export function logFile(root)                            // → <root>/.masume/log.jsonl の絶対パス
+export function outputFile(root, seq)                    // → 出力ファイルの絶対パス | null
+export function amend(root, mapPath, { actor })
+export function load(root, seqOrJumon, { actor })
+```
+
+`stamp(..., { boss: false })` の戻り値 `ready` は、ハンコの結果 ready になったゲートID（なければ null）。
+
+---
+
+## 8. 伝令（`src/server/index.js`）
+
+```js
+export function createServer({ webRoot, getView, watchFile, onStamp, onBattle, outputFor })  // → http.Server（未listen）+ stop()
+export async function startServer({ root, port = 5005, host = '127.0.0.1', webRoot })     // → { server, url, port, stop }
+```
+
+- `createServer` が返す `http.Server` には `stop(): Promise<void>` を足す（監視・SSE接続・サーバーを全部閉じる）。
+- `getView` は同期でも Promise を返してもよい。
+- `startServer` は engine を使って上を組み立てる（`webRoot` 既定 = リポジトリの `web/`、`watchFile` = `logFile(root)`）。
+
+| メソッド パス | 内容 |
+| --- | --- |
+| `GET /` と静的ファイル | `webRoot` から配る。`index.html`。MIME: html/css/js(mjs)/json/svg/png/woff2/txt。ディレクトリの外は 403 か 404 |
+| `GET /api/state` | `getView()` の JSON。`Cache-Control: no-store`。例外は 500 `{ok:false, code, error}` |
+| `GET /api/health` | `{ok:true, masume:1}` |
+| `GET /api/stream` | Server-Sent Events。接続時 `event: hello`、`watchFile` が変わるたびに `event: change`（data は JSON）。15秒ごとに `: ping` |
+| `GET /api/output/:seq` | `outputFor(seq)` の文字列を `text/plain; charset=utf-8` で。null なら 404、数字でなければ 400 |
+| `POST /api/stamp` | body `{node, as}` → `onStamp({node, as})` の結果を JSON で 200。`startServer` では engine の `stamp(boss:false)` を呼び、ready になったゲートがあれば `bin/masume.js check <gate> --dir <root> --as gm` を**別プロセスで**起動して `{ok:true, ready:<gate>}` を返す |
+| `POST /api/battle` | body `{gate}` → `onBattle({gate})`。`startServer` では ready なら上と同じく別プロセスでボス戦、そうでなければ 409 |
+
+- POST は `X-Masume: 1` ヘッダ必須（無ければ 403）。`Origin` ヘッダがあってホストと違えば 403。JSON が壊れていれば 400。
+- `onStamp`/`onBattle` が `code` 付きの例外を投げたら 409 `{ok:false, code, error}`。
+
+---
+
+## 9. Linear との文通（`src/linear/**`）
+
+### export
+
+`masume export linear [--format json|csv] [--out file]`（既定 json、stdout）。task と gate だけを1件ずつ（camp は出さない）。
+
+| 列 | 内容 |
+| --- | --- |
+| `ID` | マスID |
+| `Title` | title |
+| `Description` | detail + 空行 + `判定: \`<run>\``（stamp なら `判定: <名前>のハンコ`） |
+| `Status` | cleared→`Done` / current→`In Progress` / waiting・ready→`In Review` / stale・open→`Todo` / fog→`Backlog` |
+| `Assignee` | 持ち主の name。gate はメンバーの name を ` & ` でつなぐ |
+| `Project` | quest.title |
+| `Milestone` | 持ち主の道で、そのマス以降にある最初の gate の title（gate はそれ自身） |
+| `Labels` | labels + 持ち主ID（gate は `gate`）+ stale なら `要再検証`。CSV ではカンマ区切りの1セル |
+| `Estimate` | estimate（無ければ空） |
+
+JSON は `[{ "ID", "Title", "Description", "Status", "Assignee", "Project", "Milestone", "Labels": [..], "Estimate" }]`。
+CSV は1行目が `ID,Title,Description,Status,Assignee,Project,Milestone,Labels,Estimate`、RFC 4180 のクォート。
+
+### import
+
+`masume import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` — Linear の CSV（列名は大文字小文字を区別せず `ID`/`Identifier`、`Title`、`Description`、`Status`、`Assignee`、`Labels`、`Estimate`、`Created`/`Created At`、`Project` を探す）から**地図の下書き**を作る。
+
+- `Status` が done / canceled / cancelled / completed / duplicate（大文字小文字無視）の issue は省き、件数を quest.pitch に書く。
+- Assignee ごとに1キャラクター（出てきた順）。空は `nanashi`（名前「名無し」）。ID は名前を小文字英数字にしたもの、作れなければ `c1`,`c2`…。`kind:"agent"`、job と color は §10 の順に巡回。
+- Labels に `E2E` か `gate`（大文字小文字無視）を含む issue は **gate**。メンバー = その issue より `Created` が前の task を持つキャラクター + その issue の Assignee のキャラクター。2人未満なら普通の task。
+- 各道の並びは `Created` の昇順（同じなら ID の数字部分の昇順）。gate は、各メンバーの道で「それより前に作られた task」の後に置く。
+- 最後に `GOAL`（使われていれば `GOAL-1`）「あがり」を全キャラクターの最後に置く。`quest.goal` はそれ。
+- 担当者が1人だけ（残った issue の Assignee がすべて同じ、またはすべて空で `nanashi` だけ）なら、キャラクターは1人で、`GOAL` のメンバーも1人になる（§2 の例外により有効）。このとき `E2E`/`gate` ラベルの issue はメンバーが2人未満なので普通の task になる。
+- 判定はすべて仮置き `{"kind":"cmd","run":"echo \"TODO(GM): <ID> のE2E判定を書く\" && exit 1","seal":[]}`（GM が本物に差し替えるまで通らない）。
+- quest.id は `--quest-id`、無ければ最初の ID の `-` の前を大文字に。title は `--title` > 最初の行の Project > 「インポートした冒険」。
+- 出力した地図は `validateMap` に通ること。
+
+---
+
+## 10. 絵（`web/assets/**`）
+
+### 12の職業（`job`）と並び順
+
+`hero` 勇者 / `warrior` 戦士 / `mage` 魔法使い / `priest` 僧侶 / `thief` 盗賊 / `merchant` 商人 / `sage` 賢者 / `scribe` 書記 / `herald` 伝令 / `cartographer` 地図職人 / `painter` 絵師 / `villager` 村人
+
+### 8色（蛍光ペン `color`）
+
+`yellow #ffe45c` / `pink #ff8fc7` / `green #8ee28a` / `blue #7cc7ff` / `orange #ffb35c` / `purple #c9a2ff` / `mint #7fe3d0` / `gray #c8c8c8`
+
+### インク
+
+ボールペン紺 `#1d2b5c` / 赤ペン `#d94a3a` / 白 `#ffffff`
+
+### 駒の絵（`web/assets/sprites/<job>.svg`）
+
+- 方眼ノートにボールペンで描いた、ちびキャラの立ち絵（台座つき）。線は丸い端、手描きのゆらぎ。
+- `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">`、6000バイト以下。
+- 使ってよい要素: `svg g path circle ellipse rect line polyline polygon title desc`。`<title>` に日本語の職業名。
+- 使ってはいけないもの: `style` 属性、`<style>`、`<script>`、`<text>`、`<image>`、`<foreignObject>`、`href`、外部参照。
+- `fill`/`stroke` の値は `none` `#1d2b5c` `#ffffff` `#d94a3a` `var(--pawn, #ffe45c)` のどれか。体の塗りに `fill="var(--pawn, #ffe45c)"` を必ず使う（盤面が担当色に塗り替える）。
+- `stroke-width` は 3 以下。描画要素は4つ以上。12枚はすべて違う絵。
+- `web/assets/sprites/index.json` = `{"jobs":[{"id":"hero","name":"勇者"}, …]}`（上の順で12件）。
+
+### 道具の絵（`web/assets/icons/<id>.svg`）
+
+`sword` 剣 / `shield` 盾 / `key` 鍵 / `scroll` 巻物 / `chest` 宝箱 / `flag` 旗 / `inn` 宿屋 / `crown` 王冠 / `potion` 薬 / `map` 地図 / `bell` 鐘 / `lantern` ランタン
+
+- 駒と同じ制約。ただし `var(--pawn, #ffe45c)` は必須ではなく、`#ffe45c` も使ってよい。
+- `web/assets/icons/index.json` = `{"icons":[{"id":"sword","name":"剣"}, …]}`（上の順で12件）。
+- `web/assets/sheet.html` = 24枚を並べて見られる一覧ページ（方眼の背景）。
+
+---
+
+## 11. 盤面（`web/`）
+
+- `web/index.html` が盤面。通常は `/api/state` と `/api/stream` を使う。
+- `?fixture=<name>` のときは `web/fixtures/<name>-state.json` を読む（サーバー無しで見られる）。
+- 駒は `web/assets/sprites/<job>.svg` があれば使い、無ければ手描き風の丸い駒で代用する。
+
+---
+
+# 第2章の契約 —「xxxのようなアプリを作りたい」から、エージェントたちがあがるまで
+
+第1章で、ルール・冒険の書・盤面ができた。第2章では、それを**製品の流れ**にする。
+
+```
+願い（masume quest / 盤面の入口） → GM の LLM が地図と最初の判定を書く → 冒険の書が生まれる
+ → パーティ出撃（masume party / 盤面の出撃ボタン） → キャラクターごとにエージェントが出撃し、1マスずつ進む
+ → ゲートでボス戦（パーティが自動で） → 人間のハンコ → あがり
+```
+
+縄張り（第2章で増えるもの）:
+
+| 縄張り | 持ち主 |
+| --- | --- |
+| `src/engine/**`、`src/commands/{sortie,return,wish}.js`（と既存の書記のコマンド） | 書記 `engine` |
+| `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
+| `src/quest/**`、`src/commands/quest.js` | 語り部 `teller`（新） |
+| `src/party/**`、`src/commands/party.js` | 軍師 `party`（新） |
+| `src/linear/**`、`src/commands/{export,import,linear}.js` | 地図職人 `gmkit` |
+| `web/assets/marks/**` | 絵師 `assets` |
+| `web/index.html`、`web/board/**`、`web/fixtures/**` | 盤面 `board`（賢者クロード） |
+| `tests/**`（`tests/helpers2.mjs` を含む）、`docs/**`、`bin/**`、`quests/masume.map.json` ほか | GM |
+
+`bin/masume.js` の受付係には、GM が `sortie` `return` `wish` `quest` `party` `linear` を足しておく。
+
+## 12. 出撃の記録（書記）
+
+### イベント（SAVE_FORMAT に追加）
+
+| type | data | 意味 |
+| --- | --- | --- |
+| `wish` | `{text, gm, model}` | 冒険の始まりの願い（`gm` は `claude` / `codex` / `cmd`、`model` は文字列か null） |
+| `sortie` | `{character, node, agent, model}` | キャラクターにエージェントが出撃した（`node` = そのときの `at`、`agent` は `claude` / `codex` / `cmd` / 自由な名前、`model` は文字列か null） |
+| `returned` | `{sortie, character, node_before, node_after, advanced, code, output, output_hash}` | 出撃したエージェントが帰還した。`sortie` = 出撃イベントの seq、`node_after` = 帰還時の `at`（あがりなら null）、`advanced` = 出撃時より `pos` が進んでいる（またはあがった）、`code` = エージェントの終了コード、`output` = `outputs/sortie-<出撃のseq 6桁>.log`（エージェントの出力。先にファイルを書いてから追記する） |
+
+- これらは盤面の状態（位置・レベル）を変えない。再生では無視してよい（ビューにだけ使う）。
+- `verify` は第1章どおり、`output` を持つイベントの出力ファイルとハッシュを確かめる。
+
+### ビュー（§5 に追加）
+
+- `characters[].sortie` … いま出撃中なら `{seq, agent, model, node, since}`（`since` = 出撃イベントの ts）、そうでなければ `null`。出撃中 = その `sortie` イベントの seq を `data.sortie` に持つ `returned` がまだ無い。
+- `characters[].sorties` … そのキャラクターの `sortie` イベントの数。
+- `log[].text`: `wish` →「願い: <text>」、`sortie` →「<名前> が出撃した（<agent>[ <model>]）」、`returned` →「<名前> が帰還した（<node_before> → <node_after か あがり>、進んだ / 進めなかった）」。`ok` は `sortie`/`wish` は null、`returned` は `advanced`。
+- `brief`（テキスト）は出撃中なら「出撃中: <agent>（seq N から）」の行を出す。`brief --json` に `sortie` を足す（ビューと同じ形か null）。
+
+### CLI
+
+| コマンド | 挙動 |
+| --- | --- |
+| `sortie <characterId> --agent <name> [--model M]` | `sortie` を記録して seq を出す。知らないキャラ `E_UNKNOWN`/2、人間 `E_USAGE`/2、あがり済み `E_DONE`/2、すでに出撃中 `E_BUSY`/2 |
+| `return <characterId> --sortie <seq> --code <n> [--log <file>]` | `outputs/sortie-<seq>.log` に `--log` の中身（無ければ空）を書き、`returned` を記録する。`node_before` は出撃イベントの `node`、`advanced` は出撃時点の `pos`（seq までを再生した状態）と今の `pos` を比べる。その出撃がすでに帰還済み・存在しない・別のキャラなら `E_USAGE`/2 |
+| `wish <text…> [--gm G] [--model M]` | `wish` を記録する |
+
+モジュール API（`src/engine/index.js`）に足す:
+
+```js
+export function recordSortie(root, characterId, { actor = 'party', agent, model = null })        // → event
+export function recordReturn(root, characterId, { actor = 'party', sortie, code, log = '' })     // → event
+export function recordWish(root, { actor = 'gm', text, gm = null, model = null })                // → event
+```
+
+## 13. 軍師（パーティ出撃）
+
+`masume party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--dry-run] [--dir D]`
+
+- 既定: `--agent claude`、`--model` なし（claude は `sonnet`）、`--parallel 3`、`--rounds 40`。`<root>/.masume/party.json`（`{agent, model, parallel}`）があればその値が既定になる。
+- 環境変数 `MASUME_AGENT_OVERRIDE` があれば、`--agent` に関係なくそれを使う（テストや社内ラッパー用）。
+
+### 1巡の流れ
+
+1. ビューを読む。`finished` なら `あがり！` を出して終了コード 0。
+2. ready なゲートがあれば、パーティ自身がボス戦をする（エンジンの `check(root, gateId, {actor: 'party'})` か CLI）。結果を出す。
+3. 候補 = `kind: agent`・`status: working`・出撃中でない・`--only` に含まれる（指定時）・**迷子**でないキャラクター。
+   迷子 = この `party` の実行中に、進めずに帰還したことが2回続いたキャラクター。
+4. 候補もなく、出撃中もいなければ止まる。理由を出して終了コード 2:
+   人間のハンコ待ちのマスがあれば `ハンコ待ち: <マスID>…`、迷子がいれば `迷子: <キャラID>…`、`--rounds` を使い切ったら `巡回の上限`。
+5. 出撃中が `--parallel` 未満の間、候補を1人ずつ出撃させる（1キャラにつき同時に1エージェント）:
+   `sortie` を記録 → エージェントを起動 → 終了したら出力を `outputs/sortie-<seq>.log` に書き → `returned` を記録 → 1. に戻る。
+6. 帰還1回を1巡と数える。
+
+`SIGINT`/`SIGTERM` を受けたら、出撃中のエージェントを止め、それぞれ `code: 130` で `returned` を記録して終了コード 130。
+
+### エージェントの起動（アダプタ）
+
+| agent | コマンド（cwd = ゲームのルート、プロンプトは stdin） |
+| --- | --- |
+| `claude` | `claude -p --model <M または sonnet> --permission-mode bypassPermissions` |
+| `codex` | `codex exec -C <root> -s workspace-write --skip-git-repo-check [-m <M>] -` |
+| `cmd:<command>` | `/bin/sh -c <command>` |
+
+すべてのエージェントに環境変数 `MASUME_DIR`（ゲームのルート）、`MASUME_BIN`（`bin/masume.js` の絶対パス）、`MASUME_CHARACTER`、`MASUME_NODE`（出撃時の `at`）、`MASUME_PROMPT_FILE`（プロンプトを書いたファイル）を渡す。
+1回の出撃のタイムアウトは `MASUME_SORTIE_TIMEOUT` 秒（既定 3600）。超えたら止めて `code: 124`。出力は stdout+stderr を最大 200KB。
+
+`--dry-run` は何も記録・起動せず、候補ごとに `出撃予定: <キャラID> <コマンド>` とプロンプトの先頭を出して終了コード 0。
+
+### プロンプト（日本語）に必ず入れること
+
+- キャラクターの名前と ID、`masume brief <id>` のテキスト全文
+- 守ること: 現在のマスだけをやる / 縄張り（territory）の外を編集しない / 封印された判定ファイルと地図を編集しない / git の書き込み操作をしない
+- 宣言判定のコマンドをそのまま: `node "<MASUME_BIN>" check <id> --as <id> --no-boss --dir "<root>"`（ゲートのボス戦はパーティがする）
+- 日誌のコマンド: `node "<MASUME_BIN>" note <id> "<申し送り>" --as <id> --dir "<root>"`
+- 止まる条件: 現在のマスを1つ突破したら、または宣言判定に2回失敗したら、そこで止まって短く報告する
+
+## 14. 語り部（願いから冒険をつくる）
+
+`masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--dry-run]`
+
+- ルート = `--dir`（無ければ作る）かカレント。冒険の書があれば `--force` なしで `E_EXISTS`/2。
+- 環境変数 `MASUME_GM_OVERRIDE` があれば、`--gm` に関係なくそれを使う。
+- `<root>/WISH.md` に願いを書く。
+- GM のプロンプト（日本語）をつくる。必ず入れること:
+  願いの全文 / `docs/GM_GUIDE.md` の全文 / `docs/CONTRACTS.md` の §2（地図）と §10（職業と色） /
+  指示「ルートに `quest.map.json` を書く。判定ファイル（E2E）は、パーティが止まらずに進めるよう、**できるだけすべての task と gate の分**を書いて `check.seal` に入れる（少なくとも各エージェントの道の最初の task の分は必ず）。判定はいまは落ちること（まだ何も実装されていない）。本物の外部サービスは使わない。アプリそのものは実装しない」
+- GM を起動する（§13 と同じアダプタ。cwd = ルート、プロンプトは stdin。環境変数 `MASUME_DIR` `MASUME_BIN` `MASUME_WISH` `MASUME_PROMPT_FILE`）。GM の出力は `<root>/quest.log` に追記する。
+- GM が終わったら `quest.map.json` を `validateMap` で検査する。エラーなら、エラー（`[CODE] path: message` の行）と「`quest.map.json` を直して」を書いた追いプロンプトで GM をもう一度起動する（`--retries` 回まで、既定 2）。
+- 正しければ `newGame(root, 'quest.map.json')`（存在する判定ファイルは自動で封印）→ `wish` を記録 → 要約（キャラクター・マス・ゲートの数、ふっかつのじゅもん、次の一手 `masume serve` / `masume party`）を出して終了コード 0。
+- 直らなければ `E_INVALID_MAP`/1。GM が 0 以外で終わったら `E_GM`/2。地図が書かれなかったら `E_GM`/2。
+- `--dry-run` は GM を起動せず、GM のコマンドとプロンプトの先頭を出して終了コード 0（何も書かない）。
+
+## 15. 伝令（入口と出撃の窓口）
+
+- `startServer` は、ルートに冒険の書が**まだ無くても**起動する（ロビー）。そのとき `GET /api/state` は 404 `{ok:false, code:'E_NO_GAME'}`。
+  冒険の書が生まれたら `change` を SSE で送る（まだ無いファイルも0.5秒ごとに見張る）。
+- `POST /api/quest` `{wish, gm, model?}`（wish 1〜2000文字、gm は `claude`/`codex`）→ 冒険の書があれば 409 `E_EXISTS`、生成中なら 409 `E_BUSY`、それ以外は `masume quest <wish> --dir <root> --gm <gm> [--model M]` を別プロセスで起動して 202 `{ok:true}`。子プロセスの出力は `<root>/quest.log`。
+- `GET /api/quest` → `{ok:true, running, code, log}`（`code` は終了コードか null、`log` は `quest.log` の末尾200行）。
+- `POST /api/sortie` `{agent, model?, parallel?, only?}`（agent は `claude`/`codex`、parallel は 1〜8、only は キャラIDの配列）→ 冒険の書が無ければ 409 `E_NO_GAME`、出撃中なら 409 `E_BUSY`、それ以外は `masume party --dir <root> --agent <agent> [...]` を別プロセスで起動して 202 `{ok:true}`。出力は `<root>/.masume/party.log`。
+- `GET /api/party` → `{ok:true, running, code, log}`（`party.log` の末尾200行）。
+- `POST /api/party/stop` → 動いていれば SIGINT を送って `{ok:true, stopped:true}`、いなければ `{ok:true, stopped:false}`。
+- これらの POST も X-Masume と Origin の確認をする。HTTP から `cmd:` は受け付けない（400）。
+  `MASUME_GM_OVERRIDE` / `MASUME_AGENT_OVERRIDE` はサーバーの環境変数として子プロセスにそのまま渡る（そちらが優先される）。
+
+## 16. 地図職人（Linear と同期する）
+
+`masume linear push [--team KEY] [--project NAME] [--dry-run]` / `masume linear pull --team KEY [--project NAME] --out <map.json>`
+
+- エンドポイント `MASUME_LINEAR_URL`（既定 `https://api.linear.app/graphql`）、`Authorization: <LINEAR_API_KEY>`
+……（出力が長いため、中ほどの 13500 バイトを省きました）……
+6. `new --force` は `.masume/linear.json` と `.masume/jira.json` を残す（同期先での重複作成を防ぐ）。
+
+## 25. 伝令: 窓口の守り
+
+1. すべての応答に `X-Frame-Options: DENY`、`Content-Security-Policy: frame-ancestors 'none'`、`X-Content-Type-Options: nosniff`。
+2. POST の本文は 64KB まで。超えたら 413（全部を読み切らない。`Content-Length` が大きければ読む前に断る）。
+3. `/api/battle` とハンコからのボス戦は、同じゲートのボス戦が動いている間は 409 `E_BUSY`。起動したボス戦は伝令の子として管理し、`stop()` で止める。子プロセスに `NODE_TEST_CONTEXT` を渡さない。
+4. `serve` と `mcp` は SIGHUP でも、SIGINT と同じく子を片づけて終わる。
+5. MCP の `masume_quest` の願いの長さは、HTTP と同じく `trim()` 後のコードポイント数で 1〜2000。
+6. `--host 0.0.0.0` / `::` のとき、表示する URL は `http://127.0.0.1:<port>/`。
+
+## 26. 軍師: 出撃の後始末
+
+1. 自分の stdout/stderr が閉じても（EPIPE）落ちない。出撃中のエージェントの帰還を必ず記録してから終わる。
+2. `sortie` の記録が `E_BUSY`（ほかの指揮役がすでに出撃させた）なら、そのキャラクターを今回の候補から外して巡回を続ける（自分の出撃を巻き添えにしない）。
+3. 現在のマスが未封印（`cmd` で seal ファイルを持つのに `sealed: false`）のキャラクターは候補にしない。止まるときの理由に `未封印: <マスID>` と `masume seal <マスID>` の案内を出す。
+4. 出撃を止めるとき（タイムアウト・SIGINT）は、最後に必ずエージェントのプロセスグループを SIGKILL する（SIGTERM を無視する孫を残さない）。ボス戦の判定中に SIGINT を受けたら、その判定も止める（判定の子孫を残さない）。
+5. プロンプトのファイルは、`sortie` を記録する**前に**書く。
+6. プロンプトに書くコマンドは、ルートや bin のパスに `$` `"` `` ` `` があっても、そのまま貼って動くように単一引用符で引用する。
+
+## 27. 語り部: GM の後始末と支度の安全
+
+1. GM を呼ぶたびに（やり直しを含む）、その呼び出しの間に `quest.map.json` が書き換わったことを確かめる。書かれていなければ `E_GM`/2（古い地図を受け入れない）。
+2. GM のシェルが終わってから1秒たってもパイプが閉じなければ、プロセスグループを SIGKILL して、終了コードどおりに扱う。
+3. SIGINT・SIGTERM・SIGHUP では、GM のプロセスグループに SIGTERM、2秒後に SIGKILL。
+4. GM の出力は UTF-8 として正しく読み（マルチバイトを壊さない）、`quest.log` と手元に残すのは最大 2MB。
+5. `MASUME_GM_TIMEOUT` は 1〜86400 秒に丸める。
+6. `--force` で GM が失敗したら `WISH.md` を元のままにする（新しい願いは冒険が生まれたときに書く）。
+7. `init`: `AGENTS.md`・`CLAUDE.md`・`.gitignore` が symlink なら、実体がルートの中にあるときだけ書く。外を指す・ぶら下がった symlink には書かない（`書きません: <ファイル>（<理由>）`）。`CLAUDE.md` が `AGENTS.md` と同じ実体なら `CLAUDE.md` は書かない。
+8. `AGENTS.md` に書くコマンドも、§26.6 と同じく単一引用符で引用する。
+
+## 28. 地図職人: 同期の守り
+
+1. API キー・トークン・URL の userinfo を、どの出力・エラー・ファイルにも出さない。キーやトークンが印字可能な ASCII でなければ `E_LINEAR_AUTH` / `E_JIRA_AUTH`/2。URL に userinfo があれば `E_USAGE`/2。
+2. 通信の途中で切れたら（応答の本文の読み込み中を含む）`E_LINEAR_NETWORK` / `E_JIRA_NETWORK`/1。
+3. Linear も 429 を `retry-after` に従って最大3回まで待って再試行する。作成の結果の `issue` が null なら `E_LINEAR_API`/1。
+4. push で、ある issue が見つからない（Linear の not found、Jira の 404）・権限が無い（403）・遷移が拒まれた（400）ときは、そのマスを飛ばして残りを最後まで同期し、最後に `飛ばしたマス: <マスID>（<理由>）…` をまとめて出して終了コード 1。Jira の 403 は「権限」と書く（認証のせいにしない）。
+5. pull: Linear は `state.type` が `completed` / `canceled` の issue も省く。
+6. import / pull: タイトルが80文字を超えたら先頭80文字（全文は detail の先頭に）、空ならマスID。プロジェクト名（quest.title）も80文字まで。quest.id は英大文字と数字だけ残し、先頭が英大文字の2〜10文字に整える（作れなければ `QUEST`）。`linear pull`・`jira pull` にも `--quest-id`・`--title`。取り込める issue が1件も無ければ `E_NOTHING`/1「取り込める issue がありません」。
+
+## 29. 盤面: 表示の守り
+
+1. URL の `fixture`・`script` は `/^[A-Za-z0-9_-]+$/` のときだけ使う。読み込みの失敗の表示はテキストとして出す（HTML として解釈しない）。
+2. `head` や `quest` が null のビュー（冒険の書が読めない）でも落ちず、「冒険の書が呪われています」と `masume verify` / `masume repair` の案内を出す。
+3. `/api/state` の一時的な失敗（`E_NO_GAME` 以外）は盤面を覆わず、端の表示（`#live`）だけにする。取れたら「ライブ」に戻る。
+4. POST が届かなかったら「サーバーに届きません」と知らせ、ボタンを押せる状態に戻す。
+5. SSE の `hello` で読み直す。SSE が閉じたら数秒後につなぎ直す。今より古い応答（`head.seq` が小さい）では描き直さない。
+6. 書き出しの SVG は XML として正しい（NBSP・制御文字を含む文字列でも単独で開ける）。
+7. 狭い画面（860px 以下）では、マスやキャラクターを選ぶと詳細が画面の中に出る。
+8. `job`・マスID・キャラIDが `constructor`・`toString`・`__proto__` などでも描ける。
+
+exec
+/bin/zsh -lc "sed -n '290,535p' docs/CONTRACTS.md" in /Users/amano/dev/masume
+ succeeded in 0ms:
+export function newGame(root, mapPath, { actor, force }) // → { head }
+export function buildView(root)                          // → §5 のビュー（呪いなら integrity.ok=false で可能な限り返す）
+export function brief(root, characterId)                 // → §6
+export async function check(root, target, { actor, boss = true })      // → { exitCode, events }
+export async function stamp(root, nodeId, { actor, as, boss = true })  // → { exitCode, events, ready: gateId|null }
+export function seal(root, nodeIds /* string[] | 'all' */, { actor })  // → { events }
+export function appendEvent(root, type, data, { actor }) // → 追記したイベント
+export function verify(root)                             // → { ok, errors, warnings, head }
+export function repair(root)                             // → { kept, moved, file }
+export function jumonOf(hashHex)                         // → "ゆうて いみや おうき むこう"
+export function logFile(root)                            // → <root>/.masume/log.jsonl の絶対パス
+export function outputFile(root, seq)                    // → 出力ファイルの絶対パス | null
+export function amend(root, mapPath, { actor })
+export function load(root, seqOrJumon, { actor })
+```
+
+`stamp(..., { boss: false })` の戻り値 `ready` は、ハンコの結果 ready になったゲートID（なければ null）。
+
+---
+
+## 8. 伝令（`src/server/index.js`）
+
+```js
+export function createServer({ webRoot, getView, watchFile, onStamp, onBattle, outputFor })  // → http.Server（未listen）+ stop()
+export async function startServer({ root, port = 5005, host = '127.0.0.1', webRoot })     // → { server, url, port, stop }
+```
+
+- `createServer` が返す `http.Server` には `stop(): Promise<void>` を足す（監視・SSE接続・サーバーを全部閉じる）。
+- `getView` は同期でも Promise を返してもよい。
+- `startServer` は engine を使って上を組み立てる（`webRoot` 既定 = リポジトリの `web/`、`watchFile` = `logFile(root)`）。
+
+| メソッド パス | 内容 |
+| --- | --- |
+| `GET /` と静的ファイル | `webRoot` から配る。`index.html`。MIME: html/css/js(mjs)/json/svg/png/woff2/txt。ディレクトリの外は 403 か 404 |
+| `GET /api/state` | `getView()` の JSON。`Cache-Control: no-store`。例外は 500 `{ok:false, code, error}` |
+| `GET /api/health` | `{ok:true, masume:1}` |
+| `GET /api/stream` | Server-Sent Events。接続時 `event: hello`、`watchFile` が変わるたびに `event: change`（data は JSON）。15秒ごとに `: ping` |
+| `GET /api/output/:seq` | `outputFor(seq)` の文字列を `text/plain; charset=utf-8` で。null なら 404、数字でなければ 400 |
+| `POST /api/stamp` | body `{node, as}` → `onStamp({node, as})` の結果を JSON で 200。`startServer` では engine の `stamp(boss:false)` を呼び、ready になったゲートがあれば `bin/masume.js check <gate> --dir <root> --as gm` を**別プロセスで**起動して `{ok:true, ready:<gate>}` を返す |
+| `POST /api/battle` | body `{gate}` → `onBattle({gate})`。`startServer` では ready なら上と同じく別プロセスでボス戦、そうでなければ 409 |
+
+- POST は `X-Masume: 1` ヘッダ必須（無ければ 403）。`Origin` ヘッダがあってホストと違えば 403。JSON が壊れていれば 400。
+- `onStamp`/`onBattle` が `code` 付きの例外を投げたら 409 `{ok:false, code, error}`。
+
+---
+
+## 9. Linear との文通（`src/linear/**`）
+
+### export
+
+`masume export linear [--format json|csv] [--out file]`（既定 json、stdout）。task と gate だけを1件ずつ（camp は出さない）。
+
+| 列 | 内容 |
+| --- | --- |
+| `ID` | マスID |
+| `Title` | title |
+| `Description` | detail + 空行 + `判定: \`<run>\``（stamp なら `判定: <名前>のハンコ`） |
+| `Status` | cleared→`Done` / current→`In Progress` / waiting・ready→`In Review` / stale・open→`Todo` / fog→`Backlog` |
+| `Assignee` | 持ち主の name。gate はメンバーの name を ` & ` でつなぐ |
+| `Project` | quest.title |
+| `Milestone` | 持ち主の道で、そのマス以降にある最初の gate の title（gate はそれ自身） |
+| `Labels` | labels + 持ち主ID（gate は `gate`）+ stale なら `要再検証`。CSV ではカンマ区切りの1セル |
+| `Estimate` | estimate（無ければ空） |
+
+JSON は `[{ "ID", "Title", "Description", "Status", "Assignee", "Project", "Milestone", "Labels": [..], "Estimate" }]`。
+CSV は1行目が `ID,Title,Description,Status,Assignee,Project,Milestone,Labels,Estimate`、RFC 4180 のクォート。
+
+### import
+
+`masume import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` — Linear の CSV（列名は大文字小文字を区別せず `ID`/`Identifier`、`Title`、`Description`、`Status`、`Assignee`、`Labels`、`Estimate`、`Created`/`Created At`、`Project` を探す）から**地図の下書き**を作る。
+
+- `Status` が done / canceled / cancelled / completed / duplicate（大文字小文字無視）の issue は省き、件数を quest.pitch に書く。
+- Assignee ごとに1キャラクター（出てきた順）。空は `nanashi`（名前「名無し」）。ID は名前を小文字英数字にしたもの、作れなければ `c1`,`c2`…。`kind:"agent"`、job と color は §10 の順に巡回。
+- Labels に `E2E` か `gate`（大文字小文字無視）を含む issue は **gate**。メンバー = その issue より `Created` が前の task を持つキャラクター + その issue の Assignee のキャラクター。2人未満なら普通の task。
+- 各道の並びは `Created` の昇順（同じなら ID の数字部分の昇順）。gate は、各メンバーの道で「それより前に作られた task」の後に置く。
+- 最後に `GOAL`（使われていれば `GOAL-1`）「あがり」を全キャラクターの最後に置く。`quest.goal` はそれ。
+- 担当者が1人だけ（残った issue の Assignee がすべて同じ、またはすべて空で `nanashi` だけ）なら、キャラクターは1人で、`GOAL` のメンバーも1人になる（§2 の例外により有効）。このとき `E2E`/`gate` ラベルの issue はメンバーが2人未満なので普通の task になる。
+- 判定はすべて仮置き `{"kind":"cmd","run":"echo \"TODO(GM): <ID> のE2E判定を書く\" && exit 1","seal":[]}`（GM が本物に差し替えるまで通らない）。
+- quest.id は `--quest-id`、無ければ最初の ID の `-` の前を大文字に。title は `--title` > 最初の行の Project > 「インポートした冒険」。
+- 出力した地図は `validateMap` に通ること。
+
+---
+
+## 10. 絵（`web/assets/**`）
+
+### 12の職業（`job`）と並び順
+
+`hero` 勇者 / `warrior` 戦士 / `mage` 魔法使い / `priest` 僧侶 / `thief` 盗賊 / `merchant` 商人 / `sage` 賢者 / `scribe` 書記 / `herald` 伝令 / `cartographer` 地図職人 / `painter` 絵師 / `villager` 村人
+
+### 8色（蛍光ペン `color`）
+
+`yellow #ffe45c` / `pink #ff8fc7` / `green #8ee28a` / `blue #7cc7ff` / `orange #ffb35c` / `purple #c9a2ff` / `mint #7fe3d0` / `gray #c8c8c8`
+
+### インク
+
+ボールペン紺 `#1d2b5c` / 赤ペン `#d94a3a` / 白 `#ffffff`
+
+### 駒の絵（`web/assets/sprites/<job>.svg`）
+
+- 方眼ノートにボールペンで描いた、ちびキャラの立ち絵（台座つき）。線は丸い端、手描きのゆらぎ。
+- `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">`、6000バイト以下。
+- 使ってよい要素: `svg g path circle ellipse rect line polyline polygon title desc`。`<title>` に日本語の職業名。
+- 使ってはいけないもの: `style` 属性、`<style>`、`<script>`、`<text>`、`<image>`、`<foreignObject>`、`href`、外部参照。
+- `fill`/`stroke` の値は `none` `#1d2b5c` `#ffffff` `#d94a3a` `var(--pawn, #ffe45c)` のどれか。体の塗りに `fill="var(--pawn, #ffe45c)"` を必ず使う（盤面が担当色に塗り替える）。
+- `stroke-width` は 3 以下。描画要素は4つ以上。12枚はすべて違う絵。
+- `web/assets/sprites/index.json` = `{"jobs":[{"id":"hero","name":"勇者"}, …]}`（上の順で12件）。
+
+### 道具の絵（`web/assets/icons/<id>.svg`）
+
+`sword` 剣 / `shield` 盾 / `key` 鍵 / `scroll` 巻物 / `chest` 宝箱 / `flag` 旗 / `inn` 宿屋 / `crown` 王冠 / `potion` 薬 / `map` 地図 / `bell` 鐘 / `lantern` ランタン
+
+- 駒と同じ制約。ただし `var(--pawn, #ffe45c)` は必須ではなく、`#ffe45c` も使ってよい。
+- `web/assets/icons/index.json` = `{"icons":[{"id":"sword","name":"剣"}, …]}`（上の順で12件）。
+- `web/assets/sheet.html` = 24枚を並べて見られる一覧ページ（方眼の背景）。
+
+---
+
+## 11. 盤面（`web/`）
+
+- `web/index.html` が盤面。通常は `/api/state` と `/api/stream` を使う。
+- `?fixture=<name>` のときは `web/fixtures/<name>-state.json` を読む（サーバー無しで見られる）。
+- 駒は `web/assets/sprites/<job>.svg` があれば使い、無ければ手描き風の丸い駒で代用する。
+
+---
+
+# 第2章の契約 —「xxxのようなアプリを作りたい」から、エージェントたちがあがるまで
+
+第1章で、ルール・冒険の書・盤面ができた。第2章では、それを**製品の流れ**にする。
+
+```
+願い（masume quest / 盤面の入口） → GM の LLM が地図と最初の判定を書く → 冒険の書が生まれる
+ → パーティ出撃（masume party / 盤面の出撃ボタン） → キャラクターごとにエージェントが出撃し、1マスずつ進む
+ → ゲートでボス戦（パーティが自動で） → 人間のハンコ → あがり
+```
+
+縄張り（第2章で増えるもの）:
+
+| 縄張り | 持ち主 |
+| --- | --- |
+| `src/engine/**`、`src/commands/{sortie,return,wish}.js`（と既存の書記のコマンド） | 書記 `engine` |
+| `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
+| `src/quest/**`、`src/commands/quest.js` | 語り部 `teller`（新） |
+| `src/party/**`、`src/commands/party.js` | 軍師 `party`（新） |
+| `src/linear/**`、`src/commands/{export,import,linear}.js` | 地図職人 `gmkit` |
+| `web/assets/marks/**` | 絵師 `assets` |
+| `web/index.html`、`web/board/**`、`web/fixtures/**` | 盤面 `board`（賢者クロード） |
+| `tests/**`（`tests/helpers2.mjs` を含む）、`docs/**`、`bin/**`、`quests/masume.map.json` ほか | GM |
+
+`bin/masume.js` の受付係には、GM が `sortie` `return` `wish` `quest` `party` `linear` を足しておく。
+
+## 12. 出撃の記録（書記）
+
+### イベント（SAVE_FORMAT に追加）
+
+| type | data | 意味 |
+| --- | --- | --- |
+| `wish` | `{text, gm, model}` | 冒険の始まりの願い（`gm` は `claude` / `codex` / `cmd`、`model` は文字列か null） |
+| `sortie` | `{character, node, agent, model}` | キャラクターにエージェントが出撃した（`node` = そのときの `at`、`agent` は `claude` / `codex` / `cmd` / 自由な名前、`model` は文字列か null） |
+| `returned` | `{sortie, character, node_before, node_after, advanced, code, output, output_hash}` | 出撃したエージェントが帰還した。`sortie` = 出撃イベントの seq、`node_after` = 帰還時の `at`（あがりなら null）、`advanced` = 出撃時より `pos` が進んでいる（またはあがった）、`code` = エージェントの終了コード、`output` = `outputs/sortie-<出撃のseq 6桁>.log`（エージェントの出力。先にファイルを書いてから追記する） |
+
+- これらは盤面の状態（位置・レベル）を変えない。再生では無視してよい（ビューにだけ使う）。
+- `verify` は第1章どおり、`output` を持つイベントの出力ファイルとハッシュを確かめる。
+
+### ビュー（§5 に追加）
+
+- `characters[].sortie` … いま出撃中なら `{seq, agent, model, node, since}`（`since` = 出撃イベントの ts）、そうでなければ `null`。出撃中 = その `sortie` イベントの seq を `data.sortie` に持つ `returned` がまだ無い。
+- `characters[].sorties` … そのキャラクターの `sortie` イベントの数。
+- `log[].text`: `wish` →「願い: <text>」、`sortie` →「<名前> が出撃した（<agent>[ <model>]）」、`returned` →「<名前> が帰還した（<node_before> → <node_after か あがり>、進んだ / 進めなかった）」。`ok` は `sortie`/`wish` は null、`returned` は `advanced`。
+- `brief`（テキスト）は出撃中なら「出撃中: <agent>（seq N から）」の行を出す。`brief --json` に `sortie` を足す（ビューと同じ形か null）。
+
+### CLI
+
+| コマンド | 挙動 |
+| --- | --- |
+| `sortie <characterId> --agent <name> [--model M]` | `sortie` を記録して seq を出す。知らないキャラ `E_UNKNOWN`/2、人間 `E_USAGE`/2、あがり済み `E_DONE`/2、すでに出撃中 `E_BUSY`/2 |
+| `return <characterId> --sortie <seq> --code <n> [--log <file>]` | `outputs/sortie-<seq>.log` に `--log` の中身（無ければ空）を書き、`returned` を記録する。`node_before` は出撃イベントの `node`、`advanced` は出撃時点の `pos`（seq までを再生した状態）と今の `pos` を比べる。その出撃がすでに帰還済み・存在しない・別のキャラなら `E_USAGE`/2 |
+| `wish <text…> [--gm G] [--model M]` | `wish` を記録する |
+
+モジュール API（`src/engine/index.js`）に足す:
+
+```js
+export function recordSortie(root, characterId, { actor = 'party', agent, model = null })        // → event
+export function recordReturn(root, characterId, { actor = 'party', sortie, code, log = '' })     // → event
+export function recordWish(root, { actor = 'gm', text, gm = null, model = null })                // → event
+```
+
+## 13. 軍師（パーティ出撃）
+
+`masume party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--dry-run] [--dir D]`
+
+- 既定: `--agent claude`、`--model` なし（claude は `sonnet`）、`--parallel 3`、`--rounds 40`。`<root>/.masume/party.json`（`{agent, model, parallel}`）があればその値が既定になる。
+- 環境変数 `MASUME_AGENT_OVERRIDE` があれば、`--agent` に関係なくそれを使う（テストや社内ラッパー用）。
+
+### 1巡の流れ
+
+1. ビューを読む。`finished` なら `あがり！` を出して終了コード 0。
+2. ready なゲートがあれば、パーティ自身がボス戦をする（エンジンの `check(root, gateId, {actor: 'party'})` か CLI）。結果を出す。
+3. 候補 = `kind: agent`・`status: working`・出撃中でない・`--only` に含まれる（指定時）・**迷子**でないキャラクター。
+   迷子 = この `party` の実行中に、進めずに帰還したことが2回続いたキャラクター。
+4. 候補もなく、出撃中もいなければ止まる。理由を出して終了コード 2:
+   人間のハンコ待ちのマスがあれば `ハンコ待ち: <マスID>…`、迷子がいれば `迷子: <キャラID>…`、`--rounds` を使い切ったら `巡回の上限`。
+5. 出撃中が `--parallel` 未満の間、候補を1人ずつ出撃させる（1キャラにつき同時に1エージェント）:
+   `sortie` を記録 → エージェントを起動 → 終了したら出力を `outputs/sortie-<seq>.log` に書き → `returned` を記録 → 1. に戻る。
+6. 帰還1回を1巡と数える。
+
+`SIGINT`/`SIGTERM` を受けたら、出撃中のエージェントを止め、それぞれ `code: 130` で `returned` を記録して終了コード 130。
+
+### エージェントの起動（アダプタ）
+
+| agent | コマンド（cwd = ゲームのルート、プロンプトは stdin） |
+| --- | --- |
+| `claude` | `claude -p --model <M または sonnet> --permission-mode bypassPermissions` |
+| `codex` | `codex exec -C <root> -s workspace-write --skip-git-repo-check [-m <M>] -` |
+| `cmd:<command>` | `/bin/sh -c <command>` |
+
+すべてのエージェントに環境変数 `MASUME_DIR`（ゲームのルート）、`MASUME_BIN`（`bin/masume.js` の絶対パス）、`MASUME_CHARACTER`、`MASUME_NODE`（出撃時の `at`）、`MASUME_PROMPT_FILE`（プロンプトを書いたファイル）を渡す。
+1回の出撃のタイムアウトは `MASUME_SORTIE_TIMEOUT` 秒（既定 3600）。超えたら止めて `code: 124`。出力は stdout+stderr を最大 200KB。
+
+`--dry-run` は何も記録・起動せず、候補ごとに `出撃予定: <キャラID> <コマンド>` とプロンプトの先頭を出して終了コード 0。
+
+### プロンプト（日本語）に必ず入れること
+
+- キャラクターの名前と ID、`masume brief <id>` のテキスト全文
+- 守ること: 現在のマスだけをやる / 縄張り（territory）の外を編集しない / 封印された判定ファイルと地図を編集しない / git の書き込み操作をしない
+- 宣言判定のコマンドをそのまま: `node "<MASUME_BIN>" check <id> --as <id> --no-boss --dir "<root>"`（ゲートのボス戦はパーティがする）
+- 日誌のコマンド: `node "<MASUME_BIN>" note <id> "<申し送り>" --as <id> --dir "<root>"`
+- 止まる条件: 現在のマスを1つ突破したら、または宣言判定に2回失敗したら、そこで止まって短く報告する
+
+## 14. 語り部（願いから冒険をつくる）
+
+`masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--dry-run]`
+
+- ルート = `--dir`（無ければ作る）かカレント。冒険の書があれば `--force` なしで `E_EXISTS`/2。
+- 環境変数 `MASUME_GM_OVERRIDE` があれば、`--gm` に関係なくそれを使う。
+- `<root>/WISH.md` に願いを書く。
+- GM のプロンプト（日本語）をつくる。必ず入れること:
+  願いの全文 / `docs/GM_GUIDE.md` の全文 / `docs/CONTRACTS.md` の §2（地図）と §10（職業と色） /
+  指示「ルートに `quest.map.json` を書く。判定ファイル（E2E）は、パーティが止まらずに進めるよう、**できるだけすべての task と gate の分**を書いて `check.seal` に入れる（少なくとも各エージェントの道の最初の task の分は必ず）。判定はいまは落ちること（まだ何も実装されていない）。本物の外部サービスは使わない。アプリそのものは実装しない」
+- GM を起動する（§13 と同じアダプタ。cwd = ルート、プロンプトは stdin。環境変数 `MASUME_DIR` `MASUME_BIN` `MASUME_WISH` `MASUME_PROMPT_FILE`）。GM の出力は `<root>/quest.log` に追記する。
+- GM が終わったら `quest.map.json` を `validateMap` で検査する。エラーなら、エラー（`[CODE] path: message` の行）と「`quest.map.json` を直して」を書いた追いプロンプトで GM をもう一度起動する（`--retries` 回まで、既定 2）。
+- 正しければ `newGame(root, 'quest.map.json')`（存在する判定ファイルは自動で封印）→ `wish` を記録 → 要約（キャラクター・マス・ゲートの数、ふっかつのじゅもん、次の一手 `masume serve` / `masume party`）を出して終了コード 0。
+- 直らなければ `E_INVALID_MAP`/1。GM が 0 以外で終わったら `E_GM`/2。地図が書かれなかったら `E_GM`/2。
+- `--dry-run` は GM を起動せず、GM のコマンドとプロンプトの先頭を出して終了コード 0（何も書かない）。
+
+## 15. 伝令（入口と出撃の窓口）
+
+
+exec
+/bin/zsh -lc 'cat docs/GM_GUIDE.md' in /Users/amano/dev/masume
+ succeeded in 0ms:
+# GM ガイド — 「xxxのようなアプリを作りたい」から地図を描く
+
+あなた（LLM）は **GM（ゲームマスター）** です。ユーザーが「xxxのようなアプリを作りたい」と言ったら、
+開発ロードマップ全体を、5mm方眼ノートのすごろくの地図（`*.map.json`）にします。
+
+GM の仕事は2つだけです。
+
+1. **地図を描く**（キャラクター＝モジュール、道＝タスクの列、結合ゲート＝結合E2E）
+2. **判定を書いて封印する**（各マスの E2E テスト）
+
+**GM は実装しません。** 実装するのは各キャラクター（エージェント）です。
+判定を書く人と実装する人を分けることで、「できました」が信用できるようになります。
+
+---
+
+## 手順
+
+### 0. ヒアリング（最大3問）
+
+聞かないと地図が描けないことだけを聞く。聞かずに決めたことは「前提」として書き残す（`quests/<名前>.md`）。
+
+- 誰が、どの画面/入口で使うか（Web? CLI? 電話? LINE?）
+- 外部サービス（決済・メール・電話・認証）は何を使うか、本番の鍵は誰が持つか
+- 「これが動けば完成」と言える一場面は何か
+
+### 1. あがりから描く
+
+最初に **あがり（goal）** の結合E2Eを1文で書く。
+例:「電話をかけて用件を話すと、1分以内に契約者へ用件のメールが届き、会話本文は削除されている」
+
+あがりは全キャラクターが合流する最後のゲート。ここが決まらない地図は描かない。
+
+### 2. キャラクター（モジュール）に分ける — 3〜7人
+
+| 基準 | 理由 |
+| --- | --- |
+| 境界がはっきりしている（ディレクトリ単位の縄張りにできる） | 並行して作っても衝突しない |
+| 外から E2E で確かめられる（CLI・HTTP・画面・ファイル） | 判定が書ける |
+| 1人あたり task が 2〜6 マス | 長すぎる道は迷子になる |
+| 人間にしかできないことは **人間の道** に分ける | 契約・決済・本番鍵・審査・デザイン承認・法務 |
+
+名前は RPG の職業風に（例: 門番=認証、倉庫番=DB、伝令=通知、絵師=UI、両替商=決済、書記=ログ、勇者=人間）。
+`job` は12職業から、`color` は8色から選ぶ（[CONTRACTS.md §10](CONTRACTS.md)）。
+
+### 3. マスを置く
+
+- 1マス = **エージェント1回分のコンテキストで終わる仕事**（目安 30〜90分）。大きければ割る。
+- タイトルは動詞で終える短い日本語（24文字以内）。例「通話を受けて用件を聞く」
+- `detail` には、やることと合格条件（何が見えたら合格か）を書く。
+- `check` は **E2E**（外から叩く）。単体テストではない。
+  - CLI を実行して出力を見る / HTTP を叩く / ヘッドレスブラウザで画面を見る / 生成物を検査する
+  - 本物の外部サービスを叩かない（フェイク・サンドボックス・録画データを使う）
+  - 何度走らせても同じ結果（一時ディレクトリを使う、後片付けする）。**累積判定で何度も再実行される**
+- 人間のマスは `{"kind":"stamp","by":"<人間のID>"}`。
+
+### 4. 結合ゲートを置く
+
+- モジュールが**初めてつながる所**に必ずゲートを置く（例: 認証＋保存＋API で「ログインして保存できる」）。
+- 各道で 2〜4 マスごとに1つが目安。ゲートの後で道は分かれる（解散）。
+- ゲートの判定は、モジュールをまたぐ一連の流れを通す。
+- どのモジュールのせいで落ちたか分かる箇所では `MASUME_BLAME: <キャラID>` を出力する。出さなければ全員が戻される（全滅）。
+
+### 5. 宿屋と戻り先
+
+- 4マス以上続く道には途中に宿屋（camp）を置く。失敗してもそこより前には戻らない。
+- `rollback_to`: 既定 `@camp`。試行錯誤するマスは `@here`。前のマスの成果に強く依存するマスはそのマスID。
+
+### 6. 縄張り
+
+- キャラクターごとに重ならない glob を `territory` に書く。
+- 共有ファイル（型定義・設定・ルーティング表など）は GM の縄張りにするか、ゲートで扱う。
+
+### 7. 書いて、確かめて、始める
+
+```sh
+masume validate quests/<名前>.map.json     # 地図の検査
+# 各道の最初の1〜2マスぶんの判定（tests/e2e/…）を書く。霧の先は後で書いてよい
+masume new quests/<名前>.map.json           # 冒険の書をつくる（存在する判定ファイルは自動で封印）
+masume serve                               # 盤面を開く
+```
+
+判定はマスに着く前に書けばよい（**遅延封印**）。未封印のマスは判定できないので、キャラクターが来る前に `masume seal <マス>`。
+
+---
+
+## キャラクターの起こし方（各エージェントへの最初の指示）
+
+```
+あなたは「<名前>」（ID: <id>）。マスメの盤上のキャラクターです。
+まず `masume brief <id>` を読み、現在のマスだけを実装してください。
+- 縄張り: <territory> の外は編集しない
+- 判定ファイル（tests/ など封印されたもの）は編集しない
+- 判定コマンドを自分で走らせて通ったら `masume check <id>` で宣言判定
+- 終わる前に `masume note <id> "次の自分への申し送り"`
+- ゲートで待機になったら、そこで止まって報告する
+```
+
+コンテキストが尽きたら、新しいセッションで同じ指示を出せば再開できる（指令書と日誌がセーブデータから復元する）。
+
+### エージェントの箱（サンドボックス）を確かめる
+
+判定が手元にサーバーを立てる（`127.0.0.1` で listen する）なら、エージェントの箱の中でもそれができるかを出撃の前に確かめる。
+Codex の `-s workspace-write` は既定でネットワークを閉じているので、listen が `EPERM` で落ち、素振りも宣言判定も通らない（キャラクターのせいではないのにレベルが下がる）。
+そのときは、その出撃だけアダプタを差し替える:
+
+```sh
+MASUME_AGENT_OVERRIDE='cmd:codex exec -C . -s workspace-write -c sandbox_workspace_write.network_access=true --skip-git-repo-check -' \
+  masume party --only engine,server
+```
+
+マスメ自身の第4章では、伝令（窓口のサーバー）と地図職人（偽物の Linear・Jira を立てる判定）がこれにあたった。
+
+---
+
+## 例: 「ことづけのようなアプリを作りたい」
+
+> 電話の用件を AI が聞き取り、メールで届ける。申込→支払い→番号提供→受付開始。
+
+```
+ふりだし
+ 門番(番号と通話)   ■KTZ-1 ■KTZ-2 ─┐
+ 聞き手(AI受付)     ■KTZ-3 ■KTZ-4 ─┤★KTZ-G1 通話から用件が取れる ─ ■KTZ-5 ─┐
+ 書記(メール)       ■KTZ-6 ■KTZ-7 ───────────────────────────────┤★KTZ-G2 用件がメールで届く ─┐
+ 両替商(申込と支払い) ■KTZ-8 ■KTZ-9 ■KTZ-10 ───────────────────────┐                              │
+ 勇者(人間)         ■KTZ-11(ハンコ) ■KTZ-12(ハンコ) ─────────────┴★KTZ-G3 申し込んで使い始められる ┴★あがり
+```
+
+実物は `quests/kotozuke.map.json`（地図職人が作る）を見ること。
+
+---
+
+## チェックリスト
+
+- [ ] あがりの判定が、ユーザーにとっての「完成」を1場面で確かめている
+- [ ] どの task にも E2E の判定がある（人間のマスはハンコ）
+- [ ] すべての道が goal で終わる
+- [ ] モジュールが初めてつながる所にゲートがある
+- [ ] 縄張りが重なっていない
+- [ ] 本物の外部サービス・本番の鍵に触る判定がない（人間のマスに分けた）
+- [ ] `masume validate` が通る
+- [ ] ボス戦（ゲート）の前に、GM 自身がゲートの判定を素振りした（判定のバグで仲間を全滅させない）
+- [ ] 判定の中で `node --test` を入れ子に呼ぶなら、環境変数 `NODE_TEST_CONTEXT` を外している（受け継ぐと何も走らずに通ってしまう）
+- [ ] ゲートの素振りは**ボス戦と同じ環境**で走らせた。エンジンは判定に `MASUME_ROOT` `MASUME_CHARACTER` `MASUME_NODE` を渡す（例: `MASUME_ROOT=$PWD node --test tests/e2e/GOAL.test.mjs`）。判定の中で別の冒険の判定を走らせるなら、`MASUME_*` を外してその冒険のルートを渡す
+
+## GM も間違える
+
+判定は GM が書くので、判定そのものが間違っていることもある。そのときは:
+
+1. 判定ファイルを直す（GM の縄張り）
+2. `masume seal <マス>` で封印し直す（冒険の書に `sealed` として残る）
+3. `masume note` で何を直したかを書く
+
+キャラクターが素振りで「判定のほうがおかしい」と気づいたら、宣言せずに（ゲートなら `--no-boss` で）報告するのが正しい動き。
+マスメ自身の冒険の書には、書記が G2 の判定の不備を素振りで見つけ、GM が直して再封印した記録が残っている。
+
+GM のミスでボス戦に負けて全滅させてしまったら、キャラクターの主張が正しかったことを確かめたうえで、`masume load <ボス戦の前のseq>` で戻してよい（ロードしたこと自体が冒険の書に残る）。
+マスメ自身の第2章では、GOAL2 の判定がボス戦の中の `MASUME_ROOT` を受け継いで負けた（seq 100）。GM が裁定を日誌に書き、seq 99 をロードし、判定を直して封印し直してから勝った。
+
+exec
+/bin/zsh -lc 'cat AGENTS.md
+rg --files -g AGENTS.md src quests tests
+git status --short' in /Users/amano/dev/masume
+ succeeded in 0ms:
+# AGENTS.md — このリポジトリで働くエージェントへ
+
+ここは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）を、**マスメ自身のルールで**作っているリポジトリです。
+あなたは盤上のキャラクターの1人です。地図は `quests/masume.map.json`、ルールは `docs/RULEBOOK.md`。
+
+## 絶対ルール
+
+1. **現在のマスだけ**を実装する。指令書に出ていない先のマスには手を出さない（霧の向こう）。
+2. **縄張り**（`docs/CONTRACTS.md` §1 と地図の `territory`）の外のファイルを作らない・編集しない。
+   必要なら最終報告の「GMへの依頼」に書く。
+3. `tests/**` `docs/**` `bin/**` `schema/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` は **GM の縄張り**。
+   判定ファイルは封印されているので、**絶対に編集しない**（改変は「封印破り」として記録される）。
+4. 外部パッケージを追加しない。Node.js 20+ の標準ライブラリだけ。ESM。
+5. git の書き込み操作（commit / push / reset / checkout / stash など）をしない。GM がやる。
+6. 判定コマンドを自分で走らせ、通ることを確かめてから報告する。通らなければ通らないと正直に書く。
+   判定を通すためにテストの意図を回避するような実装（テスト環境の検出、出力の決め打ち）はしない。
+7. 契約（`docs/CONTRACTS.md`）が足りない・矛盾していると思ったら、勝手に解釈を広げず、自然な最小の解釈で実装して報告に書く。
+
+## 読む順番
+
+1. `docs/RULEBOOK.md`（ゲームのルール）
+2. `docs/CONTRACTS.md`（モジュール間の約束。あなたの担当の節は全部）
+3. 書記（engine）は `docs/SAVE_FORMAT.md` も
+4. 地図職人（gmkit）は `docs/GM_GUIDE.md` も
+
+## 指令書と宣言判定
+
+マスメ本体（書記の担当）が動くようになったら:
+
+```sh
+node bin/masume.js brief <あなたのID>      # 指令書
+node <判定コマンド>                          # 素振り（何度でも）
+node bin/masume.js check <あなたのID> --as <あなたのID>   # 宣言判定（GMに指示されたときだけ）
+node bin/masume.js note <あなたのID> "申し送り" --as <あなたのID>
+```
+
+本体がまだ無いあいだは、GM が渡す指令書（プロンプト）があなたの現在のマスです。
+
+## 最終報告の形
+
+```
+## 報告書 <キャラ名> <マスID>
+- 変更したファイル:
+- 判定コマンドの結果（最後の数行）:
+- 申し送り（次のマスの自分へ）:
+- GMへの依頼（契約の不足・縄張りの外で必要なこと）:
+```
+ M .masume/log.jsonl
+ M docs/CONTRACTS.md
+ M docs/GM_GUIDE.md
+ M quests/masume.map.json
+ M src/commands/amend.js
+ M src/commands/init.js
+ M src/commands/jira.js
+ M src/commands/linear.js
+ M src/commands/party.js
+ M src/commands/seal.js
+ M src/commands/serve.js
+ M src/engine/checks.js
+ M src/engine/game.js
+ M src/engine/runner.js
+ M src/engine/state.js
+ M src/engine/store.js
+ M src/engine/view.js
+ M src/jira/client.js
+ M src/jira/sync.js
+ M src/linear/client.js
+ M src/linear/import.js
+ M src/linear/sync.js
+ M src/mcp/index.js
+ M src/mcp/tools.js
+ M src/party/agents.js
+ M src/party/patrol.js
+ M src/party/prompt.js
+ M src/quest/adapter.js
+ M src/quest/index.js
+ M src/quest/setup.js
+ M src/server/index.js
+ M src/server/jobs.js
+ M tests/e2e/E4.test.mjs
+ M tests/e2e/P2.test.mjs
+ M tests/e2e/Q2.test.mjs
+ M web/board/app.js
+ M web/board/board.css
+ M web/board/command.js
+ M web/board/layout.js
+ M web/board/panels.js
+ M web/board/pawns.js
+ M web/board/render.js
+ M web/board/sketch.js
+?? .masume/maps/0004.json
+?? .masume/outputs/000154.log
+?? .masume/outputs/000156.log
+?? .masume/outputs/000158.log
+?? .masume/outputs/000159.log
+?? .masume/outputs/000166.log
+?? .masume/outputs/000170.log
+?? .masume/outputs/000173.log
+?? .masume/outputs/000174.log
+?? .masume/outputs/000175.log
+?? .masume/outputs/000179.log
+?? .masume/outputs/sortie-000149.log
+?? .masume/outputs/sortie-000150.log
+?? .masume/outputs/sortie-000151.log
+?? .masume/outputs/sortie-000152.log
+?? .masume/outputs/sortie-000153.log
+?? .masume/outputs/sortie-000165.log
+?? src/linear/http.js
+?? src/party/boss.js
+?? tests/e2e/B7.test.mjs
+?? tests/e2e/E6.test.mjs
+?? tests/e2e/E7.test.mjs
+?? tests/e2e/G6.test.mjs
+?? tests/e2e/GOAL4.test.mjs
+?? tests/e2e/M6.test.mjs
+?? tests/e2e/P3.test.mjs
+?? tests/e2e/Q3.test.mjs
+?? tests/e2e/S6.test.mjs
+
+exec
+/bin/zsh -lc "node '/Users/amano/dev/masume/bin/masume.js' brief gmkit --dir '/Users/amano/dev/masume'" in /Users/amano/dev/masume
+ succeeded in 0ms:
+指令書: 地図職人（gmkit / agent）
+Lv4 / 経験値 0/5 / 視界 3マス先 / 作業中
+担当: 地図づくりの道具（サンプル地図・チュートリアル・Linear連携）
+縄張り: src/linear/**、src/jira/**、src/commands/{export,import,linear,jira}.js、quests/kotozuke.*、quests/tutorial/**
+出撃中: cmd（seq 181 から）
+現在のマス: M6「同期を守る」（task）
+CONTRACTS §28: 秘密を出さない・通信の途中の切断・429 の再試行・消えた issue や拒まれた遷移を飛ばして続ける・pull の完了の省き方・タイトルや ID の整え方。
+判定: node --test tests/e2e/M6.test.mjs
+封印: 封印済み
+失敗時の戻り先: @camp
+視界に入っている先のマス:
+  GOAL4「あがり（第4章）: 総点検」（gate）
+霧の中: 0マス
+仲間:
+  賢者クロード（board）: GOAL4 / ゲートで待機中 / Lv5
+  書記（engine）: GOAL4 / ゲートで待機中 / Lv6
+  伝令（server）: GOAL4 / ゲートで待機中 / Lv6
+  語り部（teller）: Q3 / 作業中 / Lv4
+  軍師（party）: GOAL4 / ゲートで待機中 / Lv4
+  絵師（assets）: GOAL4 / ゲートで待機中 / Lv3
+  勇者（あなた）（player）: GOAL4 / ゲートで待機中 / Lv3
+自分の日誌（新しい順）:
+  seq 157 2026-10-16T21:39:52.232Z: M6完了。CONTRACTS §28に従い、Linear/Jiraの秘密保護（不正な認証値・userinfo拒否、API応答とADF連結後の漏出防止）、本文切断のNETWORK分類、Linearの429最大3回再試行、issue欠落・403・Jira遷移400のスキップ継続を実装。import/pullは80コードポイントのタイトル・全文detail保持・quest.id正規化・E_NOTHINGに統一し、pullに--quest-id/--titleを追加。M6は20/20成功、M3/M4/M5/SOLOを含め32/32成功。宣言判定は1回で成功。GOAL4で待機し、ボス戦は軍師に引き継ぐ。
+  seq 120 2026-10-16T12:03:53.930Z: M5完了。src/jira/{client,sync}.js と src/commands/jira.js を追加（src/linear の export/import/cli を再利用、既存は無変更）。push は GET project（404→E_JIRA/2）→マスごとに POST/PUT issue→GET status→statusCategory が違えば遷移（In Review/In Progress は名前が合う遷移を優先）。.masume/jira.json は {project, issues:{ID:{key,id}}} で、作成のたびに書く（途中で止まっても二重に作らない）。--project が jira.json と食い違えば E_USAGE/2。遷移が無いマスは E_JIRA_TRANSITION を stderr に出して最後まで進め、終了コード1。認証が足りなければ E_JIRA_AUTH/2（401/403 も）、API/通信エラーは E_JIRA_API/E_JIRA_NETWORK で1、429 は Retry-After で2回まで再試行。pull は GET project で名前を引き（地図の title）、POST search/jql を nextPageToken でページ送り、ADF は text を連結（段落・リストは改行）、statusCategory done は Done 扱いで省く。トークンは出力・ログ・jira.json に出さない。M1〜M4・G2・SOLO は通ったまま。次はあがり GOAL3（gate）。全員がそろうまで待機。
+  seq 77 2026-10-16T07:07:57.150Z: M4完了。src/linear/{client,sync}.js と src/commands/linear.js を追加し、import.js を recordsFromCsv/mapFromRecords に分けた（CSV importと pull が同じ規則を使う。M3/SOLO は通ったまま）。push は MasumeTeams→MasumeProjects(無ければ Create)→マスごとに IssueCreate/IssueUpdate、.masume/linear.json は作成のたびに書く（途中で止まっても二重に作らない）。--team/--project が linear.json と食い違うときは E_USAGE/2 で止める。状態が写せなければ何も作る前に E_LINEAR_STATE。pull は MasumeIssues をページ送り（pageInfo があれば after で続ける）。キーは出力・ログ・linear.json に出さない。E_LINEAR_AUTH/2、API・通信エラーは E_LINEAR_API / E_LINEAR_NETWORK で終了コード1、issue 0件は E_LINEAR_EMPTY/1。次はあがり GOAL2（gate）。全員がそろうまで待機。
+  seq 70 2026-10-16T07:04:14.144Z: 出撃: Sonnet（claude-sonnet-5-5）の子セッションがこのキャラクターを演じる
+  seq 46 2026-10-16T06:15:54.202Z: GM: M3 の依頼（担当者0/1人の import）への回答。CONTRACTS §2 に例外を足した: キャラクターが1人だけの地図では、あがり（quest.goal）のゲートはメンバー1人でよい。goal 以外のゲートは従来どおり2人以上。§9 にも追記（担当者1人／全員空なら1人の地図になる）。src/linear のコードは変えていない（validateMap の例外だけで、担当者1人の CSV から validate と new に通る地図が出る）。地図は変えずに判定 tests/e2e/SOLO.test.mjs（sha256 1d8d168172e2b850551b8bcffb1c1912d7e639ffe72437c66b7586d8c46c482b）を足した。GOAL の数え方を「17個」から「地図のマスが封印する17個 + 足した判定（SOLO）の一覧照合」に変え、GOAL を再封印した（GOAL.test.mjs sha256 64ca2552…）。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: ふすの でしぼ げやぼ つゆち（seq 182）
+
+exec
+/bin/zsh -lc "rg --files src/linear src/jira
+sed -n '1,240p' tests/e2e/M6.test.mjs" in /Users/amano/dev/masume
+ succeeded in 0ms:
+src/jira/sync.js
+src/linear/http.js
+src/jira/client.js
+src/linear/import.js
+src/linear/export.js
+src/linear/client.js
+src/linear/sync.js
+src/linear/cli.js
+// M6「同期を守る」— CONTRACTS §28（地図職人: 同期の守り）。Linear / Jira は、このファイルの中の小さな偽物で判定する。
+// 本物の Linear / Jira には通信しない。API キーの代わりに「SECRET…」という目印を使い、どこにも出ないことを確かめる。
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import { readFileSync, readdirSync, statSync, existsSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmp, masume, masumeEnv, newToy, listen, fakeLinear, LINEAR_KEY, JIRA_ENV } from '../helpers3.mjs';
+
+// ---------- 道具 ----------
+
+// 手元の環境変数（本物のキーなど）が入り込まないよう、同期に関わるものは毎回上書きする
+const BASE_ENV = { LINEAR_API_KEY: '', MASUME_LINEAR_URL: '', JIRA_EMAIL: '', JIRA_API_TOKEN: '', JIRA_BASE_URL: '', MASUME_JIRA_URL: '' };
+const linEnv = (url, key = LINEAR_KEY) => ({ ...BASE_ENV, MASUME_LINEAR_URL: url, LINEAR_API_KEY: key });
+const jirEnv = (url, over = {}) => ({ ...BASE_ENV, ...JIRA_ENV(url), ...over });
+const linear = (args, env, cwd) => masumeEnv(['linear', ...args], { cwd, env });
+const jira = (args, env, cwd) => masumeEnv(['jira', ...args], { cwd, env });
+const readBody = (req) => new Promise((res) => { let b = ''; req.on('data', (d) => (b += d)); req.on('end', () => res(b)); });
+const readJson = (file) => JSON.parse(readFileSync(file, 'utf8'));
+
+/** dir の下のファイルのうち、needle を含むもの */
+function filesContaining(dir, needle) {
+  const hits = [];
+  const walk = (d) => {
+    for (const name of readdirSync(d)) {
+      const p = join(d, name);
+      const s = statSync(p);
+      if (s.isDirectory()) walk(p);
+      else if (readFileSync(p, 'utf8').includes(needle)) hits.push(p);
+    }
+  };
+  walk(dir);
+  return hits;
+}
+
+async function rawServer(handler) {
+  const server = http.createServer(handler);
+  const url = await listen(server);
+  return { url, close: () => new Promise((r) => (server.closeAllConnections?.(), server.close(() => r()))) };
+}
+
+/** 閉じたポート（つながらない URL） */
+async function deadUrl() {
+  const s = await rawServer(() => {});
+  const url = s.url;
+  await s.close();
+  return url;
+}
+
+const STATES = [
+  { id: 's-backlog', name: 'Backlog', type: 'backlog' },
+  { id: 's-todo', name: 'Todo', type: 'unstarted' },
+  { id: 's-progress', name: 'In Progress', type: 'started' },
+  { id: 's-review', name: 'In Review', type: 'started' },
+  { id: 's-done', name: 'Done', type: 'completed' },
+  { id: 's-canceled', name: 'Canceled', type: 'canceled' },
+];
+
+/**
+ * Linear の小さな偽物（push 用）。hook(rec, req, res, st) が true を返したらその要求は hook が応えた。
+ * st.ops = 受けた要求 { op, vars, t }、st.issues = 作られた issue
+ */
+async function miniLinear({ hook } = {}) {
+  const st = { ops: [], issues: [], projects: [] };
+  let n = 0;
+  const srv = await rawServer(async (req, res) => {
+    let body = {};
+    try { body = JSON.parse(await readBody(req)); } catch {}
+    const rec = { op: body.operationName, vars: body.variables ?? {}, t: Date.now() };
+    st.ops.push(rec);
+    if (hook && hook(rec, req, res, st) === true) return;
+    res.setHeader('content-type', 'application/json');
+    const out = (data) => res.end(JSON.stringify({ data }));
+    const v = rec.vars;
+    switch (rec.op) {
+      case 'MasumeTeams': return out({ teams: { nodes: v.key === 'TOY' ? [{ id: 'team1', key: 'TOY', name: 'おもちゃ', states: { nodes: STATES } }] : [] } });
+      case 'MasumeProjects': return out({ projects: { nodes: st.projects.filter((p) => p.name === v.name) } });
+      case 'MasumeProjectCreate': {
+        const p = { id: `p${st.projects.length + 1}`, name: v.input.name };
+        st.projects.push(p);
+        return out({ projectCreate: { success: true, project: p } });
+      }
+      case 'MasumeIssueCreate': {
+        n++;
+        const i = { id: `i${n}`, identifier: `TOY-${n}`, url: `https://linear.example/TOY-${n}`, ...v.input };
+        st.issues.push(i);
+        return out({ issueCreate: { success: true, issue: { id: i.id, identifier: i.identifier, url: i.url } } });
+      }
+      case 'MasumeIssueUpdate': {
+        const i = st.issues.find((x) => x.id === v.id);
+        if (!i) return res.end(JSON.stringify({ errors: [{ message: 'Entity not found: Issue' }], data: null }));
+        Object.assign(i, v.input);
+        return out({ issueUpdate: { success: true, issue: { id: i.id, identifier: i.identifier } } });
+      }
+      default:
+        res.statusCode = 400;
+        return res.end(JSON.stringify({ errors: [{ message: `unknown ${rec.op}` }] }));
+    }
+  });
+  return { ...srv, st };
+}
+
+const JIRA_AUTH = 'Basic ' + Buffer.from('gm@example.com:jira_test_token').toString('base64');
+const JST = {
+  todo: { name: 'To Do', statusCategory: { key: 'new' } },
+  progress: { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
+  review: { name: 'In Review', statusCategory: { key: 'indeterminate' } },
+  done: { name: 'Done', statusCategory: { key: 'done' } },
+};
+const JTRANS = [
+  { id: '11', name: 'To Do', to: JST.todo },
+  { id: '21', name: 'In Progress', to: JST.progress },
+  { id: '31', name: 'In Review', to: JST.review },
+  { id: '41', name: 'Done', to: JST.done },
+];
+
+/**
+ * Jira の小さな偽物。hook(req, u, body, send, st, res) が true を返したらその要求は hook が応えた。
+ * st.reqs = 受けた要求、st.issues = 作られた issue
+ */
+async function miniJira({ hook, seed = [], projects = [{ id: '10000', key: 'TOY', name: 'おもちゃ' }] } = {}) {
+  const st = { reqs: [], issues: [] };
+  let n = 0;
+  const srv = await rawServer(async (req, res) => {
+    const raw = await readBody(req);
+    const u = new URL(req.url, 'http://x');
+    let body;
+    try { body = raw ? JSON.parse(raw) : undefined; } catch {}
+    st.reqs.push({ method: req.method, path: u.pathname, body, auth: req.headers.authorization });
+    const send = (status, b) => {
+      res.statusCode = status;
+      if (b === undefined) return res.end();
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify(b));
+    };
+    if (req.headers.authorization !== JIRA_AUTH) return send(401, { errorMessages: ['Unauthorized'] });
+    if (hook && hook(req, u, body, send, st, res) === true) return;
+    let m;
+    if (req.method === 'GET' && (m = u.pathname.match(/^\/rest\/api\/3\/project\/([^/]+)$/))) {
+      const p = projects.find((x) => x.key === m[1]);
+      return p ? send(200, p) : send(404, { errorMessages: ['No project'] });
+    }
+    if (req.method === 'POST' && u.pathname === '/rest/api/3/issue') {
+      n++;
+      const issue = { id: String(20000 + n), key: `${body.fields.project.key}-${n}`, fields: { ...body.fields, status: JST.todo } };
+      st.issues.push(issue);
+      return send(201, { id: issue.id, key: issue.key });
+    }
+    if ((m = u.pathname.match(/^\/rest\/api\/3\/issue\/([^/]+)(\/transitions)?$/))) {
+      const issue = st.issues.find((x) => x.key === m[1]);
+      if (!issue) return send(404, { errorMessages: ['No issue'] });
+      if (m[2] && req.method === 'GET') return send(200, { transitions: JTRANS });
+      if (m[2] && req.method === 'POST') {
+        const t = JTRANS.find((x) => x.id === body?.transition?.id);
+        if (!t) return send(400, { errorMessages: ['bad transition'] });
+        issue.fields.status = t.to;
+        return send(204);
+      }
+      if (req.method === 'GET') return send(200, { id: issue.id, key: issue.key, fields: { status: issue.fields.status } });
+      if (req.method === 'PUT') {
+        Object.assign(issue.fields, body.fields);
+        return send(204);
+      }
+    }
+    if (req.method === 'POST' && u.pathname === '/rest/api/3/search/jql') {
+      const key = (body?.jql || '').match(/project\s*=\s*"?([A-Za-z0-9_]+)"?/)?.[1];
+      return send(200, { issues: seed.filter((i) => i.key.startsWith(`${key}-`)), isLast: true });
+    }
+    send(404, { errorMessages: [`no route ${req.method} ${u.pathname}`] });
+  });
+  return { ...srv, st };
+}
+
+const adf = (text) => ({ type: 'doc', version: 1, content: [{ type: 'paragraph', content: [{ type: 'text', text }] }] });
+const created = (i) => new Date(Date.UTC(2026, 8, 1, 0, 0, i)).toISOString();
+/** Linear の issue（pull 用。helpers の fakeLinear が配る形） */
+const linIssue = (i, o = {}) => ({
+  team: 'NOTE', identifier: `NOTE-${i}`, title: `タスク${i}`, description: `説明${i}`, estimate: null, createdAt: created(i),
+  state: { name: 'Todo', type: 'unstarted' }, assignee: { name: 'Aki' }, labels: { nodes: [] }, project: { name: 'ノートアプリ' }, ...o,
+});
+/** Jira の issue（pull 用） */
+const jirIssue = (key, i, summary, o = {}) => ({
+  key,
+  fields: {
+    summary, description: adf(`説明${i}`), status: { name: 'To Do', statusCategory: { key: 'new' } },
+    assignee: { displayName: 'Aki' }, labels: [], created: created(i).replace('Z', '+0000'), ...o,
+  },
+});
+
+// ---------- 28.1 秘密を出さない ----------
+
+test('28.1 Linear: 印字できない API キーは E_LINEAR_AUTH/2。キーはどこにも出ず、通信もしない', async () => {
+  const dir = newToy();
+  const mock = await miniLinear();
+  try {
+    const keys = [
+      'lin_api_SECRETnl\nxyz', // 改行を含む（ヘッダーに入れられない）
+      'lin_api_SECRETtab\tx',
+      'lin_api_SECRETbel\u0007x',
+      'lin_api_SECRETjpあい', // 全角
+      'キーSECRETonly',
+    ];
+    for (const key of keys) {
+      const marker = key.match(/SECRET[A-Za-z]+/)[0];
+      for (const args of [['push', '--team', 'TOY', '--dir', dir], ['pull', '--team', 'NOTE', '--out', join(dir, 'o.map.json')]]) {
+        const label = `${JSON.stringify(key)} linear ${args[0]}`;
+        const r = await linear(args, linEnv(mock.url, key), dir);
+        assert.equal(r.code, 2, `${label}: ${r.all}`);
+        assert.match(r.all, /E_LINEAR_AUTH/, `${label}: ${r.all}`);
+        assert.ok(!r.all.includes(marker), `${label}: キーが出力に出ている: ${r.all}`);
+      }
+    }
+    assert.equal(mock.st.ops.length, 0, '印字できないキーでは Linear に通信しない');
+    assert.deepEqual(filesContaining(dir, 'SECRET'), [], 'キーがファイルに残らない');
+    assert.equal(existsSync(join(dir, 'o.map.json')), false);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.1 Jira: 印字できない API トークンは E_JIRA_AUTH/2。トークンはどこにも出ず、通信もしない', async () => {
+  const dir = newToy();
+  const mock = await miniJira();
+  try {
+    const tokens = ['tok_SECRETnl\nxyz', 'tok_SECRETtab\tx', 'tok_SECRETjpあい', 'トークンSECRETonly'];
+    for (const token of tokens) {
+      const marker = token.match(/SECRET[A-Za-z]+/)[0];
+      for (const args of [['push', '--project', 'TOY', '--dir', dir], ['pull', '--project', 'NOTE', '--out', join(dir, 'o.map.json')]]) {
+        const label = `${JSON.stringify(token)} jira ${args[0]}`;
+        const r = await jira(args, jirEnv(mock.url, { JIRA_API_TOKEN: token }), dir);
+        assert.equal(r.code, 2, `${label}: ${r.all}`);
+        assert.match(r.all, /E_JIRA_AUTH/, `${label}: ${r.all}`);
+        assert.ok(!r.all.includes(marker), `${label}: トークンが出力に出ている: ${r.all}`);
+      }
+    }
+    assert.equal(mock.st.reqs.length, 0, '印字できないトークンでは Jira に通信しない');
+    assert.deepEqual(filesContaining(dir, 'SECRET'), [], 'トークンがファイルに残らない');
+  } finally {
+    await mock.close();
+  }
+
+codex
+最新の `brief` で、gmkitはM6作業中、判定は封印済みと確認しました。過去の完了日誌があっても、今回はこの現在位置に従います。作業開始時点でM6の実装を含む未コミット変更があるため、私は既存コードを確認し、不足がある箇所だけを修正します。
+
+私がimport/pullと封印された判定を確認し、子エージェントが通信・秘密保護・スキップ処理を読み取り専用で確認します。判定内の偽サービスと一時領域を確認した後、指定のM6素振りを実行します。
+exec
+/bin/zsh -lc "cat src/linear/import.js src/commands/linear.js src/commands/jira.js
+sed -n '240,620p' tests/e2e/M6.test.mjs" in /Users/amano/dev/masume
+ succeeded in 0ms:
+import { MasumeError, validateMap } from '../engine/index.js';
+
+const JOBS = ['hero', 'warrior', 'mage', 'priest', 'thief', 'merchant',
+  'sage', 'scribe', 'herald', 'cartographer', 'painter', 'villager'];
+const COLORS = ['yellow', 'pink', 'green', 'blue', 'orange', 'purple', 'mint', 'gray'];
+const DONE = new Set(['done', 'canceled', 'cancelled', 'completed', 'duplicate']);
+
+function invalid(message) {
+  throw new MasumeError('E_INVALID_MAP', message, 1);
+}
+
+/** Read quoted commas, escaped quotes and multiline fields without altering their contents. */
+export function parseCsv(text) {
+  const rows = [];
+  let row = [];
+  let cell = '';
+  let state = 'start';
+  const source = text.replace(/^\uFEFF/u, '');
+  for (let i = 0; i < source.length; i++) {
+    const char = source[i];
+    if (state === 'quoted') {
+      if (char === '"' && source[i + 1] === '"') {
+        cell += '"';
+        i++;
+      } else if (char === '"') state = 'closed';
+      else cell += char;
+      continue;
+    }
+    if (char === ',' || char === '\n' || char === '\r') {
+      row.push(cell);
+      cell = '';
+      state = 'start';
+      if (char !== ',') {
+        if (char === '\r' && source[i + 1] === '\n') i++;
+        rows.push(row);
+        row = [];
+      }
+    } else if (char === '"' && state === 'start') state = 'quoted';
+    else {
+      if (char === '"' || state === 'closed') invalid('CSV の引用符の位置が不正です');
+      cell += char;
+      state = 'plain';
+    }
+  }
+  if (state === 'quoted') invalid('CSV の引用符が閉じられていません');
+  if (state !== 'start' || row.length > 0 || cell !== '') {
+    row.push(cell);
+    rows.push(row);
+  }
+  return rows;
+}
+
+function placeholder(id) {
+  return { kind: 'cmd', run: `echo "TODO(GM): ${id} のE2E判定を書く" && exit 1`, seal: [] };
+}
+
+/** Linear の CSV を issue の記録（labels は配列）にする。 */
+export function recordsFromCsv(text) {
+  const rows = parseCsv(text);
+  if (rows.length === 0) invalid('CSV に列名がありません');
+  const headers = rows.shift().map((value) => value.trim().toLowerCase());
+  const column = (...names) => headers.findIndex((value) => names.includes(value));
+  const columns = {
+    id: column('id', 'identifier'), title: column('title'), detail: column('description'),
+    status: column('status'), assignee: column('assignee'), labels: column('labels'),
+    estimate: column('estimate'), created: column('created', 'created at'), project: column('project'),
+  };
+  if (columns.id < 0 || columns.title < 0) invalid('CSV には ID（または Identifier）と Title 列が必要です');
+  return rows.filter((row) => row.some((cell) => cell !== '')).map((row, index) => {
+    if (row.length !== headers.length) invalid(`CSV の ${index + 2} 行目の列数が合いません`);
+    const record = Object.fromEntries(Object.entries(columns).map(([key, at]) => [key, at < 0 ? '' : row[at]]));
+    record.labels = record.labels.split(',').map((value) => value.trim()).filter(Boolean);
+    return record;
+  });
+}
+
+export function importLinear(text, options = {}) {
+  return mapFromRecords(recordsFromCsv(text), options);
+}
+
+/**
+ * issue の記録 { id, title, detail, status, assignee, labels[], estimate, created, project }（文字列）から
+ * 地図の下書きを作る。CSV の import と Linear からの pull が同じ規則を使う。
+ */
+export function mapFromRecords(records, { questId, title } = {}) {
+  const active = records.filter((record) => !DONE.has(record.status.trim().toLowerCase()));
+  if (active.length === 0) {
+    throw new MasumeError('E_NOTHING', '取り込める issue がありません', 1);
+  }
+  const characters = [];
+  const byName = new Map();
+  const ids = new Set();
+  const hasNameless = active.some((record) => record.assignee.trim() === '');
+  for (const record of active) {
+    const name = record.assignee.trim();
+    if (byName.has(name)) continue;
+    const index = characters.length;
+    let base = name === '' ? 'nanashi' : name.toLowerCase().replace(/[^a-z0-9]/gu, '').slice(0, 24);
+    if (!/^[a-z]/u.test(base)) base = `c${index + 1}`;
+    let id = base;
+    for (let suffix = 1; ids.has(id) || (name !== '' && hasNameless && id === 'nanashi'); suffix++) {
+      const ending = `-${suffix}`;
+      id = `${base.slice(0, 24 - ending.length)}${ending}`;
+    }
+    ids.add(id);
+    const character = {
+      id, name: name || '名無し', kind: 'agent',
+      job: JOBS[index % JOBS.length], color: COLORS[index % COLORS.length], path: [],
+    };
+    characters.push(character);
+    byName.set(name, character);
+  }
+
+  const seen = new Set();
+  const issues = active.map((record, index) => {
+    const id = record.id.trim();
+    if (!/^[A-Za-z][A-Za-z0-9_-]{0,31}$/u.test(id)) invalid(`マスIDの形が不正です: ${id}`);
+    if (seen.has(id)) invalid(`マスIDが重複しています: ${id}`);
+    seen.add(id);
+    const created = record.created.trim() === '' ? 0 : Date.parse(record.created);
+    if (!Number.isFinite(created)) invalid(`${id} の Created が日時ではありません`);
+    const labels = record.labels;
+    const fullTitle = record.title.trim() === '' ? id : record.title;
+    const titlePoints = [...fullTitle];
+    const node = {
+      type: 'task', title: titlePoints.slice(0, 80).join(''),
+      detail: titlePoints.length > 80
+        ? `${fullTitle}${record.detail ? `\n\n${record.detail}` : ''}` : record.detail,
+      labels, check: placeholder(id),
+    };
+    if (record.estimate.trim() !== '') {
+      node.estimate = Number(record.estimate);
+      if (!Number.isFinite(node.estimate)) invalid(`${id} の Estimate が数値ではありません`);
+    }
+    return {
+      id, node, created, index, owner: byName.get(record.assignee.trim()),
+      number: BigInt(id.match(/\d+$/u)?.[0] ?? id.match(/\d+/u)?.[0] ?? '0'),
+      wantsGate: labels.some((label) => /^(e2e|gate)$/iu.test(label)),
+    };
+  }).sort((a, b) => a.created - b.created
+    || (a.number < b.number ? -1 : a.number > b.number ? 1 : 0) || a.index - b.index);
+
+  const priorTasks = [];
+  const nodes = Object.create(null);
+  for (const issue of issues) {
+    let members = new Set([issue.owner]);
+    if (issue.wantsGate) {
+      for (const task of priorTasks) {
+        if (task.created < issue.created) members.add(task.owner);
+      }
+    }
+    if (members.size >= 2) issue.node.type = 'gate';
+    else {
+      members = new Set([issue.owner]);
+      priorTasks.push(issue);
+    }
+    nodes[issue.id] = issue.node;
+    for (const character of members) character.path.push(issue.id);
+  }
+  let goal = 'GOAL';
+  for (let suffix = 1; Object.hasOwn(nodes, goal); suffix++) goal = `GOAL-${suffix}`;
+  nodes[goal] = { type: 'gate', title: 'あがり', check: placeholder(goal) };
+  for (const character of characters) character.path.push(goal);
+  const normalizedQuestId = (questId ?? records[0].id.trim().split('-')[0])
+    .toUpperCase().replace(/[^A-Z0-9]/gu, '').replace(/^[0-9]+/u, '').slice(0, 10);
+  const projectTitle = title ?? (records[0].project || 'インポートした冒険');
+  const map = {
+    masume: 1,
+    quest: {
+      id: normalizedQuestId.length >= 2 ? normalizedQuestId : 'QUEST',
+      title: [...(projectTitle.trim() === '' ? 'インポートした冒険' : projectTitle)].slice(0, 80).join(''),
+      pitch: `完了・取消済みなどの issue を ${records.length - active.length} 件省きました。判定は GM が作成してください。`,
+      goal,
+    },
+    characters, nodes,
+  };
+  const result = validateMap(map);
+  if (!result.ok) {
+    invalid(`地図の下書きを検証できません:\n${result.errors.map(({ code, path, message }) => `[${code}] ${path}: ${message}`).join('\n')}`);
+  }
+  return map;
+}
+import { writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { buildView, findRoot, MasumeError } from '../engine/index.js';
+import { createClient } from '../linear/client.js';
+import { parseArgs, usage } from '../linear/cli.js';
+import { planPush, pullMap, pushIssues, readLinearState, resolveTarget } from '../linear/sync.js';
+
+const USAGE = 'つかいかた: linear push [--team KEY] [--project NAME] [--dry-run] / linear pull --team KEY [--project NAME] --out <map.json> [--quest-id KEY] [--title T]';
+
+function gameRoot({ options, cwd, env }) {
+  const root = options.dir !== undefined ? resolve(cwd, options.dir)
+    : env.MASUME_DIR ? resolve(cwd, env.MASUME_DIR) : findRoot(cwd);
+  if (!root) throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません', 2);
+  return root;
+}
+
+async function push(parsed) {
+  const { options, env } = parsed;
+  if (options.out !== undefined) usage('--out は pull だけで使います');
+  if (options['quest-id'] !== undefined || options.title !== undefined) usage('--quest-id と --title は pull だけで使います');
+  const root = gameRoot(parsed);
+  const view = buildView(root);
+  if (!view.integrity.ok) {
+    throw new MasumeError('E_CURSED', `冒険の書が呪われています（seq ${view.integrity.errors[0]?.seq}）`, 3);
+  }
+  const saved = readLinearState(root);
+  const dryRun = options['dry-run'] === true;
+  const target = resolveTarget(saved, options, view, { requireTeam: !dryRun });
+  const plan = planPush(view, saved);
+
+  if (dryRun) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, dryRun: true, team: target.team ?? null, project: target.project, issues: plan.map(({ id, action, status, title }) => ({ id, action, status, title })) }));
+    } else {
+      console.log(`送り先: チーム ${target.team ?? '（未指定）'}・プロジェクト「${target.project}」（--dry-run: 通信しません）`);
+      for (const entry of plan) console.log(`  ${entry.action === 'create' ? '作成予定' : '更新予定'} ${entry.id}  ${entry.status}  ${entry.title}`);
+    }
+    return 0;
+  }
+
+  const client = createClient({ env });
+  const lines = [];
+  const result = await pushIssues({ root, view, client, saved, plan, target, log: (line) => lines.push(line) });
+  if (options.json) {
+    console.log(JSON.stringify({ ok: result.skipped.length === 0, ...result }));
+  } else {
+    console.log(`Linear に同期しました（チーム ${result.team}・プロジェクト「${result.project.name}」）`);
+    for (const line of lines) console.log(`  ${line}`);
+    console.log(`作成 ${result.created}件・更新 ${result.updated}件`);
+  }
+  if (result.skipped.length > 0) {
+    console.error(`飛ばしたマス: ${result.skipped.map(({ id, reason }) => `${id}（${reason}）`).join('・')}`);
+    return 1;
+  }
+  return 0;
+}
+
+async function pull(parsed) {
+  const { options, cwd, env } = parsed;
+  if (options['dry-run']) usage('--dry-run は push だけで使います');
+  if (!options.team) usage('--team でチームのキー（例: ENG）を指定してください');
+  if (!options.out) usage('--out で地図の下書きの出力先を指定してください');
+  const client = createClient({ env });
+  const { map, count } = await pullMap(client, {
+    team: options.team, project: options.project, questId: options['quest-id'], title: options.title,
+  });
+  const output = resolve(cwd, options.out);
+  writeFileSync(output, `${JSON.stringify(map, null, 2)}\n`, 'utf8');
+  if (options.json) console.log(JSON.stringify({ ok: true, file: output, issues: count }));
+  else console.log(`Linear から ${count} 件の issue を読み、地図の下書きを保存しました: ${output}\n${map.quest.pitch}`);
+  return 0;
+}
+
+export async function run(argv, ctx) {
+  const parsed = parseArgs(argv, ctx, {
+    team: 'string', project: 'string', out: 'string', 'dry-run': 'boolean', 'quest-id': 'string', title: 'string',
+  });
+  const { args, options } = parsed;
+  for (const key of ['team', 'project', 'out']) {
+    if (options[key] === '') usage(`--${key} に空文字は指定できません`);
+  }
+  if (args.length !== 1 || !['push', 'pull'].includes(args[0])) usage(USAGE);
+  return args[0] === 'push' ? push(parsed) : pull(parsed);
+}
+import { writeFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { buildView, findRoot, MasumeError } from '../engine/index.js';
+import { parseArgs, usage } from '../linear/cli.js';
+import { createClient } from '../jira/client.js';
+import { planPush, pullMap, pushIssues, readJiraState, resolveProject } from '../jira/sync.js';
+
+const USAGE = 'つかいかた: jira push [--project KEY] [--dry-run] / jira pull --project KEY --out <map.json> [--quest-id KEY] [--title T]';
+
+function gameRoot({ options, cwd, env }) {
+  const root = options.dir !== undefined ? resolve(cwd, options.dir)
+    : env.MASUME_DIR ? resolve(cwd, env.MASUME_DIR) : findRoot(cwd);
+  if (!root) throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません', 2);
+  return root;
+}
+
+async function push(parsed) {
+  const { options, env } = parsed;
+  if (options.out !== undefined) usage('--out は pull だけで使います');
+  if (options['quest-id'] !== undefined || options.title !== undefined) usage('--quest-id と --title は pull だけで使います');
+  const root = gameRoot(parsed);
+  const view = buildView(root);
+  if (!view.integrity.ok) {
+    throw new MasumeError('E_CURSED', `冒険の書が呪われています（seq ${view.integrity.errors[0]?.seq}）`, 3);
+  }
+  const saved = readJiraState(root);
+  const dryRun = options['dry-run'] === true;
+  const project = resolveProject(saved, options, { required: !dryRun });
+  const plan = planPush(view, saved);
+
+  if (dryRun) {
+    if (options.json) {
+      console.log(JSON.stringify({ ok: true, dryRun: true, project: project ?? null, issues: plan.map(({ id, action, status, summary }) => ({ id, action, status, summary })) }));
+    } else {
+      console.log(`送り先: Jira プロジェクト ${project ?? '（未指定）'}（--dry-run: 通信しません）`);
+      for (const entry of plan) console.log(`  ${entry.action === 'create' ? '作成予定' : '更新予定'} ${entry.id}  ${entry.status}  ${entry.summary}`);
+    }
+    return 0;
+  }
+
+  const client = createClient({ env });
+  const lines = [];
+  const result = await pushIssues({ root, client, saved, plan, project, log: (line) => lines.push(line) });
+  const summary = `作成 ${result.created}件・更新 ${result.updated}件・遷移 ${result.transitioned}件`;
+  if (options.json) {
+    console.log(JSON.stringify({ ok: result.stuck.length === 0, ...result }));
+  } else {
+    console.log(`Jira に同期しました（プロジェクト ${result.project}「${result.projectName}」）`);
+    for (const line of lines) console.log(`  ${line}`);
+    console.log(summary);
+  }
+  if (result.stuck.length > 0) {
+    for (const entry of result.stuck) {
+      if (entry.code === 'E_JIRA_TRANSITION') console.error(`[E_JIRA_TRANSITION] ${entry.message}`);
+    }
+    console.error(`飛ばしたマス: ${result.stuck.map((entry) => `${entry.id}（${entry.reason}）`).join('、')}`);
+    return 1;
+  }
+  return 0;
+}
+
+async function pull(parsed) {
+  const { options, cwd, env } = parsed;
+  if (options['dry-run']) usage('--dry-run は push だけで使います');
+  if (!options.project) usage('--project で Jira のプロジェクトキー（例: NOTE）を指定してください');
+  if (!options.out) usage('--out で地図の下書きの出力先を指定してください');
+  const client = createClient({ env });
+  const { map, count } = await pullMap(client, { project: options.project, questId: options['quest-id'], title: options.title });
+  const output = resolve(cwd, options.out);
+  writeFileSync(output, `${JSON.stringify(map, null, 2)}\n`, 'utf8');
+  if (options.json) console.log(JSON.stringify({ ok: true, file: output, issues: count }));
+  else console.log(`Jira から ${count} 件の issue を読み、地図の下書きを保存しました: ${output}\n${map.quest.pitch}`);
+  return 0;
+}
+
+export async function run(argv, ctx) {
+  const parsed = parseArgs(argv, ctx, { project: 'string', out: 'string', 'dry-run': 'boolean', 'quest-id': 'string', title: 'string' });
+  const { args, options } = parsed;
+  for (const key of ['project', 'out']) {
+    if (options[key] === '') usage(`--${key} に空文字は指定できません`);
+  }
+  if (args.length !== 1 || !['push', 'pull'].includes(args[0])) usage(USAGE);
+  return args[0] === 'push' ? push(parsed) : pull(parsed);
+}
+  }
+});
+
+test('28.1 URL に userinfo（user:password@）があれば E_USAGE/2。パスワードは出ず、通信もしない', async () => {
+  const dir = newToy();
+  const jmock = await miniJira();
+  const lmock = await miniLinear();
+  try {
+    const withInfo = (url, info) => url.replace('http://', `http://${info}@`);
+    const jiraCases = [
+      { MASUME_JIRA_URL: withInfo(jmock.url, 'me%40x.com:SECRETTOKEN') },
+      { MASUME_JIRA_URL: '', JIRA_BASE_URL: withInfo(jmock.url, 'me%40x.com:SECRETTOKEN') },
+      { MASUME_JIRA_URL: withInfo(jmock.url, 'onlyuser') }, // ユーザー名だけでも userinfo
+    ];
+    for (const over of jiraCases) {
+      for (const args of [['push', '--project', 'TOY', '--dir', dir], ['pull', '--project', 'NOTE', '--out', join(dir, 'o.map.json')]]) {
+        const label = `jira ${args[0]} ${JSON.stringify(over)}`;
+        const r = await jira(args, jirEnv(jmock.url, over), dir);
+        assert.equal(r.code, 2, `${label}: ${r.all}`);
+        assert.match(r.all, /E_USAGE/, `${label}: ${r.all}`);
+        for (const bad of ['SECRETTOKEN', 'me%40x.com', 'me@x.com']) assert.ok(!r.all.includes(bad), `${label}: userinfo「${bad}」が出ている: ${r.all}`);
+      }
+    }
+    assert.equal(jmock.st.reqs.length, 0, 'userinfo つきの URL には通信しない');
+
+    for (const args of [['push', '--team', 'TOY', '--dir', dir], ['pull', '--team', 'NOTE', '--out', join(dir, 'o.map.json')]]) {
+      const label = `linear ${args[0]}`;
+      const r = await linear(args, linEnv(withInfo(lmock.url, 'lin:SECRETPASS')), dir);
+      assert.equal(r.code, 2, `${label}: ${r.all}`);
+      assert.match(r.all, /E_USAGE/, `${label}: ${r.all}`);
+      assert.ok(!r.all.includes('SECRETPASS'), `${label}: パスワードが出ている: ${r.all}`);
+    }
+    assert.equal(lmock.st.ops.length, 0, 'userinfo つきの URL には通信しない');
+    assert.deepEqual(filesContaining(dir, 'SECRET'), [], 'どのファイルにも残らない');
+  } finally {
+    await jmock.close();
+    await lmock.close();
+  }
+});
+
+test('28.1（対照）正しいキー・トークンでつながらないときも、秘密は出ず E_*_NETWORK/1', async () => {
+  const dir = newToy();
+  const url = await deadUrl();
+  const lin = await linear(['push', '--team', 'TOY', '--dir', dir], linEnv(url, 'lin_api_SECRETvalid'), dir);
+  assert.equal(lin.code, 1, lin.all);
+  assert.match(lin.all, /E_LINEAR_NETWORK/);
+  assert.ok(!lin.all.includes('SECRETvalid'), lin.all);
+  const jr = await jira(['push', '--project', 'TOY', '--dir', dir], jirEnv(url, { JIRA_API_TOKEN: 'tok_SECRETvalid' }), dir);
+  assert.equal(jr.code, 1, jr.all);
+  assert.match(jr.all, /E_JIRA_NETWORK/);
+  assert.ok(!jr.all.includes('SECRETvalid'), jr.all);
+  assert.deepEqual(filesContaining(dir, 'SECRETvalid'), []);
+});
+
+// ---------- 28.2 通信の途中で切れる ----------
+
+// 本文の途中で切れる応答（content-length: 1000 と言いながら 8 バイトだけ送って切る）
+const cutResponse = (req, res) => {
+  res.writeHead(200, { 'content-type': 'application/json', 'content-length': '1000' });
+  res.write('{"data":');
+  setTimeout(() => req.socket.destroy(), 50);
+};
+const cutBody = (req, res) => readBody(req).then(() => cutResponse(req, res));
+
+test('28.2 応答の本文の読み込み中に切れたら E_LINEAR_NETWORK / E_JIRA_NETWORK（終了コード1）', async () => {
+  const dir = newToy();
+  const cut = await rawServer(cutBody);
+  const out = join(dir, 'o.map.json');
+  try {
+    for (const args of [['push', '--team', 'TOY', '--dir', dir], ['pull', '--team', 'NOTE', '--out', out]]) {
+      const r = await linear(args, linEnv(cut.url), dir);
+      assert.equal(r.code, 1, `linear ${args[0]}: ${r.all}`);
+      assert.match(r.all, /E_LINEAR_NETWORK/, `linear ${args[0]}: ${r.all}`);
+    }
+    for (const args of [['push', '--project', 'TOY', '--dir', dir], ['pull', '--project', 'NOTE', '--out', out]]) {
+      const r = await jira(args, jirEnv(cut.url), dir);
+      assert.equal(r.code, 1, `jira ${args[0]}: ${r.all}`);
+      assert.match(r.all, /E_JIRA_NETWORK/, `jira ${args[0]}: ${r.all}`);
+    }
+    assert.equal(existsSync(out), false, '途中で切れたら下書きは書かない');
+  } finally {
+    await cut.close();
+  }
+});
+
+test('28.2 途中まで進んでから（2つ目以降の要求で）切れても、同じ契約のコードで終わる', async () => {
+  const dir = newToy();
+  // Linear: チームとプロジェクトまでは通り、最初の issue の作成で本文の途中で切れる
+  const lin = await miniLinear({ hook: (rec, req, res) => (rec.op === 'MasumeIssueCreate' ? (cutResponse(req, res), true) : false) });
+  // Jira: プロジェクトの確認は通り、最初の issue の作成で切れる
+  const jir = await miniJira({ hook: (req, u, body, send, st, res) => (req.method === 'POST' && u.pathname === '/rest/api/3/issue' ? (cutResponse(req, res), true) : false) });
+  try {
+    const l = await linear(['push', '--team', 'TOY', '--dir', dir], linEnv(lin.url), dir);
+    assert.equal(l.code, 1, l.all);
+    assert.match(l.all, /E_LINEAR_NETWORK/, l.all);
+    assert.ok(lin.st.ops.some((o) => o.op === 'MasumeIssueCreate'), 'Linear: 作成の要求までは届いている');
+    const j = await jira(['push', '--project', 'TOY', '--dir', dir], jirEnv(jir.url), dir);
+    assert.equal(j.code, 1, j.all);
+    assert.match(j.all, /E_JIRA_NETWORK/, j.all);
+    assert.ok(jir.st.reqs.some((q) => q.method === 'POST' && q.path === '/rest/api/3/issue'), 'Jira: 作成の要求までは届いている');
+  } finally {
+    await lin.close();
+    await jir.close();
+  }
+});
+
+// ---------- 28.3 Linear の 429 と issue:null ----------
+
+const rateLimited = (res) => {
+  res.writeHead(429, { 'content-type': 'application/json', 'retry-after': '1' });
+  res.end(JSON.stringify({ errors: [{ message: 'Rate limit exceeded' }] }));
+};
+
+test('28.3 Linear: 429 は retry-after に従って待ち、再試行して最後まで同期する', async () => {
+  const dir = newToy();
+  let hits = 0;
+  const mock = await miniLinear({ hook: (rec, req, res) => (rec.op === 'MasumeTeams' && hits++ < 1 ? (rateLimited(res), true) : false) });
+  try {
+    const r = await linear(['push', '--team', 'TOY', '--dir', dir], linEnv(mock.url), dir);
+    assert.equal(r.code, 0, r.all);
+    assert.match(r.all, /作成 10件/);
+    const teams = mock.st.ops.filter((o) => o.op === 'MasumeTeams');
+    assert.equal(teams.length, 2, '429 のあと同じ要求をもう一度送る');
+    assert.ok(teams[1].t - teams[0].t >= 900, `retry-after: 1 に従って待つ（待った時間 ${teams[1].t - teams[0].t}ms）`);
+    assert.equal(mock.st.issues.length, 10);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.3 Linear: 作成が 429 でも、3回まで再試行すれば重複せずに終わる', async () => {
+  const dir = newToy();
+  let hits = 0;
+  const mock = await miniLinear({ hook: (rec, req, res) => (rec.op === 'MasumeIssueCreate' && hits++ < 3 ? (rateLimited(res), true) : false) });
+  try {
+    const r = await linear(['push', '--team', 'TOY', '--dir', dir], linEnv(mock.url), dir);
+    assert.equal(r.code, 0, `最大3回の再試行で通る: ${r.all}`);
+    assert.match(r.all, /作成 10件/);
+    assert.equal(mock.st.issues.length, 10, 'issue は重複せず10件');
+    assert.equal(new Set(mock.st.issues.map((i) => i.title)).size, 10);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.3 Linear: 429 が続くときは再試行を打ち切る（1回目 + 最大3回 = 4回まで）', async () => {
+  const dir = newToy();
+  const mock = await miniLinear({ hook: (rec, req, res) => (rateLimited(res), true) });
+  try {
+    const r = await linear(['push', '--team', 'TOY', '--dir', dir], linEnv(mock.url), dir);
+    assert.equal(r.code, 1, r.all);
+    assert.match(r.all, /E_LINEAR/, r.all);
+    assert.ok(mock.st.ops.length >= 2, '少なくとも1回は再試行する');
+    assert.ok(mock.st.ops.length <= 4, `再試行は最大3回（受けた要求 ${mock.st.ops.length}回）`);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.3 Linear: 作成の結果の issue が null なら E_LINEAR_API/1（TypeError にしない）', async () => {
+  const dir = newToy();
+  const mock = await miniLinear({
+    hook: (rec, req, res) => {
+      if (rec.op !== 'MasumeIssueCreate') return false;
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ data: { issueCreate: { success: true, issue: null } } }));
+      return true;
+    },
+  });
+  try {
+    const r = await linear(['push', '--team', 'TOY', '--dir', dir], linEnv(mock.url), dir);
+    assert.equal(r.code, 1, r.all);
+    assert.match(r.all, /E_LINEAR_API/, r.all);
+    assert.doesNotMatch(r.all, /Cannot read|TypeError/, 'JavaScript のエラーがそのまま出ない');
+    const file = join(dir, '.masume', 'linear.json');
+    if (existsSync(file)) {
+      for (const [id, v] of Object.entries(readJson(file).issues)) assert.equal(typeof v.id, 'string', `${id} に壊れた対応が残らない`);
+    }
+  } finally {
+    await mock.close();
+  }
+});
+
+// ---------- 28.4 push は飛ばして最後まで ----------
+
+/** 2回目の push の準備: 1回目で全部作り、作った順のマスIDと対応表を返す */
+async function pushedOnce(runFirst) {
+  const dir = newToy();
+  const first = await runFirst(dir);
+  assert.equal(first.code, 0, first.all);
+  return dir;
+}
+
+const SKIP_LINE = (id) => new RegExp(`飛ばしたマス:[\\s\\S]*${id}（[^）]+）`);
+
+test('28.4 Linear: 消えた issue（not found）があっても残りを最後まで同期し、飛ばしたマスをまとめて出す（終了コード1）', async () => {
+  const gone = new Set();
+  const mock = await miniLinear({
+    hook: (rec, req, res) => {
+      if (rec.op !== 'MasumeIssueUpdate' || !gone.has(rec.vars.id)) return false;
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({ data: null, errors: [{ message: 'Entity not found: Issue - Could not find referenced Issue.', extensions: { type: 'invalid input', userPresentableMessage: 'Could not find referenced Issue.' } }] }));
+      return true;
+    },
+  });
+  try {
+    const dir = await pushedOnce((d) => linear(['push', '--team', 'TOY', '--dir', d], linEnv(mock.url), d));
+    const saved = readJson(join(dir, '.masume', 'linear.json'));
+    const order = Object.keys(saved.issues);
+    assert.equal(order.length, 10);
+    const [x, y] = [order[1], order[4]];
+    gone.add(saved.issues[x].id);
+    gone.add(saved.issues[y].id);
+    const before = mock.st.ops.length;
+    const r = await linear(['push', '--dir', dir], linEnv(mock.url), dir);
+    assert.equal(r.code, 1, r.all);
+    assert.match(r.all, SKIP_LINE(x), `飛ばしたマス ${x}: ${r.all}`);
+    assert.match(r.all, SKIP_LINE(y), `飛ばしたマス ${y}: ${r.all}`);
+    const updated = new Set(mock.st.ops.slice(before).filter((o) => o.op === 'MasumeIssueUpdate').map((o) => o.vars.id));
+    for (const id of order.filter((i) => i !== x && i !== y)) assert.ok(updated.has(saved.issues[id].id), `${id} は飛ばしたマスのあとでも更新される`);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.4 Linear: not found が HTTP 400 で返っても、同じように飛ばして最後まで同期する', async () => {
+  const gone = new Set();
+  const mock = await miniLinear({
+    hook: (rec, req, res) => {
+      if (rec.op !== 'MasumeIssueUpdate' || !gone.has(rec.vars.id)) return false;
+      res.writeHead(400, { 'content-type': 'application/json' });
+      res.end(JSON.stringify({ data: null, errors: [{ message: 'Entity not found: Issue - Could not find referenced Issue.', extensions: { type: 'invalid input', code: 'INVALID_INPUT', statusCode: 400 } }] }));
+      return true;
+    },
+  });
+  try {
+    const dir = await pushedOnce((d) => linear(['push', '--team', 'TOY', '--dir', d], linEnv(mock.url), d));
+    const saved = readJson(join(dir, '.masume', 'linear.json'));
+    const order = Object.keys(saved.issues);
+    gone.add(saved.issues[order[2]].id);
+    const before = mock.st.ops.length;
+    const r = await linear(['push', '--dir', dir], linEnv(mock.url), dir);
+    assert.equal(r.code, 1, r.all);
+    assert.match(r.all, SKIP_LINE(order[2]), r.all);
+    const updated = new Set(mock.st.ops.slice(before).filter((o) => o.op === 'MasumeIssueUpdate').map((o) => o.vars.id));
+    for (const id of order.filter((i) => i !== order[2])) assert.ok(updated.has(saved.issues[id].id), `${id} が更新される`);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.4 Jira: issue が消えて(404)・権限が無くて(403)も、残りを最後まで同期する。403 は「権限」と書く', async () => {
+  const rules = new Map(); // issue key → 返す HTTP ステータス
+  const mock = await miniJira({
+    hook: (req, u, body, send) => {
+      const key = u.pathname.split('/')[5];
+      if (req.method === 'PUT' && rules.has(key)) {
+        send(rules.get(key), { errorMessages: [rules.get(key) === 404 ? 'Issue does not exist or you do not have permission to see it.' : 'You do not have permission to edit this issue.'] });
+        return true;
+      }
+      return false;
+    },
+  });
+  try {
+    const dir = await pushedOnce((d) => jira(['push', '--project', 'TOY', '--dir', d], jirEnv(mock.url), d));
+    const saved = readJson(join(dir, '.masume', 'jira.json'));
+    const order = Object.keys(saved.issues);
+    assert.equal(order.length, 10);
+    const [gone, denied] = [order[1], order[3]];
+    rules.set(saved.issues[gone].key, 404);
+    rules.set(saved.issues[denied].key, 403);
+    const before = mock.st.reqs.length;
+    const r = await jira(['push', '--dir', dir], jirEnv(mock.url), dir);
+    assert.equal(r.code, 1, r.all);
+    assert.match(r.all, SKIP_LINE(gone), `飛ばしたマス ${gone}: ${r.all}`);
+    assert.match(r.all, SKIP_LINE(denied), `飛ばしたマス ${denied}: ${r.all}`);
+    assert.match(r.all, new RegExp(`${denied}（[^）]*権限`), `403 は「権限」と書く: ${r.all}`);
+    assert.doesNotMatch(r.all, /認証されませんでした/, '403 を認証のせいにしない');
+    assert.doesNotMatch(r.all, /E_JIRA_AUTH/, '403 を認証エラーにしない');
+    const puts = new Set(mock.st.reqs.slice(before).filter((q) => q.method === 'PUT').map((q) => q.path.split('/').pop()));
+    for (const id of order.filter((i) => i !== gone && i !== denied)) assert.ok(puts.has(saved.issues[id].key), `${id} は飛ばしたマスのあとでも更新される`);
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.4 Jira: 遷移が拒まれても(400)そのマスを飛ばし、ほかのマスの作成・遷移は最後まで進む', async () => {
+  const dir = newToy(); // 作業中の A1・B1・H1 は In Progress（遷移が要る）
+  let target = '';
+  const mock = await miniJira({
+    hook: (req, u, body, send, st) => {
+      const m = u.pathname.match(/^\/rest\/api\/3\/issue\/([^/]+)\/transitions$/);
+      if (!m || req.method !== 'POST') return false;
+      const issue = st.issues.find((x) => x.key === m[1]);
+      if (!issue.fields.summary.startsWith(`[${target}]`)) return false;
+      send(400, { errors: { resolution: 'Resolution is required' }, errorMessages: ['Transition is not allowed'] });
+      return true;
+    },
+  });
+  try {
+    const dry = await jira(['push', '--project', 'TOY', '--dir', dir, '--dry-run', '--json'], jirEnv(mock.url), dir);
+    assert.equal(dry.code, 0, dry.all);
+    const plan = JSON.parse(dry.out).issues;
+    const needs = plan.filter((p) => ['In Progress', 'In Review', 'Done'].includes(p.status)).map((p) => p.id);
+    assert.ok(needs.length >= 2, `遷移が要るマスが2つ以上ある（${needs}）`);
+    target = needs[0];
+    const r = await jira(['push', '--project', 'TOY', '--dir', dir], jirEnv(mock.url), dir);
+    assert.equal(r.code, 1, r.all);
+    assert.match(r.all, SKIP_LINE(target), `飛ばしたマス ${target}: ${r.all}`);
+    assert.equal(mock.st.issues.length, 10, '全部のマスが作られる');
+    const statusOf = (id) => mock.st.issues.find((i) => i.fields.summary.startsWith(`[${id}]`)).fields.status.statusCategory.key;
+    assert.equal(statusOf(target), 'new', '拒まれたマスは遷移しないまま');
+    for (const id of needs.slice(1)) assert.equal(statusOf(id), 'indeterminate', `${id} は拒まれたマスのあとでも遷移する`);
+    const saved = readJson(join(dir, '.masume', 'jira.json'));
+    assert.equal(Object.keys(saved.issues).length, 10, '対応表は10件ぜんぶ残る');
+  } finally {
+    await mock.close();
+  }
+});
+
+// ---------- 28.5 Linear pull は state.type も見る ----------
+
+test('28.5 linear pull: state.type が completed / canceled の issue は、状態の名前が何でも省く', async () => {
+  const mock = await fakeLinear({
+    seedIssues: [
+      linIssue(1),
+      linIssue(2, { state: { name: 'Released', type: 'completed' } }),
+      linIssue(3, { state: { name: "Won't Do", type: 'canceled' } }),
+      linIssue(4, { state: { name: 'Shipped', type: 'completed' } }),
+      linIssue(5, { state: { name: 'In Progress', type: 'started' } }),
+    ],
+  });
+  const dir = tmp('masume-m6-');
+  const out = join(dir, 'o.map.json');
+  try {
+    const r = await linear(['pull', '--team', 'NOTE', '--out', out], linEnv(mock.url), dir);
+    assert.equal(r.code, 0, r.all);
+    const m = readJson(out);
+    assert.deepEqual(Object.keys(m.nodes).sort(), ['GOAL', 'NOTE-1', 'NOTE-5'], '進行中の issue だけが残る');
+    assert.match(m.quest.pitch, /3\s*件/, `省いた件数(3)が quest.pitch に出る: ${m.quest.pitch}`);
+    assert.equal(masume(['validate', out]).code, 0);
+  } finally {
+    await mock.close();
+  }
+});
+
+// ---------- 28.6 import / pull の下書きは必ず validate に通る ----------
+
+const csvCell = (v) => `"${String(v).replaceAll('"', '""')}"`;
+const csvText = (rows) => ['ID,Title,Description,Status,Assignee,Labels,Estimate,Created,Project', ...rows.map((r) => r.map(csvCell).join(','))].join('\n') + '\n';
+const row = (id, title, o = {}) => [id, title, o.detail ?? `説明${id}`, o.status ?? 'Todo', o.who ?? 'Aki', '', '', o.created ?? created(Number(id.match(/\d+$/)[0])), o.project ?? 'ノートアプリ'];
+const cp = (s) => Array.from(s);
+const ABC100 = Array.from({ length: 100 }, (_, i) => 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'[i % 26]).join('');
+const EMOJI70 = '\u{1F600}'.repeat(70);
+const EMOJI90 = '\u{1F600}'.repeat(90);
+
+/** 描いた下書きを検査する: タイトルの長さ・空のタイトル・プロジェクト名 */
+function checkTitles(m, ids) {
+  assert.equal(cp(m.nodes[ids.long].title).join(''), cp(ABC100).slice(0, 80).join(''), '100文字のタイトルは先頭80文字');
+  assert.ok(m.nodes[ids.long].detail.startsWith(ABC100), `全文は detail の先頭に: ${m.nodes[ids.long].detail.slice(0, 120)}`);
+  assert.ok(m.nodes[ids.long].detail.includes(`説明`), '元の detail も残る');
+  assert.equal(m.nodes[ids.emoji70].title, EMOJI70, '80文字以内(コードポイント)なら削らない（UTF-16 の長さで数えない）');
+  assert.ok(!m.nodes[ids.emoji70].detail.startsWith(EMOJI70), '削っていないタイトルを detail にくり返さない');
+  assert.equal(cp(m.nodes[ids.emoji90].title).length, 80, '90文字は80コードポイントに');
+  assert.equal(m.nodes[ids.emoji90].title, cp(EMOJI90).slice(0, 80).join(''));
+  assert.ok(m.nodes[ids.emoji90].detail.startsWith(EMOJI90), '全文は detail の先頭に');
+  assert.equal(m.nodes[ids.empty].title, ids.empty, '空のタイトルはマスID');
+  assert.equal(m.nodes[ids.blank].title, ids.blank, '空白だけのタイトルもマスID');
+  assert.equal(m.quest.title, 'プ'.repeat(80), 'プロジェクト名(quest.title)も80文字まで');
+}
+
+test('28.6 import linear: 長い・空のタイトルとプロジェクト名でも validate に通る下書きになる', () => {
+  const dir = tmp('masume-m6-');
+  const csv = join(dir, 'in.csv');
+  const project = 'プ'.repeat(90);
+  writeFileSync(csv, csvText([
+    row('NOTE-1', ABC100, { project }),
+    row('NOTE-2', EMOJI70, { project }),
+    row('NOTE-3', EMOJI90, { project }),
+    row('NOTE-4', '', { project }),
+    row('NOTE-5', '   ', { project }),
+
+exec
+/bin/zsh -lc "sed -n '620,860p' tests/e2e/M6.test.mjs
+sed -n '1,135p' tests/helpers3.mjs
+sed -n '1,135p' tests/helpers.mjs
+sed -n '1,110p' tests/helpers2.mjs" in /Users/amano/dev/masume
+ succeeded in 0ms:
+    row('NOTE-5', '   ', { project }),
+    row('NOTE-6', 'ふつうのタイトル', { project }),
+  ]));
+  const out = join(dir, 'out.map.json');
+  const r = masume(['import', 'linear', csv, '--out', out], { cwd: dir });
+  assert.equal(r.code, 0, r.all);
+  const m = readJson(out);
+  checkTitles(m, { long: 'NOTE-1', emoji70: 'NOTE-2', emoji90: 'NOTE-3', empty: 'NOTE-4', blank: 'NOTE-5' });
+  assert.equal(m.nodes['NOTE-6'].title, 'ふつうのタイトル');
+  const v = masume(['validate', out]);
+  assert.equal(v.code, 0, v.all);
+  assert.equal(masume(['new', out], { cwd: dir }).code, 0, '冒険を始められる');
+});
+
+test('28.6 import linear: quest.id は英大文字と数字だけの2〜10文字になる（MY_PROJ → MYPROJ）。--quest-id / --title が優先', () => {
+  const dir = tmp('masume-m6-');
+  const mk = (name, rows, extra = []) => {
+    const csv = join(dir, `${name}.csv`);
+    const out = join(dir, `${name}.map.json`);
+    writeFileSync(csv, csvText(rows));
+    const r = masume(['import', 'linear', csv, '--out', out, ...extra], { cwd: dir });
+    assert.equal(r.code, 0, `${name}: ${r.all}`);
+    assert.equal(masume(['validate', out]).code, 0, `${name} が validate に通る`);
+    return readJson(out);
+  };
+  assert.equal(mk('under', [row('MY_PROJ-1', 'a'), row('MY_PROJ-2', 'b')]).quest.id, 'MYPROJ');
+  assert.equal(mk('digits', [row('P2P-1', 'a'), row('P2P-2', 'b')]).quest.id, 'P2P');
+  assert.equal(mk('long', [row('ABCDEFGHIJKLMNOP-1', 'a'), row('ABCDEFGHIJKLMNOP-2', 'b')]).quest.id, 'ABCDEFGHIJ', '10文字までに切る');
+  const o = mk('opts', [row('MY_PROJ-1', 'a')], ['--quest-id', 'MYQ', '--title', '好きな題名']);
+  assert.equal(o.quest.id, 'MYQ');
+  assert.equal(o.quest.title, '好きな題名');
+});
+
+test('28.6 linear pull: 長い・空のタイトルとプロジェクト名でも validate に通る。--quest-id / --title が使える', async () => {
+  const project = 'プ'.repeat(90);
+  const p = { name: project };
+  const mock = await fakeLinear({
+    seedIssues: [
+      linIssue(1, { title: ABC100, project: p }),
+      linIssue(2, { title: EMOJI70, project: p }),
+      linIssue(3, { title: EMOJI90, project: p }),
+      linIssue(4, { title: '', project: p }),
+      linIssue(5, { title: '  ', project: p }),
+      linIssue(6, { project: p }),
+    ],
+  });
+  const dir = tmp('masume-m6-');
+  const out = join(dir, 'o.map.json');
+  try {
+    const r = await linear(['pull', '--team', 'NOTE', '--out', out], linEnv(mock.url), dir);
+    assert.equal(r.code, 0, r.all);
+    const m = readJson(out);
+    checkTitles(m, { long: 'NOTE-1', emoji70: 'NOTE-2', emoji90: 'NOTE-3', empty: 'NOTE-4', blank: 'NOTE-5' });
+    assert.equal(m.quest.id, 'NOTE');
+    const v = masume(['validate', out]);
+    assert.equal(v.code, 0, v.all);
+
+    const out2 = join(dir, 'o2.map.json');
+    const r2 = await linear(['pull', '--team', 'NOTE', '--quest-id', 'MYQ', '--title', '好きな題名', '--out', out2], linEnv(mock.url), dir);
+    assert.equal(r2.code, 0, `--quest-id / --title が使える: ${r2.all}`);
+    const m2 = readJson(out2);
+    assert.equal(m2.quest.id, 'MYQ');
+    assert.equal(m2.quest.title, '好きな題名');
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.6 jira pull: キー MY_PROJ・長い/空の summary・長いプロジェクト名でも validate に通る。--quest-id / --title が使える', async () => {
+  const project = 'プ'.repeat(90);
+  const seed = [
+    jirIssue('MY_PROJ-1', 1, ABC100),
+    jirIssue('MY_PROJ-2', 2, EMOJI70),
+    jirIssue('MY_PROJ-3', 3, EMOJI90),
+    jirIssue('MY_PROJ-4', 4, ''),
+    jirIssue('MY_PROJ-5', 5, '   '),
+    jirIssue('MY_PROJ-6', 6, 'ふつう', { description: null }),
+  ];
+  const mock = await miniJira({ seed, projects: [{ id: '1', key: 'MY_PROJ', name: project }] });
+  const dir = tmp('masume-m6-');
+  const out = join(dir, 'o.map.json');
+  try {
+    const r = await jira(['pull', '--project', 'MY_PROJ', '--out', out], jirEnv(mock.url), dir);
+    assert.equal(r.code, 0, r.all);
+    const m = readJson(out);
+    checkTitles(m, { long: 'MY_PROJ-1', emoji70: 'MY_PROJ-2', emoji90: 'MY_PROJ-3', empty: 'MY_PROJ-4', blank: 'MY_PROJ-5' });
+    assert.equal(m.quest.id, 'MYPROJ', 'MY_PROJ → MYPROJ');
+    const v = masume(['validate', out]);
+    assert.equal(v.code, 0, v.all);
+
+    const out2 = join(dir, 'o2.map.json');
+    const r2 = await jira(['pull', '--project', 'MY_PROJ', '--quest-id', 'MYQ', '--title', '好きな題名', '--out', out2], jirEnv(mock.url), dir);
+    assert.equal(r2.code, 0, `--quest-id / --title が使える: ${r2.all}`);
+    const m2 = readJson(out2);
+    assert.equal(m2.quest.id, 'MYQ');
+    assert.equal(m2.quest.title, '好きな題名');
+  } finally {
+    await mock.close();
+  }
+});
+
+test('28.6 取り込める issue が1件も無ければ E_NOTHING/1「取り込める issue がありません」（下書きは書かない）', async () => {
+  const dir = tmp('masume-m6-');
+  const check = (r, label, out) => {
+    assert.equal(r.code, 1, `${label}: ${r.all}`);
+    assert.match(r.all, /E_NOTHING/, `${label}: ${r.all}`);
+    assert.match(r.all, /取り込める issue がありません/, `${label}: ${r.all}`);
+    assert.equal(existsSync(out), false, `${label}: 下書きを書かない`);
+  };
+
+  // CSV: 全件 Done / Canceled
+  const csv = join(dir, 'done.csv');
+  writeFileSync(csv, csvText([row('NOTE-1', 'a', { status: 'Done' }), row('NOTE-2', 'b', { status: 'Canceled' }), row('NOTE-3', 'c', { status: 'Duplicate' })]));
+  const csvOut = join(dir, 'csv.map.json');
+  check(masume(['import', 'linear', csv, '--out', csvOut], { cwd: dir }), 'import linear', csvOut);
+
+  // Linear: 全件 completed / canceled、issue が0件
+  const lin = await fakeLinear({
+    seedIssues: [
+      linIssue(1, { state: { name: 'Done', type: 'completed' } }),
+      linIssue(2, { state: { name: 'Released', type: 'completed' } }),
+      linIssue(3, { state: { name: "Won't Do", type: 'canceled' } }),
+    ],
+  });
+  try {
+    const out1 = join(dir, 'lin1.map.json');
+    check(await linear(['pull', '--team', 'NOTE', '--out', out1], linEnv(lin.url), dir), 'linear pull（全件完了）', out1);
+    const out2 = join(dir, 'lin2.map.json');
+    check(await linear(['pull', '--team', 'EMPTY', '--out', out2], linEnv(lin.url), dir), 'linear pull（0件）', out2);
+  } finally {
+    await lin.close();
+  }
+
+  // Jira: 全件 statusCategory done、issue が0件
+  const done = (key, i) => jirIssue(key, i, `t${i}`, { status: { name: 'Done', statusCategory: { key: 'done' } } });
+  const jir = await miniJira({ seed: [done('NOTE-1', 1), done('NOTE-2', 2)], projects: [{ id: '1', key: 'NOTE', name: 'ノート' }, { id: '2', key: 'EMPTY', name: 'から' }] });
+  try {
+    const out1 = join(dir, 'jira1.map.json');
+    check(await jira(['pull', '--project', 'NOTE', '--out', out1], jirEnv(jir.url), dir), 'jira pull（全件完了）', out1);
+    const out2 = join(dir, 'jira2.map.json');
+    check(await jira(['pull', '--project', 'EMPTY', '--out', out2], jirEnv(jir.url), dir), 'jira pull（0件）', out2);
+  } finally {
+    await jir.close();
+  }
+});
+// 第3章の判定の共通道具（MCP のクライアント・偽の Jira）。GM の縄張り・封印対象。
+import { spawn } from 'node:child_process';
+import { BIN, listen } from './helpers.mjs';
+
+export * from './helpers2.mjs';
+
+/** masume mcp を起動して、JSON-RPC で話すクライアント */
+export function mcpClient(args = [], { cwd, env = {} } = {}) {
+  const p = spawn(process.execPath, [BIN, 'mcp', ...args], { cwd, env: { ...process.env, NO_COLOR: '1', MASUME_DIR: '', ...env }, stdio: ['pipe', 'pipe', 'pipe'] });
+  let buf = '';
+  let stderr = '';
+  let nextId = 1;
+  const waiting = new Map();
+  const stray = [];
+  p.stdout.setEncoding('utf8');
+  p.stdout.on('data', (d) => {
+    buf += d;
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i).trim();
+      buf = buf.slice(i + 1);
+      if (!line) continue;
+      let msg;
+      try {
+        msg = JSON.parse(line);
+      } catch {
+        stray.push(line);
+        continue;
+      }
+      if (msg.id !== undefined && waiting.has(msg.id)) {
+        waiting.get(msg.id)(msg);
+        waiting.delete(msg.id);
+      } else stray.push(msg);
+    }
+  });
+  p.stderr.on('data', (d) => (stderr += d));
+  const client = {
+    proc: p,
+    stray,
+    stderr: () => stderr,
+    request(method, params = {}, { timeout = 60000 } = {}) {
+      const id = nextId++;
+      return new Promise((res, rej) => {
+        const t = setTimeout(() => rej(new Error(`MCP ${method} が ${timeout}ms 以内に返らない\n${stderr}`)), timeout);
+        waiting.set(id, (msg) => (clearTimeout(t), res(msg)));
+        p.stdin.write(JSON.stringify({ jsonrpc: '2.0', id, method, params }) + '\n');
+      });
+    },
+    notify(method, params = {}) {
+      p.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params }) + '\n');
+    },
+    raw(line) {
+      p.stdin.write(line + '\n');
+    },
+    async call(name, args = {}, opts) {
+      const r = await client.request('tools/call', { name, arguments: args }, opts);
+      if (r.error) throw new Error(`tools/call ${name}: ${JSON.stringify(r.error)}`);
+      return { isError: r.result.isError === true, text: (r.result.content || []).map((c) => c.text).join('\n') };
+    },
+    async start() {
+      const init = await client.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'masume-test', version: '0' } });
+      client.notify('notifications/initialized');
+      return init;
+    },
+    close() {
+      return new Promise((res) => {
+        if (p.exitCode !== null) return res();
+        p.once('exit', () => res());
+        p.stdin.end();
+        setTimeout(() => p.kill('SIGTERM'), 1000);
+      });
+    },
+  };
+  return client;
+}
+
+// ---- 偽の Jira（REST v3） ----
+export const JIRA_ENV = (url) => ({ MASUME_JIRA_URL: url, JIRA_EMAIL: 'gm@example.com', JIRA_API_TOKEN: 'jira_test_token' });
+const AUTH = 'Basic ' + Buffer.from('gm@example.com:jira_test_token').toString('base64');
+
+export async function fakeJira({ seedIssues = [] } = {}) {
+  const http = await import('node:http');
+  const STATUSES = {
+    todo: { name: 'To Do', statusCategory: { key: 'new' } },
+    progress: { name: 'In Progress', statusCategory: { key: 'indeterminate' } },
+    review: { name: 'In Review', statusCategory: { key: 'indeterminate' } },
+    done: { name: 'Done', statusCategory: { key: 'done' } },
+  };
+  const TRANSITIONS = [
+    { id: '11', name: 'To Do', to: STATUSES.todo },
+    { id: '21', name: 'In Progress', to: STATUSES.progress },
+    { id: '31', name: 'In Review', to: STATUSES.review },
+    { id: '41', name: 'Done', to: STATUSES.done },
+  ];
+  const db = { requests: [], projects: [{ id: '10000', key: 'TOY', name: 'おもちゃ' }, { id: '10001', key: 'NOTE', name: 'ノート' }], issues: [], seed: seedIssues };
+  let n = 0;
+  const send = (res, status, body) => {
+    res.statusCode = status;
+    if (body === undefined) return res.end();
+    res.setHeader('content-type', 'application/json');
+    res.end(JSON.stringify(body));
+  };
+  const server = http.createServer((req, res) => {
+    let raw = '';
+    req.on('data', (d) => (raw += d));
+    req.on('end', () => {
+      const u = new URL(req.url, 'http://x');
+      let body;
+      try {
+        body = raw ? JSON.parse(raw) : undefined;
+      } catch {}
+      db.requests.push({ method: req.method, path: u.pathname, query: u.search, headers: req.headers, body });
+      if (req.headers.authorization !== AUTH) return send(res, 401, { errorMessages: ['Unauthorized'] });
+      let m;
+      if (req.method === 'GET' && (m = u.pathname.match(/^\/rest\/api\/3\/project\/([^/]+)$/))) {
+        const p = db.projects.find((x) => x.key === m[1]);
+        return p ? send(res, 200, p) : send(res, 404, { errorMessages: ['No project'] });
+      }
+      if (req.method === 'POST' && u.pathname === '/rest/api/3/issue') {
+        n++;
+        const issue = { id: String(20000 + n), key: `${body.fields.project.key}-${n}`, fields: { ...body.fields, status: STATUSES.todo } };
+        db.issues.push(issue);
+        return send(res, 201, { id: issue.id, key: issue.key, self: `http://x/rest/api/3/issue/${issue.id}` });
+      }
+      if ((m = u.pathname.match(/^\/rest\/api\/3\/issue\/([^/]+)(\/transitions)?$/))) {
+        const issue = db.issues.find((x) => x.key === m[1] || x.id === m[1]);
+        if (!issue) return send(res, 404, { errorMessages: ['No issue'] });
+        if (m[2] && req.method === 'GET') return send(res, 200, { transitions: TRANSITIONS });
+        if (m[2] && req.method === 'POST') {
+          const t = TRANSITIONS.find((x) => x.id === body?.transition?.id);
+          if (!t) return send(res, 400, { errorMessages: ['bad transition'] });
+          issue.fields.status = t.to;
+          return send(res, 204);
+        }
+        if (req.method === 'GET') return send(res, 200, { id: issue.id, key: issue.key, fields: { status: issue.fields.status } });
+// 判定（E2E）の共通道具。GM の縄張り・封印対象。キャラクターは編集しないこと。
+import { spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import assert from 'node:assert/strict';
+import { mkdtempSync, writeFileSync, readFileSync, mkdirSync, rmSync, existsSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+export const BIN = join(ROOT, 'bin', 'masume.js');
+
+export function tmp(prefix = 'masume-') {
+  return mkdtempSync(join(tmpdir(), prefix));
+}
+
+/** masume CLI を同期で実行する */
+export function masume(args, { cwd = ROOT, env = {}, timeout = 120000 } = {}) {
+  const r = spawnSync(process.execPath, [BIN, ...args], {
+    cwd,
+    env: { ...process.env, NO_COLOR: '1', MASUME_DIR: '', ...env },
+    encoding: 'utf8',
+    timeout,
+  });
+  return { code: r.status, out: r.stdout || '', err: r.stderr || '', all: (r.stdout || '') + (r.stderr || '') };
+}
+
+/** masume CLI を非同期で実行する（並行実行の判定用） */
+export function masumeAsync(args, { cwd = ROOT, env = {} } = {}) {
+  return new Promise((res) => {
+    const p = spawn(process.execPath, [BIN, ...args], { cwd, env: { ...process.env, NO_COLOR: '1', MASUME_DIR: '', ...env } });
+    let out = '';
+    let err = '';
+    p.stdout.on('data', (d) => (out += d));
+    p.stderr.on('data', (d) => (err += d));
+    p.on('close', (code) => res({ code, out, err, all: out + err }));
+  });
+}
+
+/** --json 付きで実行して stdout をパースする */
+export function masumeJson(args, opts) {
+  const r = masume([...args, '--json'], opts);
+  try {
+    r.data = JSON.parse(r.out);
+  } catch {
+    r.data = undefined;
+  }
+  return r;
+}
+
+export function view(dir) {
+  const r = masumeJson(['status', '--dir', dir]);
+  if (r.code !== 0 || !r.data) throw new Error(`status --json に失敗: code=${r.code}\n${r.all}`);
+  return r.data;
+}
+
+export function char(v, id) {
+  return v.characters.find((c) => c.id === id);
+}
+
+export function readLog(dir) {
+  return readFileSync(join(dir, '.masume', 'log.jsonl'), 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map((l) => JSON.parse(l));
+}
+
+// ---- 正規化JSON・ハッシュ・じゅもん（SAVE_FORMAT.md を独立に実装） ----
+
+export function canonical(v) {
+  if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
+  if (v && typeof v === 'object') {
+    const keys = Object.keys(v).filter((k) => v[k] !== undefined).sort();
+    return '{' + keys.map((k) => JSON.stringify(k) + ':' + canonical(v[k])).join(',') + '}';
+  }
+  return JSON.stringify(v);
+}
+
+export function sha256(data) {
+  return createHash('sha256').update(data).digest('hex');
+}
+
+export function eventHash(e) {
+  return sha256(canonical({ seq: e.seq, ts: e.ts, type: e.type, actor: e.actor, data: e.data, prev: e.prev }));
+}
+
+export const KANA = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわがぎぐげござじずぜぞだぢづでどばびぶべぼ';
+
+export function jumonOf(hex) {
+  const n = BigInt('0x' + hex.slice(0, 18));
+  const chars = [];
+  for (let i = 0; i < 12; i++) chars.push(KANA[Number((n >> BigInt(66 - 6 * i)) & 63n)]);
+  const s = chars.join('');
+  return `${s.slice(0, 3)} ${s.slice(3, 6)} ${s.slice(6, 9)} ${s.slice(9, 12)}`;
+}
+
+// ---- おもちゃの冒険（エンジンの判定用） ----
+
+const cmd = (id) => ({ kind: 'cmd', run: `node checks/flag.mjs ${id}`, seal: ['checks/flag.mjs'] });
+const task = (id, title) => ({ type: 'task', title, detail: `${title}こと。`, check: cmd(id) });
+
+export function toyMap() {
+  return {
+    masume: 1,
+    quest: { id: 'TOY', title: 'おもちゃの冒険', pitch: '判定用の小さな地図', goal: 'FIN' },
+    characters: [
+      { id: 'a', name: '戦士アリス', kind: 'agent', agent: 'test', job: 'warrior', color: 'yellow', territory: ['a/**'], path: ['A1', 'A2', 'AC', 'A3', 'G1', 'A4', 'FIN'] },
+      { id: 'b', name: '魔法使いボブ', kind: 'agent', agent: 'test', job: 'mage', color: 'blue', territory: ['b/**'], path: ['B1', 'B2', 'G1', 'B3', 'FIN'] },
+      { id: 'h', name: '勇者ひとみ', kind: 'human', agent: 'human', job: 'hero', color: 'pink', path: ['H1', 'FIN'] },
+    ],
+    nodes: {
+      A1: task('A1', '剣をとぐ'),
+      A2: task('A2', '盾をみがく'),
+      AC: { type: 'camp', title: '村の宿屋' },
+      A3: { ...task('A3', '洞窟をしらべる'), rollback_to: '@here' },
+      A4: task('A4', '宝箱をあける'),
+      B1: task('B1', '呪文をおぼえる'),
+      B2: task('B2', '杖をつくる'),
+      B3: { type: 'task', title: '封印された書を読む', check: { kind: 'cmd', run: 'node checks/b3.mjs', seal: ['checks/b3.mjs'] } },
+      G1: { type: 'gate', title: '洞窟の番人', check: cmd('G1') },
+      H1: { type: 'task', title: '王様にあいさつ', check: { kind: 'stamp', by: 'h' } },
+      FIN: { type: 'gate', title: 'あがり', check: cmd('FIN') },
+    },
+  };
+}
+
+const FLAG_SCRIPT = `import { readFileSync } from 'node:fs';
+const id = process.argv[2];
+let v = '';
+try { v = readFileSync('flags/' + id, 'utf8').trim(); } catch {}
+if (v === 'ok') { console.log('PASS ' + id); process.exit(0); }
+console.log('FAIL ' + id);
+if (v.startsWith('blame:')) console.log('MASUME_BLAME: ' + v.slice(6));
+process.exit(1);
+`;
+// 第2章の判定の共通道具（偽の GM・偽のエージェント・偽の Linear）。GM の縄張り・封印対象。
+import { spawn } from 'node:child_process';
+import { writeFileSync, mkdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { tmp, listen, BIN } from './helpers.mjs';
+
+export * from './helpers.mjs';
+
+const FAKE_DIR = tmp('masume-fakes-');
+
+// ---- 偽の GM（masume quest 用） ----
+// node fake-gm.mjs <mode>   mode: good | bad-then-good | bad | fail | nothing
+// プロンプト（stdin）を <root>/gm-prompt-<n>.txt に、環境変数を <root>/gm-env-<n>.json に残す。
+const FAKE_GM = `import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+const mode = process.argv[2] || 'good';
+const root = process.cwd();
+const prompt = readFileSync(0, 'utf8');
+const n = readdirSync(root).filter((f) => f.startsWith('gm-prompt-')).length + 1;
+writeFileSync('gm-prompt-' + n + '.txt', prompt);
+writeFileSync('gm-env-' + n + '.json', JSON.stringify({ MASUME_DIR: process.env.MASUME_DIR, MASUME_BIN: process.env.MASUME_BIN, MASUME_WISH: process.env.MASUME_WISH, MASUME_PROMPT_FILE: process.env.MASUME_PROMPT_FILE }));
+console.log('偽のGM: ' + n + '回目の呼び出し（' + mode + '）');
+if (mode === 'fail') { console.error('GM がこけた'); process.exit(3); }
+if (mode === 'nothing') process.exit(0);
+const cmd = (id) => ({ kind: 'cmd', run: 'node checks/done.mjs ' + id, seal: ['checks/done.mjs'] });
+const map = {
+  masume: 1,
+  quest: { id: 'MEMO', title: 'メモアプリ', pitch: 'メモを書いて残せるアプリ', goal: 'FIN' },
+  characters: [
+    { id: 'store', name: '倉庫番', kind: 'agent', agent: 'claude', job: 'merchant', color: 'orange', module: '保存', territory: ['store/**'], path: ['T1', 'T2', 'G1', 'FIN'] },
+    { id: 'ui', name: '絵描き', kind: 'agent', agent: 'claude', job: 'painter', color: 'pink', module: '画面', territory: ['ui/**'], path: ['U1', 'G1', 'FIN'] },
+    { id: 'you', name: 'あなた', kind: 'human', job: 'hero', color: 'purple', module: '確認', path: ['H1', 'FIN'] },
+  ],
+  nodes: {
+    T1: { type: 'task', title: 'メモを保存する', detail: 'メモを1件保存できること。', check: cmd('T1') },
+    T2: { type: 'task', title: 'メモを一覧する', detail: '保存したメモを一覧できること。', check: cmd('T2') },
+    U1: { type: 'task', title: 'メモの画面を作る', detail: 'メモを書く画面があること。', check: cmd('U1') },
+    G1: { type: 'gate', title: '書いたメモが一覧に出る', detail: '画面で書いたメモが一覧に出ること。', check: cmd('G1') },
+    H1: { type: 'task', title: '使ってみて承認する', check: { kind: 'stamp', by: 'you' } },
+    FIN: { type: 'gate', title: 'あがり', detail: 'メモアプリとして使えること。', check: cmd('FIN') },
+  },
+};
+const bad = mode === 'bad' || (mode === 'bad-then-good' && n === 1);
+if (bad) delete map.quest.goal;
+mkdirSync('checks', { recursive: true });
+writeFileSync('checks/done.mjs', "import { existsSync } from 'node:fs';\\nconst id = process.argv[2];\\nif (existsSync('work/' + id + '.txt')) { console.log('PASS ' + id); process.exit(0); }\\nconsole.log('FAIL ' + id + ': work/' + id + '.txt がありません'); process.exit(1);\\n");
+writeFileSync('quest.map.json', JSON.stringify(map, null, 2));
+console.log('偽のGM: quest.map.json を書いた');
+`;
+
+export function fakeGm(mode = 'good') {
+  const file = join(FAKE_DIR, 'fake-gm.mjs');
+  writeFileSync(file, FAKE_GM);
+  return `cmd:node ${JSON.stringify(file)} ${mode}`;
+}
+
+// ---- 偽のエージェント（masume party 用） ----
+// node fake-agent.mjs <mode> [ms]   mode: good | lazy | slow | record
+//  good   … flags/<MASUME_NODE> に ok を書き、宣言判定（--no-boss）して終わる
+//  lazy   … 何もしない
+//  slow   … ms ミリ秒待ってから good
+//  record … 環境変数とプロンプトを record-<キャラ>-<n>.json に残してから good
+const FAKE_AGENT = `import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const [mode = 'good', ms = '0'] = process.argv.slice(2);
+const prompt = readFileSync(0, 'utf8');
+const env = process.env;
+console.log('偽のエージェント ' + env.MASUME_CHARACTER + ' @ ' + env.MASUME_NODE + '（' + mode + '）');
+if (mode === 'lazy') process.exit(0);
+if (mode === 'record') {
+  const n = readdirSync(env.MASUME_DIR).filter((f) => f.startsWith('record-' + env.MASUME_CHARACTER + '-')).length + 1;
+  writeFileSync(env.MASUME_DIR + '/record-' + env.MASUME_CHARACTER + '-' + n + '.json', JSON.stringify({ prompt, cwd: process.cwd(), MASUME_DIR: env.MASUME_DIR, MASUME_BIN: env.MASUME_BIN, MASUME_CHARACTER: env.MASUME_CHARACTER, MASUME_NODE: env.MASUME_NODE, MASUME_PROMPT_FILE: env.MASUME_PROMPT_FILE, promptFile: env.MASUME_PROMPT_FILE ? readFileSync(env.MASUME_PROMPT_FILE, 'utf8') : null }));
+}
+if (mode === 'slow') await new Promise((r) => setTimeout(r, Number(ms)));
+mkdirSync(env.MASUME_DIR + '/flags', { recursive: true });
+writeFileSync(env.MASUME_DIR + '/flags/' + env.MASUME_NODE, 'ok');
+mkdirSync(env.MASUME_DIR + '/work', { recursive: true });
+writeFileSync(env.MASUME_DIR + '/work/' + env.MASUME_NODE + '.txt', 'done');
+const r = spawnSync(process.execPath, [env.MASUME_BIN, 'check', env.MASUME_CHARACTER, '--as', env.MASUME_CHARACTER, '--no-boss', '--dir', env.MASUME_DIR], { encoding: 'utf8' });
+console.log(r.stdout + r.stderr);
+process.exit(0);
+`;
+
+export function fakeAgent(mode = 'good', ms = 0) {
+  const file = join(FAKE_DIR, 'fake-agent.mjs');
+  writeFileSync(file, FAKE_AGENT);
+  return `cmd:node ${JSON.stringify(file)} ${mode} ${ms}`;
+}
+
+// ---- 環境変数つきで masume serve を起動する ----
+export function startServeEnv(dir, env = {}) {
+  return new Promise((res, rej) => {
+    const p = spawn(process.execPath, [BIN, 'serve', '--port', '0', '--dir', dir], {
+      cwd: dir,
+      env: { ...process.env, NO_COLOR: '1', MASUME_DIR: '', ...env },
+    });
+    let out = '';
+    const t = setTimeout(() => rej(new Error(`serve が起動しない:\n${out}`)), 15000);
+    const onData = (d) => {
+      out += d;
+      const m = out.match(/http:\/\/[^\s]+/);
+      if (m) {
+        clearTimeout(t);
+        res({
+          url: m[0].replace(/\/$/, ''),
+          proc: p,
+          output: () => out,
+          stop: () =>
+            new Promise((done) => {
+              if (p.exitCode !== null) return done();
+              p.once('exit', () => done());
+
+exec
+/bin/zsh -lc 'node --test tests/e2e/M6.test.mjs' in /Users/amano/dev/masume
+exec
+/bin/zsh -lc "cat src/linear/client.js src/linear/http.js
+sed -n '170,310p' src/linear/sync.js
+sed -n '200,330p' src/jira/sync.js
+node --input-type=module - <<'NODE'
+import { readFileSync } from 'node:fs';
+const entries = readFileSync('.masume/log.jsonl', 'utf8').trim().split('\\n').map(JSON.parse);
+for (const e of entries.filter(e => e.seq >= 158 && (e.type === 'gate_failed' || e.type === 'check_failed' || (e.type === 'note' && ['gm', 'gmkit'].includes(e.actor))))) console.log(JSON.stringify({seq:e.seq,type:e.type,actor:e.actor,data:e.data}));
+NODE" in /Users/amano/dev/masume
+ succeeded in 0ms:
+import { MasumeError } from '../engine/index.js';
+import { endpointUrl, publicPayload, waitForRetry } from './http.js';
+
+export const DEFAULT_URL = 'https://api.linear.app/graphql';
+const TIMEOUT_MS = 30000;
+const MAX_RETRIES = 3;
+
+// operationName は CONTRACTS §16 の表のとおり。文書は本物の Linear API の形に合わせている。
+export const DOCUMENTS = {
+  MasumeTeams: `query MasumeTeams($key: String!) {
+  teams(filter: { key: { eq: $key } }) {
+    nodes { id key name states { nodes { id name type } } }
+  }
+}`,
+  MasumeProjects: `query MasumeProjects($name: String!) {
+  projects(filter: { name: { eq: $name } }) {
+    nodes { id name }
+  }
+}`,
+  MasumeProjectCreate: `mutation MasumeProjectCreate($input: ProjectCreateInput!) {
+  projectCreate(input: $input) {
+    success
+    project { id name }
+  }
+}`,
+  MasumeIssueCreate: `mutation MasumeIssueCreate($input: IssueCreateInput!) {
+  issueCreate(input: $input) {
+    success
+    issue { id identifier url }
+  }
+}`,
+  MasumeIssueUpdate: `mutation MasumeIssueUpdate($id: String!, $input: IssueUpdateInput!) {
+  issueUpdate(id: $id, input: $input) {
+    success
+    issue { id identifier }
+  }
+}`,
+};
+
+const ISSUE_FIELDS = `identifier title description estimate createdAt
+      state { name type }
+      assignee { name }
+      labels { nodes { name } }
+      project { name }`;
+
+/** project が指定されていれば、その名前の issue だけに絞る。 */
+export function issuesDocument(withProject) {
+  const filter = withProject
+    ? '{ team: { key: { eq: $key } }, project: { name: { eq: $project } } }'
+    : '{ team: { key: { eq: $key } } }';
+  const variables = withProject ? '$key: String!, $project: String, $after: String' : '$key: String!, $after: String';
+  return `query MasumeIssues(${variables}) {
+  issues(filter: ${filter}, first: 100, after: $after) {
+    nodes {
+      ${ISSUE_FIELDS}
+    }
+    pageInfo { hasNextPage endCursor }
+  }
+}`;
+}
+
+function failure(code, message, exitCode) {
+  return new MasumeError(code, message, exitCode);
+}
+
+/** キーは値だけを持ち、メッセージやログには出さない。 */
+export function createClient({ env, fetchImpl = globalThis.fetch }) {
+  const rawKey = env.LINEAR_API_KEY ?? '';
+  if (!/^[\x20-\x7E]*$/u.test(rawKey)) {
+    throw failure('E_LINEAR_AUTH', 'LINEAR_API_KEY は印字可能な ASCII で指定してください', 2);
+  }
+  const key = rawKey.trim();
+  if (!key) throw failure('E_LINEAR_AUTH', 'LINEAR_API_KEY が設定されていません。Linear の API キーを環境変数に入れてください', 2);
+  const url = endpointUrl(env.MASUME_LINEAR_URL || DEFAULT_URL);
+  const assertPublic = (value) => publicPayload(value, [rawKey, key], 'LINEAR');
+
+  async function request(operationName, variables = {}, query = DOCUMENTS[operationName]) {
+    for (let attempt = 0; ; attempt++) {
+      let response;
+      let text;
+      try {
+        response = await fetchImpl(url, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', authorization: key },
+          body: JSON.stringify({ query, variables, operationName }),
+          signal: AbortSignal.timeout(TIMEOUT_MS),
+        });
+        text = await response.text();
+      } catch {
+        // fetch の例外にはヘッダーや URL が含まれ得るので転記しない。
+        throw failure('E_LINEAR_NETWORK', 'Linear との通信が完了しませんでした', 1);
+      }
+      if (response.status === 429 && attempt < MAX_RETRIES) {
+        await waitForRetry(response.headers.get('retry-after'));
+        continue;
+      }
+      let payload;
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = undefined;
+      }
+      const errors = Array.isArray(payload?.errors) ? payload.errors : [];
+      // 本文は分類だけに使い、秘密が反射され得るメッセージを出力しない。
+      const notFound = errors.some((entry) => /not found|could not find/iu.test(
+        `${entry?.message ?? ''} ${entry?.extensions?.userPresentableMessage ?? ''}`,
+      ));
+      let error;
+      if (response.status === 401) {
+        error = failure('E_LINEAR_AUTH', 'Linear に認証されませんでした。LINEAR_API_KEY を確かめてください', 2);
+      } else if (response.status === 403) {
+        error = failure('E_LINEAR_API', 'Linear の操作に必要な権限がありません', 1);
+        error.skipReason = '権限がありません';
+      } else if (!response.ok || errors.length > 0) {
+        error = failure('E_LINEAR_API', `Linear がエラーを返しました（HTTP ${response.status}）`, 1);
+        if (notFound || response.status === 404) error.skipReason = 'issue が見つかりません';
+      } else if (!payload || typeof payload.data !== 'object' || payload.data === null) {
+        error = failure('E_LINEAR_API', 'Linear の返事を読めません', 1);
+      }
+      if (error) {
+        error.status = response.status;
+        throw error;
+      }
+      return assertPublic(payload.data);
+    }
+  }
+
+  return { url, request, assertPublic };
+}
+import { setTimeout as delay } from 'node:timers/promises';
+import { MasumeError } from '../engine/index.js';
+
+/** URL 自体はエラーに含めない。userinfo は通信より前に断る。 */
+export function endpointUrl(value) {
+  let url;
+  try {
+    url = new URL(value);
+  } catch {
+    throw new MasumeError('E_USAGE', '同期先の URL が不正です', 2);
+  }
+  if (url.username || url.password || /^https?:\/\/[^/?#]*@/iu.test(value)) {
+    throw new MasumeError('E_USAGE', '同期先の URL にユーザー情報は指定できません', 2);
+  }
+  if (!['http:', 'https:'].includes(url.protocol)) {
+    throw new MasumeError('E_USAGE', '同期先の URL は HTTP または HTTPS にしてください', 2);
+  }
+  return url.href;
+}
+
+/** Retry-After の秒数と HTTP-date に従う。省略・不正な値は1秒待つ。 */
+export async function waitForRetry(value) {
+  const text = value?.trim() ?? '';
+  let ms = 1000;
+  if (/^\d+(?:\.\d+)?$/u.test(text)) ms = Number(text) * 1000;
+  else if (text && Number.isFinite(Date.parse(text))) ms = Math.max(0, Date.parse(text) - Date.now());
+  if (!Number.isFinite(ms)) ms = 1000;
+  // setTimeout の上限を超えても即座に再送しない。
+  while (ms > 0) {
+    const chunk = Math.min(ms, 2 ** 31 - 1);
+    await delay(chunk);
+    ms -= chunk;
+  }
+}
+
+/** 成功本文に秘密が反射されても、呼出元が表示・保存する前に止める。 */
+export function publicPayload(payload, secrets, service) {
+  const needles = [...new Set(secrets.filter(Boolean).flatMap((secret) => [secret, encodeURIComponent(secret)]))];
+  const containsSecret = (value) => {
+    if (typeof value === 'string') {
+      return needles.some((secret) => value.includes(secret))
+        || /https?:\/\/[^/\s?#]*@/iu.test(value);
+    }
+    if (value && typeof value === 'object') {
+      return Object.entries(value).some(([key, entry]) => containsSecret(key) || containsSecret(entry));
+    }
+    return false;
+  };
+  if (containsSecret(payload)) {
+    throw new MasumeError(`E_${service}_API`, '同期先の返事に秘密情報が含まれるため、表示・保存を中止しました', 1);
+  }
+  return payload;
+}
+    assignee: issue.assignee?.name ?? '',
+    labels: (issue.labels?.nodes ?? []).map((label) => String(label.name).trim()).filter(Boolean),
+    estimate: issue.estimate == null ? '' : String(issue.estimate),
+    created: issue.createdAt ?? '',
+    project: issue.project?.name ?? '',
+  }));
+}
+
+export async function pullMap(client, { team, project, questId, title }) {
+  const records = await pullRecords(client, { team, project });
+  const map = client.assertPublic(mapFromRecords(records, { questId, title }));
+  return { map, count: records.length };
+}
+  });
+  const issues = [];
+  let token;
+  for (;;) {
+    const body = { jql: `project = ${project} ORDER BY created ASC`, fields: SEARCH_FIELDS, maxResults: PAGE_SIZE };
+    if (token) body.nextPageToken = token;
+    const page = await client.request('POST', '/rest/api/3/search/jql', body);
+    issues.push(...(page?.issues ?? []));
+    const next = page?.isLast === false || (page?.isLast === undefined && page?.nextPageToken) ? page.nextPageToken : undefined;
+    if (!next || next === token) break;
+    token = next;
+  }
+  return {
+    projectName: found?.name ?? project,
+    records: issues.map((issue) => {
+      const fields = issue.fields ?? {};
+      return {
+        id: issue.key ?? '',
+        title: fields.summary ?? '',
+        detail: adfToText(fields.description),
+        // statusCategory が done なら完了扱い（§9 の import が省く Done に揃える）
+        status: fields.status?.statusCategory?.key === 'done' ? 'Done' : (fields.status?.name ?? ''),
+        assignee: fields.assignee?.displayName ?? '',
+        labels: (fields.labels ?? []).map((label) => String(label).trim()).filter(Boolean),
+        estimate: '',
+        created: isoCreated(fields.created),
+        project: found?.name ?? project,
+      };
+    }),
+  };
+}
+
+export async function pullMap(client, { project, questId, title }) {
+  const { records } = await pullRecords(client, project);
+  // ADF の text を連結した結果も、保存前に秘密が無いことを確かめる。
+  const map = client.assertPublic(mapFromRecords(records, { questId, title }));
+  return { map, count: records.length };
+}
+{"seq":169,"type":"note","actor":"gm","data":{"character":"teller","text":"GM: Q3 の解釈を2つとも了承（警告だけのやり直しは地図の書き直し不要。MASUME_GM_TIMEOUT が0以下・数でないなら既定1800秒）。GM の再確認で Q3 11/11。"}}
+{"seq":175,"type":"gate_failed","actor":"party","data":{"gate":"GOAL4","members":["board","engine","server","teller","party","gmkit","assets","player"],"blamed":["board","engine","server","teller","party","gmkit","assets","player"],"output":"outputs/000175.log","output_hash":"2ae47989ca2c5b48cb97a5114afe64e0b8eb65d70e3a53cf3b859bf564b2b049","duration_ms":158489,"git":{"head":"b8148f6ad2cc5bd5e543a7e7d8a4da77204d52b0","dirty":true}}}
+{"seq":178,"type":"note","actor":"gm","data":{"character":"board","text":"GM の裁定: GOAL4 の全滅（seq 175）は正当。落ちた B3「ボス戦のボタン」は、賢者クロードの B7 の修理（SSE の hello で読み直す）が持ち込んだ競合で、重い負荷の下で同じ中身の応答が手で描いた盤面を上書きしていた。GM の判定の不備ではないのでロードしない。賢者クロードが B7 で直し、巻き戻された語り部・地図職人は宣言判定をやり直す。軍師の --no-boss 忘れはルール違反ではない（ボス戦の前の GM の素振りが飛んだだけ）。"}}
+
+ succeeded in 12559ms:
+✔ 28.1 Linear: 印字できない API キーは E_LINEAR_AUTH/2。キーはどこにも出ず、通信もしない (515.624042ms)
+✔ 28.1 Jira: 印字できない API トークンは E_JIRA_AUTH/2。トークンはどこにも出ず、通信もしない (434.569791ms)
+✔ 28.1 URL に userinfo（user:password@）があれば E_USAGE/2。パスワードは出ず、通信もしない (542.656709ms)
+✔ 28.1（対照）正しいキー・トークンでつながらないときも、秘密は出ず E_*_NETWORK/1 (221.989917ms)
+✔ 28.2 応答の本文の読み込み中に切れたら E_LINEAR_NETWORK / E_JIRA_NETWORK（終了コード1） (559.594333ms)
+✔ 28.2 途中まで進んでから（2つ目以降の要求で）切れても、同じ契約のコードで終わる (301.232916ms)
+✔ 28.3 Linear: 429 は retry-after に従って待ち、再試行して最後まで同期する (1172.1435ms)
+✔ 28.3 Linear: 作成が 429 でも、3回まで再試行すれば重複せずに終わる (3183.530083ms)
+✔ 28.3 Linear: 429 が続くときは再試行を打ち切る（1回目 + 最大3回 = 4回まで） (3158.258458ms)
+✔ 28.3 Linear: 作成の結果の issue が null なら E_LINEAR_API/1（TypeError にしない） (161.939541ms)
+✔ 28.4 Linear: 消えた issue（not found）があっても残りを最後まで同期し、飛ばしたマスをまとめて出す（終了コード1） (239.378333ms)
+✔ 28.4 Linear: not found が HTTP 400 で返っても、同じように飛ばして最後まで同期する (240.100833ms)
+✔ 28.4 Jira: issue が消えて(404)・権限が無くて(403)も、残りを最後まで同期する。403 は「権限」と書く (246.881ms)
+✔ 28.4 Jira: 遷移が拒まれても(400)そのマスを飛ばし、ほかのマスの作成・遷移は最後まで進む (196.168208ms)
+✔ 28.5 linear pull: state.type が completed / canceled の issue は、状態の名前が何でも省く (145.579417ms)
+✔ 28.6 import linear: 長い・空のタイトルとプロジェクト名でも validate に通る下書きになる (175.056959ms)
+✔ 28.6 import linear: quest.id は英大文字と数字だけの2〜10文字になる（MY_PROJ → MYPROJ）。--quest-id / --title が優先 (367.025416ms)
+✔ 28.6 linear pull: 長い・空のタイトルとプロジェクト名でも validate に通る。--quest-id / --title が使える (174.73ms)
+✔ 28.6 jira pull: キー MY_PROJ・長い/空の summary・長いプロジェクト名でも validate に通る。--quest-id / --title が使える (219.319ms)
+✔ 28.6 取り込める issue が1件も無ければ E_NOTHING/1「取り込める issue がありません」（下書きは書かない） (330.221917ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12645.649875
+
+codex
+M6の素振りは **20件成功・0件失敗（終了コード0）** でした。既存コードでは、§28の通信エラー分類、再試行、スキップ継続、取り込み時の正規化を確認できました。私は今回、ソースを変更していません。
+
+冒険の書のGM裁定（seq 178）には、GOAL4の敗北で巻き戻された地図職人は宣言判定をやり直すよう記録されていました。これと今回の明示指示を根拠に、M6を `--no-boss` 付きで宣言します。成功後は日誌を記録し、GOAL4で待機します。
+exec
+/bin/zsh -lc "node '/Users/amano/dev/masume/bin/masume.js' check gmkit --as gmkit --no-boss --dir '/Users/amano/dev/masume'" in /Users/amano/dev/masume
+ succeeded in 12596ms:
+判定成功: gmkit が M6 を突破しました
+
+exec
+/bin/zsh -lc "node '/Users/amano/dev/masume/bin/masume.js' note gmkit 'M6再検証完了。GM裁定seq178と今回の指令に従い、既存のCONTRACTS §28実装を確認した。今回のソース編集はなし。素振りはM6 20件成功・0件失敗、宣言判定は1回で成功（--no-boss）。GOAL4で待機し、ボス戦は軍師に引き継ぐ。' --as gmkit --dir '/Users/amano/dev/masume'" in /Users/amano/dev/masume
+ succeeded in 0ms:
+gmkit の日誌を記録しました（seq 187）
+
+codex
+## 報告書 地図職人 M6
+
+- 変更したファイル: 今回のソース編集なし。既存実装をCONTRACTS §28と照合し、公式コマンドで判定・日誌を記録しました。
+- 判定の結果: 素振りは `pass 20 / fail 0`。宣言は1回で成功（終了コード0）。
+  `判定成功: gmkit が M6 を突破しました`
+- 申し送り: 日誌seq 187に記録済み。GOAL4で待機し、ボス戦は軍師に引き継ぎます。
+- GMへの依頼: なし。
+tokens used
+68,953
+## 報告書 地図職人 M6
+
+- 変更したファイル: 今回のソース編集なし。既存実装をCONTRACTS §28と照合し、公式コマンドで判定・日誌を記録しました。
+- 判定の結果: 素振りは `pass 20 / fail 0`。宣言は1回で成功（終了コード0）。
+  `判定成功: gmkit が M6 を突破しました`
+- 申し送り: 日誌seq 187に記録済み。GOAL4で待機し、ボス戦は軍師に引き継ぎます。
+- GMへの依頼: なし。
