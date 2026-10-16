@@ -1,0 +1,30 @@
+{
+  "H1": [
+    {
+      "path": "human/request.json",
+      "content": "{\n  \"name\": \"マスメ\"\n}\n"
+    }
+  ],
+  "A1": [
+    {
+      "path": "ai/hello.txt",
+      "content": "こんにちは、マスメ！\n"
+    }
+  ],
+  "A2": [
+    {
+      "path": "ai/card.json",
+      "content": "{\n  \"name\": \"マスメ\",\n  \"message\": \"こんにちは、マスメ！\"\n}\n"
+    }
+  ],
+  "G1": [],
+  "C1": [],
+  "A3": [
+    {
+      "path": "ai/card.json",
+      "content": "{\n  \"name\": \"マスメ\",\n  \"message\": \"こんにちは、マスメ！\",\n  \"ready\": true\n}\n"
+    }
+  ],
+  "H2": [],
+  "GOAL": []
+}

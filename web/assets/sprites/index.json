@@ -1,0 +1,16 @@
+{
+  "jobs": [
+    { "id": "hero", "name": "勇者" },
+    { "id": "warrior", "name": "戦士" },
+    { "id": "mage", "name": "魔法使い" },
+    { "id": "priest", "name": "僧侶" },
+    { "id": "thief", "name": "盗賊" },
+    { "id": "merchant", "name": "商人" },
+    { "id": "sage", "name": "賢者" },
+    { "id": "scribe", "name": "書記" },
+    { "id": "herald", "name": "伝令" },
+    { "id": "cartographer", "name": "地図職人" },
+    { "id": "painter", "name": "絵師" },
+    { "id": "villager", "name": "村人" }
+  ]
+}

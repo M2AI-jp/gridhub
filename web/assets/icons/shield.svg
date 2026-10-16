@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>盾</title>
+  <desc>丸い肩ととがった底の盾。黄色い縁の内側に、赤いひし形の紋章がある。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11 16Q22 14 32 7Q43 14 53 15L51 34Q48 48 32 57Q16 49 13 35Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M18 21Q25 19 32 14Q39 19 46 20L44 34Q42 43 32 49Q23 44 20 35Z" fill="#ffffff" stroke-width="2"/>
+    <path d="M32 23L39 32L32 41L25 32Z" fill="#d94a3a"/>
+    <path d="M32 23L32 41" stroke-width="2"/>
+    <path d="M15 19L16 20M48 19L48 20M31 52L32 53" stroke-width="2"/>
+  </g>
+</svg>

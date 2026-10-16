@@ -1,0 +1,349 @@
+{
+  "masume": 1,
+  "quest": {
+    "id": "KTZ",
+    "title": "ことづけ",
+    "pitch": "電話の用件をAIが預かり、契約者へメールで届ける。申込から支払い照合、番号提供、月枠管理までをつなぐ。",
+    "goal": "KTZ-GOAL"
+  },
+  "characters": [
+    {
+      "id": "phone",
+      "name": "門番",
+      "kind": "agent",
+      "job": "warrior",
+      "color": "blue",
+      "module": "Twilioの電話番号と着信、SIP接続、3分制限、同時受付",
+      "territory": ["src/phone/**"],
+      "path": ["KTZ-1", "KTZ-2", "KTZ-G1", "KTZ-3", "KTZ-G2", "KTZ-G3", "KTZ-4", "KTZ-G4", "KTZ-GOAL"]
+    },
+    {
+      "id": "listener",
+      "name": "聞き手",
+      "kind": "agent",
+      "job": "mage",
+      "color": "purple",
+      "module": "OpenAI RealtimeによるAI受付、追加質問、用件の整理",
+      "territory": ["src/listener/**"],
+      "path": ["KTZ-5", "KTZ-6", "KTZ-G1", "KTZ-7", "KTZ-G2", "KTZ-G4", "KTZ-GOAL"]
+    },
+    {
+      "id": "mailer",
+      "name": "伝令",
+      "kind": "agent",
+      "job": "herald",
+      "color": "green",
+      "module": "用件メールの整形と配送、再送、送信成功後の会話本文削除",
+      "territory": ["src/mailer/**"],
+      "path": ["KTZ-8", "KTZ-9", "KTZ-C1", "KTZ-10", "KTZ-11", "KTZ-G2", "KTZ-G4", "KTZ-GOAL"]
+    },
+    {
+      "id": "billing",
+      "name": "両替商",
+      "kind": "agent",
+      "job": "merchant",
+      "color": "orange",
+      "module": "Googleフォーム申込、Gmail案内、PayPal入金照合、契約と支払月50件の管理",
+      "territory": ["src/billing/**"],
+      "path": ["KTZ-12", "KTZ-13", "KTZ-C2", "KTZ-14", "KTZ-G3", "KTZ-15", "KTZ-G4", "KTZ-GOAL"]
+    },
+    {
+      "id": "lp",
+      "name": "絵師",
+      "kind": "agent",
+      "job": "painter",
+      "color": "pink",
+      "module": "紹介LPとGoogleフォームへの申込導線",
+      "territory": ["web/lp/**"],
+      "path": ["KTZ-16", "KTZ-17", "KTZ-G3", "KTZ-GOAL"]
+    },
+    {
+      "id": "operator",
+      "name": "勇者",
+      "kind": "human",
+      "agent": "human",
+      "job": "hero",
+      "color": "yellow",
+      "module": "本番アカウントと鍵、利用規約、決済接続、番号購入、実電話試験と公開承認",
+      "territory": ["ops/**"],
+      "path": ["KTZ-H1", "KTZ-H2", "KTZ-G3", "KTZ-H3", "KTZ-G4", "KTZ-H4", "KTZ-GOAL"]
+    }
+  ],
+  "nodes": {
+    "KTZ-1": {
+      "type": "task",
+      "title": "番号から受付先を選ぶ",
+      "detail": "門番はTwilio着信を受ける入口を作る。E2EはローカルHTTP入口へフェイクの着信を送り、仮の契約台帳にある番号を正しい契約者とSIP接続先へ結び付けること、未知の番号・無効な認証を拒否することを外部応答で確認する。実際の番号購入や発信は行わない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-1.test.mjs",
+        "seal": ["tests/e2e/KTZ-1.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-2": {
+      "type": "task",
+      "title": "通話を分けて三分で閉じる",
+      "detail": "門番は通話IDごとに接続を分け、受付許可から180秒以内に通話を終える。E2Eは同じ契約者の2通話と別契約者の通話を並行入力し、会話・宛先が混ざらないことを確認する。仮想時計の179秒では継続でき、180秒で終話し、その後の音声イベントを受け付けないことをフェイクSIPの記録で確認する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-2.test.mjs",
+        "seal": ["tests/e2e/KTZ-2.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "KTZ-1"
+    },
+    "KTZ-3": {
+      "type": "task",
+      "title": "終話を一度だけ引き渡す",
+      "detail": "門番は通常切断と3分到達のどちらでも、契約ID・通話ID・受付日時を付けて用件を配送側へ引き渡す。E2Eは終話イベントの重複・順序入れ替えを入力し、同じ通話の引渡しが重複処理されず、別通話が欠落しないことをフェイク受取口から確認する。門番は会話本文を永続化せず、引渡し完了時に一時コピーを消す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-3.test.mjs",
+        "seal": ["tests/e2e/KTZ-3.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-4": {
+      "type": "task",
+      "title": "月枠を確保して電話を受ける",
+      "detail": "門番はKTZ-G3でつながった契約台帳に対して、AI接続前に通話ID付きで月枠を確保する。E2Eは残り1件への同時着信で1件だけが受付を開始すること、51件目・未払い・期間外の電話が案内のみで終わりAI受付や用件メールを開始しないことを確認する。同じ着信の再送は二重計上せず、受付済み通話は期間をまたいでも元の期間に属する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-4.test.mjs",
+        "seal": ["tests/e2e/KTZ-4.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-5": {
+      "type": "task",
+      "title": "名前と用件を聞き取る",
+      "detail": "聞き手はOpenAI RealtimeのSIP通話イベントを受ける受付を作る。E2Eはローカル入口に合成音声に対応する固定イベント列を送り、名乗りと用件を含む会話から名前・依頼を取得できること、話されていない内容を補わないことを受付結果で確認する。実際のOpenAI接続やモデル出力には依存しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-5.test.mjs",
+        "seal": ["tests/e2e/KTZ-5.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-6": {
+      "type": "task",
+      "title": "不足を一度だけ尋ねる",
+      "detail": "聞き手は名前・用件の不足だけをまとめて最大1回尋ね、営業電話の用件も受領する。E2Eは不足なし・名前のみ不足・用件のみ不足・両方不足・無応答・営業電話の固定会話を通す。追加質問は不足なしなら0回、それ以外でも1回以下で、連絡先不足を理由に追加質問せず、再び不足しても聞き直さないことを発話記録で確認する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-6.test.mjs",
+        "seal": ["tests/e2e/KTZ-6.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@here"
+    },
+    "KTZ-7": {
+      "type": "task",
+      "title": "用件をメールへ渡せる形にする",
+      "detail": "聞き手は名前、受付日時、発話された日時・期限、依頼、時系列の会話、連絡先を通話ID付きで出力する。E2Eは途中切断、非通知、曖昧な期限を含む会話を通し、未知の項目を不明として残し、日時や連絡先を創作しないことを受取口から確認する。配送側の保存確認後に一時的な会話コピーを消し、本文をログに出さない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-7.test.mjs",
+        "seal": ["tests/e2e/KTZ-7.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-8": {
+      "type": "task",
+      "title": "用件メールを順番に整える",
+      "detail": "伝令は用件メールを誰から→日時/期限→依頼→会話→連絡先の順に整える。E2Eはローカルのプレビュー入口へ固定の受付結果を渡し、この並び、宛先、会話の時系列、不明項目の表示を生成メールから確認する。メール本文中の文字列をHTMLやメールヘッダーとして実行・解釈させない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-8.test.mjs",
+        "seal": ["tests/e2e/KTZ-8.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-9": {
+      "type": "task",
+      "title": "契約者へ用件メールを送る",
+      "detail": "伝令は送信前に用件を保存し、メール配送アダプターを経由して契約者へ送る。E2Eは2契約者の用件をローカルHTTP入口へ投入し、フェイク受信箱にそれぞれ正しい宛先で届くことを確認する。配送先の成功応答を受けて初めて送信済みにし、明示的な失敗では本文を保持したまま失敗状態を示す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-9.test.mjs",
+        "seal": ["tests/e2e/KTZ-9.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "KTZ-8"
+    },
+    "KTZ-C1": {
+      "type": "camp",
+      "title": "配送の宿屋で休む",
+      "detail": "伝令はメールの形式と送信入口を確認した地点をセーブポイントにする。次の区間で再送と本文削除を扱い、KTZ-G2で配送全体を再確認する。"
+    },
+    "KTZ-10": {
+      "type": "task",
+      "title": "送信失敗と重複を扱う",
+      "detail": "伝令は明示的な送信失敗を再送し、同じ契約ID・通話IDの重複投入を一つの用件にまとめる。E2Eは失敗後の再起動と再送、送信済みイベントの再送を行い、本文を失わず正常系でメールが重複しないことを確認する。応答喪失で配送結果が不明なときは要照合を示し、自動再送を止める。運営の照合操作には認証を要求する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-10.test.mjs",
+        "seal": ["tests/e2e/KTZ-10.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-11": {
+      "type": "task",
+      "title": "送信後に会話本文を消す",
+      "detail": "伝令は送信成功後、会話本文と用件を含むアプリ内の保存データ・キュー・一時コピーを削除し、通話IDや配送状態だけを残す。E2Eは成功直後と再起動後のローカル保存物、ログ、受取口を検査し、本文が残らず重複投入でも復元しないことを確認する。仮の保持方針として未送信本文は最初の保存から24時間で削除し、運営へ本文を含まない未配送通知を残す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-11.test.mjs",
+        "seal": ["tests/e2e/KTZ-11.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "KTZ-10"
+    },
+    "KTZ-12": {
+      "type": "task",
+      "title": "申込を受け支払いを案内する",
+      "detail": "両替商はGoogleフォームからの申込を取り込み、Gmailで支払い方法を案内する。E2Eはローカルのフォーム代替入口に架空の申込を送り、契約候補が未払いで作られ、PayPalのテスト用支払い案内がフェイクGmail受信箱に届くことを確認する。同じ申込の再送は一つの申込にまとまり、この段階では電話を利用可能にしない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-12.test.mjs",
+        "seal": ["tests/e2e/KTZ-12.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-13": {
+      "type": "task",
+      "title": "入金を運営が照合できるようにする",
+      "detail": "両替商はPayPalの入金情報と申込を運営が照合できる入口を作る。E2EはローカルのPayPalフェイクに成功・未払い・金額違い・重複取引を用意する。認証された運営が正しい取引と契約を照合した場合だけ支払期間が確定し、偽の通知や契約者の自己申告では有効にならず、同じ取引を二重適用しないことを確認する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-13.test.mjs",
+        "seal": ["tests/e2e/KTZ-13.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "KTZ-12"
+    },
+    "KTZ-C2": {
+      "type": "camp",
+      "title": "入金照合の宿屋で休む",
+      "detail": "両替商は申込と入金照合を確認した地点をセーブポイントにする。番号の割当ては次のマスで扱い、KTZ-G3で申込から利用開始までを再確認する。"
+    },
+    "KTZ-14": {
+      "type": "task",
+      "title": "番号を割り当て開始を案内する",
+      "detail": "両替商は照合済みの契約に対して、運営が確保した番号を割り当て、Gmailで利用開始を案内する。E2Eはフェイク番号在庫からの割当てを運営入口で実行し、未払いへの割当てと同じ番号の二重割当てを拒否することを確認する。正しい契約・番号・有効期間の開始案内がフェイクGmailに届き、失敗時の再実行でも番号が増えないことを確認する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-14.test.mjs",
+        "seal": ["tests/e2e/KTZ-14.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@here"
+    },
+    "KTZ-15": {
+      "type": "task",
+      "title": "支払月の五十件を守る",
+      "detail": "両替商はCloudflare Workers / Durable Objects（SQLite）で契約ごとの支払期間と利用件数を永続化する。E2Eはローカル実行環境のHTTP入口から月枠を確保し、残り1件への並行要求が1件だけ成功すること、同じ通話IDは一度しか数えないこと、再起動後も件数が残ることを確認する。期間の開始を含み終了を含まない境界、次の照合済み期間の50件、別契約者との分離を仮想時計で確認する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-15.test.mjs",
+        "seal": ["tests/e2e/KTZ-15.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-16": {
+      "type": "task",
+      "title": "サービスを紹介するページを作る",
+      "detail": "絵師は静的LPに、電話の用件をAIが預かってメールで届ける仕組み、1通話最大3分・1支払月50件、複数同時受付、営業電話も受領することを記す。E2Eはローカル配信したHTMLをHTTPで取得し、説明と申込・規約への導線、狭い画面向けの表示設定、入力やリンクの名前を確認する。未確定の料金や性能を断定しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-16.test.mjs",
+        "seal": ["tests/e2e/KTZ-16.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "@camp"
+    },
+    "KTZ-17": {
+      "type": "task",
+      "title": "紹介から申込へ案内する",
+      "detail": "絵師はLPからGoogleフォームへ進む導線と、申込後のGmail案内・PayPal支払い・運営の照合・番号提供の説明を整える。E2Eはローカル配信したLPのリンクをたどり、フェイクフォームへ到達すること、支払い前から使えると誤解させないこと、鍵や申込者情報を静的生成物に含めないことを確認する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-17.test.mjs",
+        "seal": ["tests/e2e/KTZ-17.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      },
+      "rollback_to": "KTZ-16"
+    },
+    "KTZ-H1": {
+      "type": "task",
+      "title": "本番アカウントと鍵を用意する",
+      "detail": "勇者本人がTwilio・PayPal・Googleの本番アカウントと鍵を用意し、OpenAI・Cloudflareを含む実行環境の権限を確認する。鍵は人間が管理する秘密保管先に置き、地図・判定・公開物には記さない。必要な管理権限と保管先を本人が確認してハンコを押す。自動判定のフェイク資格情報はこの確認の代用にしない。",
+      "check": { "kind": "stamp", "by": "operator" },
+      "rollback_to": "@here"
+    },
+    "KTZ-H2": {
+      "type": "task",
+      "title": "利用規約と運用条件を確かめる",
+      "detail": "勇者本人が利用規約、料金、支払期間、受付時の件数計上、上限時の案内、未送信本文の24時間保持と削除範囲を確認して承認する。これらの未確定事項は説明書の仮定であり、実際の条件と違う場合はGMが地図と判定を改訂してから進める。LPに使う承認済みの規約と案内がそろったときにハンコを押す。",
+      "check": { "kind": "stamp", "by": "operator" },
+      "rollback_to": "@here"
+    },
+    "KTZ-H3": {
+      "type": "task",
+      "title": "番号を購入し決済を接続する",
+      "detail": "勇者本人はKTZ-G3の利用開始フローを確認した後、Twilioの本番電話番号を購入し、PayPalの本番接続、GoogleフォームとGmail、電話の接続先を設定する。本人が番号の所有、正しい入金照合先、接続設定を確認してハンコを押す。実際の購入・支払い・メール送信は自動判定のコマンドから実行しない。",
+      "check": { "kind": "stamp", "by": "operator" },
+      "rollback_to": "@here"
+    },
+    "KTZ-H4": {
+      "type": "task",
+      "title": "実電話で確かめ公開を承認する",
+      "detail": "勇者本人はKTZ-G4突破後に、同意を得た試験用契約者と本番番号で実電話試験を行う。用件の聞き取り、追加質問が最大1回であること、3分制限、同時受付、実際のメール到着とアプリ内の本文削除を確認する。秘密や会話本文を含まない確認記録を残し、公開可能と判断したときだけ最後のハンコを押す。",
+      "check": { "kind": "stamp", "by": "operator" },
+      "rollback_to": "@here"
+    },
+    "KTZ-G1": {
+      "type": "gate",
+      "title": "電話から用件を受け取る",
+      "detail": "門番と聞き手が初めてつながるゲート。E2EはフェイクTwilio着信からローカルSIP境界を通して固定会話を流し、契約者を取り違えず用件を取得し、不足の質問が最大1回で、営業電話も受領できることを確認する。通話の分離と180秒の終話も通す。原因を特定できる場合だけMASUME_BLAME: phone またはMASUME_BLAME: listenerを出力する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-G1.test.mjs",
+        "seal": ["tests/e2e/KTZ-G1.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      }
+    },
+    "KTZ-G2": {
+      "type": "gate",
+      "title": "用件を届けて本文を消す",
+      "detail": "門番・聞き手・伝令が初めて配送までつながるゲート。E2Eは電話の固定会話から用件メールが正しい契約者のフェイク受信箱へ届くまでを通し、指定の項目順と送信成功後の本文削除を全モジュールの保存物から確認する。失敗時は24時間の期限までは本文を保持し、再送成功後に消すこと、重複終話で再配送しないことも確認する。原因を特定できる場合の責任先はphone・listener・mailerとする。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-G2.test.mjs",
+        "seal": ["tests/e2e/KTZ-G2.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      }
+    },
+    "KTZ-G3": {
+      "type": "gate",
+      "title": "申し込んで電話を使い始める",
+      "detail": "絵師・両替商・門番・勇者が合流し、LPと申込、契約台帳と電話の番号照合が初めてつながる。E2EはローカルLP→フェイクGoogleフォーム→Gmail支払い案内→PayPalフェイクの支払い→認証された運営の照合→仮番号の提供→利用開始案内→その番号への着信を通す。未払いでは開始できず、照合後の契約が正しい電話入口を使えることを確認する。本番の鍵やアカウントを読み取らない。原因を特定できる場合の責任先はlp・billing・phoneとする。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-G3.test.mjs",
+        "seal": ["tests/e2e/KTZ-G3.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      }
+    },
+    "KTZ-G4": {
+      "type": "gate",
+      "title": "同時受付と月枠を両立する",
+      "detail": "門番・聞き手・伝令・両替商・勇者が合流する。E2Eは照合済み契約のローカル永続ストアを49件まで利用し、同時に届く2件のうち1件だけをAI受付からメール配送・本文削除まで進める。他契約の通話は独立して受け付け、重複イベント、再起動、支払期間の境界でも50件を超えないことを確認する。勇者の本番作業の成否はハンコで管理し、この判定では全外部接続をフェイクにする。原因を特定できる場合の責任先はphone・listener・mailer・billingとする。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-G4.test.mjs",
+        "seal": ["tests/e2e/KTZ-G4.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      }
+    },
+    "KTZ-GOAL": {
+      "type": "gate",
+      "title": "あがりとしてことづけを届ける",
+      "detail": "全員が合流する最後の結合E2E。ローカルLPから申し込んだ契約者がフェイクの支払いと運営の入金照合を経て番号を受け取り、その番号に届いた電話の用件が正しい順序のメールで届き、送信成功後にアプリ内の会話本文が消えていれば合格とする。未払い、営業電話、不足の質問、同時受付、3分制限、支払月50件、配送失敗と重複の各条件も同じ外部入口で再確認する。実サービスは使わず、最後の本番確認と公開承認は直前のKTZ-H4で勇者本人が行う。原因が特定できる場合だけ参加キャラクターIDをMASUME_BLAME行に出す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/KTZ-GOAL.test.mjs",
+        "seal": ["tests/e2e/KTZ-GOAL.test.mjs", "tests/helpers.mjs", "tests/fixtures/kotozuke.json"]
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+=== M3: node --test tests/e2e/M3.test.mjs ===
+✔ export linear --format json: マスが Linear の issue になる (682.564167ms)
+✔ export linear --format csv --out: Linear に取り込める CSV (772.562167ms)
+✔ import linear: Linear の CSV から地図の下書きを作る (318.833084ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1827.887542
+
+(exit 0, 1873ms)

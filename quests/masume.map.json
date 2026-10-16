@@ -1,0 +1,229 @@
+{
+  "masume": 1,
+  "quest": {
+    "id": "MSM",
+    "title": "マスメ — マスメでマスメをつくる",
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。GMはクロード、キャラクターはCodex、最後のハンコは人間。",
+    "goal": "GOAL"
+  },
+  "characters": [
+    {
+      "id": "board",
+      "name": "賢者クロード",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "sage",
+      "color": "blue",
+      "module": "盤面UI（5mm方眼ノート）とゲームの外側のUX",
+      "territory": ["web/index.html", "web/board/**", "web/fixtures/**"],
+      "path": ["B1", "B2", "G1", "B3", "GOAL"]
+    },
+    {
+      "id": "engine",
+      "name": "書記",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "scribe",
+      "color": "yellow",
+      "module": "冒険の書（セーブデータ）・ルールエンジン・CLI",
+      "territory": ["src/engine/**", "src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load}.js"],
+      "path": ["E1", "E2", "C1", "E3", "G1", "E4", "G2", "GOAL"]
+    },
+    {
+      "id": "server",
+      "name": "伝令",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "herald",
+      "color": "green",
+      "module": "盤面を配るローカルサーバー（API・ライブ更新・ハンコ窓口）",
+      "territory": ["src/server/**", "src/commands/serve.js"],
+      "path": ["S1", "S2", "G1", "S3", "GOAL"]
+    },
+    {
+      "id": "gmkit",
+      "name": "地図職人",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "cartographer",
+      "color": "orange",
+      "module": "地図づくりの道具（サンプル地図・チュートリアル・Linear連携）",
+      "territory": ["src/linear/**", "src/commands/{export,import}.js", "quests/kotozuke.*", "quests/tutorial/**"],
+      "path": ["M1", "M2", "G2", "M3", "GOAL"]
+    },
+    {
+      "id": "assets",
+      "name": "絵師",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "painter",
+      "color": "pink",
+      "module": "駒と道具の絵（ボールペン手描き風SVG）",
+      "territory": ["web/assets/sprites/**", "web/assets/icons/**", "web/assets/sheet.html"],
+      "path": ["A1", "A2", "GOAL"]
+    },
+    {
+      "id": "player",
+      "name": "勇者（あなた）",
+      "kind": "human",
+      "agent": "human",
+      "job": "hero",
+      "color": "purple",
+      "module": "遊んで確かめる・最後のハンコ",
+      "path": ["H1", "GOAL"]
+    }
+  ],
+  "nodes": {
+    "B1": {
+      "type": "task",
+      "title": "方眼ノートに道を描く",
+      "detail": "web/index.html と web/board/ に盤面を作る。5mm方眼（10mm実線入り）の紙、キャラクターごとの一方通行の道（蛍光ペン）、マス（4×4目）、結合ゲート、宿屋、駒、ふりだし・あがりを、ビュー（CONTRACTS §5）から描く。?fixture=demo でサーバー無しに表示できること。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/B1.test.mjs", "seal": ["tests/e2e/B1.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 5,
+      "labels": ["ui"]
+    },
+    "B2": {
+      "type": "task",
+      "title": "駒が動き冒険の書が流れる",
+      "detail": "状態の変化を演出する（はなまる・消しゴム・駒のジャンプ／後退・レベル表示）。マスの詳細（issueビュー）、キャラクターシート、冒険の書（ログ）、ふっかつのじゅもん、セーブデータの健全性表示。?fixture=demo&script=demo で状態の列を順に再生できること。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/B2.test.mjs", "seal": ["tests/e2e/B2.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 3,
+      "labels": ["ui"]
+    },
+    "B3": {
+      "type": "task",
+      "title": "台帳とハンコを用意する",
+      "detail": "Linearのような一覧（台帳）表示、ルール表示、人間のマスの「ハンコを押す」ボタン（POST /api/stamp）、ready なゲートの「ボス戦を始める」ボタン（POST /api/battle）、判定出力の表示（GET /api/output/:seq）。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/B3.test.mjs", "seal": ["tests/e2e/B3.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 3,
+      "labels": ["ui"]
+    },
+    "E1": {
+      "type": "task",
+      "title": "冒険の書をひらく",
+      "detail": "src/engine/ にセーブデータ（SAVE_FORMAT.md）を実装する: 正規化JSON・ハッシュの鎖・ロック付き追記・地図の検証（CONTRACTS §2）・genesis と自動封印・verify / repair・ふっかつのじゅもん。コマンド new / validate / seal / verify / repair / jumon / log / note。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/E1.test.mjs", "seal": ["tests/e2e/E1.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 5,
+      "labels": ["engine"]
+    },
+    "E2": {
+      "type": "task",
+      "title": "判定をくだす",
+      "detail": "宣言判定（CONTRACTS §4.1〜4.3, 4.6, 4.7）: 封印の確認、累積判定、成功で前進と経験値・レベル、失敗でレベルダウンと所定の位置への巻き戻し（消しゴム）、ハンコ、判定出力の保存、楽観ロック。status --json（§5のビュー）。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/E2.test.mjs", "seal": ["tests/e2e/E2.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 5,
+      "labels": ["engine"]
+    },
+    "C1": {
+      "type": "camp",
+      "title": "宿屋「ふたつ星亭」"
+    },
+    "E3": {
+      "type": "task",
+      "title": "仲間と合流する",
+      "detail": "結合ゲート（§4.4, 4.5）: 待機・ready・自動ボス戦・MASUME_BLAME による差し戻しと全滅・解散。視界と霧（§5 の state、§6 の指令書 brief）。buildView を src/engine/index.js から export（§7 の API 一式）。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/E3.test.mjs", "seal": ["tests/e2e/E3.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 5,
+      "labels": ["engine"]
+    },
+    "E4": {
+      "type": "task",
+      "title": "時をさかのぼる",
+      "detail": "地図の改訂 amend（§4.8 歴史は書き換えられない）と、過去の状態のロード load（§4.9、seq かふっかつのじゅもんで指定）。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/E4.test.mjs", "seal": ["tests/e2e/E4.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 3,
+      "labels": ["engine"]
+    },
+    "S1": {
+      "type": "task",
+      "title": "盤面を配る",
+      "detail": "src/server/index.js の createServer（CONTRACTS §8）: web/ の静的配信（MIME、ディレクトリ外への脱出を防ぐ）、GET /api/state、GET /api/health、stop()。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/S1.test.mjs", "seal": ["tests/e2e/S1.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 2,
+      "labels": ["server"]
+    },
+    "S2": {
+      "type": "task",
+      "title": "早馬を走らせる",
+      "detail": "GET /api/stream（SSE: hello / change / ping）と watchFile の監視。あわせて startServer と serve コマンド（engine を使う。結合ゲートG1で判定される）。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/S2.test.mjs", "seal": ["tests/e2e/S2.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 2,
+      "labels": ["server"]
+    },
+    "S3": {
+      "type": "task",
+      "title": "ハンコ窓口とボス戦の号令",
+      "detail": "POST /api/stamp・POST /api/battle・GET /api/output/:seq。X-Masume ヘッダと Origin の確認。ハンコで ready になったゲートのボス戦を別プロセスで起動し、盤面がライブで更新されること。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/S3.test.mjs", "seal": ["tests/e2e/S3.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 3,
+      "labels": ["server"]
+    },
+    "M1": {
+      "type": "task",
+      "title": "ことづけの地図を描く",
+      "detail": "GM_GUIDE.md に従い「ことづけのようなアプリを作りたい」から quests/kotozuke.map.json と quests/kotozuke.md（ヒアリング・前提・地図の説明）を作る。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/M1.test.mjs", "seal": ["tests/e2e/M1.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 3,
+      "labels": ["gmkit"]
+    },
+    "M2": {
+      "type": "task",
+      "title": "はじめての冒険を用意する",
+      "detail": "5分で遊べるチュートリアル quests/tutorial/（地図・判定スクリプト・SOLUTIONS.json・README.md）。人間の道とエージェントの道、ゲート、宿屋を1つずつ以上。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/M2.test.mjs", "seal": ["tests/e2e/M2.test.mjs", "tests/helpers.mjs"] },
+      "estimate": 2,
+      "labels": ["gmkit"]
+    },
+    "M3": {
+      "type": "task",
+      "title": "Linearと文通する",
+      "detail": "masume export linear（json/csv）と masume import linear（Linear CSV → 地図の下書き）。CONTRACTS §9。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/M3.test.mjs", "seal": ["tests/e2e/M3.test.mjs", "tests/helpers.mjs", "tests/fixtures/linear-sample.csv"] },
+      "estimate": 3,
+      "labels": ["gmkit", "linear"]
+    },
+    "A1": {
+      "type": "task",
+      "title": "仲間の似顔絵を描く",
+      "detail": "12職業の駒の絵 web/assets/sprites/<job>.svg と index.json。方眼ノートにボールペンで描いたちびキャラ（CONTRACTS §10）。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/A1.test.mjs", "seal": ["tests/e2e/A1.test.mjs", "tests/helpers.mjs"] },
+      "rollback_to": "@here",
+      "estimate": 3,
+      "labels": ["art"]
+    },
+    "A2": {
+      "type": "task",
+      "title": "道具と標識を描く",
+      "detail": "12個の道具の絵 web/assets/icons/<id>.svg と index.json、24枚を並べた web/assets/sheet.html（CONTRACTS §10）。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/A2.test.mjs", "seal": ["tests/e2e/A2.test.mjs", "tests/helpers.mjs"] },
+      "rollback_to": "@here",
+      "estimate": 2,
+      "labels": ["art"]
+    },
+    "H1": {
+      "type": "task",
+      "title": "盤面で遊んでハンコを押す",
+      "detail": "masume serve で盤面を開き、チュートリアルを遊んでみる。遊べると思ったら、盤面の「ハンコを押す」で承認する。押すと、あがりのボス戦が始まる。",
+      "check": { "kind": "stamp", "by": "player" },
+      "labels": ["human"]
+    },
+    "G1": {
+      "type": "gate",
+      "title": "結合: 盤面に冒険が映る",
+      "detail": "本物の冒険の書を masume serve で配り、ブラウザの盤面に映り、宣言判定で駒がライブに動く。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/G1.test.mjs", "seal": ["tests/e2e/G1.test.mjs", "tests/helpers.mjs"] }
+    },
+    "G2": {
+      "type": "gate",
+      "title": "結合: 地図職人の地図で旅ができる",
+      "detail": "地図職人の地図が書記の検査に通り、チュートリアルを CLI だけで最後まで遊びきれる。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/G2.test.mjs", "seal": ["tests/e2e/G2.test.mjs", "tests/helpers.mjs"] }
+    },
+    "GOAL": {
+      "type": "gate",
+      "title": "あがり: マスメでマスメを完成させる",
+      "detail": "すべての判定がまとめて通り、この冒険の書が正常で、Linear へ書き出せる。",
+      "check": { "kind": "cmd", "run": "node --test tests/e2e/GOAL.test.mjs", "seal": ["tests/e2e/GOAL.test.mjs", "tests/helpers.mjs"] }
+    }
+  }
+}

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>地図職人</title>
+  <desc>探検帽の地図職人。ひもで留めた丸い地図と、赤い針のコンパスを持っている。</desc>
+  <path d="M16 58C18 54 46 55 49 58C49 63 15 62 16 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 48L22 56Q17 59 30 58L31 49M34 49L35 58Q46 59 41 55L40 48" fill="#1d2b5c"/>
+    <path d="M24 33Q30 31 38 33L42 49Q32 53 22 49Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M24 34Q18 34 15 40L21 45L26 38M38 34Q43 34 46 39L41 44L37 39" fill="var(--pawn, #ffe45c)"/>
+    <path d="M28 35Q32 41 38 44M29 43L29 47L35 47L35 43Z"/>
+    <path d="M19 18Q21 11 32 12Q43 14 42 25Q40 35 30 35Q19 34 18 26Q15 23 19 22Z" fill="#ffffff"/>
+    <path d="M17 20Q17 10 28 9Q40 7 43 20Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M29 10Q27 14 28 18"/>
+    <path d="M14 19Q30 16 45 20Q48 24 33 24Q21 24 14 22Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M24 27L24 28M35 27L35 28M28 31Q31 33 34 30"/>
+    <path d="M9 31Q11 28 14 31L25 47Q27 51 21 52L8 36Q6 33 9 31Z" fill="#ffffff"/>
+    <path d="M9 31Q14 30 13 34Q12 36 8 34M21 52Q20 48 25 47"/>
+    <path d="M13 40L19 36L22 40L16 44Z" fill="#d94a3a" stroke="none"/>
+    <path d="M17 41Q14 39 13 42Q13 46 17 47L20 45Z" fill="#ffffff"/>
+    <path d="M47 31Q44 27 48 26Q52 26 51 31" fill="var(--pawn, #ffe45c)"/>
+    <path d="M48 31C60 30 62 47 50 50C37 52 36 33 48 31Z" fill="#ffffff"/>
+    <path d="M50 35L45 43L50 45L52 38Z" fill="#d94a3a" stroke="none"/>
+    <path d="M50 35L47 41L46 46M44 41L52 41" stroke-width="2"/>
+    <path d="M41 44Q44 42 46 45Q47 49 43 50L40 48Z" fill="#ffffff"/>
+  </g>
+</svg>

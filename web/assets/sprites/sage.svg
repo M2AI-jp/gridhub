@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>賢者</title>
+  <desc>ふわふわの白い髪と長いひげの賢者。両手で大きな本を開いている。</desc>
+  <path d="M15 58C17 54 46 55 49 58C49 63 14 62 15 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 49L23 57Q17 60 30 58L30 51M34 51L34 58Q46 59 40 55L39 50" fill="#1d2b5c"/>
+    <path d="M23 33Q29 30 37 33Q42 44 43 53Q31 57 18 53Q19 42 23 33Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M22 34Q15 34 12 42L20 47L25 39M38 34Q44 34 49 42L42 48L36 39" fill="var(--pawn, #ffe45c)"/>
+    <path d="M17 26Q12 21 17 16Q14 9 23 9Q26 4 33 8Q42 5 44 14Q49 19 43 26Z" fill="#ffffff"/>
+    <path d="M20 17Q25 11 34 14Q42 17 41 25Q40 34 30 34Q19 34 18 25Q17 20 20 20Z" fill="#ffffff"/>
+    <path d="M21 21Q24 19 27 20M33 20Q37 18 39 21M25 24L25 25M35 24L35 25"/>
+    <path d="M19 28Q22 32 27 29Q30 32 33 29Q37 31 41 27Q44 36 38 39Q37 44 30 46Q24 43 23 40Q17 38 19 28Z" fill="#ffffff"/>
+    <path d="M28 34Q30 35 32 34M29 39Q28 41 30 43"/>
+    <path d="M12 40Q21 38 29 43Q38 38 48 40L47 54Q38 52 29 56Q20 52 12 54Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M14 40Q22 39 29 43Q37 39 46 40L45 51Q37 50 29 54Q22 50 14 51Z" fill="#ffffff"/>
+    <path d="M29 44Q28 49 29 54M18 44Q23 43 25 46M34 45Q38 43 42 44"/>
+    <path d="M39 40L39 46L42 44L43 39Z" fill="#d94a3a" stroke="none"/>
+    <path d="M12 44Q8 44 10 49Q11 52 15 49L15 46ZM47 44Q51 43 51 47Q51 51 47 50L45 47Z" fill="#ffffff"/>
+  </g>
+</svg>

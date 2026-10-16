@@ -1,0 +1,23 @@
+import { buildView } from '../engine/index.js';
+import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+import { requireHealthy } from '../engine/store.js';
+
+export async function run(argv, ctx) {
+  const command = parseArgs(argv, ctx);
+  const { args, options } = command;
+  if (args.length !== 0) usage('つかいかた: status [--json]');
+  const view = buildView(gameRoot(command));
+  requireHealthy(view.integrity);
+  if (options.json) console.log(JSON.stringify(view));
+  else {
+    const statuses = { working: '作業中', waiting: 'ゲートで待機中', done: 'あがり' };
+    console.log(`${view.quest.title}（地図の版 ${view.map_version}）`);
+    for (const character of view.characters) {
+      const location = character.at === null ? 'あがり' : `${character.at}「${view.nodes[character.at].title}」`;
+      console.log(`${character.name}: ${location} / ${statuses[character.status]} / Lv${character.level}`
+        + ` 経験値 ${character.xp}/${character.xp_next} / 成功 ${character.clears}・失敗 ${character.fails}`);
+    }
+    console.log(`ふっかつのじゅもん: ${view.head.jumon}`);
+  }
+  return 0;
+}

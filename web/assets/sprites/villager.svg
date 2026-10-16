@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>村人</title>
+  <desc>広いつばの麦わら帽子をかぶった村人。つなぎの作業着を着て、長いくわを立てている。</desc>
+  <path d="M15 58C17 54 45 55 49 58C49 62 14 63 15 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M23 47L21 56Q16 59 29 58L30 48M33 48L34 58Q46 59 40 55L39 47" fill="#1d2b5c"/>
+    <path d="M23 33Q29 31 37 33L41 49Q31 52 21 49Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 34Q17 35 13 41L20 45L25 39M38 34Q43 34 47 40L42 45L37 39" fill="var(--pawn, #ffe45c)"/>
+    <path d="M15 41Q11 43 15 47Q19 49 21 44Z" fill="#ffffff"/>
+    <path d="M26 34L25 42Q31 44 36 41L35 34M27 46Q31 48 35 45"/>
+    <path d="M19 19Q21 12 31 13Q43 14 41 26Q40 35 30 36Q19 35 18 27Q15 23 19 22Z" fill="#ffffff"/>
+    <path d="M17 20L20 10Q28 6 38 10L42 21Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M20 16Q29 13 40 17L41 20Q29 17 18 20Z" fill="#d94a3a" stroke="none"/>
+    <path d="M10 20C17 17 40 17 47 21Q51 25 29 26Q12 26 8 23Q7 21 10 20Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M24 11L23 14M33 11L34 14M13 22L16 23M41 22L44 23" stroke-width="2"/>
+    <path d="M24 29L24 30M35 28L35 29M28 33Q31 35 34 32"/>
+    <path d="M49 19Q51 37 48 56" stroke-width="2.5"/>
+    <path d="M49 18Q56 17 60 22L59 29Q54 25 49 26Z" fill="#ffffff"/>
+    <path d="M45 40Q49 38 51 41L51 44Q47 48 44 44Z" fill="#ffffff"/>
+  </g>
+</svg>

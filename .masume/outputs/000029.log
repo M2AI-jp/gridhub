@@ -1,0 +1,28 @@
+=== B1: node --test tests/e2e/B1.test.mjs ===
+✔ 見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅもん (1401.691542ms)
+✔ ゲートは道を合流させ、駒の位置と道の高さがそろう (1338.105792ms)
+✔ スマホの幅でも横にはみ出さない (1346.273292ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4142.437334
+
+(exit 0, 4187ms)
+=== B2: node --test tests/e2e/B2.test.mjs ===
+✔ 状態の列を再生すると、駒・マス・冒険の書が最後の場面に追いつく (4902.864667ms)
+✔ マスの詳細（issue）とキャラクターシート (2811.787375ms)
+✔ セーブデータが呪われたら、すぐ分かる (1342.216ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9111.328834
+
+(exit 0, 9154ms)

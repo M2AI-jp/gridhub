@@ -1,0 +1,14 @@
+=== E3: node --test tests/e2e/E3.test.mjs ===
+✔ 霧: Lv1 の指令書には現在のマスしか出ない (214.536416ms)
+✔ ゲート: 待機・全滅・差し戻し・突破・解散 (3732.93125ms)
+✔ モジュール API: buildView は status --json と同じ、ログに日本語の要約 (2277.509042ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6282.353791
+
+(exit 0, 6325ms)

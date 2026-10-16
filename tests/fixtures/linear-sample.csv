@@ -1,0 +1,10 @@
+ID,Title,Description,Status,Priority,Estimate,Assignee,Labels,Created,Project
+NOTE-1,ログイン画面を作る,メールとパスワードでログインできる,Todo,High,3,Aki,frontend,2026-09-01T10:00:00.000Z,ノートアプリ
+NOTE-2,ユーザーAPIを作る,"POST /users でユーザーを作れる, 重複はエラー",In Progress,High,2,Ben,backend,2026-09-01T11:00:00.000Z,ノートアプリ
+NOTE-3,ノートを保存する,ノートを保存して一覧できる,Todo,Medium,3,Ben,backend,2026-09-02T09:00:00.000Z,ノートアプリ
+NOTE-4,エディタ画面を作る,"Markdown で書ける
+プレビューつき",Backlog,Medium,5,Aki,frontend,2026-09-02T10:00:00.000Z,ノートアプリ
+NOTE-5,ログインしてノートを保存できる,結合テスト,Todo,High,,Aki,"E2E, milestone",2026-09-03T09:00:00.000Z,ノートアプリ
+NOTE-6,招待メールを送る,招待メールを送る,Done,Low,1,Ben,backend,2026-08-30T09:00:00.000Z,ノートアプリ
+NOTE-7,利用規約を書く,規約の文面,Todo,Low,1,,legal,2026-09-04T09:00:00.000Z,ノートアプリ
+NOTE-8,共有リンクを作る,ノートを共有リンクで見せる,Todo,Low,2,Ben,backend,2026-09-05T09:00:00.000Z,ノートアプリ

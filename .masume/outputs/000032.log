@@ -1,0 +1,13 @@
+=== B3: node --test tests/e2e/B3.test.mjs ===
+✔ 台帳: マスがそのまま Linear のステータスで並ぶ (1783.205084ms)
+✔ ハンコとボス戦のボタンは、本物の盤面では X-Masume 付きで POST する (1659.00025ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3496.700708
+
+(exit 0, 3540ms)

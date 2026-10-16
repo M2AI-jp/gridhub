@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>マスメ — 方眼すごろく</title>
+  <meta name="description" content="5mm方眼ノートのすごろくで、開発の進み具合を遊ぶ。">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23fbfaf3'/%3E%3Cpath d='M8 0V32M16 0V32M24 0V32M0 8H32M0 16H32M0 24H32' stroke='%239fd0e6' stroke-width='1'/%3E%3Crect x='9' y='9' width='14' height='14' fill='%23ffe45c' stroke='%231d2b5c' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="board/board.css">
+</head>
+<body data-view="board">
+  <header class="cover">
+    <div class="brand">
+      <span class="logo" aria-label="マスメ">マ<span>ス</span>メ</span>
+      <span class="chip">方眼 5mm</span>
+      <span class="tagline">すごろく式 開発進行ノート</span>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="表示">
+      <button role="tab" data-view="board" aria-selected="true">盤面</button>
+      <button role="tab" data-view="list" aria-selected="false">台帳</button>
+      <button role="tab" data-view="rules" aria-selected="false">ルール</button>
+    </nav>
+    <div class="save">
+      <div class="jumon-box">
+        <span class="jumon-label">ふっかつのじゅもん</span>
+        <span id="jumon" class="jumon">—</span>
+        <button id="copy-jumon" class="mini-btn" title="じゅもんを写す">写す</button>
+      </div>
+      <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
+      <span id="live" class="pill live" data-mode="off">…</span>
+      <button id="sound" class="mini-btn" aria-pressed="false">♪ 音なし</button>
+    </div>
+  </header>
+
+  <main class="desk">
+    <aside id="party" class="slip" aria-label="なかま"></aside>
+
+    <section id="stage">
+      <div id="view-board" class="view active">
+        <div class="binding" aria-hidden="true"></div>
+        <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="すごろくの盤面"></svg>
+        <div class="zoom" role="group" aria-label="拡大縮小">
+          <button data-zoom="in" aria-label="拡大">＋</button>
+          <button data-zoom="out" aria-label="縮小">－</button>
+          <button data-zoom="fit">全体</button>
+        </div>
+        <div class="legend" aria-label="凡例">
+          <span><i class="lg-hanamaru"></i>突破</span>
+          <span><i class="lg-current"></i>作業中</span>
+          <span title="巻き戻されて消しゴムで消されたマス。もう一度判定に通れば戻る"><i class="lg-stale"></i>要再検証</span>
+          <span title="視界の外。エージェントの指令書には出ない"><i class="lg-fog"></i>霧</span>
+          <span title="判定（E2E）のファイルはGMが封印済み"><i class="lg-seal">封</i>封印済み</span>
+        </div>
+      </div>
+
+      <div id="view-list" class="view"><div id="ledger"></div></div>
+
+      <div id="view-rules" class="view">
+        <article id="rules" class="rules">
+          <h2>あそびかた</h2>
+          <p class="lead">マスメは、5mm方眼ノートに描いたすごろくで開発を進めるゲームです。<br>キャラクターはモジュールを1つずつ担当するエージェント（と人間）。<b>判定（E2Eテスト）に通ったときだけ</b>駒が進みます。</p>
+          <div class="rule-grid">
+            <section><h3>1. 指令書を読む</h3><p><code>masume brief &lt;ID&gt;</code> に、いまのマス・判定コマンド・見えている先・仲間の位置・前の自分の日誌が出ます。</p></section>
+            <section><h3>2. いまのマスだけやる</h3><p>先のマスは霧の中（視界はレベルで広がる）。触ってよいのは自分の縄張りだけ。</p></section>
+            <section><h3>3. 宣言判定</h3><p><code>masume check &lt;ID&gt;</code>。セーブポイントから今のマスまでの判定を<b>まとめて</b>走らせます。素振りは自由、宣言は一発勝負。</p></section>
+            <section><h3>4. 成功</h3><p>はなまる。1マス進んで経験値。レベルが上がると視界が広がります。</p></section>
+            <section><h3>5. 失敗</h3><p>レベル−1。所定の位置まで戻され、その間のマスは<b>消しゴムで消されます</b>（もう一度判定に通れば戻る。経験値はなし）。</p></section>
+            <section><h3>6. 結合ゲート</h3><p>道が合流するボス戦。仲間が全員そろうと結合E2Eが始まります。負けると全滅（<code>MASUME_BLAME</code> があれば責任者だけ差し戻し）。勝てば解散して次へ。</p></section>
+            <section><h3>7. ハンコ</h3><p>人間にしかできないマスは、人間のハンコで進みます。</p></section>
+            <section><h3>8. 冒険の書</h3><p>進み具合は追記専用のセーブデータに残ります。ハッシュの鎖なので改ざんは「呪い」として見つかり、<b>ふっかつのじゅもん</b>でどの時点の盤面でも指せます。</p></section>
+          </div>
+          <h3>役割の分離</h3>
+          <ul>
+            <li><b>GM</b> は地図を描き、判定を書いて封印する（実装しない）。</li>
+            <li><b>キャラクター</b> は実装する（判定を書かない・変えない）。</li>
+            <li><b>人間</b> は人間にしかできないマスと、最後のハンコ。</li>
+          </ul>
+          <p class="foot">くわしくは <code>docs/RULEBOOK.md</code>。「xxxのようなアプリを作りたい」から地図を作る手順は <code>docs/GM_GUIDE.md</code>。</p>
+        </article>
+      </div>
+      <div id="toast" aria-live="polite"></div>
+    </section>
+
+    <aside id="side" class="slip">
+      <div id="drawer" hidden></div>
+      <section id="log" aria-label="冒険の書"></section>
+    </aside>
+  </main>
+
+  <script type="module" src="board/app.js"></script>
+</body>
+</html>

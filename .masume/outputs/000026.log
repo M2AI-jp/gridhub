@@ -1,0 +1,25 @@
+=== A1: node --test tests/e2e/A1.test.mjs ===
+✔ 12職業の駒の絵がそろっている (3.319041ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 55.042083
+
+(exit 0, 97ms)
+=== A2: node --test tests/e2e/A2.test.mjs ===
+✔ 12個の道具の絵がそろっている (7.861541ms)
+✔ 一覧ページで24枚が見られる (1048.771833ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1109.951542
+
+(exit 0, 1154ms)

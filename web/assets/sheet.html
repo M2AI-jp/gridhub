@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>マスメの絵帳 — 仲間と道具</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", "Meiryo", sans-serif;
+      color: #1d2b5c;
+      background: #ffffff;
+      --drawing-size: 64px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 280px;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      pointer-events: none;
+      background-image:
+        linear-gradient(#1d2b5c 1px, transparent 1px),
+        linear-gradient(90deg, #1d2b5c 1px, transparent 1px);
+      background-size: 20px 20px;
+      opacity: .09;
+    }
+
+    main {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 36px 36px 24px;
+    }
+
+    header {
+      position: relative;
+      padding: 0 0 20px 20px;
+      border-left: 3px solid #d94a3a;
+    }
+
+    .eyebrow {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: .16em;
+    }
+
+    h1 {
+      display: inline;
+      margin: 0;
+      font-size: clamp(28px, 5vw, 40px);
+      font-weight: 800;
+      letter-spacing: .08em;
+      background: linear-gradient(transparent 72%, #ffe45c 72%, #ffe45c 94%, transparent 94%);
+    }
+
+    .intro {
+      margin: 12px 0 0;
+      font-size: 14px;
+      line-height: 1.8;
+    }
+
+    fieldset {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px 20px;
+      margin: 24px 0 26px;
+      padding: 10px 16px 12px;
+      border: 1px solid #1d2b5c;
+      border-radius: 3px 6px 4px 5px;
+      background: #ffffff;
+    }
+
+    legend {
+      padding: 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #ffffff;
+    }
+
+    label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      min-height: 28px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    input { accent-color: #1d2b5c; }
+
+    input:focus-visible {
+      outline: 2px solid #d94a3a;
+      outline-offset: 3px;
+    }
+
+    body:has(#size-32:checked) { --drawing-size: 32px; }
+    body:has(#size-20:checked) { --drawing-size: 20px; }
+
+    section + section { margin-top: 24px; }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 4px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #1d2b5c;
+    }
+
+    h2 { margin: 0; font-size: 20px; letter-spacing: .1em; }
+    .count { font-size: 12px; }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 4px 12px;
+    }
+
+    figure {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      min-height: 116px;
+      margin: 0;
+      padding: 12px 0;
+    }
+
+    .drawing {
+      display: grid;
+      place-items: center;
+      width: 64px;
+      height: 64px;
+    }
+
+    img {
+      display: block;
+      width: var(--drawing-size);
+      height: var(--drawing-size);
+    }
+
+    figcaption {
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
+    footer {
+      margin-top: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #1d2b5c;
+      font-size: 12px;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 700px) {
+      main { padding: 24px 20px; }
+      .gallery { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+    }
+
+    @media (max-width: 420px) {
+      main { padding: 24px 16px; }
+      .gallery { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      fieldset { gap: 4px 12px; padding-inline: 10px; }
+      header { padding-left: 14px; }
+    }
+
+    @media print {
+      main { max-width: none; padding: 0; }
+      fieldset { display: none; }
+      .gallery { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+      figure { break-inside: avoid; }
+      body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="eyebrow">マスメ / 絵師のノート</p>
+      <h1>仲間と、旅の道具。</h1>
+      <p class="intro">12人の仲間と12個の道具を、ひとつの方眼ノートに。</p>
+    </header>
+
+    <fieldset>
+      <legend>絵の大きさ</legend>
+      <label><input id="size-64" type="radio" name="size" value="64" checked>64px · 大きく見る</label>
+      <label><input id="size-32" type="radio" name="size" value="32">32px · 盤面の大きさ</label>
+      <label><input id="size-20" type="radio" name="size" value="20">20px · 小さく見る</label>
+    </fieldset>
+
+    <section aria-labelledby="companions">
+      <div class="section-heading">
+        <h2 id="companions">仲間</h2>
+        <span class="count">12人</span>
+      </div>
+      <div class="gallery">
+        <figure><span class="drawing"><img src="sprites/hero.svg" width="64" height="64" alt="勇者の駒"></span><figcaption>勇者</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/warrior.svg" width="64" height="64" alt="戦士の駒"></span><figcaption>戦士</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/mage.svg" width="64" height="64" alt="魔法使いの駒"></span><figcaption>魔法使い</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/priest.svg" width="64" height="64" alt="僧侶の駒"></span><figcaption>僧侶</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/thief.svg" width="64" height="64" alt="盗賊の駒"></span><figcaption>盗賊</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/merchant.svg" width="64" height="64" alt="商人の駒"></span><figcaption>商人</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/sage.svg" width="64" height="64" alt="賢者の駒"></span><figcaption>賢者</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/scribe.svg" width="64" height="64" alt="書記の駒"></span><figcaption>書記</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/herald.svg" width="64" height="64" alt="伝令の駒"></span><figcaption>伝令</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/cartographer.svg" width="64" height="64" alt="地図職人の駒"></span><figcaption>地図職人</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/painter.svg" width="64" height="64" alt="絵師の駒"></span><figcaption>絵師</figcaption></figure>
+        <figure><span class="drawing"><img src="sprites/villager.svg" width="64" height="64" alt="村人の駒"></span><figcaption>村人</figcaption></figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="tools">
+      <div class="section-heading">
+        <h2 id="tools">道具と標識</h2>
+        <span class="count">12個</span>
+      </div>
+      <div class="gallery">
+        <figure><span class="drawing"><img src="icons/sword.svg" width="64" height="64" alt="剣"></span><figcaption>剣</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/shield.svg" width="64" height="64" alt="盾"></span><figcaption>盾</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/key.svg" width="64" height="64" alt="鍵"></span><figcaption>鍵</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/scroll.svg" width="64" height="64" alt="巻物"></span><figcaption>巻物</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/chest.svg" width="64" height="64" alt="宝箱"></span><figcaption>宝箱</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/flag.svg" width="64" height="64" alt="旗"></span><figcaption>旗</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/inn.svg" width="64" height="64" alt="宿屋"></span><figcaption>宿屋</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/crown.svg" width="64" height="64" alt="王冠"></span><figcaption>王冠</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/potion.svg" width="64" height="64" alt="薬"></span><figcaption>薬</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/map.svg" width="64" height="64" alt="地図"></span><figcaption>地図</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/bell.svg" width="64" height="64" alt="鐘"></span><figcaption>鐘</figcaption></figure>
+        <figure><span class="drawing"><img src="icons/lantern.svg" width="64" height="64" alt="ランタン"></span><figcaption>ランタン</figcaption></figure>
+      </div>
+    </section>
+
+    <footer>マスメの絵帳 · 全24枚<br>紺のボールペンに、黄色の蛍光ペンと赤のしるし。</footer>
+  </main>
+</body>
+</html>

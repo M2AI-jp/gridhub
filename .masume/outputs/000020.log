@@ -1,0 +1,15 @@
+=== S1: node --test tests/e2e/S1.test.mjs ===
+✔ 静的配信・API・健康診断 (28.944459ms)
+✔ ディレクトリの外には出られない (7.80825ms)
+✔ getView は Promise でもよく、例外は 500 の JSON になる (3.791417ms)
+✔ stop() で確実に閉じる (3.978ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.575458
+
+(exit 0, 147ms)

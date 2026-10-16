@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>僧侶</title>
+  <desc>赤い十字のずきんをかぶった僧侶。裾の長い服を着て、十字の表紙の聖書を抱える。</desc>
+  <path d="M16 58C18 54 46 55 49 58C48 63 15 62 16 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 50L23 57Q19 60 30 58L30 51M34 51L34 58Q45 59 40 55L39 50" fill="#1d2b5c"/>
+    <path d="M23 33Q29 31 37 33Q39 44 43 53Q38 56 32 54Q25 56 18 53Q22 42 23 33Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 34Q17 34 13 42L21 47L26 38" fill="var(--pawn, #ffe45c)"/>
+    <path d="M15 42Q11 44 15 48Q19 49 21 46Z" fill="#ffffff"/>
+    <path d="M29 35Q27 45 29 52M34 36Q35 43 34 48"/>
+    <path d="M17 33Q14 22 18 15Q22 9 30 7Q42 12 44 23L43 34Q32 38 17 33Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M22 21Q29 16 37 21Q41 32 30 34Q20 33 21 26Z" fill="#ffffff"/>
+    <path d="M30 11Q29 14 30 17M27 14L33 14" stroke="#d94a3a" stroke-width="2.5"/>
+    <path d="M25 25L25 26M35 25L35 26M28 30Q30 32 33 29"/>
+    <path d="M39 34L53 35L52 50L38 49Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M41 35L52 36L51 48L40 47Z" fill="#1d2b5c"/>
+    <path d="M46 38L46 44M43 40L49 41" stroke="#ffffff"/>
+    <path d="M38 41Q42 40 43 43Q44 46 40 47L37 45Z" fill="#ffffff"/>
+  </g>
+</svg>

@@ -1,0 +1,16 @@
+{
+  "icons": [
+    { "id": "sword", "name": "剣" },
+    { "id": "shield", "name": "盾" },
+    { "id": "key", "name": "鍵" },
+    { "id": "scroll", "name": "巻物" },
+    { "id": "chest", "name": "宝箱" },
+    { "id": "flag", "name": "旗" },
+    { "id": "inn", "name": "宿屋" },
+    { "id": "crown", "name": "王冠" },
+    { "id": "potion", "name": "薬" },
+    { "id": "map", "name": "地図" },
+    { "id": "bell", "name": "鐘" },
+    { "id": "lantern", "name": "ランタン" }
+  ]
+}

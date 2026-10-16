@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "masume-board",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["bin/masume.js", "serve", "--port", "5005"],
+      "port": 5005
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>盗賊</title>
+  <desc>後ろで結んだバンダナの盗賊。腰を少しかがめ、短剣を斜めに構える。</desc>
+  <path d="M15 58C16 54 46 55 49 59C47 63 14 62 15 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M23 46L20 54Q14 58 28 58L31 48M33 48L36 57Q47 59 42 54L40 46" fill="#1d2b5c"/>
+    <path d="M22 33Q29 30 37 32L42 48Q31 52 21 47Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 34Q15 34 14 40L20 45L24 40M37 34Q42 34 47 40L42 45L37 40" fill="var(--pawn, #ffe45c)"/>
+    <path d="M17 40Q13 42 17 46Q20 47 22 43Z" fill="#ffffff"/>
+    <path d="M25 34Q30 40 40 43M22 44Q32 47 40 44" stroke-width="2.5"/>
+    <path d="M16 16Q9 17 7 23L13 23L8 30Q17 28 20 20Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M18 16C20 9 38 10 41 19Q44 30 32 34Q19 35 17 26Q13 22 17 20Z" fill="#ffffff"/>
+    <path d="M16 20C13 10 24 7 31 8Q42 7 42 18Q30 15 16 20Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M14 18Q11 16 11 20Q12 24 16 21Z" fill="#d94a3a"/>
+    <path d="M23 23L27 24M33 23L37 21M25 25L25 26M35 24L35 25M29 30Q33 31 36 28"/>
+    <path d="M45 39Q49 31 57 28Q56 37 49 43Z" fill="#ffffff"/>
+    <path d="M43 38Q47 43 52 45M46 43L42 48" stroke-width="2.5"/>
+    <path d="M42 40Q46 40 47 44Q46 48 42 46L40 43Z" fill="#ffffff"/>
+  </g>
+</svg>

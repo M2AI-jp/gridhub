@@ -1,0 +1,12 @@
+=== G1: node --test tests/e2e/G1.test.mjs ===
+✔ 本物の冒険の書が盤面に映り、判定で駒がライブに動く (2516.518417ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5564.376
+
+(exit 0, 5608ms)

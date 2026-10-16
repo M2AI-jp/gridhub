@@ -1,0 +1,14 @@
+=== M1: node --test tests/e2e/M1.test.mjs ===
+✔ 地図と説明書がある (2.094709ms)
+✔ 地図の形が契約どおり (1.359ms)
+✔ ことづけの中身を描いている (0.851916ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 53.92875
+
+(exit 0, 94ms)

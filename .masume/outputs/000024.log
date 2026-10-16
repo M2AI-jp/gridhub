@@ -1,0 +1,30 @@
+=== S1: node --test tests/e2e/S1.test.mjs ===
+✔ 静的配信・API・健康診断 (31.231667ms)
+✔ ディレクトリの外には出られない (11.000917ms)
+✔ getView は Promise でもよく、例外は 500 の JSON になる (5.845834ms)
+✔ stop() で確実に閉じる (4.293625ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 114.9205
+
+(exit 0, 156ms)
+=== S2: node --test tests/e2e/S2.test.mjs ===
+✔ 接続すると hello、ログが伸びると change が全員に届く (418.324292ms)
+✔ 監視ファイルが置き換えられても（rename で書き直されても）change が届く (416.46475ms)
+✔ stop() は開いている SSE 接続も閉じる (7.977167ms)
+✔ watchFile が無くても SSE は hello を返す (8.375625ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 916.827
+
+(exit 0, 961ms)

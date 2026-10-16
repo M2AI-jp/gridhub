@@ -1,0 +1,13 @@
+=== E4: node --test tests/e2e/E4.test.mjs ===
+✔ load: seq でも、ふっかつのじゅもんでも、その時の盤面に戻せる (1486.538042ms)
+✔ amend: 計画は変えられるが、歴史は書き換えられない (937.876625ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2475.607875
+
+(exit 0, 2518ms)

@@ -1,0 +1,14 @@
+=== G2: node --test tests/e2e/G2.test.mjs ===
+✔ 地図職人の地図は、書記の検査に通る (148.848584ms)
+✔ チュートリアルを CLI だけで最後まで遊びきれる (1799.937917ms)
+✔ ことづけの地図で冒険を始め、全員が指令書を読める (446.378584ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2451.104291
+
+(exit 0, 2495ms)

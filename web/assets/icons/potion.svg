@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>薬</title>
+  <desc>栓をした丸い薬びん。赤い薬が半分ほど入り、白い十字のラベルがついている。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M25 19L25 26C7 32 8 56 29 57C53 60 58 34 40 27L39 19Z" fill="#ffffff"/>
+    <path d="M16 38Q25 34 32 38Q41 41 48 37C53 49 43 56 31 55Q14 55 16 38Z" fill="#d94a3a" stroke="none"/>
+    <path d="M25 8Q31 6 39 8L38 17L26 17Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 17Q31 16 41 17L41 22Q32 24 23 22Z" fill="#ffffff"/>
+    <path d="M29 38L35 38L35 42L39 42L39 48L35 48L35 52L29 52L29 48L25 48L25 42L29 42Z" fill="#ffffff" stroke="none"/>
+    <path d="M22 31Q18 34 18 36" stroke-width="2"/>
+  </g>
+</svg>
