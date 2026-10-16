@@ -1,0 +1,14 @@
+=== GOAL: node --test tests/e2e/GOAL.test.mjs ===
+✔ ほかのすべての判定が、まとめて通る (33522.018458ms)
+✔ この冒険の書（マスメ自身のセーブデータ）が正常で、Linear へ書き出せる (102.371333ms)
+✔ 遊び方が書いてある (2.091666ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 33681.75725
+
+(exit 0, 33726ms)

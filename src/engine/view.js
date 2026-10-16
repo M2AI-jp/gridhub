@@ -51,10 +51,12 @@ function logEntry(event, map) {
       text = `${node} のボス戦で${all ? '全滅' : '差し戻し'}: ${names.join('、')}`;
       break;
     }
-    case 'stamped':
+    case 'stamped': {
       ok = true;
-      text = `${data.by} が ${name} の ${node} にハンコを押した`;
+      const by = map?.characters.find(({ id }) => id === data.by)?.name ?? data.by;
+      text = data.by === character ? `${name} が ${node} にハンコを押した` : `${by} が ${name} の ${node} にハンコを押した`;
       break;
+    }
     case 'note': text = `${name} の日誌: ${data.text}`; break;
     case 'amended': text = `地図が第${data.version}版に改訂された`; break;
     case 'loaded': text = `冒険の書の seq ${data.to_seq} の状態をロードした`; break;
