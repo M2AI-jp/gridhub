@@ -1,0 +1,12 @@
+=== G5: node --test tests/e2e/G5.test.mjs ===
+✔ MCP の道具だけで、願い → 支度 → 指令書 → 実装 → 宣言判定 → 日誌 (577.242584ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1641.825
+
+(exit 0, 1688ms)

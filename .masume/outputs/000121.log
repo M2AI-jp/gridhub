@@ -1,0 +1,14 @@
+=== Q2: node --test tests/e2e/Q2.test.mjs ===
+✔ init: AGENTS.md・CLAUDE.md・.gitignore を置く。何度やっても重ならない (97.589667ms)
+✔ init: 既にある AGENTS.md は --force なしでは触らない。冒険の書があれば party.json (210.058583ms)
+✔ quest のあとには支度が済んでいる (132.2155ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 493.3635
+
+(exit 0, 537ms)

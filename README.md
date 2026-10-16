@@ -59,6 +59,40 @@ masume party --dry-run                                                        # 
 
 `examples/` に、本物の願いから本物のエージェントであがった冒険が残っています。
 
+### どの LLM からでも（MCP の道具箱）
+
+`masume mcp` は、マスメを LLM の道具にする MCP サーバーです（標準入出力）。Claude Code・Claude Desktop・Codex など、MCP を話すクライアントに登録すると、
+LLM が `masume_quest`（願いから冒険）・`masume_brief`（指令書）・`masume_check`（宣言判定）・`masume_note`（日誌）などを道具として直接使えます。
+
+```sh
+# Claude Code
+claude mcp add masume -- node /path/to/masume/bin/masume.js mcp --dir /path/to/project
+# Codex（~/.codex/config.toml）
+#   [mcp_servers.masume]
+#   command = "node"
+#   args = ["/path/to/masume/bin/masume.js", "mcp", "--dir", "/path/to/project"]
+```
+
+冒険の書に書き込む道具（`masume_check`・`masume_note`・`masume_stamp`・`masume_quest`）は、クライアント側で承認が要ることがあります。
+無人で走らせるときは、その道具だけを承認しておきます。
+
+```sh
+# Codex（その実行だけ承認する例）
+codex exec -c 'mcp_servers.masume.tools.masume_check.approval_mode="approve"' \
+           -c 'mcp_servers.masume.tools.masume_note.approval_mode="approve"' …
+# Claude Code（.claude/settings.json の permissions.allow に）
+#   "mcp__masume__masume_check", "mcp__masume__masume_note"
+```
+
+`demos/mcp-tutorial` には、本物の Codex が MCP の道具（`masume_brief` → `masume_check` → `masume_note`）だけで1マス進めた記録があります。
+1回目は Codex の承認の設定で `masume_check` が断られ（進めなかった帰還として記録）、2回目に承認して突破しました。
+
+よそのプロジェクトでエージェントがマスメのルールを守れるように、`masume init` が `AGENTS.md`・`CLAUDE.md`・`.gitignore` を置きます（`masume quest` は自動でやります）。
+
+### 盤面をノートに書き出す
+
+盤面の右下の「ノートに書き出す」で、地図全体を1枚の SVG にして保存できます。1目 = 5mm の実寸なので、印刷するとそのまま5mm方眼ノートのすごろくになります。
+
 ### 「xxxのようなアプリを作りたい」から始める（LLM に直接頼む）
 
 LLM（Claude / Codex など）に、こう頼みます。
@@ -90,6 +124,13 @@ LINEAR_API_KEY=lin_… masume linear pull --team ENG --out quests/eng.map.json  
 
 `masume linear push` は、判定に通ってマスが進むたびに流せば、Linear の issue の状態がすごろくの盤面と同じになります。
 
+Jira も同じように同期できます（REST v3。状態は遷移でそろえます）。
+
+```sh
+JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_TOKEN=… masume jira push --project ENG
+JIRA_BASE_URL=… JIRA_EMAIL=… JIRA_API_TOKEN=… masume jira pull --project ENG --out quests/eng.map.json
+```
+
 ## コマンド
 
 | コマンド | すること |
@@ -98,6 +139,9 @@ LINEAR_API_KEY=lin_… masume linear pull --team ENG --out quests/eng.map.json  
 | `masume party [--agent claude\|codex] [--parallel N]` | キャラクターごとにエージェントを出撃させ、ボス戦をしながら進める |
 | `masume sortie` / `masume return` / `masume wish` | 出撃・帰還・願いを冒険の書に記録する（外の指揮役用） |
 | `masume linear push\|pull` | Linear 本体と同期する |
+| `masume jira push\|pull` | Jira と同期する |
+| `masume mcp` | LLM の道具箱（MCP サーバー） |
+| `masume init` | よそのプロジェクトに支度をする（AGENTS.md・CLAUDE.md・.gitignore） |
 | `masume new <map>` | 地図から冒険の書をつくる |
 | `masume validate <map>` | 地図を検査する |
 | `masume serve [--port 5005]` | 盤面を開く（ライブ更新・ハンコ・ボス戦のボタン） |
@@ -173,6 +217,18 @@ node ../../bin/masume.js serve          # その冒険の盤面
 ```
 
 第2章のあがり GOAL2 では、GM の判定の不備で一度全滅しました。冒険の書には、GM の裁定・ロード・封印のし直し・再戦の勝利まで、すべて残っています。
+
+### 第3章: どの LLM からでも
+
+| キャラクター | 第3章でつくったもの |
+| --- | --- |
+| 伝令 | LLM の道具箱 `masume mcp`（MCP サーバー） |
+| 地図職人 | Jira との同期 `masume jira push / pull` |
+| 語り部 | よその冒険の支度 `masume init`（AGENTS.md・CLAUDE.md・.gitignore） |
+| 賢者クロード | 盤面を1枚の5mm方眼ノート（SVG）に書き出す |
+| 勇者（代理: GM） | 本物の Codex を MCP でつなぎ、道具だけで1マス進めさせる（`demos/mcp-tutorial`） |
+
+第3章のあがり GOAL3 は、ボス戦と同じ環境での素振りを先に済ませ、一度で突破しました。全106判定が通ります。
 
 ```sh
 masume status       # 全員「あがり」

@@ -1,0 +1,12 @@
+=== B6: node --test tests/e2e/B6.test.mjs ===
+✔ 盤面全体が1枚の方眼ノートの SVG になり、保存できる (1410.11275ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1483.89425
+
+(exit 0, 1531ms)

@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "マスメ — マスメでマスメをつくる",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。",
-    "goal": "GOAL2"
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。",
+    "goal": "GOAL3"
   },
   "characters": [
     {
@@ -30,7 +30,9 @@
         "G3",
         "B5",
         "G4",
-        "GOAL2"
+        "GOAL2",
+        "B6",
+        "GOAL3"
       ]
     },
     {
@@ -57,7 +59,9 @@
         "E5",
         "G3",
         "G4",
-        "GOAL2"
+        "GOAL2",
+        "G5",
+        "GOAL3"
       ]
     },
     {
@@ -70,7 +74,9 @@
       "module": "盤面を配るローカルサーバー（API・ライブ更新・ハンコ窓口）",
       "territory": [
         "src/server/**",
-        "src/commands/serve.js"
+        "src/commands/serve.js",
+        "src/mcp/**",
+        "src/commands/mcp.js"
       ],
       "path": [
         "S1",
@@ -81,7 +87,10 @@
         "S4",
         "G3",
         "G4",
-        "GOAL2"
+        "GOAL2",
+        "S5",
+        "G5",
+        "GOAL3"
       ]
     },
     {
@@ -94,12 +103,16 @@
       "module": "願いから冒険をつくる（GM の LLM を呼んで地図と最初の判定を書かせる）",
       "territory": [
         "src/quest/**",
-        "src/commands/quest.js"
+        "src/commands/quest.js",
+        "src/commands/init.js"
       ],
       "path": [
         "Q1",
         "G3",
-        "GOAL2"
+        "GOAL2",
+        "Q2",
+        "G5",
+        "GOAL3"
       ]
     },
     {
@@ -118,7 +131,8 @@
         "P1",
         "P2",
         "G4",
-        "GOAL2"
+        "GOAL2",
+        "GOAL3"
       ]
     },
     {
@@ -131,7 +145,8 @@
       "module": "地図づくりの道具（サンプル地図・チュートリアル・Linear連携）",
       "territory": [
         "src/linear/**",
-        "src/commands/{export,import,linear}.js",
+        "src/jira/**",
+        "src/commands/{export,import,linear,jira}.js",
         "quests/kotozuke.*",
         "quests/tutorial/**"
       ],
@@ -142,7 +157,9 @@
         "M3",
         "GOAL",
         "M4",
-        "GOAL2"
+        "GOAL2",
+        "M5",
+        "GOAL3"
       ]
     },
     {
@@ -164,7 +181,8 @@
         "A2",
         "GOAL",
         "A3",
-        "GOAL2"
+        "GOAL2",
+        "GOAL3"
       ]
     },
     {
@@ -179,7 +197,9 @@
         "H1",
         "GOAL",
         "H2",
-        "GOAL2"
+        "GOAL2",
+        "H3",
+        "GOAL3"
       ]
     }
   ],
@@ -713,6 +733,126 @@
           "tests/e2e/GOAL2.test.mjs",
           "tests/helpers.mjs",
           "tests/helpers2.mjs"
+        ]
+      }
+    },
+    "S5": {
+      "type": "task",
+      "title": "LLM の道具箱を開く",
+      "detail": "CONTRACTS §19: masume mcp（標準入出力の MCP サーバー）。道具 masume_status / brief / check / stamp / note / log / jumon / verify / quest、資料 RULEBOOK / GM_GUIDE / CONTRACTS。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/S5.test.mjs",
+        "seal": [
+          "tests/e2e/S5.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "server",
+        "mcp"
+      ]
+    },
+    "M5": {
+      "type": "task",
+      "title": "Jira と同期する",
+      "detail": "CONTRACTS §20: masume jira push / pull（REST v3、Basic 認証、.masume/jira.json、状態は遷移でそろえる）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/M5.test.mjs",
+        "seal": [
+          "tests/e2e/M5.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "gmkit",
+        "jira"
+      ]
+    },
+    "Q2": {
+      "type": "task",
+      "title": "よその冒険の支度をする",
+      "detail": "CONTRACTS §21: masume init（AGENTS.md・CLAUDE.md・.gitignore・party.json）と、quest のあとの支度。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/Q2.test.mjs",
+        "seal": [
+          "tests/e2e/Q2.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "quest"
+      ]
+    },
+    "B6": {
+      "type": "task",
+      "title": "ノートに書き出す",
+      "detail": "CONTRACTS §22: 盤面全体を1枚の5mm方眼ノートの SVG にして保存する。印刷では盤面だけ。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/B6.test.mjs",
+        "seal": [
+          "tests/e2e/B6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui"
+      ]
+    },
+    "H3": {
+      "type": "task",
+      "title": "本物の LLM を MCP でつなぐ",
+      "detail": "本物の LLM のクライアント（Codex など）に masume mcp を道具箱として登録し、MCP の道具だけで指令書を読ませ、1マス進めさせる。できたらハンコ。",
+      "check": {
+        "kind": "stamp",
+        "by": "player"
+      },
+      "labels": [
+        "human"
+      ]
+    },
+    "G5": {
+      "type": "gate",
+      "title": "結合: どの LLM からでも遊べる",
+      "detail": "LLM のクライアントになったつもりで、MCP の道具だけで願いから冒険を始め（支度つき）、指令書を読み、1マス進める。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/G5.test.mjs",
+        "seal": [
+          "tests/e2e/G5.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      }
+    },
+    "GOAL3": {
+      "type": "gate",
+      "title": "あがり（第3章）: どの LLM からでも",
+      "detail": "第1章〜第3章のすべての判定がまとめて通り、冒険の書が正常で、遊び方に第3章が書いてある。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/GOAL3.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL3.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
         ]
       }
     }

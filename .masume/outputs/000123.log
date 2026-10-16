@@ -1,0 +1,14 @@
+=== S5: node --test tests/e2e/S5.test.mjs ===
+✔ 初期化・道具の一覧・資料 (457.625667ms)
+✔ 道具で遊ぶ: 指令書を読み、宣言判定し、日誌を書く (1018.936041ms)
+✔ 冒険の書が無くても起動し、願いから冒険を始められる（cmd: は受け付けない） (278.552042ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2816.3755
+
+(exit 0, 2864ms)

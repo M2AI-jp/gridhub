@@ -1,0 +1,4 @@
+=== A1: node checks/hello.mjs ===
+合格: あいさつを一行で書けました。
+
+(exit 0, 46ms)

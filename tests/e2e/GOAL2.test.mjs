@@ -7,15 +7,11 @@ import { join } from 'node:path';
 import { ROOT, masume, masumeJson } from '../helpers2.mjs';
 
 test('ほかのすべての判定が、まとめて本当に通る', () => {
-  const files = readdirSync(join(ROOT, 'tests', 'e2e'))
-    .filter((f) => f.endsWith('.test.mjs') && !['GOAL.test.mjs', 'GOAL2.test.mjs'].includes(f))
-    .sort()
-    .map((f) => join('tests', 'e2e', f));
-  // 第1章の17 + 地図の外で足した SOLO + 第2章の11（GOAL と GOAL2 は除く）
-  const expected = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'B4', 'B5', 'E1', 'E2', 'E3', 'E4', 'E5', 'G1', 'G2', 'G3', 'G4', 'M1', 'M2', 'M3', 'M4', 'P1', 'P2', 'Q1', 'S1', 'S2', 'S3', 'S4', 'SOLO']
+  // 第1章の17 + 地図の外で足した SOLO + 第2章の11（GOAL と GOAL2 は除く）。章が増えても、第2章のあがりはこの一覧で確かめる
+  const files = ['A1', 'A2', 'A3', 'B1', 'B2', 'B3', 'B4', 'B5', 'E1', 'E2', 'E3', 'E4', 'E5', 'G1', 'G2', 'G3', 'G4', 'M1', 'M2', 'M3', 'M4', 'P1', 'P2', 'Q1', 'S1', 'S2', 'S3', 'S4', 'SOLO']
     .map((id) => join('tests', 'e2e', `${id}.test.mjs`))
     .sort();
-  assert.deepEqual(files, expected, `判定ファイルがそろっている（${files.length}）`);
+  for (const f of files) assert.ok(existsSync(join(ROOT, f)), f);
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;
   const r = spawnSync(process.execPath, ['--test', '--test-reporter=spec', '--test-concurrency=3', ...files], { cwd: ROOT, env, encoding: 'utf8', timeout: 30 * 60 * 1000 });

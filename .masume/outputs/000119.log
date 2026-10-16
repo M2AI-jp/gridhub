@@ -1,0 +1,13 @@
+=== M5: node --test tests/e2e/M5.test.mjs ===
+✔ push: マスが Jira の issue になり、状態は遷移でそろう。2回目は更新 (1321.275792ms)
+✔ pull: Jira の issue から地図の下書きを作る (158.284417ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1533.690917
+
+(exit 0, 1578ms)

@@ -5,6 +5,7 @@ import * as engine from '../engine/index.js';
 import { gmCommand, parseGm, runGm, tail } from './adapter.js';
 import { inspectMap, MAP_FILE } from './inspect.js';
 import { buildPrompt, buildRetryPrompt } from './prompt.js';
+import { AGENT_KINDS, printSetup, setupProject } from './setup.js';
 
 const { MasumeError } = engine;
 const DEFAULT_RETRIES = 2;
@@ -48,6 +49,16 @@ function summarize(root, view, jumon, seq) {
   };
 }
 
+/** 冒険の書が生まれたあとの支度（CONTRACTS §21）。失敗しても冒険は始められるので、止めずに知らせる */
+function prepareProject(root, { gm, override, ctx }) {
+  const requested = (gm ?? (override ? '' : 'claude')).trim();
+  try {
+    return setupProject({ root, agent: AGENT_KINDS.includes(requested) ? requested : undefined }, ctx);
+  } catch (error) {
+    return { root, files: [], error: error.message };
+  }
+}
+
 function printSummary(say, { root, cwd, bin }, s) {
   const dir = root === cwd ? '' : ` --dir ${quote(root)}`;
   say('冒険がはじまります！');
@@ -58,6 +69,8 @@ function printSummary(say, { root, cwd, bin }, s) {
   if (s.unsealed.length > 0) {
     say(`  ※ 判定ファイルがまだ無いマス: ${s.unsealed.join('、')}（キャラクターが着く前に masume seal <マス> で封印してください）`);
   }
+  if (s.setup.error) say(`※ 支度（AGENTS.md ほか）に失敗しました: ${s.setup.error}\n  あとで masume init${root === cwd ? '' : ` --dir ${quote(root)}`} を打ってください`);
+  else printSetup(say, s.setup);
   say(`ふっかつのじゅもん: ${s.jumon}`);
   say('');
   say('次の一手:');
@@ -177,9 +190,15 @@ export async function runQuest(opts, ctx) {
   const wish = recordWish(root, { actor: opts.actor, text: opts.wish, gm: gm.kind, model });
   const jumon = engine.jumonOf((wish?.hash) ?? head.hash);
   const summary = summarize(root, engine.buildView(root), jumon, wish?.seq ?? head.seq);
+  summary.setup = prepareProject(root, { gm: opts.gm, override, ctx });
 
   if (opts.json) {
-    out(JSON.stringify({ ok: true, root, ...summary, files: { map: mapFile, wish: join(root, 'WISH.md'), log: logFile } }));
+    const { setup, ...rest } = summary;
+    out(JSON.stringify({
+      ok: true, root, ...rest,
+      setup: setup.error ? { ok: false, error: setup.error } : { ok: true, files: setup.files.map(({ file, written }) => ({ file, written })) },
+      files: { map: mapFile, wish: join(root, 'WISH.md'), log: logFile },
+    }));
   } else {
     printSummary(say, { root, cwd, bin: ctx.bin }, summary);
   }

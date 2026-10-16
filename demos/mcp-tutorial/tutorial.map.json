@@ -1,0 +1,106 @@
+{
+  "masume": 1,
+  "quest": {
+    "id": "TUT",
+    "title": "はじめてのマスメ",
+    "pitch": "勇者と見習いAIが、名前入りのあいさつカードを作る約5分の冒険。1人で両方の役を遊べます。",
+    "goal": "GOAL"
+  },
+  "characters": [
+    {
+      "id": "player",
+      "name": "勇者",
+      "kind": "human",
+      "agent": "human",
+      "job": "hero",
+      "color": "pink",
+      "module": "カードに載せる名前を決め、完成した内容を承認する",
+      "territory": ["human/**"],
+      "path": ["H1", "G1", "H2", "GOAL"]
+    },
+    {
+      "id": "apprentice",
+      "name": "見習いAI",
+      "kind": "agent",
+      "job": "scribe",
+      "color": "blue",
+      "module": "あいさつ文とカードを作る。人間がこの役を演じてもよい",
+      "territory": ["ai/**"],
+      "path": ["A1", "A2", "G1", "C1", "A3", "GOAL"]
+    }
+  ],
+  "nodes": {
+    "H1": {
+      "type": "task",
+      "title": "カードに載せる名前を決める",
+      "detail": "勇者が human/request.json を作り、例 {\"name\":\"マスメ\"} のように name を決めてください。合格条件は、JSON がオブジェクトで、name が前後に空白も改行もない空でない文字列であり、人間がその名前でよいと確認したことです。確認後に masume stamp H1 --as player でハンコを押します。以後、この冒険では名前を変更しません。ハンコ自体はファイルを検査しないため、内容は G1 で確認します。",
+      "check": { "kind": "stamp", "by": "player" },
+      "rollback_to": "@here"
+    },
+    "A1": {
+      "type": "task",
+      "title": "あいさつを一行で書く",
+      "detail": "見習いAIが ai/hello.txt を作り、human/request.json の名前を使って「こんにちは、マスメ！」のような一行を書いてください。合格条件は、本文が「こんにちは、<名前>！」の形で、名前が空でなく前後の空白や改行を含まないことです。末尾の改行は1つまで付けられます。このマスでは書式を検査し、勇者の名前との一致は G1 で検査します。素振りは node checks/hello.mjs、進むときは masume check apprentice --as apprentice です。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/hello.mjs",
+        "seal": ["checks/hello.mjs", "checks/common.mjs"]
+      },
+      "rollback_to": "@here"
+    },
+    "A2": {
+      "type": "task",
+      "title": "あいさつをカードに写す",
+      "detail": "見習いAIが ai/card.json を作り、例 {\"name\":\"マスメ\",\"message\":\"こんにちは、マスメ！\"} のように名前とあいさつを保存してください。合格条件は、JSON がオブジェクトで、name が前後に空白も改行もない空でない文字列であり、message が「こんにちは、<name>！」と ai/hello.txt の本文の両方に一致することです。ready はまだ不要です。素振りは node checks/card.mjs、進むときは masume check apprentice --as apprentice です。宣言判定では A1 も再検査します。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/card.mjs",
+        "seal": ["checks/card.mjs", "checks/common.mjs"]
+      },
+      "rollback_to": "@here"
+    },
+    "G1": {
+      "type": "gate",
+      "title": "お願いとカードを照らし合わせる",
+      "detail": "勇者が H1、見習いAIが A2 を終えると、2人がそろって自動で判定します。新しいファイルを作る必要はありません。合格条件は、human/request.json の name が H1 の形式を満たし、ai/hello.txt と ai/card.json が A1・A2 の条件を満たしたうえで、カードの name が勇者の決めた名前と一致することです。お願いの欠落や形式不備は player、カードやあいさつの欠落・形式不備・不一致は apprentice に差し戻します。成功後、見習いAIは宿屋を通って A3、勇者は H2 へ進みます。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/join.mjs",
+        "seal": ["checks/join.mjs", "checks/common.mjs"]
+      }
+    },
+    "C1": {
+      "type": "camp",
+      "title": "宿屋で休む",
+      "detail": "見習いAIが G1 を突破すると、宿屋を自動で通過して A3 に進みます。操作や判定は不要です。通過するとここがセーブポイントになり、その後の失敗ではここより前のマスへ戻りません。以前の成果物は引き続き使うので残してください。"
+    },
+    "A3": {
+      "type": "task",
+      "title": "カードに完成の印を付ける",
+      "detail": "見習いAIが ai/card.json の name と message を保ったまま、\"ready\": true を追加してください。合格条件は、カードとあいさつが A1・A2 の条件を引き続き満たし、ready が文字列の \"true\" ではなく JSON の真偽値 true になっていることです。素振りは node checks/ready.mjs、進むときは masume check apprentice --as apprentice です。成功すると GOAL で勇者の最終確認を待ちます。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/ready.mjs",
+        "seal": ["checks/ready.mjs", "checks/common.mjs"]
+      },
+      "rollback_to": "@here"
+    },
+    "H2": {
+      "type": "task",
+      "title": "完成したカードを読んで承認する",
+      "detail": "勇者が human/request.json、ai/hello.txt、ai/card.json を読み、お願いした名前で自然にあいさつできているか確認してください。合格条件は、カードの name がお願いの name と同じで、message があいさつの本文と同じ、ready が真偽値 true になっており、人間が完成品として承認したことです。見習いAIの A3 が終わってから masume stamp H2 --as player でハンコを押します。2人が GOAL にそろうと最後の判定が自動で始まります。",
+      "check": { "kind": "stamp", "by": "player" },
+      "rollback_to": "@here"
+    },
+    "GOAL": {
+      "type": "gate",
+      "title": "あがりを迎える",
+      "detail": "見習いAIが A3、勇者が H2 を終えると、名前入りのあいさつカードが完成したかを自動で判定します。新しいファイルは不要です。合格条件は、お願い・あいさつ・カードが G1 の全条件を満たし、カードの ready が真偽値 true であることです。お願いの不備は player、あいさつやカードの不備は apprentice に差し戻します。成功すると2人ともあがりです。masume status --json の finished が true になります。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/goal.mjs",
+        "seal": ["checks/goal.mjs", "checks/common.mjs"]
+      }
+    }
+  }
+}

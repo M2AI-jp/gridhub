@@ -28,10 +28,13 @@ const COMMANDS = {
   wish: ['書記', '冒険の始まりの願いを記録する', 'wish <text> [--gm G] [--model M]'],
   quest: ['語り部', '「xxxのようなアプリを作りたい」から冒険をつくる', 'quest "<願い>" [--gm claude|codex] [--dir D]'],
   party: ['軍師', 'キャラクターごとにエージェントを出撃させる', 'party [--agent claude|codex] [--model M] [--parallel N]'],
+  init: ['語り部', 'よそのプロジェクトにマスメの支度をする（AGENTS.md ほか）', 'init [--dir D] [--agent claude|codex]'],
   serve: ['伝令', '盤面（5mm方眼ノート）を開く', 'serve [--port 5005]'],
+  mcp: ['伝令', 'LLM の道具箱（MCP サーバー、標準入出力）', 'mcp [--dir D]'],
   export: ['地図職人', 'Linear形式で書き出す', 'export linear [--format csv|json] [--out file]'],
   import: ['地図職人', 'Linear CSVから地図の下書きをつくる', 'import linear <file.csv> --out <map.json>'],
   linear: ['地図職人', 'Linear と同期する', 'linear push|pull [--team KEY] [--project NAME]'],
+  jira: ['地図職人', 'Jira と同期する', 'jira push|pull [--project KEY]'],
 };
 
 function usage() {

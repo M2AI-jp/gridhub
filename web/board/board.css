@@ -618,3 +618,15 @@ body.finished .cover { background-color: #3a2a1f; }
 body.in-lobby .desk { grid-template-columns: minmax(0, 1fr); }
 body.in-lobby #party, body.in-lobby #side, body.in-lobby #integrity, body.in-lobby .jumon-box, body.in-lobby .legend, body.in-lobby .zoom { display: none; }
 body.in-lobby #stage { min-height: 70vh; }
+
+#export-notebook { font-size: 12px; }
+
+/* 印刷: 盤面だけを紙いっぱいに */
+@media print {
+  .cover, #party, #side, .zoom, .legend, .binding, #toast, #lobby { display: none !important; }
+  body { overflow: visible; background: #fff; }
+  .desk { display: block; padding: 0; height: auto; }
+  #stage { position: static; box-shadow: none; border-radius: 0; height: 100vh; }
+  .view { position: static; }
+  #board { height: 100vh; }
+}

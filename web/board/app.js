@@ -505,12 +505,71 @@ async function startFixture() {
   }
 }
 
-window.__masume = { ready: false, view: null, frame: 0, done: false, render: (v) => render(v), select, setView };
+// ---- ノートに書き出す（CONTRACTS §22） ----
+function boardCss() {
+  let css = '';
+  for (const sheet of document.styleSheets) {
+    try {
+      for (const rule of sheet.cssRules) css += rule.cssText + '\n';
+    } catch {
+      // よそのスタイルシート（Google Fonts など）は読めないので飛ばす
+    }
+  }
+  const root = getComputedStyle(document.documentElement);
+  const vars = ['--paper', '--grid', '--grid-strong', '--ink', '--ink-soft', '--red', '--pencil', '--hand', '--mono']
+    .map((v) => `${v}: ${root.getPropertyValue(v).trim()};`)
+    .join(' ');
+  return `svg { ${vars} } ${css}`;
+}
+
+/** 盤面全体を1枚の SVG の文字列にする。1目 = 5mm の実寸 */
+function exportSvg() {
+  if (!state.view || !state.lay) return '';
+  const lay = state.lay;
+  const x = -U;
+  const y = 0;
+  const w = lay.width + 2 * U;
+  const h = lay.height + U;
+  const world = $('#world').cloneNode(true);
+  world.querySelectorAll('.float-text').forEach((el) => el.remove());
+  const defsEl = svg.querySelector('defs')?.outerHTML || '';
+  const css = boardCss().replace(/<\/?script/gi, '');
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${((w / U) * 5).toFixed(1)}mm" height="${((h / U) * 5).toFixed(1)}mm">
+<title>${(state.view.quest?.title || 'マスメ').replace(/[&<>]/g, '')}</title>
+<style>${css.replace(/]]>/g, ']] >')}</style>
+${defsEl}
+${world.outerHTML}
+</svg>
+`;
+}
+
+function downloadNotebook() {
+  const text = exportSvg();
+  if (!text) return;
+  const d = new Date();
+  const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
+  const filename = `${state.view.quest?.id || 'masume'}-${ymd}.svg`;
+  const blob = new Blob([text], { type: 'image/svg+xml' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  window.__masume.lastExport = { filename, size: blob.size };
+  toast({ text: `ノートに書き出しました: ${filename}（1目 = 5mm の実寸）`, ok: true });
+}
+
+window.__masume = { ready: false, view: null, frame: 0, done: false, render: (v) => render(v), select, setView, exportSvg };
 
 (async () => {
   setupCamera();
   setupInteractions();
   initCommand({ live: LIVE, post, refresh: liveRefresh, toast, getView: () => state.view });
+  $('#export-notebook').addEventListener('click', downloadNotebook);
   state.sprites = await loadSprites();
   if (params.get('view')) setView(params.get('view'));
   try {

@@ -578,3 +578,86 @@ export function recordWish(root, { actor = 'gm', text, gm = null, model = null }
 - 冒険の書が無いときは**入口**（ロビー）: 願いの入力欄・GM の選択（claude / codex）・モデル（任意）・「冒険をはじめる」→ `POST /api/quest`。生成中は `GET /api/quest` の様子を見せ、冒険の書が生まれたら盤面に切り替わる。
 - **出撃**: なかまの欄の「出撃させる」→ エージェント・モデル・同時に何人・誰を、を選んで `POST /api/sortie`。出撃中は `GET /api/party` の様子と「止める」。
   出撃中のキャラクターの駒には、ふきだしとエージェント名が出る。キャラクターシートに出撃の記録と、帰還ごとの出力へのリンク。
+
+---
+
+# 第3章の契約 — どの LLM からでも
+
+第2章で、願いからエージェントたちがあがるまでが CLI と盤面で通った。第3章では、それを**どの LLM のクライアントからでも**使えるようにし、Jira とも同期する。
+
+| 縄張り（第3章で増えるもの） | 持ち主 |
+| --- | --- |
+| `src/mcp/**`、`src/commands/mcp.js`（と既存の伝令の縄張り） | 伝令 `server` |
+| `src/jira/**`、`src/commands/jira.js`（と既存の地図職人の縄張り） | 地図職人 `gmkit` |
+| `src/commands/init.js`（と既存の語り部の縄張り `src/quest/**`） | 語り部 `teller` |
+| `web/**`（絵師の場所を除く） | 盤面 `board` |
+| `tests/helpers3.mjs` ほか GM の縄張り | GM |
+
+## 19. 伝令の MCP サーバー（LLM の道具箱）
+
+`masume mcp [--dir D]` — 標準入出力の MCP サーバー（Model Context Protocol）。1行に1つの JSON-RPC 2.0 メッセージ。stdout はプロトコル専用、ログは stderr。
+
+- ルート: `--dir` > `MASUME_DIR` > カレントから冒険の書を探す > カレント（冒険の書が無くても起動する。`masume_quest` で始められる）。
+- `initialize` → `{protocolVersion, capabilities: {tools: {}, resources: {}}, serverInfo: {name: "masume", version}}`（`protocolVersion` は相手の要求をそのまま返す）。
+- `notifications/initialized` などの通知（`id` の無いもの）には返事をしない。`ping` → `{}`。
+- `tools/list` → `{tools: [{name, description, inputSchema}]}`。道具（すべて日本語の説明つき。`inputSchema` は JSON Schema）:
+
+| name | arguments | すること（中身は CLI と同じ） |
+| --- | --- | --- |
+| `masume_status` | `{json?}` | `status`（`json: true` なら §5 のビューの JSON 文字列） |
+| `masume_brief` | `{character, json?}` | `brief` |
+| `masume_check` | `{target, as?, no_boss?}` | `check <target>`（`as` 既定は target） |
+| `masume_stamp` | `{node, as}` | `stamp` |
+| `masume_note` | `{character, text, as?}` | `note`（`as` 既定は character） |
+| `masume_log` | `{tail?}` | `log --tail N`（既定 20） |
+| `masume_jumon` | `{}` | `jumon` |
+| `masume_verify` | `{jumon?}` | `verify` |
+| `masume_quest` | `{wish, gm?, model?}` | `quest`（`gm` は `claude` / `codex`。`cmd:` は受け付けない。`MASUME_GM_OVERRIDE` はそのまま効く） |
+
+- `tools/call` `{name, arguments}` → `{content: [{type: "text", text}], isError}`。`text` は CLI の stdout+stderr、`isError` は終了コードが 0 でないとき true（判定失敗も true。出力は返す）。知らない道具・引数の不足は `isError: true` と説明の text。
+- `resources/list` → `{resources: [{uri, name, mimeType}]}`: `masume://docs/RULEBOOK.md`、`masume://docs/GM_GUIDE.md`、`masume://docs/CONTRACTS.md`。`resources/read` `{uri}` → `{contents: [{uri, mimeType: "text/markdown", text}]}`。知らない uri は JSON-RPC エラー `-32602`。
+- 知らないメソッドは JSON-RPC エラー `-32601`。壊れた JSON は `-32700`（`id: null`）。
+
+## 20. 地図職人の Jira 同期
+
+`masume jira push [--project KEY] [--dry-run]` / `masume jira pull --project KEY --out <map.json>`
+
+- ベース URL: `MASUME_JIRA_URL` > `JIRA_BASE_URL`（例 `https://example.atlassian.net`）。認証: `Authorization: Basic base64(JIRA_EMAIL:JIRA_API_TOKEN)`。どれかが無ければ `E_JIRA_AUTH`/2。
+- 使う REST（v3）:
+
+| 使いみち | メソッド パス | body / 返り値 |
+| --- | --- | --- |
+| プロジェクトの確認 | `GET /rest/api/3/project/{key}` | `{id, key, name}`（無ければ 404 → `E_JIRA`/2） |
+| issue を作る | `POST /rest/api/3/issue` | `{fields: {project: {key}, summary, description, issuetype: {name: "Task"}, labels}}` → `{id, key, self}` |
+| issue を直す | `PUT /rest/api/3/issue/{key}` | `{fields: {summary, description, labels}}` → 204 |
+| 今の状態 | `GET /rest/api/3/issue/{key}?fields=status` | `{fields: {status: {name, statusCategory: {key}}}}` |
+| 遷移の候補 | `GET /rest/api/3/issue/{key}/transitions` | `{transitions: [{id, name, to: {name, statusCategory: {key}}}]}` |
+| 遷移する | `POST /rest/api/3/issue/{key}/transitions` | `{transition: {id}}` → 204 |
+| issue を読む | `POST /rest/api/3/search/jql` | `{jql, fields: [...], maxResults}` → `{issues: [{key, fields: {summary, description, status: {name, statusCategory: {key}}, assignee: {displayName} or null, labels, created}}]}` |
+
+- push: task と gate を1件ずつ。`.masume/jira.json`（`{project, issues: {<マスID>: {key, id}}}`）に key があれば PUT、無ければ POST。
+  summary は `[マスID] タイトル`、description は Atlassian Document Format `{type: "doc", version: 1, content: [{type: "paragraph", content: [{type: "text", text: <§9 の Description>}]}]}`、
+  labels は `["masume", <持ち主ID か gate>]`（stale なら `masume-stale` も）。
+  状態は §9 の Status を Jira の statusCategory に写す: `Backlog`/`Todo` → `new`、`In Progress`/`In Review` → `indeterminate`、`Done` → `done`。今の statusCategory と違えば、`to.statusCategory.key` が合う遷移（`In Review` は名前が `In Review` のものを優先）で遷移する。
+  stdout に `作成 N件・更新 M件・遷移 K件`。`--dry-run` は通信せず、送る予定（マスIDと Status）を出す。
+- pull: `jql = "project = KEY ORDER BY created ASC"` で読み、§9 の import と同じ規則で地図の下書きにする（ID = key、Title = summary、Description = description の ADF から text を連結、Status = status.name、statusCategory が `done` なら完了扱いで省く、Assignee = assignee.displayName、Labels = labels、Created = created）。
+
+## 21. 語り部の支度（よそのプロジェクトでも、エージェントがルールを守れるように）
+
+`masume init [--dir D] [--agent claude|codex] [--force]`
+
+- `<root>/AGENTS.md` を書く（既にあって `--force` が無ければ書かずに「AGENTS.md はそのまま」と出す）。中身（日本語）に必ず入れること:
+  このプロジェクトはマスメで進めていること / 指令書・宣言判定・日誌のコマンド（`node "<bin/masume.js の絶対パス>" brief <あなたのID>`、`check <ID> --as <ID>`、`note`）/
+  現在のマスだけ・縄張り・封印された判定ファイルと地図を編集しない・git の書き込み操作をしない / あがりに着く宣言は `--no-boss` /
+  ルールブックの場所（`docs/RULEBOOK.md` の絶対パス）
+- `<root>/CLAUDE.md` を書く（同じく既存なら `--force` なしでは触らない）: 1行目に「このプロジェクトはマスメで進めています。AGENTS.md を読んでください。」、そのあと `@AGENTS.md` の行。
+- `<root>/.gitignore` に `.masume/lock` `.masume/state.json` `.masume/party.log` を足す（無ければ作る。既にある行は重ねない）。
+- 冒険の書があって `--agent` があれば `.masume/party.json` に `{agent, parallel: 3}` を書く。
+- stdout に、書いたファイルと書かなかったファイルを1行ずつ。終了コード 0。
+- `masume quest` は冒険の書を生んだあとに `init` を行う（`--agent` は `--gm` と同じものを既定に）。
+
+## 22. 盤面（ノートに書き出す）
+
+- 盤面の右下に「ノートに書き出す」（`#export-notebook`）。押すと、地図全体を1枚の SVG（5mm方眼の紙・道・マス・ゲート・駒・題名）にして `<quest.id>-<YYYYMMDD>.svg` として保存する。
+- 試験用に `window.__masume.exportSvg()` がその SVG の文字列を返し、保存したら `window.__masume.lastExport = {filename, size}`。
+- 印刷（`@media print`）では盤面だけを紙いっぱいに出す。
