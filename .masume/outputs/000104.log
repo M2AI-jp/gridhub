@@ -1,0 +1,14 @@
+=== GOAL2: node --test tests/e2e/GOAL2.test.mjs ===
+✔ ほかのすべての判定が、まとめて本当に通る (60372.485625ms)
+✔ examples/ に、本物の願いから本物のエージェントであがった冒険がある (19779.532791ms)
+✔ マスメ自身の冒険の書が正常で、遊び方に第2章が書いてある (60.419875ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 80291.96
+
+(exit 0, 80349ms)

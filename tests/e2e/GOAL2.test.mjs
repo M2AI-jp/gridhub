@@ -44,10 +44,12 @@ test('examples/ に、本物の願いから本物のエージェントであが�
     const real = log.filter((e) => e.type === 'sortie' && ['claude', 'codex'].includes(e.data.agent));
     assert.ok(real.length >= 2, `${dir} は本物のエージェントが出撃した（${real.length}回）`);
     assert.ok(log.some((e) => e.type === 'gate_cleared'), `${dir} でボス戦があった`);
-    // 作ったアプリは、いまも自分の判定に通る
+    // 作ったアプリは、いまも自分の判定に通る。エンジンが判定に渡すのと同じ環境（MASUME_ROOT = その冒険のルート）で走らせる。
+    // ボス戦の中ではマスメ自身の MASUME_* が入っているので、受け継がないように外す
+    const env = Object.fromEntries(Object.entries(process.env).filter(([k]) => !k.startsWith('MASUME_')));
     for (const [id, n] of Object.entries(v.nodes)) {
       if (n.check?.kind !== 'cmd') continue;
-      const r = spawnSync('/bin/sh', ['-c', n.check.run], { cwd: dir, encoding: 'utf8', timeout: 5 * 60 * 1000 });
+      const r = spawnSync('/bin/sh', ['-c', n.check.run], { cwd: dir, env: { ...env, MASUME_ROOT: dir, MASUME_NODE: id }, encoding: 'utf8', timeout: 5 * 60 * 1000 });
       assert.equal(r.status, 0, `${dir} の ${id}: ${r.stdout}${r.stderr}`);
     }
   }
