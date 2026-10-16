@@ -10,7 +10,7 @@
     "node": ">=20"
   },
   "scripts": {
-    "test": "node --test tests/e2e/",
+    "test": "node --test tests/e2e/*.test.mjs",
     "serve": "node bin/masume.js serve",
     "board": "node bin/masume.js serve"
   },

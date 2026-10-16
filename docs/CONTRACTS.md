@@ -72,6 +72,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 ```
 
 - ゲートのメンバー = そのゲートIDを `path` に含むキャラクター全員（地図には書かない）。
+- ゲートのメンバーは2人以上。ただし**キャラクターが1人だけの地図では、あがり（`quest.goal`）のゲートはメンバー1人でよい**（1人の冒険も、あがりの結合E2Eで終わる）。goal 以外のゲートは、1人だけの地図でも2人以上が必要（つまり1人だけの地図に置けるゲートはあがりだけ）。
 - `check.seal` は判定ファイルの一覧（ルートからの相対パス）。空配列・省略なら、判定は地図に書かれたコマンドだけで成立し、封印イベントは不要。
 - `check.kind: "stamp"` は task だけ。`by` は `kind: "human"` のキャラクターID。gate と camp は stamp にできない。
 
@@ -85,7 +86,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 | `E_UNKNOWN_NODE` | `path` に存在しないマスID |
 | `E_DUP_IN_PATH` | 1つの `path` に同じマスが2回 |
 | `E_SHARED_TASK` | task / camp が2つ以上の `path` に出てくる |
-| `E_GATE_MEMBERS` | gate が2つ未満の `path` にしか出てこない |
+| `E_GATE_MEMBERS` | gate が2つ未満の `path` にしか出てこない（例外: キャラクターが1人だけの地図で、`quest.goal` のゲートがその1人の `path` に出てくるときはエラーにしない） |
 | `E_ORPHAN` | どの `path` にも出てこないマス |
 | `E_CYCLE` | 全 `path` の「前→次」をつないだグラフに閉路がある（ゲートの順番が道ごとに食い違うなど） |
 | `E_CHECK` | task/gate に check が無い・形が違う、camp に check がある、gate が stamp、stamp の by が人間でない |
@@ -362,6 +363,7 @@ CSV は1行目が `ID,Title,Description,Status,Assignee,Project,Milestone,Labels
 - Labels に `E2E` か `gate`（大文字小文字無視）を含む issue は **gate**。メンバー = その issue より `Created` が前の task を持つキャラクター + その issue の Assignee のキャラクター。2人未満なら普通の task。
 - 各道の並びは `Created` の昇順（同じなら ID の数字部分の昇順）。gate は、各メンバーの道で「それより前に作られた task」の後に置く。
 - 最後に `GOAL`（使われていれば `GOAL-1`）「あがり」を全キャラクターの最後に置く。`quest.goal` はそれ。
+- 担当者が1人だけ（残った issue の Assignee がすべて同じ、またはすべて空で `nanashi` だけ）なら、キャラクターは1人で、`GOAL` のメンバーも1人になる（§2 の例外により有効）。このとき `E2E`/`gate` ラベルの issue はメンバーが2人未満なので普通の task になる。
 - 判定はすべて仮置き `{"kind":"cmd","run":"echo \"TODO(GM): <ID> のE2E判定を書く\" && exit 1","seal":[]}`（GM が本物に差し替えるまで通らない）。
 - quest.id は `--quest-id`、無ければ最初の ID の `-` の前を大文字に。title は `--title` > 最初の行の Project > 「インポートした冒険」。
 - 出力した地図は `validateMap` に通ること。

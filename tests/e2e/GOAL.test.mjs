@@ -6,12 +6,21 @@ import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 import { ROOT, masume, masumeJson } from '../helpers.mjs';
 
+// 地図の外で GM が足した判定（地図は変えずに足したもの）。足したらここに書き、GOAL を封印し直す
+const EXTRA = ['tests/e2e/SOLO.test.mjs'];
+
 test('ほかのすべての判定が、まとめて通る', () => {
+  const map = JSON.parse(readFileSync(join(ROOT, 'quests', 'masume.map.json'), 'utf8'));
+  const sealed = Object.entries(map.nodes)
+    .filter(([id]) => id !== map.quest.goal)
+    .flatMap(([, n]) => n.check?.seal ?? [])
+    .filter((f) => /^tests\/e2e\/[^/]+\.test\.mjs$/.test(f));
+  assert.equal(sealed.length, 17, `地図のマスが封印する判定ファイルは17個（${sealed.length}）`);
   const files = readdirSync(join(ROOT, 'tests', 'e2e'))
     .filter((f) => f.endsWith('.test.mjs') && f !== 'GOAL.test.mjs')
     .sort()
     .map((f) => join('tests', 'e2e', f));
-  assert.equal(files.length, 17, `GOAL 以外の判定ファイル17個が揃っている（${files.length}）`);
+  assert.deepEqual(files, [...sealed, ...EXTRA].sort(), `GOAL 以外の判定ファイル（地図の17個 + 足した${EXTRA.length}個）が揃っている`);
   // 親の node --test から受け継ぐ NODE_TEST_CONTEXT があると、入れ子の node --test は判定を走らせない。外して本当に走らせる
   const env = { ...process.env };
   delete env.NODE_TEST_CONTEXT;

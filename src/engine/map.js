@@ -107,7 +107,11 @@ export function validateMap(map) {
     if (['task', 'camp'].includes(node.type) && members.length > 1) {
       error('E_SHARED_TASK', path, 'task / camp を複数の道で共有できません');
     }
-    if (node.type === 'gate' && members.length < 2) error('E_GATE_MEMBERS', path, 'ゲートには2人以上のメンバーが必要です');
+    // キャラクターが1人だけの地図では、あがりのゲートだけはその1人で戦える。
+    const soloGoal = characters.length === 1 && members.length === 1 && id === map.quest?.goal;
+    if (node.type === 'gate' && members.length < 2 && !soloGoal) {
+      error('E_GATE_MEMBERS', path, 'ゲートには2人以上のメンバーが必要です（1人だけの地図のあがりを除く）');
+    }
 
     const checkError = (message) => error('E_CHECK', `${path}.check`, message);
     if (node.type === 'camp') {
