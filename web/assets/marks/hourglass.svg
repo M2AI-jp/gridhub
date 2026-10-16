@@ -8,7 +8,7 @@
     <path d="M23 51Q27 43 32 42Q37 43 41 51Z" fill="var(--pawn, #ffe45c)" stroke-width="2"/>
     <path d="M11 8Q32 5 53 8L53 13Q32 16 11 13Z" fill="var(--pawn, #ffe45c)"/>
     <path d="M11 51Q32 48 53 51L53 56Q32 59 11 56Z" fill="var(--pawn, #ffe45c)"/>
-    <path d="M21 20Q21 25 25 29" stroke-width="1.5"/>
-    <path d="M56 22L60 20M57 33L61 33" stroke="#d94a3a" stroke-width="2"/>
+    <path d="M58 22L58 29M54.5 25.5L61.5 25.5" stroke="#d94a3a" stroke-width="2"/>
+    <path d="M6 36L6 40M4 38L8 38" stroke-width="2"/>
   </g>
 </svg>
