@@ -1,0 +1,8 @@
+=== H1: node checks/H1.mjs ===
+PASS H1: E2Eの全シナリオが成功
+
+(exit 0, 258ms)
+=== H2: node checks/H2.mjs ===
+PASS H2: E2Eの全シナリオが成功
+
+(exit 0, 601ms)

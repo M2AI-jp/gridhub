@@ -65,6 +65,9 @@ canonical(v):
 | `note` | `{character, text}` | 日誌 |
 | `amended` | `{version, map_file, map_hash}` | 地図の改訂 |
 | `loaded` | `{to_seq}` | 過去の状態のロード |
+| `wish` | `{text, gm, model}` | 冒険の始まりの願い（第2章） |
+| `sortie` | `{character, node, agent, model}` | エージェントの出撃（第2章。盤面の状態は変えない） |
+| `returned` | `{sortie, character, node_before, node_after, advanced, code, output, output_hash}` | エージェントの帰還（第2章。`output` は `outputs/sortie-<出撃のseq>.log`） |
 
 - `output` は `.masume` からの相対パス（例 `"outputs/000042.log"`）。`output_hash` はその中身の sha256。
 - `git` は `{head:"<sha>"|null, dirty:true|false}`。ルートが git 管理外なら `null`。

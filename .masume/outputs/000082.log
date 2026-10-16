@@ -1,0 +1,31 @@
+=== P1: node --test tests/e2e/P1.test.mjs ===
+✔ パーティは自分で進み、ボス戦をして、ハンコ待ちで止まる (2198.60775ms)
+✔ 進めないキャラクターは2回で迷子になり、パーティは止まる (488.789459ms)
+✔ --only と --rounds (905.705208ms)
+✔ --parallel: 同時に出撃する人数を守る (4961.763167ms)
+✔ エージェントに渡す環境変数とプロンプトのファイル、タイムアウト (1688.900167ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10302.474917
+
+(exit 0, 10348ms)
+=== P2: node --test tests/e2e/P2.test.mjs ===
+✔ --dry-run: claude と codex のコマンド、何も記録しない (510.879416ms)
+✔ プロンプトに入れること (495.660292ms)
+✔ .masume/party.json の既定値と、MASUME_AGENT_OVERRIDE (989.081792ms)
+✔ SIGINT で出撃中のエージェントを止め、帰還を記録して終わる (354.486334ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 10334.814708
+
+(exit 0, 10386ms)

@@ -409,3 +409,172 @@ CSV は1行目が `ID,Title,Description,Status,Assignee,Project,Milestone,Labels
 - `web/index.html` が盤面。通常は `/api/state` と `/api/stream` を使う。
 - `?fixture=<name>` のときは `web/fixtures/<name>-state.json` を読む（サーバー無しで見られる）。
 - 駒は `web/assets/sprites/<job>.svg` があれば使い、無ければ手描き風の丸い駒で代用する。
+
+---
+
+# 第2章の契約 —「xxxのようなアプリを作りたい」から、エージェントたちがあがるまで
+
+第1章で、ルール・冒険の書・盤面ができた。第2章では、それを**製品の流れ**にする。
+
+```
+願い（masume quest / 盤面の入口） → GM の LLM が地図と最初の判定を書く → 冒険の書が生まれる
+ → パーティ出撃（masume party / 盤面の出撃ボタン） → キャラクターごとにエージェントが出撃し、1マスずつ進む
+ → ゲートでボス戦（パーティが自動で） → 人間のハンコ → あがり
+```
+
+縄張り（第2章で増えるもの）:
+
+| 縄張り | 持ち主 |
+| --- | --- |
+| `src/engine/**`、`src/commands/{sortie,return,wish}.js`（と既存の書記のコマンド） | 書記 `engine` |
+| `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
+| `src/quest/**`、`src/commands/quest.js` | 語り部 `teller`（新） |
+| `src/party/**`、`src/commands/party.js` | 軍師 `party`（新） |
+| `src/linear/**`、`src/commands/{export,import,linear}.js` | 地図職人 `gmkit` |
+| `web/assets/marks/**` | 絵師 `assets` |
+| `web/index.html`、`web/board/**`、`web/fixtures/**` | 盤面 `board`（賢者クロード） |
+| `tests/**`（`tests/helpers2.mjs` を含む）、`docs/**`、`bin/**`、`quests/masume.map.json` ほか | GM |
+
+`bin/masume.js` の受付係には、GM が `sortie` `return` `wish` `quest` `party` `linear` を足しておく。
+
+## 12. 出撃の記録（書記）
+
+### イベント（SAVE_FORMAT に追加）
+
+| type | data | 意味 |
+| --- | --- | --- |
+| `wish` | `{text, gm, model}` | 冒険の始まりの願い（`gm` は `claude` / `codex` / `cmd`、`model` は文字列か null） |
+| `sortie` | `{character, node, agent, model}` | キャラクターにエージェントが出撃した（`node` = そのときの `at`、`agent` は `claude` / `codex` / `cmd` / 自由な名前、`model` は文字列か null） |
+| `returned` | `{sortie, character, node_before, node_after, advanced, code, output, output_hash}` | 出撃したエージェントが帰還した。`sortie` = 出撃イベントの seq、`node_after` = 帰還時の `at`（あがりなら null）、`advanced` = 出撃時より `pos` が進んでいる（またはあがった）、`code` = エージェントの終了コード、`output` = `outputs/sortie-<出撃のseq 6桁>.log`（エージェントの出力。先にファイルを書いてから追記する） |
+
+- これらは盤面の状態（位置・レベル）を変えない。再生では無視してよい（ビューにだけ使う）。
+- `verify` は第1章どおり、`output` を持つイベントの出力ファイルとハッシュを確かめる。
+
+### ビュー（§5 に追加）
+
+- `characters[].sortie` … いま出撃中なら `{seq, agent, model, node, since}`（`since` = 出撃イベントの ts）、そうでなければ `null`。出撃中 = その `sortie` イベントの seq を `data.sortie` に持つ `returned` がまだ無い。
+- `characters[].sorties` … そのキャラクターの `sortie` イベントの数。
+- `log[].text`: `wish` →「願い: <text>」、`sortie` →「<名前> が出撃した（<agent>[ <model>]）」、`returned` →「<名前> が帰還した（<node_before> → <node_after か あがり>、進んだ / 進めなかった）」。`ok` は `sortie`/`wish` は null、`returned` は `advanced`。
+- `brief`（テキスト）は出撃中なら「出撃中: <agent>（seq N から）」の行を出す。`brief --json` に `sortie` を足す（ビューと同じ形か null）。
+
+### CLI
+
+| コマンド | 挙動 |
+| --- | --- |
+| `sortie <characterId> --agent <name> [--model M]` | `sortie` を記録して seq を出す。知らないキャラ `E_UNKNOWN`/2、人間 `E_USAGE`/2、あがり済み `E_DONE`/2、すでに出撃中 `E_BUSY`/2 |
+| `return <characterId> --sortie <seq> --code <n> [--log <file>]` | `outputs/sortie-<seq>.log` に `--log` の中身（無ければ空）を書き、`returned` を記録する。`node_before` は出撃イベントの `node`、`advanced` は出撃時点の `pos`（seq までを再生した状態）と今の `pos` を比べる。その出撃がすでに帰還済み・存在しない・別のキャラなら `E_USAGE`/2 |
+| `wish <text…> [--gm G] [--model M]` | `wish` を記録する |
+
+モジュール API（`src/engine/index.js`）に足す:
+
+```js
+export function recordSortie(root, characterId, { actor = 'party', agent, model = null })        // → event
+export function recordReturn(root, characterId, { actor = 'party', sortie, code, log = '' })     // → event
+export function recordWish(root, { actor = 'gm', text, gm = null, model = null })                // → event
+```
+
+## 13. 軍師（パーティ出撃）
+
+`masume party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--dry-run] [--dir D]`
+
+- 既定: `--agent claude`、`--model` なし（claude は `sonnet`）、`--parallel 3`、`--rounds 40`。`<root>/.masume/party.json`（`{agent, model, parallel}`）があればその値が既定になる。
+- 環境変数 `MASUME_AGENT_OVERRIDE` があれば、`--agent` に関係なくそれを使う（テストや社内ラッパー用）。
+
+### 1巡の流れ
+
+1. ビューを読む。`finished` なら `あがり！` を出して終了コード 0。
+2. ready なゲートがあれば、パーティ自身がボス戦をする（エンジンの `check(root, gateId, {actor: 'party'})` か CLI）。結果を出す。
+3. 候補 = `kind: agent`・`status: working`・出撃中でない・`--only` に含まれる（指定時）・**迷子**でないキャラクター。
+   迷子 = この `party` の実行中に、進めずに帰還したことが2回続いたキャラクター。
+4. 候補もなく、出撃中もいなければ止まる。理由を出して終了コード 2:
+   人間のハンコ待ちのマスがあれば `ハンコ待ち: <マスID>…`、迷子がいれば `迷子: <キャラID>…`、`--rounds` を使い切ったら `巡回の上限`。
+5. 出撃中が `--parallel` 未満の間、候補を1人ずつ出撃させる（1キャラにつき同時に1エージェント）:
+   `sortie` を記録 → エージェントを起動 → 終了したら出力を `outputs/sortie-<seq>.log` に書き → `returned` を記録 → 1. に戻る。
+6. 帰還1回を1巡と数える。
+
+`SIGINT`/`SIGTERM` を受けたら、出撃中のエージェントを止め、それぞれ `code: 130` で `returned` を記録して終了コード 130。
+
+### エージェントの起動（アダプタ）
+
+| agent | コマンド（cwd = ゲームのルート、プロンプトは stdin） |
+| --- | --- |
+| `claude` | `claude -p --model <M または sonnet> --permission-mode bypassPermissions` |
+| `codex` | `codex exec -C <root> -s workspace-write --skip-git-repo-check [-m <M>] -` |
+| `cmd:<command>` | `/bin/sh -c <command>` |
+
+すべてのエージェントに環境変数 `MASUME_DIR`（ゲームのルート）、`MASUME_BIN`（`bin/masume.js` の絶対パス）、`MASUME_CHARACTER`、`MASUME_NODE`（出撃時の `at`）、`MASUME_PROMPT_FILE`（プロンプトを書いたファイル）を渡す。
+1回の出撃のタイムアウトは `MASUME_SORTIE_TIMEOUT` 秒（既定 3600）。超えたら止めて `code: 124`。出力は stdout+stderr を最大 200KB。
+
+`--dry-run` は何も記録・起動せず、候補ごとに `出撃予定: <キャラID> <コマンド>` とプロンプトの先頭を出して終了コード 0。
+
+### プロンプト（日本語）に必ず入れること
+
+- キャラクターの名前と ID、`masume brief <id>` のテキスト全文
+- 守ること: 現在のマスだけをやる / 縄張り（territory）の外を編集しない / 封印された判定ファイルと地図を編集しない / git の書き込み操作をしない
+- 宣言判定のコマンドをそのまま: `node "<MASUME_BIN>" check <id> --as <id> --no-boss --dir "<root>"`（ゲートのボス戦はパーティがする）
+- 日誌のコマンド: `node "<MASUME_BIN>" note <id> "<申し送り>" --as <id> --dir "<root>"`
+- 止まる条件: 現在のマスを1つ突破したら、または宣言判定に2回失敗したら、そこで止まって短く報告する
+
+## 14. 語り部（願いから冒険をつくる）
+
+`masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--dry-run]`
+
+- ルート = `--dir`（無ければ作る）かカレント。冒険の書があれば `--force` なしで `E_EXISTS`/2。
+- 環境変数 `MASUME_GM_OVERRIDE` があれば、`--gm` に関係なくそれを使う。
+- `<root>/WISH.md` に願いを書く。
+- GM のプロンプト（日本語）をつくる。必ず入れること:
+  願いの全文 / `docs/GM_GUIDE.md` の全文 / `docs/CONTRACTS.md` の §2（地図）と §10（職業と色） /
+  指示「ルートに `quest.map.json` を書く。判定ファイル（E2E）は、パーティが止まらずに進めるよう、**できるだけすべての task と gate の分**を書いて `check.seal` に入れる（少なくとも各エージェントの道の最初の task の分は必ず）。判定はいまは落ちること（まだ何も実装されていない）。本物の外部サービスは使わない。アプリそのものは実装しない」
+- GM を起動する（§13 と同じアダプタ。cwd = ルート、プロンプトは stdin。環境変数 `MASUME_DIR` `MASUME_BIN` `MASUME_WISH` `MASUME_PROMPT_FILE`）。GM の出力は `<root>/quest.log` に追記する。
+- GM が終わったら `quest.map.json` を `validateMap` で検査する。エラーなら、エラー（`[CODE] path: message` の行）と「`quest.map.json` を直して」を書いた追いプロンプトで GM をもう一度起動する（`--retries` 回まで、既定 2）。
+- 正しければ `newGame(root, 'quest.map.json')`（存在する判定ファイルは自動で封印）→ `wish` を記録 → 要約（キャラクター・マス・ゲートの数、ふっかつのじゅもん、次の一手 `masume serve` / `masume party`）を出して終了コード 0。
+- 直らなければ `E_INVALID_MAP`/1。GM が 0 以外で終わったら `E_GM`/2。地図が書かれなかったら `E_GM`/2。
+- `--dry-run` は GM を起動せず、GM のコマンドとプロンプトの先頭を出して終了コード 0（何も書かない）。
+
+## 15. 伝令（入口と出撃の窓口）
+
+- `startServer` は、ルートに冒険の書が**まだ無くても**起動する（ロビー）。そのとき `GET /api/state` は 404 `{ok:false, code:'E_NO_GAME'}`。
+  冒険の書が生まれたら `change` を SSE で送る（まだ無いファイルも0.5秒ごとに見張る）。
+- `POST /api/quest` `{wish, gm, model?}`（wish 1〜2000文字、gm は `claude`/`codex`）→ 冒険の書があれば 409 `E_EXISTS`、生成中なら 409 `E_BUSY`、それ以外は `masume quest <wish> --dir <root> --gm <gm> [--model M]` を別プロセスで起動して 202 `{ok:true}`。子プロセスの出力は `<root>/quest.log`。
+- `GET /api/quest` → `{ok:true, running, code, log}`（`code` は終了コードか null、`log` は `quest.log` の末尾200行）。
+- `POST /api/sortie` `{agent, model?, parallel?, only?}`（agent は `claude`/`codex`、parallel は 1〜8、only は キャラIDの配列）→ 冒険の書が無ければ 409 `E_NO_GAME`、出撃中なら 409 `E_BUSY`、それ以外は `masume party --dir <root> --agent <agent> [...]` を別プロセスで起動して 202 `{ok:true}`。出力は `<root>/.masume/party.log`。
+- `GET /api/party` → `{ok:true, running, code, log}`（`party.log` の末尾200行）。
+- `POST /api/party/stop` → 動いていれば SIGINT を送って `{ok:true, stopped:true}`、いなければ `{ok:true, stopped:false}`。
+- これらの POST も X-Masume と Origin の確認をする。HTTP から `cmd:` は受け付けない（400）。
+  `MASUME_GM_OVERRIDE` / `MASUME_AGENT_OVERRIDE` はサーバーの環境変数として子プロセスにそのまま渡る（そちらが優先される）。
+
+## 16. 地図職人（Linear と同期する）
+
+`masume linear push [--team KEY] [--project NAME] [--dry-run]` / `masume linear pull --team KEY [--project NAME] --out <map.json>`
+
+- エンドポイント `MASUME_LINEAR_URL`（既定 `https://api.linear.app/graphql`）、`Authorization: <LINEAR_API_KEY>`。キーが無ければ `E_LINEAR_AUTH`/2。
+- POST の body は `{query, variables, operationName}`。使う操作（operationName と変数）は次のとおり:
+
+| operationName | 使いみち | variables | 返り値（data の中） |
+| --- | --- | --- | --- |
+| `MasumeTeams` | チームと状態を引く | `{key}` | `teams.nodes[0] = {id, key, name, states: {nodes: [{id, name, type}]}}` |
+| `MasumeProjects` | プロジェクトを探す | `{name}` | `projects.nodes = [{id, name}]` |
+| `MasumeProjectCreate` | プロジェクトを作る | `{input: {name, teamIds}}` | `projectCreate = {success, project: {id, name}}` |
+| `MasumeIssueCreate` | issue を作る | `{input: {teamId, projectId, title, description, stateId}}` | `issueCreate = {success, issue: {id, identifier, url}}` |
+| `MasumeIssueUpdate` | issue を更新する | `{id, input: {title, description, stateId}}` | `issueUpdate = {success, issue: {id, identifier}}` |
+| `MasumeIssues` | issue を読む | `{key, project}`（project は null 可） | `issues.nodes = [{identifier, title, description, estimate, createdAt, state: {name, type}, assignee: {name} or null, labels: {nodes: [{name}]}, project: {name} or null}]` |
+
+- push: `--team` は `.masume/linear.json` の `team` か必須。プロジェクト名は `--project` か quest.title（無ければ作る）。task と gate を1件ずつ、
+  `.masume/linear.json` の `issues[マスID]` に issue id があれば `MasumeIssueUpdate`、無ければ `MasumeIssueCreate` して id と identifier を保存する。
+  title は `[マスID] タイトル`、description は §9 の Description と同じ、state は §9 の Status を Linear の状態に写す:
+  `Backlog`→type `backlog`、`Todo`→`unstarted`、`In Progress`→名前が `In Progress` の `started`（無ければ最初の `started`）、`In Review`→名前が `In Review` の `started`（無ければ最初の `started`）、`Done`→`completed`。
+  `.masume/linear.json` = `{team, project: {id, name}, issues: {<マスID>: {id, identifier}}}`。stdout に `作成 N件・更新 M件`。
+- `--dry-run` は通信せずに、送る予定（マスIDと Status）を出す。
+- pull: `MasumeIssues` の結果を §9 の import と同じ規則で地図の下書きにする（Created = `createdAt`、Assignee = `assignee.name`、Labels = `labels.nodes[].name`、Status = `state.name`、ID = `identifier`、Project = `project.name`）。
+
+## 17. 絵師（第2章のしるし）
+
+`web/assets/marks/<id>.svg` と `web/assets/marks/index.json`（`{"marks":[{"id","name"}]}`、次の順で4件）:
+`crystal` 水晶玉（願い） / `hourglass` 砂時計（出撃中） / `bubble` ふきだし（考え中） / `horn` 角笛（出撃の合図）。
+制約は §10 の道具の絵と同じ（`var(--pawn, #ffe45c)` は必須ではない）。
+
+## 18. 盤面（賢者クロード）
+
+- 冒険の書が無いときは**入口**（ロビー）: 願いの入力欄・GM の選択（claude / codex）・モデル（任意）・「冒険をはじめる」→ `POST /api/quest`。生成中は `GET /api/quest` の様子を見せ、冒険の書が生まれたら盤面に切り替わる。
+- **出撃**: なかまの欄の「出撃させる」→ エージェント・モデル・同時に何人・誰を、を選んで `POST /api/sortie`。出撃中は `GET /api/party` の様子と「止める」。
+  出撃中のキャラクターの駒には、ふきだしとエージェント名が出る。キャラクターシートに出撃の記録と、帰還ごとの出力へのリンク。

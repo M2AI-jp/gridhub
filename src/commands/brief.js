@@ -15,6 +15,7 @@ export async function run(argv, ctx) {
   console.log(`Lv${c.level} / 経験値 ${c.xp}/${c.xp_next} / 視界 ${c.vision}マス先 / ${statuses[c.status]}`);
   console.log(`担当: ${c.module ?? '指定なし'}`);
   console.log(`縄張り: ${c.territory.join('、') || '指定なし'}`);
+  if (report.sortie) console.log(`出撃中: ${report.sortie.agent}（seq ${report.sortie.seq} から）`);
   if (report.current) {
     const node = report.current;
     console.log(`現在のマス: ${node.id}「${node.title}」（${node.type}）`);

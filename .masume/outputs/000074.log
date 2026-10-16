@@ -1,0 +1,14 @@
+=== E5: node --test tests/e2e/E5.test.mjs ===
+✔ 出撃と帰還（進んだ） (755.956708ms)
+✔ 出撃と帰還（進めなかった）、出せない相手 (2227.342458ms)
+✔ 願いの記録と、モジュール API (297.418792ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3334.852792
+
+(exit 0, 3378ms)

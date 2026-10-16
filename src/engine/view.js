@@ -1,4 +1,5 @@
 import { inspectLog } from './store.js';
+import { sortieStatus } from './sortie.js';
 import { isSealed, nodeXp, replay } from './state.js';
 
 function nodeState(node, progress, members, characters) {
@@ -23,7 +24,7 @@ function nodeState(node, progress, members, characters) {
 function logEntry(event, map) {
   const data = event.data ?? {};
   const character = data.character ?? null;
-  const node = data.gate ?? data.node ?? null;
+  const node = data.gate ?? data.node ?? data.node_before ?? null;
   const name = map?.characters.find(({ id }) => id === character)?.name ?? character;
   let ok = null;
   let text;
@@ -60,6 +61,14 @@ function logEntry(event, map) {
     case 'note': text = `${name} の日誌: ${data.text}`; break;
     case 'amended': text = `地図が第${data.version}版に改訂された`; break;
     case 'loaded': text = `冒険の書の seq ${data.to_seq} の状態をロードした`; break;
+    case 'wish': text = `願い: ${data.text}`; break;
+    case 'sortie':
+      text = `${name} が出撃した（${data.agent}${data.model ? ` ${data.model}` : ''}）`;
+      break;
+    case 'returned':
+      ok = data.advanced === true;
+      text = `${name} が帰還した（${data.node_before} → ${data.node_after ?? 'あがり'}、${ok ? '進んだ' : '進めなかった'}）`;
+      break;
     default: text = `イベントが記録された（${event.type}）`;
   }
   return {
@@ -76,6 +85,7 @@ export function buildView(root) {
     : snapshot.records.slice(0, snapshot.errors[0].seq).map(({ event }) => event);
   const state = replay(root, events);
   const map = state?.map;
+  const sorties = sortieStatus(events);
   const characters = map?.characters.map((definition) => {
     const character = state.characters[definition.id];
     return {
@@ -91,6 +101,8 @@ export function buildView(root) {
       clears: character.clears,
       fails: character.fails,
       last_note: character.lastNote,
+      sortie: sorties.current[definition.id] ?? null,
+      sorties: sorties.counts[definition.id] ?? 0,
     };
   }) ?? [];
   const byId = Object.fromEntries(characters.map((character) => [character.id, character]));

@@ -1,0 +1,13 @@
+=== S4: node --test tests/e2e/S4.test.mjs ===
+✔ ロビー: 冒険の書が無くても開き、願いから冒険が生まれると知らせる (284.686625ms)
+✔ 出撃の窓口: パーティを起動し、様子を見せ、止められる (2298.82825ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5640.980292
+
+(exit 0, 5687ms)

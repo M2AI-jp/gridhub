@@ -39,6 +39,7 @@ export function brief(root, characterId) {
         const member = view.characters.find((c) => c.id === id);
         return member.at !== current.id || member.status !== 'waiting';
       }) : [],
+    sortie: character.sortie,
     notes,
     rules: [
       '現在のマスだけをやる',

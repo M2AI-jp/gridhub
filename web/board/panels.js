@@ -30,6 +30,7 @@ export function renderParty(view, sprites, selectedChar) {
           <span class="pc-meta">${esc(agentLabel(c))}・${esc(jobJa(c.job))}・<b>Lv${c.level}</b></span>
           <span class="pc-xp" title="経験値 ${c.xp}/${c.xp_next}"><i style="width:${pct}%"></i></span>
           <span class="pc-where" data-status="${c.status}">${esc(CHAR_STATUS[c.status] || c.status)}${node ? ` @ ${esc(c.at)} ${esc(node.title)}` : ''}</span>
+          ${c.sortie ? `<span class="pc-sortie">⏳ 出撃中（${esc(c.sortie.agent)}${c.sortie.model ? ' ' + esc(c.sortie.model) : ''}）</span>` : ''}
           <span class="pc-progress" aria-label="道のり ${progress}%"><i style="width:${progress}%"></i></span>
         </span>
       </button>`;
@@ -136,6 +137,28 @@ export function renderNodeDrawer(view, id, { live }) {
     ${log ? `<h4>このマスの記録</h4><ol class="mini-log">${log}</ol>` : ''}`;
 }
 
+/** 出撃の記録: 出撃1回につき1行。帰還があれば、その出力へのリンク */
+function sortieRows(view, c) {
+  const mine = (view.log || []).filter((e) => e.character === c.id && (e.type === 'sortie' || e.type === 'returned'));
+  const rows = [];
+  for (const e of mine) {
+    if (e.type === 'sortie') rows.push({ sortie: e, ret: null });
+    else if (rows.length && !rows[rows.length - 1].ret) rows[rows.length - 1].ret = e;
+  }
+  if (!rows.length && !c.sorties) return '';
+  const items = rows
+    .reverse()
+    .map(
+      ({ sortie, ret }) => `<li class="sortie-row ${ret ? (ret.ok ? 'ok' : 'ng') : 'open'}">
+        <span class="sr-text">${esc(sortie.text)}${ret ? ` → ${esc(ret.text.replace(/^.*が帰還した/, '帰還'))}` : ' → 出撃中…'}</span>
+        <small>#${sortie.seq}・${esc(fmtTime(sortie.ts))}</small>
+        ${ret ? `<a href="api/output/${ret.seq}" target="_blank" rel="noopener">出力</a>` : ''}
+      </li>`,
+    )
+    .join('');
+  return `<h4>出撃の記録 <small>${c.sorties ?? rows.length}回</small></h4><ol class="sortie-list">${items}</ol>`;
+}
+
 export function renderCharDrawer(view, id, sprites) {
   const c = view.characters.find((x) => x.id === id);
   if (!c) return '';
@@ -169,6 +192,7 @@ export function renderCharDrawer(view, id, sprites) {
       <dt>戦績</dt><dd>突破 ${c.clears} ・ 失敗 ${c.fails}</dd>
       ${c.last_note ? `<dt>日誌</dt><dd class="note">「${esc(c.last_note)}」</dd>` : ''}
     </dl>
+    ${sortieRows(view, c)}
     <p class="hint">このキャラクターを動かすエージェントへの最初の指示: <code>masume brief ${esc(c.id)}</code> を読んで、現在のマスだけを実装し、<code>masume check ${esc(c.id)}</code> で宣言判定。</p>
     <h4>道のり</h4>
     <ol class="steps">${steps}</ol>`;

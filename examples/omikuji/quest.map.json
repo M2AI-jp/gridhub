@@ -1,0 +1,205 @@
+{
+  "masume": 1,
+  "quest": {
+    "id": "OMK",
+    "title": "おみくじを引いて記録する",
+    "pitch": "6種類の運勢と助言をCLIで引き、seedで再現し、JSONと履歴で振り返る",
+    "goal": "GOAL"
+  },
+  "characters": [
+    {
+      "id": "fortune",
+      "name": "占い師",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "priest",
+      "color": "purple",
+      "module": "6種類の運勢・助言と再現可能な抽選",
+      "territory": ["src/fortune/**"],
+      "path": ["F1", "F2", "G1", "FC", "F3", "GOAL"]
+    },
+    {
+      "id": "history",
+      "name": "書記",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "scribe",
+      "color": "blue",
+      "module": "JSON Linesの履歴追記・一覧・保全",
+      "territory": ["src/history/**"],
+      "path": ["H1", "H2", "G1", "HC", "H3", "GOAL"]
+    },
+    {
+      "id": "cli",
+      "name": "伝令",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "herald",
+      "color": "orange",
+      "module": "引数解釈・利用者向け表示・抽選と履歴の接続",
+      "territory": ["src/cli/**"],
+      "path": ["C1", "C2", "G1", "CC", "C3", "GOAL"]
+    }
+  ],
+  "nodes": {
+    "F1": {
+      "type": "task",
+      "title": "六つの運勢と助言をそろえる",
+      "detail": "占い師はCONTRACTS.md §1〜3を読み、src/fortune/** の中にカタログの入口を作る。判定は node src/fortune/main.mjs --catalog を別プロセスで実行する。stdoutは大吉・中吉・小吉・吉・末吉・凶の順の6件の {fortune,advice} 配列と末尾LFだけ、stderrは空、終了0とする。各助言は日本語を含む1〜120文字の一行で、再起動しても変わらないこと。判定は一時ディレクトリで実行し、履歴が作られないことも確認する。助言の文言は担当が決める。ほかの担当のファイルは不要。抽選機能はこのマスでは作らない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/F1.mjs",
+        "seal": ["checks/F1.mjs", "checks/support.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "@here",
+      "labels": ["fortune"]
+    },
+    "F2": {
+      "type": "task",
+      "title": "seedから同じ運勢を引く",
+      "detail": "占い師はCONTRACTS.md §2〜3に従い、F1のカタログからseed付き抽選を実装する。判定の入口は node src/fortune/main.mjs --seed <文字列> と --catalog。stdoutは正確に {fortune,advice,seed} のJSONとLF、終了0。seedのUTF-8 SHA-256の先頭4バイトを符号なしビッグエンディアンで読み、6で割った余りをカタログの添字にする。数値風・空白入り・日本語・引用符入りのseedを変更せず、別プロセスの再実行でも同じ値を返す。判定は固定コーパスで6種類に到達し、助言がカタログと一致し、履歴へ書かないことを確かめる。他担当は不要。通常の乱数抽選はF3の範囲。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/F2.mjs",
+        "seal": ["checks/F2.mjs", "checks/support.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "F1",
+      "labels": ["fortune", "seed"]
+    },
+    "H1": {
+      "type": "task",
+      "title": "履歴を保存順に読み出す",
+      "detail": "書記はCONTRACTS.md §1〜2・§4を読み、src/history/** に履歴一覧の入口を作る。判定は OMIKUJI_HISTORY_FILE=<一時パス> node src/history/main.mjs list を別プロセスで実行する。未作成ならstdoutは [] とLF、終了0、親ディレクトリもファイルも作らない。判定が用意した正常なJSON Linesを読むと、Record配列をファイル順で返し、元のバイト列を変えない。空ファイルと末尾LFなしの正常な履歴も読めること。Recordの形はCONTRACTS.md §2。占い師の実装は不要で、履歴の助言文をカタログへ問い合わせない。追記と破損処理は後のマス。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/H1.mjs",
+        "seal": ["checks/H1.mjs", "checks/support.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "@here",
+      "labels": ["history"]
+    },
+    "H2": {
+      "type": "task",
+      "title": "引いた結果を一件ずつ残す",
+      "detail": "書記はCONTRACTS.md §2・§4に従って正常な追記を実装する。判定は node src/history/main.mjs append のstdinに {fortune,advice,seed} のJSONを渡し、同じ入口を別プロセスで繰り返す。保存処理時点のISO UTC日時drawnAtを加え、stdoutのRecordとファイルの追加行が一致すること。既存行を変更せず1回に1件だけ追記し、同じseedも重複排除しない。親ディレクトリを必要時だけ作る。listで保存順を再確認し、末尾LFなしの既存行には区切りを補う。OMIKUJI_HISTORY_FILEの絶対・相対・空白入りパスと、未設定/空文字時のcwd/.omikuji-history.jsonlを判定する。他担当は不要。不正入力や破損の保全はH3で扱う。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/H2.mjs",
+        "seal": ["checks/H2.mjs", "checks/support.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "H1",
+      "labels": ["history", "persistence"]
+    },
+    "C1": {
+      "type": "task",
+      "title": "使い方と入力エラーを伝える",
+      "detail": "伝令はCONTRACTS.md §1・§2・§5を読み、src/cli/** に利用者向け入口を作る。判定は伝令のディレクトリだけを一時プロジェクトへコピーし、node src/cli/main.mjs --help と不正引数で起動する。他担当の入口は置かない。helpは「使い方」と --seed / --json / --history / --help を含み、終了0・stderr空とする。未知引数、位置引数、seed欠落/空文字、重複、historyとseedの併用、helpとの併用はstdout空・[E_USAGE]の1行・終了2。解析・helpには他担当も履歴も必要なく、ファイルを作らないこと。正常な抽選の接続はC2で扱う。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/C1.mjs",
+        "seal": ["checks/C1.mjs", "checks/support.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "@here",
+      "labels": ["cli"]
+    },
+    "C2": {
+      "type": "task",
+      "title": "seed付きの結果を表示して保存する",
+      "detail": "伝令はCONTRACTS.md §1〜5の接続契約に従い、seed付き抽選を占い師→書記append→表示の順に処理する。入口は node src/cli/main.mjs --seed <文字列> [--json]。JSONはDrawだけ、通常表示は「運勢: <fortune>」「ひとこと: <advice>」の2行。判定は伝令を一時プロジェクトへコピーし、同じ相対位置に固定応答の占い師・書記フェイクを置くため、ほかの担当の完成を待たない。子プロセスはprocess.execPathと引数配列で呼び、入口をimport.meta.url基準で解決する。seedを改変せず1回だけ抽選し、同じDrawをstdinで1回だけappendへ渡し、保存先の環境変数とcwdを継承してから表示すること。判定は順序と回数も記録する。製品にフェイクやテスト専用分岐を実装しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/C2.mjs",
+        "seal": ["checks/C2.mjs", "checks/support.mjs", "checks/fakes.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "C1",
+      "labels": ["cli", "seed"]
+    },
+    "G1": {
+      "type": "gate",
+      "title": "結合して抽選結果を履歴に残す",
+      "detail": "3担当の実物を初めてつなぐ。CONTRACTS.md §1〜6に従い、判定は各担当の入口を単独で確認してから、一時cwdと履歴パスで node src/cli/main.mjs --seed <文字列> --json、および同じseedのテキスト抽選を別プロセスで実行する。抽選・助言・seedが占い師の結果と一致し、書記が2回分を順に保存してlistで再読でき、実際のJSON Linesと表示が一致すれば合格。まだ通常抽選や利用者向け--historyは要求しない。単独入口の失敗はその担当のMASUME_BLAMEを出し、保存連携の原因が確定できない場合はcli,historyを示す。ゲートで新しい共有実装ファイルは作らない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/G1.mjs",
+        "seal": ["checks/G1.mjs", "checks/support.mjs"]
+      },
+      "xp": 3,
+      "labels": ["integration"]
+    },
+    "FC": {
+      "type": "camp",
+      "title": "占い師が宿で休む",
+      "detail": "占い師の保存地点。G1までのseed付き抽選を保ち、次の現在マスで通常抽選を仕上げる。",
+      "xp": 0
+    },
+    "HC": {
+      "type": "camp",
+      "title": "書記が宿で休む",
+      "detail": "書記の保存地点。G1までの正常な保存を保ち、次の現在マスで履歴の保全を仕上げる。",
+      "xp": 0
+    },
+    "CC": {
+      "type": "camp",
+      "title": "伝令が宿で休む",
+      "detail": "伝令の保存地点。G1までの抽選表示を保ち、次の現在マスで一覧と失敗伝達を仕上げる。",
+      "xp": 0
+    },
+    "F3": {
+      "type": "task",
+      "title": "通常の抽選と不正入力を扱う",
+      "detail": "占い師はCONTRACTS.md §2〜3の通常抽選とエラー処理を実装する。判定は node src/fortune/main.mjs を複数回起動し、6種類のどれかと対応する助言、seed:nullを持つDrawだけが返ることを確認する。乱数は等確率に選ぶ実装とし、判定は有限回の出目の偏りで失敗させない。--catalogとの併用、未知引数、seed欠落/空文字/重複などはstdout空、[E_USAGE]の1行、終了2。判定はseed付きの再現とカタログも再確認し、履歴を作らないことを確かめる。他担当は不要。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/F3.mjs",
+        "seal": ["checks/F3.mjs", "checks/support.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "@here",
+      "labels": ["fortune", "errors"]
+    },
+    "H3": {
+      "type": "task",
+      "title": "壊れた履歴と保存失敗から守る",
+      "detail": "書記はCONTRACTS.md §4のエラーと保全を実装する。入口は node src/history/main.mjs list / append。判定がstdinへ不正JSON・不正Drawを渡すとE_RECORD/2、履歴ファイルに不正JSON・不正Record・途中の空行を置くとE_HISTORY_CORRUPT/1、親を通常ファイルにした保存先等ではE_HISTORY_IO/1を返すこと。すべてstdout空・stderr1行とする。既存ファイルのバイト列を変更せず、新規の不正入力では履歴や親を作らない。未知コマンド・余分な引数はE_USAGE/2。正常append/listも再確認する。判定はOS権限に依存するchmodや実サービスを使わない。他担当は不要。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/H3.mjs",
+        "seal": ["checks/H3.mjs", "checks/support.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "@here",
+      "labels": ["history", "errors"]
+    },
+    "C3": {
+      "type": "task",
+      "title": "通常抽選と履歴と失敗を伝える",
+      "detail": "伝令はCONTRACTS.md §5に従い、node src/cli/main.mjs [--json]、--history [--json] と依存先の失敗伝達を仕上げる。通常抽選はseedを渡さず、保存後にDrawを表示する。履歴JSONはRecord配列、テキストは日時・運勢・助言のタブ区切り、空なら「履歴はありません。」の1行とする。判定は一時プロジェクトの固定応答フェイクを使い、履歴時にlistだけを1回呼んで抽選/appendしないことを確認する。抽選失敗では保存を呼ばず、保存失敗では成功結果を出さず、依存先のエラー行と終了コードを引き継ぐ。不正JSONなどの成功応答はE_DEPENDENCY/1とする。helpや入力エラーも他担当を呼ばないことを再確認する。ほかの担当の進行には依存しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/C3.mjs",
+        "seal": ["checks/C3.mjs", "checks/support.mjs", "checks/fakes.mjs"]
+      },
+      "xp": 1,
+      "rollback_to": "@here",
+      "labels": ["cli", "history", "errors"]
+    },
+    "GOAL": {
+      "type": "gate",
+      "title": "おみくじを引いて履歴で振り返る",
+      "detail": "あがり。CONTRACTS.md §1〜6とASSUMPTIONS.mdの完成場面を実物だけで外から確かめる。判定は一時cwdで node src/cli/main.mjs、--seed <文字列>、--json、--history、--history --json を別プロセスで起動する。seedコーパスが6種類へ到達し、同seedのDrawは再現し、テキストにも同じ運勢と助言が出ること。通常抽選も含む成功回数と実際のJSON Lines件数が一致し、保存順・seed・助言・保存日時が正しく、一覧の再実行・help・入力エラーでファイルが変わらないこと。環境変数での保存先と既定のcwd/.omikuji-history.jsonlを確認し、壊れた履歴や保存不能では成功表示せず元の内容を守ること。単独入口で原因が分かる箇所では担当IDのMASUME_BLAME、結合境界では関係するIDを出す。すべての道はここで終わる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/GOAL.mjs",
+        "seal": ["checks/GOAL.mjs", "checks/support.mjs"]
+      },
+      "xp": 3,
+      "labels": ["integration", "goal"]
+    }
+  }
+}

@@ -23,9 +23,15 @@ const COMMANDS = {
   note: ['書記', '日誌を書く（次の自分への申し送り）', 'note <characterId> <text>'],
   amend: ['書記', '地図を改訂する（歴史は書き換えられない）', 'amend <map.json>'],
   load: ['書記', '過去の状態をロードする', 'load <seq|ふっかつのじゅもん>'],
+  sortie: ['書記', 'エージェントの出撃を記録する', 'sortie <characterId> --agent <name> [--model M]'],
+  return: ['書記', 'エージェントの帰還を記録する', 'return <characterId> --sortie <seq> --code <n> [--log file]'],
+  wish: ['書記', '冒険の始まりの願いを記録する', 'wish <text> [--gm G] [--model M]'],
+  quest: ['語り部', '「xxxのようなアプリを作りたい」から冒険をつくる', 'quest "<願い>" [--gm claude|codex] [--dir D]'],
+  party: ['軍師', 'キャラクターごとにエージェントを出撃させる', 'party [--agent claude|codex] [--model M] [--parallel N]'],
   serve: ['伝令', '盤面（5mm方眼ノート）を開く', 'serve [--port 5005]'],
   export: ['地図職人', 'Linear形式で書き出す', 'export linear [--format csv|json] [--out file]'],
   import: ['地図職人', 'Linear CSVから地図の下書きをつくる', 'import linear <file.csv> --out <map.json>'],
+  linear: ['地図職人', 'Linear と同期する', 'linear push|pull [--team KEY] [--project NAME]'],
 };
 
 function usage() {

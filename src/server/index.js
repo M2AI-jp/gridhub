@@ -1,9 +1,10 @@
 import { createServer as createHttpServer } from 'node:http';
 import { spawn } from 'node:child_process';
-import { watchFile as watchPath, unwatchFile } from 'node:fs';
+import { existsSync, mkdirSync, watchFile as watchPath, unwatchFile } from 'node:fs';
 import { readFile, realpath, stat } from 'node:fs/promises';
-import { extname, isAbsolute, relative, resolve, sep } from 'node:path';
+import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ChildJob, tailLines } from './jobs.js';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -39,8 +40,54 @@ function sendError(response, status, error) {
   });
 }
 
-function apiError(code, message) {
-  return Object.assign(new Error(message), { code });
+function apiError(code, message, status) {
+  return Object.assign(new Error(message), status === undefined ? { code } : { code, status });
+}
+
+const badRequest = (message) => apiError('E_USAGE', message, 400);
+
+const GMS = ['claude', 'codex']; // HTTP から cmd: は受け付けない（任意のコマンド実行になるため）
+const MODEL_PATTERN = /^[A-Za-z0-9][\w.:@/+[\]-]{0,99}$/u;
+const CHARACTER_PATTERN = /^[a-z][a-z0-9-]{0,23}$/u;
+
+function isObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function parseModel(value) {
+  if (value === undefined || value === null || value === '') return null;
+  if (typeof value !== 'string' || !MODEL_PATTERN.test(value)) throw badRequest('model が不正です');
+  return value;
+}
+
+function parseQuestBody(body) {
+  if (typeof body.wish !== 'string') throw badRequest('wish を文字列で指定してください');
+  const wish = body.wish.trim();
+  const length = [...wish].length;
+  if (length < 1 || length > 2000) throw badRequest('wish は 1〜2000 文字で書いてください');
+  if (wish.includes('\0')) throw badRequest('wish に使えない文字が含まれています');
+  if (!GMS.includes(body.gm)) throw badRequest('gm は claude か codex を指定してください');
+  return { wish, gm: body.gm, model: parseModel(body.model) };
+}
+
+function parseSortieBody(body) {
+  if (!GMS.includes(body.agent)) throw badRequest('agent は claude か codex を指定してください');
+  let parallel;
+  if (body.parallel !== undefined && body.parallel !== null) {
+    if (!Number.isInteger(body.parallel) || body.parallel < 1 || body.parallel > 8) {
+      throw badRequest('parallel は 1〜8 の整数で指定してください');
+    }
+    parallel = body.parallel;
+  }
+  let only;
+  if (body.only !== undefined && body.only !== null) {
+    if (!Array.isArray(body.only) || body.only.length > 64
+      || body.only.some((id) => typeof id !== 'string' || !CHARACTER_PATTERN.test(id))) {
+      throw badRequest('only はキャラクターIDの配列で指定してください');
+    }
+    only = [...new Set(body.only)];
+  }
+  return { agent: body.agent, model: parseModel(body.model), parallel, only: only?.length ? only : undefined };
 }
 
 function allowedOrigin(request) {
@@ -49,6 +96,26 @@ function allowedOrigin(request) {
     const origin = new URL(request.headers.origin);
     const host = new URL(`http://${request.headers.host}`);
     return ['http:', 'https:'].includes(origin.protocol) && origin.host === host.host;
+  } catch {
+    return false;
+  }
+}
+
+const LOOPBACK_ADDRESS = /^(127\.\d+\.\d+\.\d+|::1|::ffff:127\.\d+\.\d+\.\d+)$/u;
+const LOOPBACK_HOST = /^(localhost|[^.]+\.localhost|127\.\d+\.\d+\.\d+|\[::1\])$/iu;
+
+/**
+ * ループバックで待ち受けているときは、Host もループバックの名前だけ受ける（DNS rebinding 対策）。
+ * 外のページが自分のドメインをこの端末の 127.0.0.1 に向けても、Host がそのドメインなので弾ける。
+ * LAN に公開した（--host 0.0.0.0 など）ときは、公開した本人の選択なので確認しない。
+ */
+function allowedHost(request) {
+  const local = request.socket.localAddress;
+  if (typeof local !== 'string' || !LOOPBACK_ADDRESS.test(local)) return true;
+  const host = request.headers.host;
+  if (host === undefined) return true;
+  try {
+    return LOOPBACK_HOST.test(new URL(`http://${host}`).hostname);
   } catch {
     return false;
   }
@@ -93,7 +160,10 @@ async function serveStatic(response, root, pathname) {
 }
 
 /** 盤面・更新通知・ハンコとボス戦の窓口を提供する、未 listen の HTTP サーバー。 */
-export function createServer({ webRoot, getView, watchFile, onStamp, onBattle, outputFor }) {
+export function createServer({
+  webRoot, getView, watchFile, onStamp, onBattle, outputFor,
+  onQuest, getQuest, onSortie, getParty, onPartyStop,
+}) {
   const root = resolve(webRoot);
   const watchedPath = watchFile == null ? null : resolve(watchFile);
   const streams = new Map();
@@ -144,46 +214,87 @@ export function createServer({ webRoot, getView, watchFile, onStamp, onBattle, o
     streams.clear();
   }
 
+  // 窓口ごとの「中身の検査」と「呼ぶ先」。入口・出撃の窓口（§15）は、呼ぶ先を渡されたときだけ開く。
+  const postRoutes = {
+    '/api/stamp': {
+      parse(body) {
+        if (['node', 'as'].some((field) => typeof body[field] !== 'string' || !body[field].trim())) {
+          throw badRequest('node・as を文字列で指定してください');
+        }
+        return { node: body.node, as: body.as };
+      },
+      call: (value) => onStamp(value),
+      status: 200,
+    },
+    '/api/battle': {
+      parse(body) {
+        if (typeof body.gate !== 'string' || !body.gate.trim()) throw badRequest('gate を文字列で指定してください');
+        return { gate: body.gate };
+      },
+      call: (value) => onBattle(value),
+      status: 200,
+    },
+  };
+  if (typeof onQuest === 'function') {
+    postRoutes['/api/quest'] = { parse: parseQuestBody, call: (value) => onQuest(value), status: 202 };
+  }
+  if (typeof onSortie === 'function') {
+    postRoutes['/api/sortie'] = { parse: parseSortieBody, call: (value) => onSortie(value), status: 202 };
+  }
+  if (typeof onPartyStop === 'function') {
+    postRoutes['/api/party/stop'] = { parse: () => ({}), call: () => onPartyStop(), status: 200, optionalBody: true };
+  }
+  const getRoutes = {};
+  if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
+  if (typeof getParty === 'function') getRoutes['/api/party'] = getParty;
+
   async function handlePost(request, response, pathname) {
     if (request.headers['x-masume'] !== '1' || !allowedOrigin(request)) {
       sendError(response, 403, apiError('E_FORBIDDEN', 'このリクエストは許可されていません'));
       return;
     }
-    if (pathname !== '/api/stamp' && pathname !== '/api/battle') {
+    const route = Object.hasOwn(postRoutes, pathname) ? postRoutes[pathname] : undefined;
+    if (route === undefined) {
       sendText(response, 404, '窓口が見つかりません');
       return;
     }
 
     let body;
+    let value;
     try {
       const chunks = [];
       for await (const chunk of request) chunks.push(chunk);
-      body = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+      const text = Buffer.concat(chunks).toString('utf8');
+      body = route.optionalBody && !text.trim() ? {} : JSON.parse(text);
     } catch {
       sendError(response, 400, apiError('E_USAGE', 'JSON が不正です'));
       return;
     }
-    const fields = pathname === '/api/stamp' ? ['node', 'as'] : ['gate'];
-    if (body === null || typeof body !== 'object' || Array.isArray(body)
-      || fields.some((field) => typeof body[field] !== 'string' || !body[field].trim())) {
-      sendError(response, 400, apiError('E_USAGE', `${fields.join('・')} を文字列で指定してください`));
+    try {
+      if (!isObject(body)) throw badRequest('JSON はオブジェクトで送ってください');
+      value = route.parse(body);
+    } catch (error) {
+      if (error?.status !== 400) throw error;
+      sendError(response, 400, error);
       return;
     }
 
     let result;
     try {
-      result = pathname === '/api/stamp'
-        ? await onStamp({ node: body.node, as: body.as })
-        : await onBattle({ gate: body.gate });
+      result = await route.call(value);
     } catch (error) {
       if (typeof error?.code !== 'string') throw error;
-      sendError(response, 409, error);
+      sendError(response, error.status ?? 409, error);
       return;
     }
-    sendJson(response, 200, result);
+    sendJson(response, route.status, result);
   }
 
   async function handleRequest(request, response) {
+    if (!allowedHost(request)) {
+      sendError(response, 403, apiError('E_FORBIDDEN', 'このホスト名ではアクセスできません'));
+      return;
+    }
     let pathname;
     try {
       // URL の正規化で「..」が消える前に、実際の要求パスを検証する。
@@ -202,14 +313,31 @@ export function createServer({ webRoot, getView, watchFile, onStamp, onBattle, o
       return;
     }
     if (request.method !== 'GET') {
-      const allow = ['/api/stamp', '/api/battle'].includes(pathname) ? 'POST' : 'GET';
+      const methods = [];
+      if (Object.hasOwn(getRoutes, pathname) || !Object.hasOwn(postRoutes, pathname)) methods.push('GET');
+      if (Object.hasOwn(postRoutes, pathname)) methods.push('POST');
+      const allow = methods.join(', ');
       sendText(response, 405, 'このメソッドには対応していません', { Allow: allow });
       return;
     }
 
     if (pathname === '/api/state') {
       response.setHeader('Cache-Control', 'no-store');
-      sendJson(response, 200, await getView());
+      let view;
+      try {
+        view = await getView();
+      } catch (error) {
+        // 冒険の書がまだ無い（ロビー）。サーバーの不具合ではない
+        if (error?.code !== 'E_NO_GAME') throw error;
+        sendError(response, 404, error);
+        return;
+      }
+      sendJson(response, 200, view);
+      return;
+    }
+    if (Object.hasOwn(getRoutes, pathname)) {
+      response.setHeader('Cache-Control', 'no-store');
+      sendJson(response, 200, await getRoutes[pathname]());
       return;
     }
     if (pathname === '/api/health') {
@@ -270,12 +398,25 @@ export function createServer({ webRoot, getView, watchFile, onStamp, onBattle, o
   return server;
 }
 
-/** engine の公開 API を使って、指定した冒険の盤面を公開する。 */
+/**
+ * engine の公開 API を使って、指定した冒険の盤面を公開する。
+ * 冒険の書がまだ無い場所でも開く（ロビー）。願いを受けて語り部（masume quest）を、出撃の合図を受けて軍師（masume party）を、
+ * 別プロセスで起こす。stop() で HTTP と子プロセスをまとめて片付ける。
+ */
 export async function startServer({ root, port = 5005, host = '127.0.0.1', webRoot }) {
   // createServer 単体は engine の存在や実装状況に依存させない。
   const engine = await import('../engine/index.js');
   const gameRoot = resolve(root);
   const bin = fileURLToPath(new URL('../../bin/masume.js', import.meta.url));
+  const questLog = join(gameRoot, 'quest.log');
+  const partyLog = join(gameRoot, '.masume', 'party.log');
+  const quest = new ChildJob();
+  const party = new ChildJob();
+
+  const hasGame = () => existsSync(engine.logFile(gameRoot));
+  const requireGame = () => {
+    if (!hasGame()) throw apiError('E_NO_GAME', '冒険の書がまだありません。入口で願いを書いて冒険をはじめてください');
+  };
 
   function startBattle(gate) {
     // 判定の終了は待たない。子プロセスが冒険の書に結果を記録し、SSE が通知する。
@@ -293,21 +434,34 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     });
   }
 
+  const job = (running, code, file) => async () => ({
+    ok: true,
+    running: running(),
+    code: code(),
+    log: await tailLines(file),
+  });
+
   const server = createServer({
     webRoot: webRoot ?? fileURLToPath(new URL('../../web/', import.meta.url)),
-    getView: () => engine.buildView(gameRoot),
+    getView: () => {
+      requireGame();
+      return engine.buildView(gameRoot);
+    },
     watchFile: engine.logFile(gameRoot),
     outputFor: async (seq) => {
+      if (!hasGame()) return null;
       const file = await engine.outputFile(gameRoot, seq);
       return file == null ? null : readFile(file, 'utf8');
     },
     onStamp: async ({ node, as }) => {
+      requireGame();
       const result = await engine.stamp(gameRoot, node, { actor: as, as, boss: false });
       const ready = result.ready ?? null;
       if (ready !== null) await startBattle(ready);
       return { ok: true, ready };
     },
     onBattle: async ({ gate }) => {
+      requireGame();
       const view = await engine.buildView(gameRoot);
       if (!view.integrity.ok) throw apiError('E_CURSED', '冒険の書が呪われています');
       if (view.nodes[gate]?.type !== 'gate') throw apiError('E_UNKNOWN', 'その結合ゲートはありません');
@@ -317,7 +471,61 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       await startBattle(gate);
       return { ok: true, ready: gate };
     },
+
+    // ---- 入口（語り部）----
+    onQuest: async ({ wish, gm, model }) => {
+      // 確認から起動までに await を挟まない（同時に2つ起こさないため）
+      if (hasGame() || existsSync(join(gameRoot, '.masume'))) {
+        throw apiError('E_EXISTS', 'ここにはもう冒険の書があります');
+      }
+      if (quest.running) throw apiError('E_BUSY', 'いま冒険をつくっています');
+      mkdirSync(gameRoot, { recursive: true });
+      // 願いは「--」のあとに置く（先頭が - の願いがオプションに化けないように）
+      const args = [bin, 'quest', '--dir', gameRoot, '--gm', gm, ...(model ? ['--model', model] : []), '--', wish];
+      try {
+        await quest.start(args, { cwd: gameRoot, logFile: questLog });
+      } catch (error) {
+        throw apiError('E_SPAWN', `語り部を起こせませんでした: ${error.message}`, 500);
+      }
+      return { ok: true };
+    },
+    getQuest: job(() => quest.running, () => quest.code, questLog),
+
+    // ---- 出撃（軍師）----
+    onSortie: async ({ agent, model, parallel, only }) => {
+      requireGame();
+      if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
+      if (only !== undefined) {
+        const view = await engine.buildView(gameRoot);
+        const unknown = only.filter((id) => !view.characters.some((c) => c.id === id));
+        if (unknown.length > 0) throw apiError('E_UNKNOWN', `そんなキャラクターはいません: ${unknown.join('、')}`, 400);
+        // view を待つあいだに、別の出撃が始まっていないか確かめ直す
+        if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
+      }
+      const args = [
+        bin, 'party', '--dir', gameRoot, '--agent', agent,
+        ...(model ? ['--model', model] : []),
+        ...(parallel === undefined ? [] : ['--parallel', String(parallel)]),
+        ...(only === undefined ? [] : ['--only', only.join(',')]),
+      ];
+      const heading = `\n===== 出撃 ${new Date().toISOString()} =====\n$ masume ${args.slice(1).join(' ')}\n`;
+      try {
+        await party.start(args, { cwd: gameRoot, logFile: partyLog, heading });
+      } catch (error) {
+        throw apiError('E_SPAWN', `軍師を起こせませんでした: ${error.message}`, 500);
+      }
+      return { ok: true };
+    },
+    getParty: job(() => party.running, () => party.code, partyLog),
+    onPartyStop: () => ({ ok: true, stopped: party.interrupt() }),
   });
+
+  // 伝令が突然終わるときも、子（語り部・軍師）を置き去りにしない（最後の手段。待てないので SIGINT を送るだけ）
+  const onExit = () => {
+    quest.interruptNow();
+    party.interruptNow();
+  };
+  process.once('exit', onExit);
 
   try {
     await new Promise((resolveListen, rejectListen) => {
@@ -334,9 +542,21 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       server.listen(port, host);
     });
   } catch (error) {
+    process.off('exit', onExit);
     await server.stop();
     throw error;
   }
+
+  // HTTP を閉じ、動いている子には SIGINT を伝えて（軍師は帰還を記録する）終わりを待つ
+  const stopHttp = server.stop;
+  let stopping;
+  const stop = () => {
+    stopping ??= Promise.all([stopHttp(), quest.terminate(), party.terminate()])
+      .then(() => {})
+      .finally(() => process.off('exit', onExit));
+    return stopping;
+  };
+  server.stop = stop;
 
   const actualPort = server.address().port;
   const urlHost = host.includes(':') ? `[${host}]` : host;
@@ -344,6 +564,6 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     server,
     url: `http://${urlHost}:${actualPort}/`,
     port: actualPort,
-    stop: () => server.stop(),
+    stop,
   };
 }

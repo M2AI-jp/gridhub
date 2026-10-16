@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>角笛</title>
+  <desc>黄色い角笛。細い吹き口から太いラッパ口へ広がり、赤い帯が巻かれ、口から音の線が飛び出している（出撃の合図）。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 41Q5 37 9 36Q29 37 43 20L53 34Q36 51 11 46Q7 45 6 41Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M43 20Q52 21 55 29Q55 33 53 34Q47 28 43 20Z" fill="#ffffff"/>
+    <path d="M23 38Q27 41 25 47" stroke="#d94a3a"/>
+    <path d="M32 33Q35 37 32 44" stroke="#d94a3a"/>
+    <path d="M14 38L15 44" stroke-width="2"/>
+    <path d="M52 9L50 4M59 14L63 11M61 22L63 22" stroke-width="2"/>
+  </g>
+</svg>

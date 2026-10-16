@@ -1,0 +1,12 @@
+=== G4: node --test tests/e2e/G4.test.mjs ===
+✔ 盤面の出撃ボタンで、駒がふきだしを出して進み、ボス戦を越え、ハンコであがる (8321.734917ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11379.654458
+
+(exit 0, 11423ms)

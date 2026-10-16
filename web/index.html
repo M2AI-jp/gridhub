@@ -36,7 +36,16 @@
   </header>
 
   <main class="desk">
-    <aside id="party" class="slip" aria-label="なかま"></aside>
+    <aside id="party" class="slip" aria-label="なかま">
+      <div id="party-list-wrap"></div>
+      <div id="party-controls">
+        <button id="sortie-open" class="act sortie">出撃させる</button>
+        <div id="party-status" data-running="false" aria-live="polite">
+          <span id="party-status-text">出撃していません</span>
+          <button id="party-stop" class="mini-btn dark" hidden>止める</button>
+        </div>
+      </div>
+    </aside>
 
     <section id="stage">
       <div id="view-board" class="view active">
@@ -81,6 +90,37 @@
           <p class="foot">くわしくは <code>docs/RULEBOOK.md</code>。「xxxのようなアプリを作りたい」から地図を作る手順は <code>docs/GM_GUIDE.md</code>。</p>
         </article>
       </div>
+      <section id="lobby" class="lobby" hidden aria-label="新しい冒険の入口">
+        <div class="lobby-card">
+          <p class="lobby-kicker">新しい冒険</p>
+          <h2>どんなアプリを作りたい？</h2>
+          <p class="lobby-lead">「○○のようなアプリを作りたい」と書くと、GM の LLM が開発のロードマップ全体を5mm方眼のすごろくにします。モジュールごとにキャラクター（エージェント）が並び、要所の結合ゲートで合流します。</p>
+          <form id="lobby-form">
+            <label class="field"><span>願い</span>
+              <textarea id="wish" rows="4" maxlength="2000" placeholder="例: ことづけのような、電話の用件をAIが聞いてメールで届けるアプリを作りたい"></textarea>
+            </label>
+            <div class="examples">
+              <button type="button" class="chip-btn" data-wish-example="おみくじを引けるコマンドラインのアプリを作りたい">おみくじCLI</button>
+              <button type="button" class="chip-btn" data-wish-example="メモを書いて一覧できる、ブラウザで動くメモアプリを作りたい">メモアプリ</button>
+              <button type="button" class="chip-btn" data-wish-example="家計簿のような、支出を記録して月ごとに集計するアプリを作りたい">家計簿</button>
+            </div>
+            <div class="field-row">
+              <label class="field"><span>GM</span>
+                <select id="gm"><option value="claude">Claude</option><option value="codex">Codex</option></select>
+              </label>
+              <label class="field"><span>モデル（任意）</span>
+                <input id="gm-model" type="text" placeholder="sonnet / opus / gpt-5 …" autocomplete="off">
+              </label>
+            </div>
+            <button id="start-quest" class="act quest" type="submit" disabled>冒険をはじめる</button>
+            <p class="hint">GM は地図（quest.map.json）と最初の判定（E2E）を書くだけで、アプリは作りません。作るのは、このあと出撃させるキャラクターたちです。</p>
+          </form>
+          <div id="quest-progress" hidden data-state="idle">
+            <p id="quest-phase" class="quest-phase"></p>
+            <pre id="quest-log"></pre>
+          </div>
+        </div>
+      </section>
       <div id="toast" aria-live="polite"></div>
     </section>
 
@@ -89,6 +129,29 @@
       <section id="log" aria-label="冒険の書"></section>
     </aside>
   </main>
+
+  <dialog id="sortie-modal" aria-labelledby="sortie-title">
+    <form id="sortie-form" method="dialog">
+      <h2 id="sortie-title">出撃させる</h2>
+      <p class="hint">選んだキャラクターごとにエージェントを1人ずつ出撃させます。エージェントは指令書を読んで、いまのマスだけを実装し、宣言判定します。ゲートのボス戦はパーティがします。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b></p>
+      <div class="field-row">
+        <label class="field"><span>エージェント</span>
+          <select id="sortie-agent"><option value="claude">Claude</option><option value="codex">Codex</option></select>
+        </label>
+        <label class="field"><span>モデル（任意）</span>
+          <input id="sortie-model" type="text" placeholder="sonnet / gpt-5 …" autocomplete="off">
+        </label>
+        <label class="field narrow"><span>同時に</span>
+          <input id="sortie-parallel" type="number" min="1" max="8" value="3">
+        </label>
+      </div>
+      <fieldset class="field"><legend>だれを</legend><div id="sortie-choices"></div></fieldset>
+      <div class="dialog-actions">
+        <button id="sortie-cancel" type="button" class="mini-btn plain">やめる</button>
+        <button id="sortie-go" type="submit" class="act sortie">出撃！</button>
+      </div>
+    </form>
+  </dialog>
 
   <script type="module" src="board/app.js"></script>
 </body>

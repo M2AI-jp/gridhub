@@ -1,0 +1,8 @@
+=== F1: node checks/F1.mjs ===
+PASS F1: E2Eの全シナリオが成功
+
+(exit 0, 129ms)
+=== F2: node checks/F2.mjs ===
+PASS F2: E2Eの全シナリオが成功
+
+(exit 0, 2702ms)

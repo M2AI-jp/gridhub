@@ -540,3 +540,81 @@ body.finished .cover { background-color: #3a2a1f; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
+
+/* ---------- 第2章: 入口（ロビー） ---------- */
+.lobby {
+  position: absolute; inset: 0; z-index: 7; overflow: auto; display: grid; place-items: center; padding: 24px 16px;
+  background-color: var(--paper);
+  background-image: radial-gradient(circle at 50% 30%, rgba(255, 228, 92, 0.25), transparent 55%),
+    linear-gradient(var(--grid-strong) 1px, transparent 1px), linear-gradient(90deg, var(--grid-strong) 1px, transparent 1px);
+  background-size: auto, 32px 32px, 32px 32px;
+}
+.lobby[hidden] { display: none; }
+.lobby-card { width: min(640px, 100%); background: #fff; border: 2px solid var(--ink); border-radius: 12px; padding: 22px 26px; box-shadow: 6px 6px 0 rgba(29, 43, 92, 0.16); }
+.lobby-kicker { margin: 0; font-family: var(--hand); font-size: 12px; color: var(--red); letter-spacing: 2px; }
+.lobby-kicker::before { content: '🔮 '; }
+.lobby h2 { font-family: var(--hand); font-size: 28px; margin: 4px 0 8px; }
+.lobby-lead { margin: 0 0 16px; line-height: 1.75; color: var(--ink-soft); }
+.field { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; border: 0; padding: 0; min-width: 0; flex: 1; }
+.field > span, .field > legend { font-size: 11.5px; color: var(--ink-soft); font-weight: 600; }
+.field textarea, .field input, .field select {
+  font: inherit; font-size: 14px; color: var(--ink); background: var(--paper); border: 1.5px solid var(--ink); border-radius: 6px; padding: 8px 10px;
+}
+.field textarea { font-family: var(--hand); font-size: 16px; line-height: 1.6; resize: vertical; min-height: 96px;
+  background-image: repeating-linear-gradient(180deg, transparent 0 25px, rgba(147, 201, 223, 0.5) 25px 26px); background-attachment: local; }
+.field textarea:focus, .field input:focus, .field select:focus { outline: 2px solid var(--sky); outline-offset: 1px; }
+.field.narrow { flex: 0 0 90px; }
+.field-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.examples { display: flex; flex-wrap: wrap; gap: 6px; margin: -4px 0 14px; }
+.chip-btn { font: inherit; font-size: 12px; background: var(--paper); border: 1px dashed var(--ink-soft); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+.chip-btn:hover { background: #fffbe0; border-style: solid; }
+.act.quest { background: var(--red); color: #fff; border-color: var(--ink); }
+.act.quest::before { content: '🔮 '; }
+.act:disabled { opacity: 0.45; cursor: not-allowed; }
+#quest-progress { margin-top: 16px; border-top: 1px dashed var(--pencil); padding-top: 12px; }
+#quest-progress[hidden] { display: none; }
+.quest-phase { font-family: var(--hand); font-size: 16px; margin: 0 0 8px; }
+#quest-progress[data-state='running'] .quest-phase::before { content: '🔮'; display: inline-block; margin-right: 6px; animation: crystal 1.6s ease-in-out infinite; }
+#quest-progress[data-state='failed'] .quest-phase { color: var(--red); }
+#quest-log { margin: 0; max-height: 220px; overflow: auto; background: var(--cover); color: #e8f1f8; border-radius: 6px; padding: 10px 12px; font-family: var(--mono); font-size: 11.5px; line-height: 1.55; white-space: pre-wrap; }
+@keyframes crystal { 50% { transform: scale(1.25) rotate(8deg); filter: drop-shadow(0 0 6px rgba(201, 162, 255, 0.9)); } }
+.live[data-mode='lobby'] { color: #ffe9a8; }
+.live[data-mode='lobby']::before { content: '🔮 '; }
+
+/* ---------- 第2章: 出撃 ---------- */
+#party-controls { padding: 10px; border-top: 1px dashed var(--pencil); display: flex; flex-direction: column; gap: 8px; }
+.act.sortie { margin: 0; background: var(--ink); color: #fff; font-size: 15px; padding: 9px 12px; }
+.act.sortie::before { content: '📯 '; }
+#party-status { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-soft); min-height: 24px; }
+#party-status[data-running='true'] { color: var(--ink); font-weight: 600; }
+#party-status-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mini-btn.dark { background: var(--red); color: #fff; border-color: var(--red); }
+.mini-btn.plain { background: #fff; color: var(--ink); border-color: var(--ink); padding: 8px 14px; font-size: 13px; }
+.pc-sortie { font-size: 11px; color: #6a3fb0; font-weight: 600; }
+#sortie-modal { border: 2px solid var(--ink); border-radius: 12px; padding: 0; width: min(560px, calc(100vw - 32px)); box-shadow: 8px 8px 0 rgba(29, 43, 92, 0.2); background: #fff; color: var(--ink); }
+#sortie-modal::backdrop { background: rgba(31, 42, 68, 0.45); }
+#sortie-form { padding: 20px 22px; }
+#sortie-form h2 { font-family: var(--hand); margin: 0 0 6px; }
+#sortie-choices { display: flex; flex-direction: column; gap: 4px; max-height: 240px; overflow: auto; }
+.choice { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid rgba(29, 43, 92, 0.15); border-radius: 6px; cursor: pointer; font-size: 13px; }
+.choice:hover { background: #fffbe0; }
+.choice-name { font-family: var(--hand); font-weight: 600; }
+.choice-at { color: var(--ink-soft); font-size: 11.5px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.choice-busy { font-size: 10.5px; color: #6a3fb0; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.dialog-actions .act { width: auto; }
+.sortie-bubble .bubble-bg { fill: #fff; stroke: #6a3fb0; stroke-width: 1.5; }
+.sortie-bubble .bubble-text { font-size: 10.5px; font-weight: 600; fill: #4b2a85; }
+.sortie-bubble { animation: bubble 1.8s ease-in-out infinite; }
+@keyframes bubble { 50% { transform: translateY(-2px); } }
+.sortie-list { list-style: none; margin: 0; padding: 0; font-size: 12px; }
+.sortie-row { display: flex; gap: 6px; align-items: baseline; padding: 4px 0; border-bottom: 1px dotted rgba(29, 43, 92, 0.15); }
+.sortie-row .sr-text { flex: 1; }
+.sortie-row.ok .sr-text::before { content: '◎ '; color: var(--red); }
+.sortie-row.ng .sr-text::before { content: '✗ '; }
+.sortie-row.open .sr-text::before { content: '⏳ '; }
+.sortie-row small { color: var(--pencil); }
+/* 入口にいる間は、冒険の書にまつわる飾りを隠し、入口だけを大きく見せる */
+body.in-lobby .desk { grid-template-columns: minmax(0, 1fr); }
+body.in-lobby #party, body.in-lobby #side, body.in-lobby #integrity, body.in-lobby .jumon-box, body.in-lobby .legend, body.in-lobby .zoom { display: none; }
+body.in-lobby #stage { min-height: 70vh; }

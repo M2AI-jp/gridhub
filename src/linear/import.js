@@ -54,7 +54,8 @@ function placeholder(id) {
   return { kind: 'cmd', run: `echo "TODO(GM): ${id} のE2E判定を書く" && exit 1`, seal: [] };
 }
 
-export function importLinear(text, { questId, title } = {}) {
+/** Linear の CSV を issue の記録（labels は配列）にする。 */
+export function recordsFromCsv(text) {
   const rows = parseCsv(text);
   if (rows.length === 0) invalid('CSV に列名がありません');
   const headers = rows.shift().map((value) => value.trim().toLowerCase());
@@ -65,10 +66,23 @@ export function importLinear(text, { questId, title } = {}) {
     estimate: column('estimate'), created: column('created', 'created at'), project: column('project'),
   };
   if (columns.id < 0 || columns.title < 0) invalid('CSV には ID（または Identifier）と Title 列が必要です');
-  const records = rows.filter((row) => row.some((cell) => cell !== '')).map((row, index) => {
+  return rows.filter((row) => row.some((cell) => cell !== '')).map((row, index) => {
     if (row.length !== headers.length) invalid(`CSV の ${index + 2} 行目の列数が合いません`);
-    return Object.fromEntries(Object.entries(columns).map(([key, at]) => [key, at < 0 ? '' : row[at]]));
+    const record = Object.fromEntries(Object.entries(columns).map(([key, at]) => [key, at < 0 ? '' : row[at]]));
+    record.labels = record.labels.split(',').map((value) => value.trim()).filter(Boolean);
+    return record;
   });
+}
+
+export function importLinear(text, options = {}) {
+  return mapFromRecords(recordsFromCsv(text), options);
+}
+
+/**
+ * issue の記録 { id, title, detail, status, assignee, labels[], estimate, created, project }（文字列）から
+ * 地図の下書きを作る。CSV の import と Linear からの pull が同じ規則を使う。
+ */
+export function mapFromRecords(records, { questId, title } = {}) {
   const active = records.filter((record) => !DONE.has(record.status.trim().toLowerCase()));
   const characters = [];
   const byName = new Map();
@@ -102,8 +116,8 @@ export function importLinear(text, { questId, title } = {}) {
     seen.add(id);
     const created = record.created.trim() === '' ? 0 : Date.parse(record.created);
     if (!Number.isFinite(created)) invalid(`${id} の Created が日時ではありません`);
-    const labels = record.labels.split(',').map((value) => value.trim()).filter(Boolean);
-    const node = { type: 'task', title: record.title, detail: record.detail, labels, check: placeholder(id) };
+    const labels = record.labels;
+    const node ={ type: 'task', title: record.title, detail: record.detail, labels, check: placeholder(id) };
     if (record.estimate.trim() !== '') {
       node.estimate = Number(record.estimate);
       if (!Number.isFinite(node.estimate)) invalid(`${id} の Estimate が数値ではありません`);

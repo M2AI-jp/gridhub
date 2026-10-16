@@ -1,0 +1,13 @@
+=== M4: node --test tests/e2e/M4.test.mjs ===
+✔ push: マスが Linear の issue になり、状態がそろう。2回目は更新だけ (1168.954459ms)
+✔ pull: Linear の issue から地図の下書きを作る (126.816458ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1346.6505
+
+(exit 0, 1390ms)

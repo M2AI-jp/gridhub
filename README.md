@@ -37,7 +37,29 @@ masume stamp <マスID> --as <人間のID>   # 人間のマスはハンコで進
 
 キャラクターIDやマスは `quests/tutorial/README.md` を見てください。
 
-### 「xxxのようなアプリを作りたい」から始める
+### 願いから、あがりまで（いちばん簡単な遊び方）
+
+```sh
+mkdir ~/omikuji && cd ~/omikuji
+masume serve                       # 盤面を開くと「どんなアプリを作りたい？」の入口が出る
+```
+
+入口に「おみくじを引けるコマンドラインのアプリを作りたい」のような**願い**を書いて「冒険をはじめる」。
+GM の LLM（Claude か Codex）が、開発のロードマップ全体を地図にし、判定（E2E）を書いて封印します。
+盤面に地図が出たら「出撃させる」。キャラクター（モジュール担当）ごとに LLM エージェントが**出撃**し、
+指令書を読んで1マスずつ実装・宣言判定し、ゲートのボス戦を越えて進みます。人間のマスはハンコで。
+
+同じことは CLI でもできます。
+
+```sh
+masume quest "おみくじを引けるコマンドラインのアプリを作りたい" --gm claude   # 願いから地図と判定を作る
+masume party --agent claude --model sonnet --parallel 3                       # パーティ出撃（codex も可）
+masume party --dry-run                                                        # 誰に何を出撃させるかだけ見る
+```
+
+`examples/` に、本物の願いから本物のエージェントであがった冒険が残っています。
+
+### 「xxxのようなアプリを作りたい」から始める（LLM に直接頼む）
 
 LLM（Claude / Codex など）に、こう頼みます。
 
@@ -62,12 +84,20 @@ masume brief <id> を読み、現在のマスだけを実装してください�
 ```sh
 masume import linear export.csv --out quests/mine.map.json   # 担当者ごとの道、E2E ラベルはゲートに
 masume export linear --format csv --out linear.csv            # 盤面の状態を Linear のステータスで書き出す
+LINEAR_API_KEY=lin_… masume linear push --team ENG            # Linear 本体に issue を作り、状態を同期する
+LINEAR_API_KEY=lin_… masume linear pull --team ENG --out quests/eng.map.json   # Linear の issue から地図を作る
 ```
+
+`masume linear push` は、判定に通ってマスが進むたびに流せば、Linear の issue の状態がすごろくの盤面と同じになります。
 
 ## コマンド
 
 | コマンド | すること |
 | --- | --- |
+| `masume quest "<願い>" [--gm claude\|codex]` | 願いから GM の LLM が地図と判定を書き、冒険を始める |
+| `masume party [--agent claude\|codex] [--parallel N]` | キャラクターごとにエージェントを出撃させ、ボス戦をしながら進める |
+| `masume sortie` / `masume return` / `masume wish` | 出撃・帰還・願いを冒険の書に記録する（外の指揮役用） |
+| `masume linear push\|pull` | Linear 本体と同期する |
 | `masume new <map>` | 地図から冒険の書をつくる |
 | `masume validate <map>` | 地図を検査する |
 | `masume serve [--port 5005]` | 盤面を開く（ライブ更新・ハンコ・ボス戦のボタン） |

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { startServer } from '../server/index.js';
@@ -32,12 +33,11 @@ export async function run(argv, ctx) {
     throw usageError('--dir に冒険の書のある場所を指定してください');
   }
 
-  const { findRoot } = await import('../engine/index.js');
-  const root = values.dir === undefined ? findRoot(ctx.cwd) : resolve(ctx.cwd, values.dir);
-  if (!root) {
-    throw Object.assign(new Error('冒険の書が見つかりません'), { code: 'E_NO_GAME', exitCode: 2 });
-  }
+  // 冒険の書が無くても開く（入口＝ロビー。CONTRACTS §15）。--dir が無ければ、上へたどって見つけた冒険の書、無ければカレント。
+  const { findRoot, logFile } = await import('../engine/index.js');
+  const root = values.dir === undefined ? (findRoot(ctx.cwd) ?? resolve(ctx.cwd)) : resolve(ctx.cwd, values.dir);
   const running = await startServer({ root, port, host: values.host });
+  const lobby = !existsSync(logFile(root));
 
   return new Promise((resolveRun, rejectRun) => {
     let stopping = false;
@@ -59,5 +59,6 @@ export async function run(argv, ctx) {
     process.on('SIGINT', shutdown);
     process.on('SIGTERM', shutdown);
     console.log(`盤面: ${running.url}`);
+    if (lobby) console.log('冒険の書はまだありません。盤面の入口で願いを書いて、冒険をはじめてください。');
   });
 }

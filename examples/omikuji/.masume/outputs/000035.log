@@ -1,0 +1,4 @@
+=== G1: node checks/G1.mjs ===
+PASS G1: E2Eの全シナリオが成功
+
+(exit 0, 531ms)

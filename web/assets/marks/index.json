@@ -1,0 +1,8 @@
+{
+  "marks": [
+    { "id": "crystal", "name": "水晶玉" },
+    { "id": "hourglass", "name": "砂時計" },
+    { "id": "bubble", "name": "ふきだし" },
+    { "id": "horn", "name": "角笛" }
+  ]
+}

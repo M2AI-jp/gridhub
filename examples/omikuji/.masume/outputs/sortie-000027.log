@@ -1,0 +1,1121 @@
+OpenAI Codex v0.153.4
+--------
+workdir: /Users/amano/dev/masume/examples/omikuji
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: ultra
+reasoning summaries: none
+session id: 01a14476-9800-7130-88d2-6db210bdf29a
+--------
+user
+あなたは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）の冒険に参加しているキャラクター「伝令」（ID: cli）です。
+
+冒険: おみくじを引いて記録する — 6種類の運勢と助言をCLIで引き、seedで再現し、JSONと履歴で振り返る
+作業場所（ゲームのルート。ここで作業する）: /Users/amano/dev/masume/examples/omikuji
+
+マスメでは、作るものを「マス」に分け、キャラクターが1マスずつ進みます。マスを突破できるのは、封印された判定（E2Eテスト）に通ったときだけで、「できました」という自己申告では進めません。
+あなたの仕事は、いまのマス（C2「seed付きの結果を表示して保存する」）の1つだけを実装して宣言判定に通し、そこで止まって報告することです。先のマスには手を出しません。
+
+## 指令書
+
+次は `masume brief cli` の出力です。現在のマス・判定・視界・仲間・自分の前の日誌が書いてあります。
+
+指令書: 伝令（cli / agent）
+Lv1 / 経験値 1/2 / 視界 0マス先 / 作業中
+担当: 引数解釈・利用者向け表示・抽選と履歴の接続
+縄張り: src/cli/**
+現在のマス: C2「seed付きの結果を表示して保存する」（task）
+伝令はCONTRACTS.md §1〜5の接続契約に従い、seed付き抽選を占い師→書記append→表示の順に処理する。入口は node src/cli/main.mjs --seed <文字列> [--json]。JSONはDrawだけ、通常表示は「運勢: <fortune>」「ひとこと: <advice>」の2行。判定は伝令を一時プロジェクトへコピーし、同じ相対位置に固定応答の占い師・書記フェイクを置くため、ほかの担当の完成を待たない。子プロセスはprocess.execPathと引数配列で呼び、入口をimport.meta.url基準で解決する。seedを改変せず1回だけ抽選し、同じDrawをstdinで1回だけappendへ渡し、保存先の環境変数とcwdを継承してから表示すること。判定は順序と回数も記録する。製品にフェイクやテスト専用分岐を実装しない。
+判定: node checks/C2.mjs
+封印: 封印済み
+失敗時の戻り先: C1
+視界に入っている先のマス:
+霧の中: 4マス
+仲間:
+  占い師（fortune）: F2 / 作業中 / Lv1
+  書記（history）: H2 / 作業中 / Lv1
+自分の日誌（新しい順）:
+  seq 23 2026-10-16T11:26:14.068Z: C1突破。src/cli/args.mjs に副作用のない引数解析、main.mjs にhelpとE_USAGE表示を実装。seedは変換せず保持し、全引数検証後にhelpを表示する。素振り・宣言判定とも成功。正常な抽選・履歴処理の接続は未実装。次の指令書とCONTRACTS.mdを確認して接続する。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: ほへほ へうだ らえつ そかた（seq 26）
+
+## 守ること
+
+- 現在のマスだけをやる。指令書に出ていない先のマス（霧の向こう）の内容は実装しない。
+- 自分の縄張りの中だけを編集する。縄張り: src/cli/**。縄張りの外のファイルを作らない・編集しない。必要なら最終報告の「GMへの依頼」に書く。
+- 封印された判定ファイル（checks/C2.mjs、checks/support.mjs、checks/fakes.mjs）と、地図（*.map.json）と、冒険の書（.masume/）は編集しない。封印を破ると記録され、判定できなくなる。
+- 判定のほうがおかしい（契約や指令書どおりに作っても通らない）と思ったら、判定を直さず、宣言もせずに、そこで止まって報告する。
+- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。
+- マスメのコマンドは brief / check / note だけを使う。new / seal / amend / load / repair / stamp / party / quest などは使わない。
+- 判定を通すために、テストの意図を回避する実装（テスト環境の検出、出力の決め打ち）をしない。
+- 外部パッケージを勝手に増やさない。本物の外部サービスや課金・秘密の鍵を使わない。
+
+## 進め方
+
+1. 上の指令書の「現在のマス」の内容を読み、実装する。
+2. 素振り（判定コマンドを自分で走らせる。何度走らせてもよく、記録されない）:
+
+       node checks/C2.mjs
+
+   通るまで直す。
+3. 素振りが通ったら、宣言判定（公式の判定。記録される。素振りが通ってからにする）:
+
+       node "/Users/amano/dev/masume/bin/masume.js" check cli --as cli --no-boss --dir "/Users/amano/dev/masume/examples/omikuji"
+
+   - 通ると「判定成功」と出て、1マス進む。
+   - 落ちるとレベルが下がり、前のマスに巻き戻されることがある（累積判定: 宿屋より後の自分のマスの判定をまとめて走らせる）。失敗の出力を読み、`node "/Users/amano/dev/masume/bin/masume.js" brief cli --dir "/Users/amano/dev/masume/examples/omikuji"` で現在のマスを確かめ直して、直してから素振りをやり直す。
+   - 結合ゲート（ボス戦）に着いたら「待機」になる。ボス戦は軍師（パーティ）がやるので、あなたは何もしなくてよい。
+4. 日誌（次の自分への申し送りを短く。何を作ったか、次のマスで気をつけること）:
+
+       node "/Users/amano/dev/masume/bin/masume.js" note cli "<申し送り>" --as cli --dir "/Users/amano/dev/masume/examples/omikuji"
+
+## 止まる条件
+
+- 現在のマスを1つ突破したら（宣言判定が「判定成功」になったら）、日誌を書いて、そこで止まる。次のマスには進まない。
+- 宣言判定に2回失敗したら、そこで止まる。なぜ落ちたかを報告する。
+- 結合ゲートに着いて待機になったら、そこで止まる。
+- 判定や契約がおかしくて進めないと分かったら、そこで止まる。
+
+止まったら、次の形で短く報告して終わる:
+
+    ## 報告書 伝令 <マスID>
+    - 変更したファイル:
+    - 判定の結果（最後の数行）:
+    - 申し送り（次のマスの自分へ）:
+    - GMへの依頼（契約の不足・縄張りの外で必要なこと）:
+
+codex
+私は伝令（cli）として、C2の実装・素振り・宣言判定・日誌記録を行い、C2突破後に停止します。これはユーザーの明示指示に基づきます。まずSSoTである `docs/RULEBOOK.md`、`docs/CONTRACTS.md`、現在の指令書と実装を順に読み、契約を確認します。現時点ではファイルの内容は未確認です。編集範囲は `src/cli/**` に限定し、冒険の書への記録は指定された `check` と `note` コマンドだけで行います。
+exec
+/bin/zsh -lc "pwd
+rg --files -g 'AGENTS.md' -g 'RULEBOOK.md' -g 'CONTRACTS.md' -g '*map.json' -g 'src/cli/**' -g 'checks/C[12].mjs' -g 'checks/support.mjs' -g 'checks/fakes.mjs' -g 'package.json'
+cat docs/RULEBOOK.md" in /Users/amano/dev/masume/examples/omikuji
+ exited 1 in 0ms:
+/Users/amano/dev/masume/examples/omikuji
+src/cli/main.mjs
+src/cli/args.mjs
+quest.map.json
+checks/fakes.mjs
+checks/support.mjs
+checks/C1.mjs
+checks/C2.mjs
+CONTRACTS.md
+cat: docs/RULEBOOK.md: No such file or directory
+
+exec
+/bin/zsh -lc "rg --files -g 'AGENTS.md' -g 'RULEBOOK.md' -g 'CONTRACTS.md' -g 'package.json' /Users/amano/dev/masume
+ls -la
+cat /Users/amano/dev/masume/docs/RULEBOOK.md" in /Users/amano/dev/masume/examples/omikuji
+ succeeded in 0ms:
+/Users/amano/dev/masume/AGENTS.md
+/Users/amano/dev/masume/examples/omikuji/CONTRACTS.md
+/Users/amano/dev/masume/package.json
+/Users/amano/dev/masume/docs/RULEBOOK.md
+/Users/amano/dev/masume/docs/CONTRACTS.md
+total 2248
+drwxr-xr-x@ 11 amano  staff      352 Oct 16 20:25 .
+drwxr-xr-x@  3 amano  staff       96 Oct 16 16:15 ..
+drwxr-xr-x@  5 amano  staff      160 Oct 16 20:26 .masume
+-rw-r--r--@  1 amano  staff     4149 Oct 16 16:20 ASSUMPTIONS.md
+-rw-r--r--@  1 amano  staff    10461 Oct 16 16:20 CONTRACTS.md
+-rw-r--r--@  1 amano  staff      376 Oct 16 16:15 WISH.md
+drwxr-xr-x@ 15 amano  staff      480 Oct 16 16:26 checks
+-rw-r--r--@  1 amano  staff    22111 Oct 16 16:15 quest-prompt-1.txt
+-rw-r--r--@  1 amano  staff  1082014 Oct 16 16:29 quest.log
+-rw-r--r--@  1 amano  staff    13752 Oct 16 16:22 quest.map.json
+drwxr-xr-x@  5 amano  staff      160 Oct 16 20:25 src
+# マスメ ルールブック（rules 1）
+
+> 5mm方眼ノートに描いたすごろくで、ソフトウェア開発を進めるゲーム。
+> Linear や Jira の「文字だけのタスク」に、**盤面・駒・セーブデータ**という「状態」を持たせる。
+
+小学生のころ、方眼ノートにマス目を引いて、すごろく兼RPGを作って兄弟で遊んだ。
+マスメはそれを開発に持ち込む。人間も LLM エージェントも、同じ盤面を見て「いまどこにいて、次に何をして、どこで合流するか」を共有する。
+
+---
+
+## 0. なぜゲームにするのか
+
+LLM エージェントに開発を任せると、だいたい次のことが起きる。
+
+| 起きること | マスメのルール |
+| --- | --- |
+| コンテキストが切れると、どこまでやったか分からなくなる | 進捗は**冒険の書**（追記専用のセーブデータ）にだけ記録される。`masume brief` を読めば誰でも再開できる |
+| 「できました」と言うが、実は動いていない | 進めるのは**判定（E2E）に通ったときだけ**。自己申告では1マスも進めない |
+| テストを書き換えて通してしまう | 判定ファイルは GM が**封印**する。改変すると「封印が破れている」と記録され、判定できない |
+| 頼んでいない所まで手を出して全体を壊す | 見えるのは**視界**の範囲だけ（霧）。触ってよいのは**縄張り**だけ |
+| 後から別の変更で、前にできたことが壊れる | 判定は**累積**。宿屋（セーブポイント）以降のマスの判定を毎回まとめて再実行する |
+| モジュールを結合したら動かない | 道は一本道ではない。要所に**結合ゲート（ボス戦）**があり、仲間が全員そろってから結合E2Eで戦う |
+| セーブデータ自体が壊れる・食い違う | 冒険の書は**ハッシュの鎖**。1文字でも改ざんされると「呪われています」と検出され、修復・ロードできる |
+| いまの状態を短く伝えられない | **ふっかつのじゅもん**（12文字）で「その時点の盤面」を一意に指せる |
+
+Git/GitHub はコードの履歴を守る。マスメは**「誰が・どこまで・何を検証済みか」という進行の履歴**を守る。
+
+---
+
+## 1. 登場するもの
+
+| ゲーム | 開発での意味 | Linear でいうと |
+| --- | --- | --- |
+| **冒険（クエスト）** | 作りたいプロダクト全体 | Project |
+| **地図**（`*.map.json`） | 開発ロードマップ全体。GM が作る | Project の issue 群と依存関係 |
+| **キャラクター（駒）** | 完成させるべき**モジュール1つ**を担当するエージェント（または人間） | Assignee |
+| **道** | そのキャラクターが通る一方通行のマスの列（`path`） | Assignee ごとの issue の並び |
+| **マス（task）** | 1つのタスク。1回のコンテキストで終わる大きさ | Issue |
+| **結合ゲート（gate）** | 複数の道が合流する、結合E2Eテストのマス。ボス戦 | Milestone |
+| **宿屋（camp）** | セーブポイント。失敗してもここより前には戻らない | Cycle の区切り |
+| **あがり（goal）** | 全員が合流する最後の結合ゲート。完成 | Project 完了 |
+| **GM** | 地図を描き、判定（E2E）を書いて封印する人。実装はしない | PM / テックリード |
+| **勇者（人間）** | 人間にしかできないマス（契約・鍵・決済・承認）を**ハンコ**で進める | 人間の Assignee |
+| **冒険の書**（`.masume/`） | セーブデータ。追記専用のイベントログ | Issue の履歴 |
+
+盤面は 5mm 方眼ノートとして描かれる。マスは 4×4 目（2cm角）、道は蛍光ペン、判定に通ったマスには赤ペンの**はなまる**、巻き戻されたマスには**消しゴムの跡**が残る。
+
+---
+
+## 2. 1ターンの流れ（キャラクター）
+
+1. **指令書を読む** — `masume brief <自分のID>`
+   いまのマス・判定コマンド・視界に入っている先のマス・仲間の位置・前の自分の日誌・ふっかつのじゅもん が出る。
+2. **実装する** — 現在のマスの内容だけ。縄張りの中だけ。
+3. **素振り** — 判定コマンドを自分で何度走らせてもよい（記録されない）。
+4. **宣言判定** — `masume check <自分のID>`。これが公式の判定で、冒険の書に記録される。
+5. **日誌** — `masume note <自分のID> "次の自分への申し送り"`（任意だが強く推奨）。
+
+> 素振りは自由、宣言は一発勝負。TRPG で「判定します」と宣言してからダイスを振るのと同じ。
+
+---
+
+## 3. 判定
+
+- 判定はすべて**コマンド**（E2Eテスト）で行う。終了コード 0 なら成功。
+  例外は人間のマス（`stamp`）で、これは人間のハンコで成功になる。
+- 判定コマンドは地図に書かれ、地図は冒険の書に**ハッシュ付きで凍結**される。キャラクターは変えられない。
+- 判定が参照するファイル（`check.seal`）は GM が**封印**する（ハッシュを記録）。
+  - 封印前のマスは判定できない（`未封印` → GM に依頼）。
+  - 封印後にファイルが変わっていたら判定できない（`封印が破れています` が記録される）。GM が再封印するか、元に戻す。
+- **累積判定**: 宣言判定では、直近のセーブポイント（宿屋・突破済みゲート・ふりだし）より後の、自分の道のマスの判定を**古い順にすべて**走らせる。どれか1つでも落ちたら失敗。
+  - 「前にできていたことを壊していない」ことまで含めて、はじめて1マス進める。
+
+## 4. 成功・経験値・レベル・視界
+
+- 成功すると 1 マス進み、そのマスの経験値（task 1 / gate 3 / camp 0）を得る。
+- 経験値が `レベル + 1` に達するとレベルアップ（余りは繰り越し）。最大 Lv9。
+- **視界** = `min(レベル − 1, 4)` マス先まで。Lv1 は現在のマスしか見えない。
+  - 指令書には視界の外のマスのタイトルは**出ない**（霧）。
+  - 信頼は実績で増える。失敗すると視界が狭まり、小さく確実に進むことを強いられる。
+- 宿屋に着くと自動で休んで（判定なし）通過し、そこがセーブポイントになる。
+
+## 5. 失敗・レベルダウン・巻き戻し
+
+宣言判定に失敗すると:
+
+1. **レベル −1**（最低 Lv1）、経験値は 0 に。
+2. **所定の位置まで戻される**。所定の位置は、落ちたマスの `rollback_to` で決まる。
+   - `@camp`（既定）… 直近のセーブポイントの次のマス
+   - `@here` … 落ちたマスそのもの
+   - マスID … 同じ道の、それより前のマス
+   - ただし**セーブポイントより前には戻らない**。
+3. 戻った位置から失敗地点までに通過していたマスは**消しゴムで消される**（`stale`：要再検証）。
+4. 消されたマスは、もう一度判定に通れば元に戻る。ただし**経験値は入らない**。
+
+> 巻き戻されるのは「コード」ではなく「できた、という主張」。コードが正しければ再判定はすぐ通る。正しくなければ、どこで壊れたかが盤面に出る。
+
+## 6. 結合ゲート（合流・ボス戦・解散）
+
+- ゲートは複数の道に同じIDで現れるマス。そこを通る全キャラクターが**メンバー**。
+  - 例外: キャラクターが1人だけの冒険では、**あがり**のゲートだけはその1人で戦う（ほかのゲートは置けない）。
+- ゲートに着いたキャラクターは**待機**する。
+- メンバー全員がそろうと、そろえた最後の判定（またはハンコ）の直後に**自動でボス戦**（ゲートの判定）が始まる（`--no-boss` で保留、あとで `masume check <gateId>`）。
+- **勝利**: 全員が経験値 3 を得て、ゲートの次のマスへ進む（**解散**）。ゲートは全員のセーブポイントになる。
+- **敗北**: 判定の出力に `MASUME_BLAME: <id>,<id>` 行があれば、そのキャラクターだけが責任を負う（**差し戻し**）。無ければメンバー全員（**全滅**）。
+  - 責任を負ったキャラクターはレベル −1、直近のセーブポイントの次まで戻り、その間のマスは消しゴムで消される。
+  - 責任のないキャラクターはゲートで待ち続ける。
+- ゲートの判定は「そのゲートの結合E2E」だけを走らせる。
+
+## 7. 人間のマス（ハンコ）
+
+- `check.kind: "stamp"` のマスは、指定された人間（`by`）の**ハンコ**で成功になる。
+  - `masume stamp <nodeId> --as <humanId>` または盤面の「ハンコを押す」ボタン。
+- 人間のマスは、アカウント作成・契約・支払い・本番鍵・デザイン承認など、人間にしかできない／人間が決めるべきことに使う。
+- ハンコで最後のメンバーがゲートにそろえば、そのままボス戦が始まる。
+
+## 8. セーブデータ（冒険の書）
+
+- `.masume/log.jsonl` に**追記だけ**される。1行1イベント。各行は前の行のハッシュを含む（ハッシュの鎖）。
+- 盤面の状態は、イベントを最初から再生して毎回つくり直す（状態ファイルはただのキャッシュ）。
+- `masume verify` で鎖・地図・判定ログの改ざんを検出する。壊れていたら「呪われています（seq N）」。
+- `masume repair` で、壊れた所から後ろを退避して鎖を直す。
+- **ふっかつのじゅもん**: 最新イベントのハッシュから作る 12 文字のひらがな（例: `ゆうて いみや おうき むこう`）。
+  - コミットメッセージ・PR・Linear のコメント・日誌に書いておけば、「その時点の盤面」を一意に指せる。
+  - `masume verify --jumon "..."` で、その状態が冒険の書に実在するか確かめられる。
+  - `masume load "..."` でその時点の状態に戻せる（戻したこと自体も記録される）。
+- 書き込みはロックで1人ずつ。判定中に盤面が動いたら、その判定は無効（もう一度）。
+
+## 9. 地図の改訂
+
+- 計画は変わる。`masume amend <新しい地図>` で地図を改訂できる。
+- ただし**歴史は書き換えられない**: すでに通過したマスを消したり、判定を変えたり、その前に新しいマスを差し込んだりはできない。
+  タイトル・説明・ラベル・見積もりの修正だけは許される。
+- 新しいキャラクター（新しいモジュール）を途中から加えるのは自由。
+
+## 10. 状態と Linear のステータス
+
+| マスの状態 | 盤面の見え方 | Linear |
+| --- | --- | --- |
+| `fog` 霧 | 鉛筆の下書き | Backlog |
+| `open` 視界の中 | ボールペン | Todo |
+| `current` 駒がいる | 蛍光ペンで塗られ、駒が立つ | In Progress |
+| `waiting` / `ready` ゲートで待機 | 「待機中 2/3」 | In Review |
+| `cleared` 突破 | 赤ペンのはなまる | Done |
+| `stale` 消された | 消しゴムの跡 | Todo（要再検証） |
+
+`masume export linear` で Linear 形式（CSV/JSON）に書き出せる。`masume import linear` で既存の Linear CSV から地図の下書きを作れる。
+
+---
+
+## 11. 役割の分離（いちばん大事なルール）
+
+- **GM** は地図を描き、判定を書いて封印する。**実装しない。**
+- **キャラクター**は実装する。**判定を書かない・変えない。**
+- **人間（勇者）**は、人間にしかできないマスと、最後の「あがり」の手前でハンコを押す。
+
+この分離があるから、エージェントの「できました」がそのまま信用できる。
+
+詳しい仕様: [SAVE_FORMAT.md](SAVE_FORMAT.md)（セーブデータ） / [CONTRACTS.md](CONTRACTS.md)（地図・CLI・API） / [GM_GUIDE.md](GM_GUIDE.md)（「xxxのようなアプリを作りたい」から地図を作る手順）
+
+exec
+/bin/zsh -lc 'cat /Users/amano/dev/masume/AGENTS.md
+cat CONTRACTS.md
+cat src/cli/args.mjs
+cat src/cli/main.mjs
+node "/Users/amano/dev/masume/bin/masume.js" brief cli --dir "/Users/amano/dev/masume/examples/omikuji"' in /Users/amano/dev/masume/examples/omikuji
+ succeeded in 0ms:
+# AGENTS.md — このリポジトリで働くエージェントへ
+
+ここは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）を、**マスメ自身のルールで**作っているリポジトリです。
+あなたは盤上のキャラクターの1人です。地図は `quests/masume.map.json`、ルールは `docs/RULEBOOK.md`。
+
+## 絶対ルール
+
+1. **現在のマスだけ**を実装する。指令書に出ていない先のマスには手を出さない（霧の向こう）。
+2. **縄張り**（`docs/CONTRACTS.md` §1 と地図の `territory`）の外のファイルを作らない・編集しない。
+   必要なら最終報告の「GMへの依頼」に書く。
+3. `tests/**` `docs/**` `bin/**` `schema/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` は **GM の縄張り**。
+   判定ファイルは封印されているので、**絶対に編集しない**（改変は「封印破り」として記録される）。
+4. 外部パッケージを追加しない。Node.js 20+ の標準ライブラリだけ。ESM。
+5. git の書き込み操作（commit / push / reset / checkout / stash など）をしない。GM がやる。
+6. 判定コマンドを自分で走らせ、通ることを確かめてから報告する。通らなければ通らないと正直に書く。
+   判定を通すためにテストの意図を回避するような実装（テスト環境の検出、出力の決め打ち）はしない。
+7. 契約（`docs/CONTRACTS.md`）が足りない・矛盾していると思ったら、勝手に解釈を広げず、自然な最小の解釈で実装して報告に書く。
+
+## 読む順番
+
+1. `docs/RULEBOOK.md`（ゲームのルール）
+2. `docs/CONTRACTS.md`（モジュール間の約束。あなたの担当の節は全部）
+3. 書記（engine）は `docs/SAVE_FORMAT.md` も
+4. 地図職人（gmkit）は `docs/GM_GUIDE.md` も
+
+## 指令書と宣言判定
+
+マスメ本体（書記の担当）が動くようになったら:
+
+```sh
+node bin/masume.js brief <あなたのID>      # 指令書
+node <判定コマンド>                          # 素振り（何度でも）
+node bin/masume.js check <あなたのID> --as <あなたのID>   # 宣言判定（GMに指示されたときだけ）
+node bin/masume.js note <あなたのID> "申し送り" --as <あなたのID>
+```
+
+本体がまだ無いあいだは、GM が渡す指令書（プロンプト）があなたの現在のマスです。
+
+## 最終報告の形
+
+```
+## 報告書 <キャラ名> <マスID>
+- 変更したファイル:
+- 判定コマンドの結果（最後の数行）:
+- 申し送り（次のマスの自分へ）:
+- GMへの依頼（契約の不足・縄張りの外で必要なこと）:
+```
+# おみくじCLIの契約
+
+このファイルは、この冒険のモジュール間の約束のSSoTである。地図は `quest.map.json`、ユーザーの願いは `WISH.md`、GMが補った前提は `ASSUMPTIONS.md` に置く。実装担当は現在のマスで指定された範囲だけを実装し、契約や判定を変更しない。
+
+## 1. 担当、環境、接続
+
+| ID / 名前 | 編集できる縄張り | 外から使う入口 |
+| --- | --- | --- |
+| `fortune` / 占い師 | `src/fortune/**` | `node src/fortune/main.mjs` |
+| `history` / 書記 | `src/history/**` | `node src/history/main.mjs` |
+| `cli` / 伝令 | `src/cli/**` | `node src/cli/main.mjs` |
+
+- 地図、`checks/**`、この契約、前提文書、その他の共有ファイルはGMの管理対象であり、どの担当の縄張りにも入らない。
+- 実行環境はNode.js 20以上、標準ライブラリのみ、ESM（`.mjs`）、UTF-8、改行LF。`package.json` の追加は不要。
+- 伝令は占い師・書記のCLIを子プロセスとして呼ぶ。実行ファイルは `process.execPath`、引数は配列で渡し、シェルを介さない。相手の入口は自身の `import.meta.url` から `../fortune/main.mjs` / `../history/main.mjs` を解決する。利用者のカレントディレクトリからソースを探さない。
+- 伝令は子プロセスにカレントディレクトリと `OMIKUJI_HISTORY_FILE` を引き継ぐ。抽選・保存のロジックを伝令に複製せず、両担当の入口を利用する。他担当のファイルは読み取りのみとする。
+- 入口は1要求で終了する。成功は終了コード0、stderrは空。JSONを返す入口はstdoutにJSON値1つと末尾LFだけを出す。
+- エラーはstdoutを空にし、stderrに `[コード] 理由\n` を1行出す。スタックトレースや成功表示を混ぜない。コードと終了値は以下の各節による。
+
+## 2. データ
+
+運勢の順番は `["大吉", "中吉", "小吉", "吉", "末吉", "凶"]` とする。
+
+- `Advice` は日本語（漢字・ひらがな・カタカナのいずれか）を含む、空白だけでない1〜120 Unicode文字の文字列。CR/LFを含まない。同じ運勢の助言は全コマンド・全プロセスで固定する。
+- `Seed` は `null`、または長さ1以上で `--` から始まらない文字列。`null` はseed指定なしを表す。指定文字列をtrim・数値化・Unicode正規化しない。
+- `CatalogEntry` は正確に `{fortune: 運勢, advice: Advice}` の2項目。
+- `Draw` は正確に `{fortune: 運勢, advice: Advice, seed: Seed}` の3項目。
+- `Record` は正確に `{fortune: 運勢, advice: Advice, seed: Seed, drawnAt: string}` の4項目。`drawnAt` は保存処理時点の `new Date().toISOString()` 形式（UTC、ミリ秒付き）。
+- JSONのプロパティ順、インデントは自由。追加項目は設けない。履歴ファイルは1レコード1行のJSONとする。
+
+## 3. 占い師の入口
+
+| コマンド | stdout |
+| --- | --- |
+| `node src/fortune/main.mjs --catalog` | 上記順の6件の `CatalogEntry` 配列 |
+| `node src/fortune/main.mjs --seed <文字列>` | `Draw` 1つ |
+| `node src/fortune/main.mjs` | `Draw` 1つ（`seed: null`） |
+
+seed付き抽選は、seedのUTF-8をSHA-256でハッシュ化し、先頭4バイトの符号なしビッグエンディアン整数を6で割った余りで運勢を選ぶ。JSONの値は別プロセスでも同じになる。seedを省いた抽選は、例えば `node:crypto` の `randomInt(6)` で等確率に選ぶ。有限回の判定では乱数の偏りを合否条件にしない。
+
+占い師は履歴を読み書きしない。カタログと抽選の助言は一致させる。
+
+未知の引数、値なし/空文字のseed、`--` で始まるseed、重複seed、`--catalog` と他の引数の併用は `[E_USAGE]`、終了コード2。
+
+段階: `F1` はカタログ、`F2` はseed付き抽選、`F3` は通常抽選と不正引数を担当する。
+
+## 4. 書記の入口と履歴
+
+書記は `OMIKUJI_HISTORY_FILE` が空でなければそのパスを使う。未設定または空文字なら `path.resolve(process.cwd(), ".omikuji-history.jsonl")` を使う。環境変数の相対パスはカレントディレクトリから解決する。
+
+| コマンド | stdin | stdout / 効果 |
+| --- | --- | --- |
+| `node src/history/main.mjs list` | 使用しない | `Record[]`。未作成なら `[]`。ファイルも親ディレクトリも作らない |
+| `node src/history/main.mjs append` | JSONの `Draw` 1つ（末尾空白可） | 保存時刻を加えた `Record` を1件追記し、その同じレコードを返す |
+
+- ファイルはUTF-8のJSON Lines。空ファイルは0件として扱う。既存ファイルの最後のLFは省略可だが、途中の空行・不正JSON・不正な `Record` は破損とする。
+- `list` はファイル順で返す。読んだファイルの内容を変えない。
+- `append` は入力と既存ファイル全体を検証してから必要な親ディレクトリを作り、1件だけ末尾に加える。既存ファイルがLFで終わらない場合は区切りのLFを補う。既存のバイト列を削除・整形・上書きしない。
+- 同じseed・同じ結果でも毎回追記する。日時は各保存時点の時刻とし、異なる日時になること自体は要求しない。
+- 書記は運勢の名前とレコードの形を検証するが、占い師の助言文と一致するかは問い合わせない。独立して実装できるようにする。
+- 読み書きは逐次実行を対象とする。同時実行のロックや異常終了時のトランザクションは今回の範囲外。
+
+| 状況 | コード / 終了値 | 保全条件 |
+| --- | --- | --- |
+| コマンドがない、不明、余分な引数 | `E_USAGE` / 2 | 書き込まない |
+| appendのstdinが不正JSON・不正な `Draw` | `E_RECORD` / 2 | ファイルを作成・変更しない |
+| 既存履歴が不正JSON・不正な `Record` | `E_HISTORY_CORRUPT` / 1 | listもappendも元のバイト列を保持する |
+| 未作成ファイル以外の読み取りエラー、親が通常ファイル、保存先がディレクトリ等 | `E_HISTORY_IO` / 1 | 成功を返さず、既存の内容を保持する |
+
+段階: `H1` は正常な履歴の一覧、`H2` は追記・保存先、`H3` は不正入力・破損・I/Oエラー時の保全を担当する。
+
+## 5. 伝令の利用者向けCLI
+
+```text
+node src/cli/main.mjs [--seed <文字列>] [--json]
+node src/cli/main.mjs --history [--json]
+node src/cli/main.mjs --help
+```
+
+- 各オプションの順番は自由。ただし重複、未知のオプション、位置引数、値なし/空文字/`--` で始まるseedを認めない。`--seed=value` 形式は扱わない。
+- `--history` と `--seed` は併用不可。`--help` は単独で使う。不正な組み合わせは `E_USAGE` / 2。解析を完了してから他担当を呼ぶ。
+- `--help` は `使い方` と4つのオプション（`--seed`、`--json`、`--history`、`--help`）を説明して終了する。他担当も履歴も不要。
+- 通常は占い師を1回呼び、その `Draw` を書記の `append` にJSONで渡し、保存の成功を確認してから表示する。`--seed` は指定時だけ占い師に渡す。
+- `--json` の抽選結果は `Draw` だけ。保存日時は履歴から読める。seedが同じならプロセス・表示形式・履歴件数に影響されず同じ抽選結果になる。
+- テキストの抽選結果は次の2行。LFで終える。
+
+```text
+運勢: <fortune>
+ひとこと: <advice>
+```
+
+- `--history` は書記の `list` だけを1回呼ぶ。占い師も `append` も呼ばない。`--history --json` は書記の `Record[]` をそのまま返す。
+- テキストの履歴は1件1行、`<drawnAt>\t<fortune>\t<advice>\n`（実際のタブ区切り）。見出しや番号は付けない。0件なら `履歴はありません。\n`。
+- 子プロセスが契約上のエラーを返したときは、そのエラー行と終了コードを利用者へ伝える。抽選失敗時は保存しない。保存失敗時は抽選成功をstdoutに出さない。
+- 子プロセスを起動できない、成功応答が不正JSONなどの接続不良は `E_DEPENDENCY` / 1。各子プロセスのstdoutを利用者のstdoutへ直接流さない。
+
+段階: `C1` はヘルプ・入力検証、`C2` はseed付き抽選・表示・保存の接続、`C3` は通常抽選・履歴表示・依存先の失敗伝達を担当する。
+
+## 6. 判定と結合の順序
+
+- `F1/F2`、`H1/H2`、`C1/C2` は他の担当を待たずに合格できる。伝令の判定は、一時ディレクトリに伝令のコードと固定応答のフェイクを配置し、子プロセスの引数・stdin・呼び出し回数・順序を観測する。テスト用のコードを製品へ追加してはいけない。
+- `G1` で初めて3担当の実物を接続し、seed付きのJSON/テキスト抽選と保存内容の一致を検証する。
+- 各道は自分の宿屋を通って最後のtaskを行う。`GOAL` は実物の通常抽選、6種類とseedの再現、テキスト/JSON、履歴の永続化・一覧・非更新、エラー時の履歴保全を検証する。
+- すべての判定は `node checks/<ID>.mjs`。`MASUME_ROOT` があればそのルートを使い、未設定なら判定ファイルの位置から解決する。`MASUME_CHARACTER` と `MASUME_NODE` によって合否や製品の挙動を変えない。
+- 判定は毎回一時ディレクトリを作り、成功/失敗どちらでも削除する。子プロセスから `NODE_TEST_CONTEXT` と `NODE_OPTIONS` を外す。外部通信や外部パッケージを使用しない。
+- 共有ヘルパーとフェイクも、それを読むすべてのマスの `check.seal` に含める。
+- ゲートは単独入口で原因が分かった場合に `MASUME_BLAME: fortune` / `history` / `cli` を出す。結合境界だけで失敗して担当を一意に確定できない場合は関係するIDをカンマ区切りで出す。
+- GMの確認時は入口がまだないため、各判定は `FAIL <ID>: 未実装: <入口>` で終了コード1となる。これは実装後も常に失敗させる仕組みではなく、入口の存在確認の後に各E2Eシナリオが続く。
+export function parseArguments(args) {
+  const options = { seed: null, json: false, history: false, help: false };
+  const seen = new Set();
+
+  for (let index = 0; index < args.length; index += 1) {
+    const argument = args[index];
+    if (!['--seed', '--json', '--history', '--help'].includes(argument)) {
+      throw new Error('未知のオプションまたは位置引数です。--help で使い方を確認してください。');
+    }
+    if (seen.has(argument)) {
+      throw new Error(`${argument} は重複して指定できません。`);
+    }
+    seen.add(argument);
+
+    if (argument === '--seed') {
+      const seed = args[index + 1];
+      if (seed === undefined || seed === '' || seed.startsWith('--')) {
+        throw new Error('--seed には空でなく、-- で始まらない文字列が必要です。');
+      }
+      options.seed = seed;
+      index += 1;
+    } else {
+      options[argument.slice(2)] = true;
+    }
+  }
+
+  if (options.help && args.length !== 1) {
+    throw new Error('--help は単独で指定してください。');
+  }
+  if (options.history && options.seed !== null) {
+    throw new Error('--history と --seed は併用できません。');
+  }
+
+  return options;
+}
+import { parseArguments } from './args.mjs';
+
+const help = `使い方:
+  node src/cli/main.mjs [--seed <文字列>] [--json]
+  node src/cli/main.mjs --history [--json]
+  node src/cli/main.mjs --help
+
+オプション:
+  --seed <文字列>  指定した文字列で抽選結果を再現します。
+  --json           結果をJSONで表示します。
+  --history        保存した履歴を表示します。--seed とは併用できません。
+  --help           この使い方を表示します。単独で指定してください。
+
+各オプションの順番は自由ですが、重複はできません。
+seedは空文字や -- で始まる文字列を指定できません。
+--seed=value 形式や位置引数には対応していません。
+`;
+
+try {
+  const options = parseArguments(process.argv.slice(2));
+  if (options.help) {
+    process.stdout.write(help);
+  }
+  // C1は入力検証とhelpまで。正常な抽選・履歴処理の接続は後続のマスで行う。
+} catch (error) {
+  process.stderr.write(`[E_USAGE] ${error.message}\n`);
+  process.exitCode = 2;
+}
+指令書: 伝令（cli / agent）
+Lv1 / 経験値 1/2 / 視界 0マス先 / 作業中
+担当: 引数解釈・利用者向け表示・抽選と履歴の接続
+縄張り: src/cli/**
+出撃中: codex（seq 27 から）
+現在のマス: C2「seed付きの結果を表示して保存する」（task）
+伝令はCONTRACTS.md §1〜5の接続契約に従い、seed付き抽選を占い師→書記append→表示の順に処理する。入口は node src/cli/main.mjs --seed <文字列> [--json]。JSONはDrawだけ、通常表示は「運勢: <fortune>」「ひとこと: <advice>」の2行。判定は伝令を一時プロジェクトへコピーし、同じ相対位置に固定応答の占い師・書記フェイクを置くため、ほかの担当の完成を待たない。子プロセスはprocess.execPathと引数配列で呼び、入口をimport.meta.url基準で解決する。seedを改変せず1回だけ抽選し、同じDrawをstdinで1回だけappendへ渡し、保存先の環境変数とcwdを継承してから表示すること。判定は順序と回数も記録する。製品にフェイクやテスト専用分岐を実装しない。
+判定: node checks/C2.mjs
+封印: 封印済み
+失敗時の戻り先: C1
+視界に入っている先のマス:
+霧の中: 4マス
+仲間:
+  占い師（fortune）: F2 / 作業中 / Lv1
+  書記（history）: H2 / 作業中 / Lv1
+自分の日誌（新しい順）:
+  seq 23 2026-10-16T11:26:14.068Z: C1突破。src/cli/args.mjs に副作用のない引数解析、main.mjs にhelpとE_USAGE表示を実装。seedは変換せず保持し、全引数検証後にhelpを表示する。素振り・宣言判定とも成功。正常な抽選・履歴処理の接続は未実装。次の指令書とCONTRACTS.mdを確認して接続する。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: ぞたい へゆご きぐく びすほ（seq 27）
+
+codex
+一次情報として、親リポジトリのルールブック、ゲーム直下の `CONTRACTS.md`、最新の `brief cli` を確認しました。現在地はC2で、既存実装は入力検証とヘルプまでです。私は契約§1〜5に従い、seedをそのまま渡して「抽選1回→保存1回→表示」を実装します。保存時には書記が履歴へ1件追記します。実装と並行して、読み取り専用の担当にC1・C2の判定条件を確認させます。通常抽選と履歴表示は今回の範囲に含めません。
+exec
+/bin/zsh -lc "node --input-type=module -e 'import { readFileSync } from \"node:fs\"; const map = JSON.parse(readFileSync(\"quest.map.json\", \"utf8\")); console.log(JSON.stringify({ characters: map.characters, c2: Array.isArray(map.nodes) ? map.nodes.find(node => node.id === \"C2\") : map.nodes?.C2 }, null, 2));'
+git diff -- src/cli
+git status --short -- src/cli" in /Users/amano/dev/masume/examples/omikuji
+ succeeded in 0ms:
+{
+  "characters": [
+    {
+      "id": "fortune",
+      "name": "占い師",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "priest",
+      "color": "purple",
+      "module": "6種類の運勢・助言と再現可能な抽選",
+      "territory": [
+        "src/fortune/**"
+      ],
+      "path": [
+        "F1",
+        "F2",
+        "G1",
+        "FC",
+        "F3",
+        "GOAL"
+      ]
+    },
+    {
+      "id": "history",
+      "name": "書記",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "scribe",
+      "color": "blue",
+      "module": "JSON Linesの履歴追記・一覧・保全",
+      "territory": [
+        "src/history/**"
+      ],
+      "path": [
+        "H1",
+        "H2",
+        "G1",
+        "HC",
+        "H3",
+        "GOAL"
+      ]
+    },
+    {
+      "id": "cli",
+      "name": "伝令",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "herald",
+      "color": "orange",
+      "module": "引数解釈・利用者向け表示・抽選と履歴の接続",
+      "territory": [
+        "src/cli/**"
+      ],
+      "path": [
+        "C1",
+        "C2",
+        "G1",
+        "CC",
+        "C3",
+        "GOAL"
+      ]
+    }
+  ],
+  "c2": {
+    "type": "task",
+    "title": "seed付きの結果を表示して保存する",
+    "detail": "伝令はCONTRACTS.md §1〜5の接続契約に従い、seed付き抽選を占い師→書記append→表示の順に処理する。入口は node src/cli/main.mjs --seed <文字列> [--json]。JSONはDrawだけ、通常表示は「運勢: <fortune>」「ひとこと: <advice>」の2行。判定は伝令を一時プロジェクトへコピーし、同じ相対位置に固定応答の占い師・書記フェイクを置くため、ほかの担当の完成を待たない。子プロセスはprocess.execPathと引数配列で呼び、入口をimport.meta.url基準で解決する。seedを改変せず1回だけ抽選し、同じDrawをstdinで1回だけappendへ渡し、保存先の環境変数とcwdを継承してから表示すること。判定は順序と回数も記録する。製品にフェイクやテスト専用分岐を実装しない。",
+    "check": {
+      "kind": "cmd",
+      "run": "node checks/C2.mjs",
+      "seal": [
+        "checks/C2.mjs",
+        "checks/support.mjs",
+        "checks/fakes.mjs"
+      ]
+    },
+    "xp": 1,
+    "rollback_to": "C1",
+    "labels": [
+      "cli",
+      "seed"
+    ]
+  }
+}
+?? src/cli/
+
+codex
+地図のC2定義と読み取り確認の結果は、契約と一致しています。私は `src/cli/main.mjs` だけを変更し、子プロセスを同期実行して、書記の成功応答を確認してから占い師のDrawを表示します。JSON表示には保存日時を加えません。引数検証とヘルプを先に処理し、cwdと環境変数を子プロセスへ継承します。変更後の合否は未確認のため、封印済みのC2判定で検証します。
+apply patch
+patch: completed
+/Users/amano/dev/masume/examples/omikuji/src/cli/main.mjs
+diff --git a/examples/omikuji/src/cli/main.mjs b/examples/omikuji/src/cli/main.mjs
+index 1ac0fc8cce93456f94eeb16863a5168f61c5d5ac..bd0ccc191ee70ad58d019c6630c4426ff484c5d6
+--- a/examples/omikuji/src/cli/main.mjs
++++ b/examples/omikuji/src/cli/main.mjs
+@@ -1,3 +1,5 @@
++import { spawnSync } from 'node:child_process';
++import { fileURLToPath } from 'node:url';
+ import { parseArguments } from './args.mjs';
+ 
+ const help = `使い方:
+@@ -16,13 +18,55 @@
+ --seed=value 形式や位置引数には対応していません。
+ `;
+ 
+-try {
+-  const options = parseArguments(process.argv.slice(2));
++function callJson(entry, args, input) {
++  const result = spawnSync(
++    process.execPath,
++    [fileURLToPath(new URL(entry, import.meta.url)), ...args],
++    {
++      cwd: process.cwd(),
++      env: process.env,
++      encoding: 'utf8',
++      input,
++    },
++  );
++  if (result.error || result.status !== 0) {
++    throw new Error('子プロセスの処理が成功しませんでした。');
++  }
++  return JSON.parse(result.stdout);
++}
++
++function main() {
++  let options;
++  try {
++    options = parseArguments(process.argv.slice(2));
++  } catch (error) {
++    process.stderr.write(`[E_USAGE] ${error.message}\n`);
++    process.exitCode = 2;
++    return;
++  }
++
+   if (options.help) {
+     process.stdout.write(help);
++    return;
++  }
++  // C2ではseed付き抽選だけを接続する。
++  if (options.seed === null) {
++    return;
++  }
++
++  try {
++    const draw = callJson('../fortune/main.mjs', ['--seed', options.seed]);
++    const drawJson = `${JSON.stringify(draw)}\n`;
++    callJson('../history/main.mjs', ['append'], drawJson);
++    process.stdout.write(
++      options.json
++        ? drawJson
++        : `運勢: ${draw.fortune}\nひとこと: ${draw.advice}\n`,
++    );
++  } catch {
++    process.stderr.write('[E_DEPENDENCY] 抽選または保存の成功応答を確認できませんでした。\n');
++    process.exitCode = 1;
+   }
+-  // C1は入力検証とhelpまで。正常な抽選・履歴処理の接続は後続のマスで行う。
+-} catch (error) {
+-  process.stderr.write(`[E_USAGE] ${error.message}\n`);
+-  process.exitCode = 2;
+ }
++
++main();
+
+diff --git a/examples/omikuji/src/cli/main.mjs b/examples/omikuji/src/cli/main.mjs
+index 1ac0fc8cce93456f94eeb16863a5168f61c5d5ac..bd0ccc191ee70ad58d019c6630c4426ff484c5d6
+--- a/examples/omikuji/src/cli/main.mjs
++++ b/examples/omikuji/src/cli/main.mjs
+@@ -1,3 +1,5 @@
++import { spawnSync } from 'node:child_process';
++import { fileURLToPath } from 'node:url';
+ import { parseArguments } from './args.mjs';
+ 
+ const help = `使い方:
+@@ -16,13 +18,55 @@
+ --seed=value 形式や位置引数には対応していません。
+ `;
+ 
+-try {
+-  const options = parseArguments(process.argv.slice(2));
++function callJson(entry, args, input) {
++  const result = spawnSync(
++    process.execPath,
++    [fileURLToPath(new URL(entry, import.meta.url)), ...args],
++    {
++      cwd: process.cwd(),
++      env: process.env,
++      encoding: 'utf8',
++      input,
++    },
++  );
++  if (result.error || result.status !== 0) {
++    throw new Error('子プロセスの処理が成功しませんでした。');
++  }
++  return JSON.parse(result.stdout);
++}
++
++function main() {
++  let options;
++  try {
++    options = parseArguments(process.argv.slice(2));
++  } catch (error) {
++    process.stderr.write(`[E_USAGE] ${error.message}\n`);
++    process.exitCode = 2;
++    return;
++  }
++
+   if (options.help) {
+     process.stdout.write(help);
++    return;
++  }
++  // C2ではseed付き抽選だけを接続する。
++  if (options.seed === null) {
++    return;
++  }
++
++  try {
++    const draw = callJson('../fortune/main.mjs', ['--seed', options.seed]);
++    const drawJson = `${JSON.stringify(draw)}\n`;
++    callJson('../history/main.mjs', ['append'], drawJson);
++    process.stdout.write(
++      options.json
++        ? drawJson
++        : `運勢: ${draw.fortune}\nひとこと: ${draw.advice}\n`,
++    );
++  } catch {
++    process.stderr.write('[E_DEPENDENCY] 抽選または保存の成功応答を確認できませんでした。\n');
++    process.exitCode = 1;
+   }
+-  // C1は入力検証とhelpまで。正常な抽選・履歴処理の接続は後続のマスで行う。
+-} catch (error) {
+-  process.stderr.write(`[E_USAGE] ${error.message}\n`);
+-  process.exitCode = 2;
+ }
++
++main();
+
+exec
+/bin/zsh -lc 'node checks/C2.mjs' in /Users/amano/dev/masume/examples/omikuji
+ succeeded in 311ms:
+PASS C2: E2Eの全シナリオが成功
+
+diff --git a/examples/omikuji/src/cli/main.mjs b/examples/omikuji/src/cli/main.mjs
+index 1ac0fc8cce93456f94eeb16863a5168f61c5d5ac..bd0ccc191ee70ad58d019c6630c4426ff484c5d6
+--- a/examples/omikuji/src/cli/main.mjs
++++ b/examples/omikuji/src/cli/main.mjs
+@@ -1,3 +1,5 @@
++import { spawnSync } from 'node:child_process';
++import { fileURLToPath } from 'node:url';
+ import { parseArguments } from './args.mjs';
+ 
+ const help = `使い方:
+@@ -16,13 +18,55 @@
+ --seed=value 形式や位置引数には対応していません。
+ `;
+ 
+-try {
+-  const options = parseArguments(process.argv.slice(2));
++function callJson(entry, args, input) {
++  const result = spawnSync(
++    process.execPath,
++    [fileURLToPath(new URL(entry, import.meta.url)), ...args],
++    {
++      cwd: process.cwd(),
++      env: process.env,
++      encoding: 'utf8',
++      input,
++    },
++  );
++  if (result.error || result.status !== 0) {
++    throw new Error('子プロセスの処理が成功しませんでした。');
++  }
++  return JSON.parse(result.stdout);
++}
++
++function main() {
++  let options;
++  try {
++    options = parseArguments(process.argv.slice(2));
++  } catch (error) {
++    process.stderr.write(`[E_USAGE] ${error.message}\n`);
++    process.exitCode = 2;
++    return;
++  }
++
+   if (options.help) {
+     process.stdout.write(help);
++    return;
++  }
++  // C2ではseed付き抽選だけを接続する。
++  if (options.seed === null) {
++    return;
++  }
++
++  try {
++    const draw = callJson('../fortune/main.mjs', ['--seed', options.seed]);
++    const drawJson = `${JSON.stringify(draw)}\n`;
++    callJson('../history/main.mjs', ['append'], drawJson);
++    process.stdout.write(
++      options.json
++        ? drawJson
++        : `運勢: ${draw.fortune}\nひとこと: ${draw.advice}\n`,
++    );
++  } catch {
++    process.stderr.write('[E_DEPENDENCY] 抽選または保存の成功応答を確認できませんでした。\n');
++    process.exitCode = 1;
+   }
+-  // C1は入力検証とhelpまで。正常な抽選・履歴処理の接続は後続のマスで行う。
+-} catch (error) {
+-  process.stderr.write(`[E_USAGE] ${error.message}\n`);
+-  process.exitCode = 2;
+ }
++
++main();
+
+codex
+素振りは終了コード0で、`PASS C2: E2Eの全シナリオが成功` と出ました。これは封印済み判定による確認結果です。ユーザーが指定した順序に従い、これから `check cli --as cli --no-boss` を実行します。この操作は累積判定を行い、結果を冒険の書へ記録します。成功したら日誌を記録し、そこで停止します。
+exec
+/bin/zsh -lc 'node "/Users/amano/dev/masume/bin/masume.js" check cli --as cli --no-boss --dir "/Users/amano/dev/masume/examples/omikuji"' in /Users/amano/dev/masume/examples/omikuji
+ succeeded in 1212ms:
+判定成功: cli が C2 を突破しました
+
+diff --git a/examples/omikuji/src/cli/main.mjs b/examples/omikuji/src/cli/main.mjs
+index 1ac0fc8cce93456f94eeb16863a5168f61c5d5ac..bd0ccc191ee70ad58d019c6630c4426ff484c5d6
+--- a/examples/omikuji/src/cli/main.mjs
++++ b/examples/omikuji/src/cli/main.mjs
+@@ -1,3 +1,5 @@
++import { spawnSync } from 'node:child_process';
++import { fileURLToPath } from 'node:url';
+ import { parseArguments } from './args.mjs';
+ 
+ const help = `使い方:
+@@ -16,13 +18,55 @@
+ --seed=value 形式や位置引数には対応していません。
+ `;
+ 
+-try {
+-  const options = parseArguments(process.argv.slice(2));
++function callJson(entry, args, input) {
++  const result = spawnSync(
++    process.execPath,
++    [fileURLToPath(new URL(entry, import.meta.url)), ...args],
++    {
++      cwd: process.cwd(),
++      env: process.env,
++      encoding: 'utf8',
++      input,
++    },
++  );
++  if (result.error || result.status !== 0) {
++    throw new Error('子プロセスの処理が成功しませんでした。');
++  }
++  return JSON.parse(result.stdout);
++}
++
++function main() {
++  let options;
++  try {
++    options = parseArguments(process.argv.slice(2));
++  } catch (error) {
++    process.stderr.write(`[E_USAGE] ${error.message}\n`);
++    process.exitCode = 2;
++    return;
++  }
++
+   if (options.help) {
+     process.stdout.write(help);
++    return;
++  }
++  // C2ではseed付き抽選だけを接続する。
++  if (options.seed === null) {
++    return;
++  }
++
++  try {
++    const draw = callJson('../fortune/main.mjs', ['--seed', options.seed]);
++    const drawJson = `${JSON.stringify(draw)}\n`;
++    callJson('../history/main.mjs', ['append'], drawJson);
++    process.stdout.write(
++      options.json
++        ? drawJson
++        : `運勢: ${draw.fortune}\nひとこと: ${draw.advice}\n`,
++    );
++  } catch {
++    process.stderr.write('[E_DEPENDENCY] 抽選または保存の成功応答を確認できませんでした。\n');
++    process.exitCode = 1;
+   }
+-  // C1は入力検証とhelpまで。正常な抽選・履歴処理の接続は後続のマスで行う。
+-} catch (error) {
+-  process.stderr.write(`[E_USAGE] ${error.message}\n`);
+-  process.exitCode = 2;
+ }
++
++main();
+
+codex
+宣言判定は終了コード0で、`判定成功: cli が C2 を突破しました` と出ました。私はユーザーの明示指示に従い、実装内容と未実装範囲を `note` で日誌へ追記します。日誌の記録後は、次のマスの実装や判定を行わず停止します。
+exec
+/bin/zsh -lc 'node "/Users/amano/dev/masume/bin/masume.js" note cli "C2突破。src/cli/main.mjs にseed付き抽選→書記append→表示を実装。process.execPathと引数配列、import.meta.url基準の入口を使い、cwdと環境変数を継承。seedを改変せず、抽選・保存は各1回。保存成功後にDrawだけのJSONまたは指定2行を表示。素振りと宣言判定は成功。通常抽選・履歴表示・依存先エラーの詳細伝達は未実装。次回も最新指令書と契約を確認する。C2突破で停止。" --as cli --dir "/Users/amano/dev/masume/examples/omikuji"' in /Users/amano/dev/masume/examples/omikuji
+ succeeded in 0ms:
+cli の日誌を記録しました（seq 32）
+
+diff --git a/examples/omikuji/src/cli/main.mjs b/examples/omikuji/src/cli/main.mjs
+index 1ac0fc8cce93456f94eeb16863a5168f61c5d5ac..bd0ccc191ee70ad58d019c6630c4426ff484c5d6
+--- a/examples/omikuji/src/cli/main.mjs
++++ b/examples/omikuji/src/cli/main.mjs
+@@ -1,3 +1,5 @@
++import { spawnSync } from 'node:child_process';
++import { fileURLToPath } from 'node:url';
+ import { parseArguments } from './args.mjs';
+ 
+ const help = `使い方:
+@@ -16,13 +18,55 @@
+ --seed=value 形式や位置引数には対応していません。
+ `;
+ 
+-try {
+-  const options = parseArguments(process.argv.slice(2));
++function callJson(entry, args, input) {
++  const result = spawnSync(
++    process.execPath,
++    [fileURLToPath(new URL(entry, import.meta.url)), ...args],
++    {
++      cwd: process.cwd(),
++      env: process.env,
++      encoding: 'utf8',
++      input,
++    },
++  );
++  if (result.error || result.status !== 0) {
++    throw new Error('子プロセスの処理が成功しませんでした。');
++  }
++  return JSON.parse(result.stdout);
++}
++
++function main() {
++  let options;
++  try {
++    options = parseArguments(process.argv.slice(2));
++  } catch (error) {
++    process.stderr.write(`[E_USAGE] ${error.message}\n`);
++    process.exitCode = 2;
++    return;
++  }
++
+   if (options.help) {
+     process.stdout.write(help);
++    return;
++  }
++  // C2ではseed付き抽選だけを接続する。
++  if (options.seed === null) {
++    return;
++  }
++
++  try {
++    const draw = callJson('../fortune/main.mjs', ['--seed', options.seed]);
++    const drawJson = `${JSON.stringify(draw)}\n`;
++    callJson('../history/main.mjs', ['append'], drawJson);
++    process.stdout.write(
++      options.json
++        ? drawJson
++        : `運勢: ${draw.fortune}\nひとこと: ${draw.advice}\n`,
++    );
++  } catch {
++    process.stderr.write('[E_DEPENDENCY] 抽選または保存の成功応答を確認できませんでした。\n');
++    process.exitCode = 1;
+   }
+-  // C1は入力検証とhelpまで。正常な抽選・履歴処理の接続は後続のマスで行う。
+-} catch (error) {
+-  process.stderr.write(`[E_USAGE] ${error.message}\n`);
+-  process.exitCode = 2;
+ }
++
++main();
+
+codex
+## 報告書 伝令 C2
+
+- 変更したファイル: [src/cli/main.mjs](/Users/amano/dev/masume/examples/omikuji/src/cli/main.mjs)。契約§1〜5とC2指令に従い、seedを改変せず「抽選1回→保存1回→表示」を実装しました。
+- 判定の結果（実行確認済み）:
+  ```text
+  PASS C2: E2Eの全シナリオが成功
+  判定成功: cli が C2 を突破しました
+  ```
+- 申し送り: 日誌を記録済み（seq 32）。通常抽選・履歴表示・依存先エラーの詳細伝達は未実装です。私はC2突破で停止しました。
+- GMへの依頼: なし。確認範囲で契約と判定の矛盾はありません。
+diff --git a/examples/omikuji/src/cli/main.mjs b/examples/omikuji/src/cli/main.mjs
+index 1ac0fc8cce93456f94eeb16863a5168f61c5d5ac..bd0ccc191ee70ad58d019c6630c4426ff484c5d6
+--- a/examples/omikuji/src/cli/main.mjs
++++ b/examples/omikuji/src/cli/main.mjs
+@@ -1,3 +1,5 @@
++import { spawnSync } from 'node:child_process';
++import { fileURLToPath } from 'node:url';
+ import { parseArguments } from './args.mjs';
+ 
+ const help = `使い方:
+@@ -16,13 +18,55 @@
+ --seed=value 形式や位置引数には対応していません。
+ `;
+ 
+-try {
+-  const options = parseArguments(process.argv.slice(2));
++function callJson(entry, args, input) {
++  const result = spawnSync(
++    process.execPath,
++    [fileURLToPath(new URL(entry, import.meta.url)), ...args],
++    {
++      cwd: process.cwd(),
++      env: process.env,
++      encoding: 'utf8',
++      input,
++    },
++  );
++  if (result.error || result.status !== 0) {
++    throw new Error('子プロセスの処理が成功しませんでした。');
++  }
++  return JSON.parse(result.stdout);
++}
++
++function main() {
++  let options;
++  try {
++    options = parseArguments(process.argv.slice(2));
++  } catch (error) {
++    process.stderr.write(`[E_USAGE] ${error.message}\n`);
++    process.exitCode = 2;
++    return;
++  }
++
+   if (options.help) {
+     process.stdout.write(help);
++    return;
++  }
++  // C2ではseed付き抽選だけを接続する。
++  if (options.seed === null) {
++    return;
++  }
++
++  try {
++    const draw = callJson('../fortune/main.mjs', ['--seed', options.seed]);
++    const drawJson = `${JSON.stringify(draw)}\n`;
++    callJson('../history/main.mjs', ['append'], drawJson);
++    process.stdout.write(
++      options.json
++        ? drawJson
++        : `運勢: ${draw.fortune}\nひとこと: ${draw.advice}\n`,
++    );
++  } catch {
++    process.stderr.write('[E_DEPENDENCY] 抽選または保存の成功応答を確認できませんでした。\n');
++    process.exitCode = 1;
+   }
+-  // C1は入力検証とhelpまで。正常な抽選・履歴処理の接続は後続のマスで行う。
+-} catch (error) {
+-  process.stderr.write(`[E_USAGE] ${error.message}\n`);
+-  process.exitCode = 2;
+ }
++
++main();
+
+tokens used
+36,939
+## 報告書 伝令 C2
+
+- 変更したファイル: [src/cli/main.mjs](/Users/amano/dev/masume/examples/omikuji/src/cli/main.mjs)。契約§1〜5とC2指令に従い、seedを改変せず「抽選1回→保存1回→表示」を実装しました。
+- 判定の結果（実行確認済み）:
+  ```text
+  PASS C2: E2Eの全シナリオが成功
+  判定成功: cli が C2 を突破しました
+  ```
+- 申し送り: 日誌を記録済み（seq 32）。通常抽選・履歴表示・依存先エラーの詳細伝達は未実装です。私はC2突破で停止しました。
+- GMへの依頼: なし。確認範囲で契約と判定の矛盾はありません。

@@ -8,3 +8,4 @@ export { jumonOf } from './jumon.js';
 export { check, stamp } from './checks.js';
 export { buildView } from './view.js';
 export { brief } from './brief.js';
+export { recordReturn, recordSortie, recordWish } from './sortie.js';

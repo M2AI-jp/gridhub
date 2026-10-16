@@ -4,6 +4,7 @@ import { defs, paper, roads, laneHeads, nodesLayer } from './render.js';
 import { Pawns } from './pawns.js';
 import { renderParty, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
+import { initCommand, showLobby, hideLobby, pollParty, noteSorties } from './command.js';
 
 const params = new URLSearchParams(location.search);
 const FIXTURE = params.get('fixture');
@@ -84,7 +85,7 @@ function render(view) {
   if (!state.cam) fitCamera({ whole: false });
   else applyCamera();
 
-  $('#party').innerHTML = renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null);
+  $('#party-list-wrap').innerHTML = renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null);
   $('#log').innerHTML = renderLog(view, prev ? prev.head.seq : -1);
   $('#ledger').innerHTML = renderLedger(view, state.sprites);
   $('#jumon').textContent = view.head?.jumon || '—';
@@ -97,6 +98,7 @@ function render(view) {
   document.body.classList.toggle('finished', !!view.finished);
   document.title = `${view.finished ? '🏁 ' : ''}${view.quest?.title || 'マスメ'} — マスメ`;
   renderDrawer();
+  noteSorties(view);
   if (prev) announce(prev, view);
   window.__masume.ready = true;
   window.__masume.view = view;
@@ -298,7 +300,7 @@ function select(kind, id, { focus = false } = {}) {
   history.replaceState(null, '', url);
   if (state.view) {
     $('#node-layer').innerHTML = nodesLayer(state.view, state.lay, { selected: kind === 'node' ? id : null });
-    $('#party').innerHTML = renderParty(state.view, state.sprites, kind === 'char' ? id : null);
+    $('#party-list-wrap').innerHTML = renderParty(state.view, state.sprites, kind === 'char' ? id : null);
   }
   renderDrawer();
   if (focus && state.lay) {
@@ -429,36 +431,57 @@ function setLive(mode, text) {
   el.textContent = text;
 }
 
-async function startLive() {
-  const refresh = async () => {
-    try {
-      const r = await fetch('api/state', { cache: 'no-store' });
-      const body = await r.json().catch(() => null);
-      if (!r.ok) {
-        setLive('off', body?.code === 'E_CURSED' ? '冒険の書が呪われています' : '冒険の書が読めません');
-        showNotice(body);
+let partyWatched = false;
+async function liveRefresh() {
+  try {
+    const r = await fetch('api/state', { cache: 'no-store' });
+    const body = await r.json().catch(() => null);
+    if (!r.ok) {
+      if (body?.code === 'E_NO_GAME') {
+        hideNotice();
+        showLobby();
+        setLive('lobby', '入口');
+        window.__masume.ready = true;
+        window.__masume.lobby = true;
         return;
       }
-      hideNotice();
-      render(body);
-    } catch (err) {
-      setLive('off', '盤面サーバーに届きません');
-      console.warn(err);
+      setLive('off', body?.code === 'E_CURSED' ? '冒険の書が呪われています' : '冒険の書が読めません');
+      showNotice(body);
+      return;
     }
-  };
-  await refresh();
+    hideNotice();
+    hideLobby();
+    window.__masume.lobby = false;
+    if ($('#live').dataset.mode === 'lobby') setLive('live', 'ライブ');
+    render(body);
+    if (!partyWatched) {
+      partyWatched = true;
+      pollParty();
+    }
+  } catch (err) {
+    setLive('off', '盤面サーバーに届きません');
+    console.warn(err);
+  }
+}
+
+async function startLive() {
+  await liveRefresh();
   let timer = null;
   const schedule = () => {
     clearTimeout(timer);
-    timer = setTimeout(refresh, 120);
+    timer = setTimeout(liveRefresh, 120);
   };
   if ('EventSource' in window && !params.has('nostream')) {
     const es = new EventSource('api/stream');
-    es.addEventListener('hello', () => setLive('live', 'ライブ'));
+    es.addEventListener('hello', () => setLive(window.__masume.lobby ? 'lobby' : 'live', window.__masume.lobby ? '入口' : 'ライブ'));
     es.addEventListener('change', schedule);
     es.onerror = () => setLive('off', '再接続中…');
   }
-  setInterval(refresh, 15000);
+  // 入口にいる間は冒険の書が生まれるのをこまめに見る。盤面ではときどき読み直す
+  setInterval(() => {
+    if (window.__masume.lobby) liveRefresh();
+  }, 2000);
+  setInterval(liveRefresh, 15000);
 }
 
 async function startFixture() {
@@ -487,6 +510,7 @@ window.__masume = { ready: false, view: null, frame: 0, done: false, render: (v)
 (async () => {
   setupCamera();
   setupInteractions();
+  initCommand({ live: LIVE, post, refresh: liveRefresh, toast, getView: () => state.view });
   state.sprites = await loadSprites();
   if (params.get('view')) setView(params.get('view'));
   try {

@@ -1,0 +1,12 @@
+=== B4: node --test tests/e2e/B4.test.mjs ===
+✔ ロビーで願いを書くと、GM の様子が見え、冒険の書が生まれたら盤面になる (4840.908958ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4895.299375
+
+(exit 0, 4939ms)

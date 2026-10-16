@@ -1,0 +1,12 @@
+=== G3: node --test tests/e2e/G3.test.mjs ===
+✔ 盤面の入口に願いを書くと、冒険の書が生まれて盤面に映る (2157.745916ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5212.181625
+
+(exit 0, 5258ms)

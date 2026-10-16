@@ -10,8 +10,22 @@ function badge(c) {
   return `<g class="pawn-badge"><rect x="${-1.3 * U}" y="${-SIZE - 0.95 * U}" width="${2.6 * U}" height="${0.9 * U}" rx="${0.45 * U}" class="badge-bg" stroke="${hl(c.color)}"/><text class="hand badge-text" x="0" y="${-SIZE - 0.27 * U}" text-anchor="middle">Lv${c.level}${st}</text></g>`;
 }
 
+/** 出撃中のふきだし（エージェント名と砂時計） */
+function bubble(c) {
+  if (!c.sortie) return '';
+  const label = `${c.sortie.agent}${c.sortie.model ? ' ' + c.sortie.model : ''}`;
+  const w = Math.max(4.2 * U, label.length * 7 + 2.6 * U);
+  const x = 0.6 * U;
+  const y = -SIZE - 3.1 * U;
+  return `<g class="sortie-bubble" aria-label="出撃中 ${esc(label)}">
+    <rect x="${x}" y="${y}" width="${w}" height="${1.5 * U}" rx="${0.75 * U}" class="bubble-bg"/>
+    <path d="M${x + 0.7 * U} ${y + 1.5 * U} L${x + 0.2 * U} ${y + 2.2 * U} L${x + 1.4 * U} ${y + 1.5 * U}" class="bubble-bg"/>
+    <text class="hand bubble-text" x="${x + 0.55 * U}" y="${y + 1.05 * U}"><tspan class="bubble-hourglass">⏳</tspan> ${esc(label)}</text>
+  </g>`;
+}
+
 export function pawnMarkup(c, sprites) {
-  return `<g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.35 * U, SIZE, 'pawn')}</g>${badge(c)}`;
+  return `<g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.35 * U, SIZE, 'pawn')}</g>${badge(c)}${bubble(c)}`;
 }
 
 /** 駒の座標（同じ場所に何人もいたら少しずらす） */
@@ -56,6 +70,7 @@ export class Pawns {
       g.dataset.at = c.at ?? '';
       g.dataset.status = c.status;
       g.dataset.level = String(c.level);
+      g.dataset.sortie = c.sortie ? c.sortie.agent : '';
       g.setAttribute('aria-label', `${c.name} Lv${c.level} ${c.at ?? 'あがり'}`);
       g.innerHTML = pawnMarkup(c, sprites);
       const target = pts[c.id];

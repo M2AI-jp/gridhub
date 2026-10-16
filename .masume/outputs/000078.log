@@ -1,0 +1,15 @@
+=== Q1: node --test tests/e2e/Q1.test.mjs ===
+✔ 願いから地図が生まれ、冒険が始まる (348.161333ms)
+✔ GM の地図が壊れていたら、エラーを見せて直させる (368.082ms)
+✔ GM が失敗したら E_GM (190.695667ms)
+✔ --dry-run と MASUME_GM_OVERRIDE (227.743625ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1189.647291
+
+(exit 0, 1233ms)
