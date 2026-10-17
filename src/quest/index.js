@@ -50,10 +50,10 @@ function summarize(root, view, jumon, seq) {
 }
 
 /** 冒険の書が生まれたあとの支度（CONTRACTS §21）。失敗しても冒険は始められるので、止めずに知らせる */
-function prepareProject(root, { gm, override, ctx }) {
+function prepareProject(root, { gm, override, network, ctx }) {
   const requested = (gm ?? (override ? '' : 'claude')).trim();
   try {
-    return setupProject({ root, agent: AGENT_KINDS.includes(requested) ? requested : undefined }, ctx);
+    return setupProject({ root, agent: AGENT_KINDS.includes(requested) ? requested : undefined, network }, ctx);
   } catch (error) {
     return { root, files: [], error: error.message };
   }
@@ -97,7 +97,7 @@ function printDryRun({ out, gm, command, root, override, prompt, promptFile, exi
 }
 
 /**
- * opts: { wish, dir, gm, model, force, retries, dryRun, json, actor }
+ * opts: { wish, dir, gm, model, force, retries, dryRun, json, actor, network }
  * ctx:  { bin, root（リポジトリ）, cwd, env }
  */
 export async function runQuest(opts, ctx) {
@@ -107,7 +107,8 @@ export async function runQuest(opts, ctx) {
   const override = (env.MASUME_GM_OVERRIDE ?? '').trim();
   const gm = parseGm(override || opts.gm || 'claude');
   const model = opts.model ?? null;
-  const command = gmCommand(gm, { root, model });
+  const network = opts.network === true;
+  const command = gmCommand(gm, { root, model, network });
   const retries = opts.retries ?? DEFAULT_RETRIES;
   const out = (text) => console.log(text);
   const say = opts.json ? (text) => console.error(text) : out;
@@ -199,7 +200,7 @@ export async function runQuest(opts, ctx) {
   }
   const jumon = engine.jumonOf((wish?.hash) ?? head.hash);
   const summary = summarize(root, engine.buildView(root), jumon, wish?.seq ?? head.seq);
-  summary.setup = prepareProject(root, { gm: opts.gm, override, ctx });
+  summary.setup = prepareProject(root, { gm: opts.gm, override, network, ctx });
 
   if (opts.json) {
     const { setup, ...rest } = summary;

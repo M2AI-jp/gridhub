@@ -734,3 +734,44 @@ export function recordWish(root, { actor = 'gm', text, gm = null, model = null }
 6. 書き出しの SVG は XML として正しい（NBSP・制御文字を含む文字列でも単独で開ける）。
 7. 狭い画面（860px 以下）では、マスやキャラクターを選ぶと詳細が画面の中に出る。
 8. `job`・マスID・キャラIDが `constructor`・`toString`・`__proto__` などでも描ける。
+
+---
+
+# 第5章の契約 — エージェントの箱（サンドボックス）のネットワーク
+
+Codex の `-s workspace-write` は、既定で箱のネットワークを閉じている。判定が手元にサーバーを立てる（`127.0.0.1` で listen する）と `EPERM` で落ち、キャラクターのせいではないのにレベルが下がる。
+第4章では `MASUME_AGENT_OVERRIDE` でアダプタを差し替えて開けた（GM_GUIDE「エージェントの箱を確かめる」）。第5章では、それを製品の選択肢にする。
+**既定は閉じたまま**（開けるのは、頼まれたときだけ）。ここに書く挙動は、第1章〜第4章の契約に足すもの。
+
+| 縄張り（第5章で触るもの） | 持ち主 |
+| --- | --- |
+| `src/party/**`、`src/commands/party.js` | 軍師 `party` |
+| `src/quest/**`、`src/commands/quest.js`、`src/commands/init.js` | 語り部 `teller` |
+
+伝令（HTTP の `POST /api/sortie`・`POST /api/quest`、MCP の `masume_quest`）と盤面は変えない。盤面から出撃させるときは、`.masume/party.json` の `network` が効く（伝令は `masume party` を起動するだけなので）。
+
+## 30. 軍師: 箱のネットワーク
+
+`masume party [...] [--network | --no-network]`
+
+1. 箱のネットワークを開けるか（`network`）は、`--network`（開ける）/ `--no-network`（閉じる）> `.masume/party.json` の `network` > 既定 `false` の順に決める。
+   - `party.json` の `network` は `true` か `false`（書かなければ `false`）。ほかの値（文字列・数・null など）は `E_USAGE`/2。
+   - `--network` と `--no-network` は値を取らない（`--network=…` は `E_USAGE`/2）。両方を付けたら `E_USAGE`/2。
+2. `network` が `true` で、エージェントが `codex` なら、アダプタ（§13）のコマンドは `-s workspace-write` の**すぐ後ろ**に `-c sandbox_workspace_write.network_access=true` を足したものになる。
+   `codex exec -C <root> -s workspace-write -c sandbox_workspace_write.network_access=true --skip-git-repo-check [-m <M>] -`
+   （`-c` とその値は別々の引数。シェルを通さずに起動するので、引用符は付けない）
+3. `claude` と `cmd:<command>` のコマンドは `network` に関係なく変わらない（`claude` には §13 の箱の指定が無い。`cmd:` は持ち主が自分で決める）。
+   `MASUME_AGENT_OVERRIDE` が `codex` なら 2. が効き、`cmd:…` なら効かない。
+4. `--dry-run` の `出撃予定: <キャラID> <コマンド>` と、巡回を始めるときの見出しの行（行頭から `出撃準備: `。`あがり！` の行と同じく時刻の接頭辞を付けない）に出すコマンドは、実際に起動するコマンドと同じ（2. の引数を含む）。
+5. `network` が `false` のときは、コマンドにも出力にも `network_access` を出さない（第2章どおりの、閉じた箱）。
+
+## 31. 語り部: GM の箱と、出撃への持ち越し
+
+`masume quest "<願い>" [...] [--network]` / `masume init [...] [--agent claude|codex] [--network]`
+
+1. `quest --network` で GM が `codex`（`--gm codex`、または `MASUME_GM_OVERRIDE` が `codex`）なら、GM のコマンドは §30.2 と同じく `-s workspace-write` のすぐ後ろに `-c sandbox_workspace_write.network_access=true` を足したもの。
+   `claude` と `cmd:` の GM のコマンドは変わらない。`--network` が無ければ、どこにも `network_access` を出さない。
+2. `quest --dry-run` の `コマンド:` の行（`--json` なら `command`）は、実際に起動するコマンドと同じ（1. の引数を含む）。
+3. `quest --network` で冒険が生まれ、支度（§21）が `.masume/party.json` を書くときは、`"network": true` も書く（GM の箱を開けた冒険は、出撃の箱も開けたまま始まる）。
+   `--network` が無ければ `network` には触らない（第3章どおり `{agent, parallel}`）。
+4. `init --agent <A> --network` は、`.masume/party.json` に `"network": true` も書く（ほかの項目は §21 どおり残す）。`--network` の無い `init` は `network` に触らない。`--agent` の無い `--network` は `E_USAGE`/2。

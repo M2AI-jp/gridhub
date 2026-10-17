@@ -230,7 +230,7 @@ export class Party {
 
   async loop() {
     const first = await this.view();
-    this.say(`出撃準備: ${first.quest.title}（エージェント ${this.agent.display}／同時 ${this.parallel}人／上限 ${this.rounds}回${this.only ? `／対象 ${[...this.only].join(',')}` : ''}）`);
+    this.out(`出撃準備: ${first.quest.title}（エージェント ${this.agent.display}／同時 ${this.parallel}人／上限 ${this.rounds}回${this.only ? `／対象 ${[...this.only].join(',')}` : ''}）`);
     for (;;) {
       if (this.fatal) throw this.fatal;
       if (this.interrupted) return this.finishInterrupted();

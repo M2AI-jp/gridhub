@@ -101,14 +101,18 @@ masume serve                               # 盤面を開く
 
 判定が手元にサーバーを立てる（`127.0.0.1` で listen する）なら、エージェントの箱の中でもそれができるかを出撃の前に確かめる。
 Codex の `-s workspace-write` は既定でネットワークを閉じているので、listen が `EPERM` で落ち、素振りも宣言判定も通らない（キャラクターのせいではないのにレベルが下がる）。
-そのときは、その出撃だけアダプタを差し替える:
+そのときは、箱のネットワークを開けて出撃させる（CONTRACTS §30。codex のコマンドの `-s workspace-write` の後ろに `-c sandbox_workspace_write.network_access=true` が足される。claude と `cmd:` には効かない）:
 
 ```sh
-MASUME_AGENT_OVERRIDE='cmd:codex exec -C . -s workspace-write -c sandbox_workspace_write.network_access=true --skip-git-repo-check -' \
-  masume party --only engine,server
+masume party --dry-run --agent codex --network            # 起動するコマンドを先に見る
+masume party --agent codex --network --only engine,server # その出撃だけ開ける
 ```
 
-マスメ自身の第4章では、伝令（窓口のサーバー）と地図職人（偽物の Linear・Jira を立てる判定）がこれにあたった。
+いつも開けるなら `.masume/party.json` に `"network": true` を書く（盤面の「出撃させる」もこれに従う）。その回だけ閉じるなら `--no-network`。
+願いから始めるときは `masume quest "<願い>" --gm codex --network` で GM の箱も開けられ、生まれた冒険の `party.json` にも `"network": true` が書かれる（§31）。
+`masume init --agent codex --network` でも書ける。開けるのは、判定が本当に手元のサーバーを要るときだけ。既定は閉じたまま。
+
+マスメ自身の第4章では、伝令（窓口のサーバー）と地図職人（偽物の Linear・Jira を立てる判定）がこれにあたった。まだ `--network` が無かったので、`MASUME_AGENT_OVERRIDE` でアダプタごと差し替えた。第5章で、それを `--network` にした。
 
 ---
 
@@ -137,6 +141,7 @@ MASUME_AGENT_OVERRIDE='cmd:codex exec -C . -s workspace-write -c sandbox_workspa
 - [ ] モジュールが初めてつながる所にゲートがある
 - [ ] 縄張りが重なっていない
 - [ ] 本物の外部サービス・本番の鍵に触る判定がない（人間のマスに分けた）
+- [ ] 判定が手元にサーバーを立てるなら、Codex の出撃は箱のネットワークを開けた（`masume party --network` か `party.json` の `"network": true`）
 - [ ] `masume validate` が通る
 - [ ] ボス戦（ゲート）の前に、GM 自身がゲートの判定を素振りした（判定のバグで仲間を全滅させない）
 - [ ] 判定の中で `node --test` を入れ子に呼ぶなら、環境変数 `NODE_TEST_CONTEXT` を外している（受け継ぐと何も走らずに通ってしまう）

@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 import { MasumeError } from '../engine/index.js';
 import { runQuest } from '../quest/index.js';
 
-const USAGE = '使い方: masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--dry-run] [--json]';
+const USAGE = '使い方: masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--network] [--dry-run] [--json]';
 
 export async function run(argv, ctx) {
   let parsed;
@@ -17,6 +17,7 @@ export async function run(argv, ctx) {
         retries: { type: 'string' },
         force: { type: 'boolean' },
         'dry-run': { type: 'boolean' },
+        network: { type: 'boolean' },
         json: { type: 'boolean' },
       },
       strict: true,
@@ -45,6 +46,7 @@ export async function run(argv, ctx) {
     force: values.force,
     retries: values.retries === undefined ? undefined : Number(values.retries),
     dryRun: values['dry-run'],
+    network: Boolean(values.network),
     json: values.json,
     actor: values.as ?? (env.MASUME_ACTOR || 'gm'),
   }, ctx);

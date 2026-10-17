@@ -1,0 +1,14 @@
+=== GOAL5: node --test tests/e2e/GOAL5.test.mjs ===
+✔ 第1章〜第5章のすべての判定が、まとめて本当に通る (167825.53325ms)
+✔ マスメ自身と、残っているすべての冒険の書が正常 (182.760667ms)
+✔ 遊び方に第5章（箱のネットワーク）が書いてある (1.828042ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 168068.370417
+
+(exit 0, 168110ms)

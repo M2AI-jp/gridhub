@@ -1,0 +1,14 @@
+=== Q4: node --test tests/e2e/Q4.test.mjs ===
+✔ §31.1・§31.2 quest --network --dry-run: codex の GM のコマンドに -c が入る。claude は変わらない。無ければ閉じたまま (298.971041ms)
+✔ §31.1・§31.3 偽の codex: quest --network で GM の箱を開け、生まれた冒険の party.json に network: true を持ち越す (797.020333ms)
+✔ §31.4 init --agent codex --network は party.json に network: true を足す。ほかの項目は残す。--agent なしは E_USAGE (305.335666ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1455.831208
+
+(exit 0, 1505ms)

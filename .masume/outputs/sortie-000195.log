@@ -1,0 +1,6 @@
+軍師（Claude Sonnet サブエージェント）P4 の報告
+宣言判定: P4 突破（seq 199、--no-boss）。G7 で待機。日誌 seq 200。
+変更: src/party/agents.js（resolveAgent に { network }。codex だけ -s workspace-write の直後に -c sandbox_workspace_write.network_access=true）、
+      src/commands/party.js（--network / --no-network、party.json の network の検査と優先順）、src/party/patrol.js（出撃準備の行を接頭辞なしに）
+素振り: P4 6/6、P1+P2+P3+G4+SOLO 24/24。
+GM への依頼: P4 の判定は「出撃準備:」の行頭一致を求め、§30.4 はそれを書いていなかった → GM が §30.4 に明記して了承。

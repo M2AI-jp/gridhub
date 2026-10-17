@@ -1,0 +1,12 @@
+=== G7: node --test tests/e2e/G7.test.mjs ===
+✔ 願いから出撃まで: quest --network が GM の箱を開けて party.json に持ち越し、何も指定しない party がそれを読んで codex の箱を開けて進む (1818.312958ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1873.911167
+
+(exit 0, 1919ms)

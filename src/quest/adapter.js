@@ -40,8 +40,14 @@ export function parseGm(spec) {
   throw new MasumeError('E_USAGE', `--gm は claude / codex / cmd:<command> のどれかです（受け取った値: ${text || '空'}）`);
 }
 
-/** 起動するコマンド（実行ファイル・引数・人間向けの表示）を組み立てる */
-export function gmCommand(gm, { root, model }) {
+/** codex の箱（workspace-write）のネットワークを開ける引数（§31.1）。-c とその値は別々の引数 */
+const NETWORK_ARGS = ['-c', 'sandbox_workspace_write.network_access=true'];
+
+/**
+ * 起動するコマンド（実行ファイル・引数・人間向けの表示）を組み立てる。
+ * network が true で codex のときだけ、`-s workspace-write` のすぐ後ろにネットワークを開ける引数を足す（§31.1）。
+ */
+export function gmCommand(gm, { root, model, network = false }) {
   let file;
   let args;
   if (gm.kind === 'claude') {
@@ -49,7 +55,11 @@ export function gmCommand(gm, { root, model }) {
     args = ['-p', '--model', model || 'sonnet', '--permission-mode', 'bypassPermissions'];
   } else if (gm.kind === 'codex') {
     file = 'codex';
-    args = ['exec', '-C', root, '-s', 'workspace-write', '--skip-git-repo-check', ...(model ? ['-m', model] : []), '-'];
+    args = [
+      'exec', '-C', root, '-s', 'workspace-write',
+      ...(network === true ? NETWORK_ARGS : []),
+      '--skip-git-repo-check', ...(model ? ['-m', model] : []), '-',
+    ];
   } else {
     file = '/bin/sh';
     args = ['-c', gm.command];

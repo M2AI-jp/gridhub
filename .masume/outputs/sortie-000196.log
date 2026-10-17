@@ -1,0 +1,6 @@
+語り部（Claude Sonnet サブエージェント）Q4 の報告
+宣言判定: Q4 突破（seq 197、--no-boss）。G7 で待機。日誌 seq 198。
+変更: src/quest/adapter.js（gmCommand に network）、src/quest/index.js、src/quest/setup.js（party.json に network: true を持ち越す）、
+      src/commands/quest.js・src/commands/init.js（--network。init は --agent なしなら E_USAGE）
+素振り: Q4 3/3、Q1+Q2+Q3+G5 19/19。
+契約の解釈（GM 了承）: --gm claude --network でも party.json には network: true を書く。agent が決まらない（cmd: の GM）ときは第3章どおり party.json を書かない。

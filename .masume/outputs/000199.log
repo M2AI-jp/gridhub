@@ -1,0 +1,17 @@
+=== P4: node --test tests/e2e/P4.test.mjs ===
+✔ §30.2 --network で codex の箱を開ける。--dry-run の出撃予定は起動するコマンドと同じ。既定は閉じたまま (502.200458ms)
+✔ §30.3 claude と cmd: のコマンドは --network でも変わらない。MASUME_AGENT_OVERRIDE が codex なら開ける (639.649167ms)
+✔ §30.1 .masume/party.json の network が既定になり、--network / --no-network がそれに勝つ (787.374791ms)
+✔ §30.1 使い方の誤り: party.json の network が true/false でない・--network=… ・両方を付ける (493.779292ms)
+✔ §30.2・§30.4 偽の codex: --network なら起動する codex の引数に -c が入り、そのまま進める。無ければ入らない (1349.303334ms)
+✔ §30.1 偽の codex: party.json の network: true で開け、--no-network で閉じる (825.830375ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4657.223209
+
+(exit 0, 4701ms)

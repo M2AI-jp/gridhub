@@ -55,7 +55,10 @@ GM の LLM（Claude か Codex）が、開発のロードマップ全体を地図
 masume quest "おみくじを引けるコマンドラインのアプリを作りたい" --gm claude   # 願いから地図と判定を作る
 masume party --agent claude --model sonnet --parallel 3                       # パーティ出撃（codex も可）
 masume party --dry-run                                                        # 誰に何を出撃させるかだけ見る
+masume party --agent codex --network                                          # Codex の箱のネットワークを開けて出撃（判定が手元にサーバーを立てるとき）
 ```
+
+Codex の箱（`-s workspace-write`）は既定でネットワークが閉じています。判定が `127.0.0.1` でサーバーを立てるなら `--network` で開けます（`.masume/party.json` の `"network": true` でいつも開ける。`masume quest --gm codex --network` なら GM の箱も開け、出撃にも持ち越す）。
 
 `examples/` に、本物の願いから本物のエージェントであがった冒険が残っています。
 
@@ -135,13 +138,13 @@ JIRA_BASE_URL=… JIRA_EMAIL=… JIRA_API_TOKEN=… masume jira pull --project E
 
 | コマンド | すること |
 | --- | --- |
-| `masume quest "<願い>" [--gm claude\|codex]` | 願いから GM の LLM が地図と判定を書き、冒険を始める |
-| `masume party [--agent claude\|codex] [--parallel N]` | キャラクターごとにエージェントを出撃させ、ボス戦をしながら進める |
+| `masume quest "<願い>" [--gm claude\|codex] [--network]` | 願いから GM の LLM が地図と判定を書き、冒険を始める |
+| `masume party [--agent claude\|codex] [--parallel N] [--network]` | キャラクターごとにエージェントを出撃させ、ボス戦をしながら進める |
 | `masume sortie` / `masume return` / `masume wish` | 出撃・帰還・願いを冒険の書に記録する（外の指揮役用） |
 | `masume linear push\|pull` | Linear 本体と同期する |
 | `masume jira push\|pull` | Jira と同期する |
 | `masume mcp` | LLM の道具箱（MCP サーバー） |
-| `masume init` | よそのプロジェクトに支度をする（AGENTS.md・CLAUDE.md・.gitignore） |
+| `masume init [--agent claude\|codex] [--network]` | よそのプロジェクトに支度をする（AGENTS.md・CLAUDE.md・.gitignore・`.masume/party.json`） |
 | `masume new <map>` | 地図から冒険の書をつくる |
 | `masume validate <map>` | 地図を検査する |
 | `masume serve [--port 5005]` | 盤面を開く（ライブ更新・ハンコ・ボス戦のボタン） |
@@ -252,6 +255,33 @@ Codex のキャラクターは `masume party` で出撃しました。判定が�
 3. 原因は、賢者クロード自身が B7 の修理で持ち込んだ競合だった（SSE の hello で読み直す処理が、重い負荷の下でだけ手で描いた盤面を上書きする）。
 
 GM の判定の不備ではないので、ロードはしませんでした。全滅を受け入れ、賢者クロードが直し、戻された仲間が宣言をやり直しました。最後は、パーティ自身（軍師の新しいボス戦）が GOAL4 を突破しています。全189判定が通ります。
+
+### 第5章: エージェントの箱
+
+第4章では、Codex のキャラクターの判定が手元にサーバーを立てるので、`MASUME_AGENT_OVERRIDE` でアダプタごと差し替えて、箱（サンドボックス）のネットワークを開けました。
+第5章では、それを製品の選択肢にしました（契約 §30・§31）。**既定は閉じたまま**で、頼んだときだけ開けます。
+
+```sh
+masume party --agent codex --network          # その出撃だけ、Codex の箱のネットワークを開ける
+masume party --no-network                     # party.json で開けていても、その回だけ閉じる
+masume quest "<願い>" --gm codex --network     # GM の箱も開け、生まれた冒険の party.json に "network": true を持ち越す
+masume init --agent codex --network           # よそのプロジェクトの party.json に "network": true を書く
+```
+
+開けると、codex のコマンドの `-s workspace-write` のすぐ後ろに `-c sandbox_workspace_write.network_access=true` が入ります（`--dry-run` でそのまま見えます）。claude と `cmd:` のコマンドは変わりません。
+盤面の「出撃させる」は `masume party` を起動するので、`.masume/party.json` の `"network": true` がそのまま効きます。
+
+| キャラクター | 第5章でつくったもの | 中の人 |
+| --- | --- | --- |
+| 軍師 | `masume party --network / --no-network` と `party.json` の `network` | Claude Sonnet |
+| 語り部 | `masume quest --network`（GM の箱）、`party.json` への持ち越し、`masume init --network` | Claude Sonnet |
+
+GM は判定（P4・Q4・結合 G7・あがり GOAL5）を先に書き、今のコードで落ちることを確かめてから封印しました。本物の Codex は呼ばず、`PATH` の先頭に置いた偽の `codex`（受け取った引数を書き残す）で、本当に起動されるコマンドを確かめています。
+結合 G7 は「`quest --gm codex --network` で GM の箱が開き、`party.json` に `"network": true` が残り、何も指定しない `masume party` が codex の箱を開けて出撃し、ボス戦まで進む」という一続きの流れです。
+
+P4 の判定は「出撃準備:」の行が行頭から始まることを求めていましたが、契約には書いていませんでした。軍師が宣言のあとの報告でそれを指摘し、GM は軍師の変更を了承して契約に明記しました（冒険の書 seq 203）。
+
+第5章のあがり GOAL5 は、GM がボス戦と同じ環境で G7 と GOAL5 を素振りしてから、パーティ自身（`masume party --agent codex --network`）が G7・GOAL5 を続けて一度で突破しました。全199判定が通ります。
 
 ```sh
 masume status       # 全員「あがり」

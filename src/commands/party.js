@@ -9,7 +9,7 @@ import { buildPrompt } from '../party/prompt.js';
 const DEFAULTS = { agent: 'claude', parallel: 3, rounds: 40 };
 const OPTIONS = {
   dir: 'string', agent: 'string', model: 'string', parallel: 'string',
-  rounds: 'string', only: 'string', 'dry-run': 'boolean',
+  rounds: 'string', only: 'string', 'dry-run': 'boolean', network: 'boolean', 'no-network': 'boolean',
 };
 
 function usage(message) {
@@ -20,7 +20,7 @@ function parseOptions(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--dry-run] [--dir D]（余計な引数: ${arg}）`);
+    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--network | --no-network] [--dry-run] [--dir D]（余計な引数: ${arg}）`);
     const eq = arg.indexOf('=');
     const key = arg.slice(2, eq === -1 ? undefined : eq);
     if (!Object.hasOwn(OPTIONS, key)) usage(`知らないオプションです: --${key}`);
@@ -52,6 +52,7 @@ function readConfig(root) {
     usage(`.masume/party.json を読めません: ${error.message}`);
   }
   if (config === null || typeof config !== 'object' || Array.isArray(config)) usage('.masume/party.json はオブジェクトで書いてください');
+  if (Object.hasOwn(config, 'network') && typeof config.network !== 'boolean') usage('party.json の network は true か false で書いてください');
   return config;
 }
 
@@ -96,7 +97,9 @@ export async function run(argv, ctx) {
   const parallel = options.parallel !== undefined ? positive('--parallel', options.parallel)
     : config.parallel !== undefined ? positive('party.json の parallel', config.parallel) : DEFAULTS.parallel;
   const rounds = options.rounds !== undefined ? positive('--rounds', options.rounds) : DEFAULTS.rounds;
-  const agent = resolveAgent(agentName, model, root);
+  if (options.network && options['no-network']) usage('--network と --no-network は一緒に指定できません');
+  const network = options.network ? true : options['no-network'] ? false : (config.network ?? false); // §30.1
+  const agent = resolveAgent(agentName, model, root, { network });
   const timeoutMs = timeoutSeconds(env) * 1000;
 
   const view = buildView(root);
