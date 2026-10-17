@@ -26,9 +26,9 @@ const COMMANDS = {
   sortie: ['書記', 'エージェントの出撃を記録する', 'sortie <characterId> --agent <name> [--model M]'],
   return: ['書記', 'エージェントの帰還を記録する', 'return <characterId> --sortie <seq> --code <n> [--log file]'],
   wish: ['書記', '冒険の始まりの願いを記録する', 'wish <text> [--gm G] [--model M]'],
-  quest: ['語り部', '「xxxのようなアプリを作りたい」から冒険をつくる', 'quest "<願い>" [--gm claude|codex] [--dir D]'],
-  party: ['軍師', 'キャラクターごとにエージェントを出撃させる', 'party [--agent claude|codex] [--model M] [--parallel N]'],
-  init: ['語り部', 'よそのプロジェクトにマスメの支度をする（AGENTS.md ほか）', 'init [--dir D] [--agent claude|codex]'],
+  quest: ['語り部', '「xxxのようなアプリを作りたい」から冒険をつくる', 'quest "<願い>" [--gm claude|codex] [--allow-listen]'],
+  party: ['軍師', 'キャラクターごとにエージェントを出撃させる', 'party [--agent claude|codex] [--allow-listen]'],
+  init: ['語り部', 'よそのプロジェクトにマスメの支度をする（AGENTS.md ほか）', 'init [--agent claude|codex] [--allow-listen]'],
   serve: ['伝令', '盤面（5mm方眼ノート）を開く', 'serve [--port 5005]'],
   mcp: ['伝令', 'LLM の道具箱（MCP サーバー、標準入出力）', 'mcp [--dir D]'],
   export: ['地図職人', 'Linear形式で書き出す', 'export linear [--format csv|json] [--out file]'],
@@ -47,37 +47,44 @@ function usage() {
   for (const [name, [who, what, how]] of Object.entries(COMMANDS)) {
     lines.push(`  ${how.padEnd(44)} ${what}（担当: ${who}）`);
   }
+  lines.push('', '--allow-listen: 判定が 127.0.0.1 にサーバーを立てられるよう、Codex の箱（サンドボックス）のソケットを開ける。',
+    '  ゲームはローカルのまま。ただし Codex の設定は localhost だけに絞れないので、その出撃中はインターネットにも出られる。',
+    'くわしくは masume <command> --help');
   lines.push('', 'ルールブック: docs/RULEBOOK.md');
   return lines.join('\n');
 }
 
-const [cmd, ...rest] = process.argv.slice(2);
+// process.exit() は使わない（macOS のパイプでは stdout の書き込みが非同期なので、`masume --help | less` などで出力が途中で切れる）
+async function main() {
+  const [cmd, ...rest] = process.argv.slice(2);
+  if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') {
+    console.log(usage());
+    return 0;
+  }
+  if (cmd === '--version' || cmd === '-v') {
+    console.log('masume 0.1.0 (rules 1)');
+    return 0;
+  }
+  if (!Object.hasOwn(COMMANDS, cmd)) {
+    console.error(`[E_USAGE] 「${cmd}」というコマンドはありません。\n\n${usage()}`);
+    return 2;
+  }
 
-if (!cmd || cmd === 'help' || cmd === '--help' || cmd === '-h') {
-  console.log(usage());
-  process.exit(0);
-}
-if (cmd === '--version' || cmd === '-v') {
-  console.log('masume 0.1.0 (rules 1)');
-  process.exit(0);
-}
-if (!Object.hasOwn(COMMANDS, cmd)) {
-  console.error(`[E_USAGE] 「${cmd}」というコマンドはありません。\n\n${usage()}`);
-  process.exit(2);
+  const file = join(ROOT, 'src', 'commands', `${cmd}.js`);
+  if (!existsSync(file)) {
+    console.error(`[E_NOT_YET] 「${cmd}」はまだ誰も踏んでいないマスです（src/commands/${cmd}.js 担当: ${COMMANDS[cmd][0]}）`);
+    return 2;
+  }
+
+  const mod = await import(pathToFileURL(file).href);
+  try {
+    const code = await mod.run(rest, { bin: BIN, root: ROOT, cwd: process.cwd(), env: process.env });
+    return typeof code === 'number' ? code : 0;
+  } catch (err) {
+    const code = err && err.code ? `[${err.code}] ` : '';
+    console.error(`${code}${err && err.message ? err.message : err}`);
+    return err && typeof err.exitCode === 'number' ? err.exitCode : 2;
+  }
 }
 
-const file = join(ROOT, 'src', 'commands', `${cmd}.js`);
-if (!existsSync(file)) {
-  console.error(`[E_NOT_YET] 「${cmd}」はまだ誰も踏んでいないマスです（src/commands/${cmd}.js 担当: ${COMMANDS[cmd][0]}）`);
-  process.exit(2);
-}
-
-const mod = await import(pathToFileURL(file).href);
-try {
-  const code = await mod.run(rest, { bin: BIN, root: ROOT, cwd: process.cwd(), env: process.env });
-  process.exitCode = typeof code === 'number' ? code : 0;
-} catch (err) {
-  const code = err && err.code ? `[${err.code}] ` : '';
-  console.error(`${code}${err && err.message ? err.message : err}`);
-  process.exitCode = err && typeof err.exitCode === 'number' ? err.exitCode : 2;
-}
+process.exitCode = await main();

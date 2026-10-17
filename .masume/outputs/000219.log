@@ -1,0 +1,21 @@
+=== P5: node --test tests/e2e/P4.test.mjs tests/e2e/P5.test.mjs ===
+✔ §30.2 --allow-listen で codex の箱を開ける。--dry-run の出撃予定は起動するコマンドと同じ。既定は閉じたまま (523.804209ms)
+✔ §30.3 claude と cmd: のコマンドは --allow-listen でも変わらない。MASUME_AGENT_OVERRIDE が codex なら開ける (646.759208ms)
+✔ §30.1 .masume/party.json の allow_listen が既定になり、--allow-listen / --no-allow-listen がそれに勝つ (781.600584ms)
+✔ §30.1 使い方の誤り: party.json の allow_listen が true/false でない・--allow-listen=… ・両方を付ける (490.523625ms)
+✔ §30.2・§30.4 偽の codex: --allow-listen なら起動する codex の引数に -c が入り、そのまま進める。無ければ入らない (1351.872709ms)
+✔ §30.1 偽の codex: party.json の allow_listen: true で開け、--no-allow-listen で閉じる (825.823333ms)
+✔ §32.2 party --help / -h: 使い方と --allow-listen の説明（目的・ローカルのまま・インターネットの注意・codex だけ）を stdout に出して 0 (279.230375ms)
+✔ §32.3 開けるときは「箱のソケット:」の知らせを1行（127.0.0.1・インターネット）。codex でなければ「codex にだけ効きます」。頼まれなければ出さない (941.012834ms)
+✔ §32.3 本当に出撃するときも、巡回の見出し（出撃準備:）より前に知らせる (380.50125ms)
+✔ §32.1 古い名前 --network / --no-network は E_USAGE/2。party.json の network は読まない (304.558333ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 10
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4677.737458
+
+(exit 0, 4721ms)

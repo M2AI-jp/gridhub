@@ -149,16 +149,16 @@ function ensureIgnore(target) {
 
 /**
  * 既にある party.json のほかの項目（model など）は残して、agent だけ合わせる。
- * network が true のときだけ `"network": true` も書く（§31.3・§31.4）。false / 未指定なら network には触らない。
+ * allowListen が true のときだけ `"allow_listen": true` も書く（§31.3・§31.4）。false / 未指定なら allow_listen には触らない。
  */
-function writePartyJson(target, agent, network) {
+function writePartyJson(target, agent, allowListen) {
   let current = {};
   try {
     const parsed = JSON.parse(readFileSync(target.path, 'utf8'));
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) current = parsed;
   } catch {}
   const next = { ...current, agent, parallel: Number.isInteger(current.parallel) ? current.parallel : PARALLEL };
-  if (network === true) next.network = true;
+  if (allowListen === true) next.allow_listen = true;
   writeFileSync(target.path, `${JSON.stringify(next)}\n`);
 }
 
@@ -173,12 +173,12 @@ const sameFile = (a, b) => {
 };
 
 /**
- * opts: { root, agent, force, network }   ctx: { bin, root（リポジトリ） }
- * network: true なら party.json に `"network": true` も書く（agent があって、party.json を書くときだけ。§31）
+ * opts: { root, agent, force, allowListen }   ctx: { bin, root（リポジトリ） }
+ * allowListen: true なら party.json に `"allow_listen": true` も書く（agent があって、party.json を書くときだけ。§31）
  * 戻り値: { root, files: [{ file, written, note, reason }] }（file は root からの相対パス）
  * reason があるファイルは「書きません」（symlink が外を指す・ぶら下がっている・AGENTS.md と同じ実体 など）
  */
-export function setupProject({ root, agent, force = false, network = false }, ctx) {
+export function setupProject({ root, agent, force = false, allowListen = false }, ctx) {
   if (agent !== undefined && agent !== null && !AGENT_KINDS.includes(agent)) {
     throw new MasumeError('E_USAGE', `--agent は ${AGENT_KINDS.join(' / ')} のどちらかです（受け取った値: ${agent}）`);
   }
@@ -228,8 +228,8 @@ export function setupProject({ root, agent, force = false, network = false }, ct
       const partyTarget = writableTarget(root, rootReal, partyFile);
       if (partyTarget.reason) refuse('.masume/party.json', partyTarget.reason);
       else {
-        writePartyJson(partyTarget, agent, network);
-        files.push({ file: '.masume/party.json', written: true, note: `（agent: ${agent}, parallel: ${PARALLEL}${network === true ? ', network: true' : ''}）` });
+        writePartyJson(partyTarget, agent, allowListen);
+        files.push({ file: '.masume/party.json', written: true, note: `（agent: ${agent}, parallel: ${PARALLEL}${allowListen === true ? ', allow_listen: true' : ''}）` });
       }
     }
   }

@@ -1,0 +1,5 @@
+語り部（Claude Sonnet サブエージェント）Q5 の報告
+宣言判定: Q5 突破（seq 221、--no-boss）。GOAL6 で待機。日誌 seq 222。
+変更: src/quest/help.js（新規: wantsHelp・questHelp・initHelp・listenNotice）、src/commands/quest.js、src/commands/init.js、src/quest/index.js、src/quest/setup.js、src/quest/adapter.js
+素振り: Q4+Q5 8/8、Q1+Q2+Q3+G5 19/19、G7 1/1（参考）。
+契約の解釈（GM 了承）: `--` より後ろの -h は願いとして扱う。init には知らせを出さない（§32.3 は party と quest だけ）。

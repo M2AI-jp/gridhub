@@ -12,11 +12,12 @@ const TAIL_LIMIT = OUTPUT_LIMIT - RESERVED - HEAD_LIMIT - 256;
 const TERM_GRACE_MS = 3000; // SIGTERM から SIGKILL までの猶予
 const LINGER_MS = 1000; // 本体が終わってもパイプが閉じないとき（孫が握っている）の猶予
 
-// 箱のネットワークを開ける codex の設定（CONTRACTS §30.2。-c とその値は別々の引数）
-const NETWORK_ARGS = ['-c', 'sandbox_workspace_write.network_access=true'];
+// 箱のソケット（127.0.0.1 で listen できるか）を開ける codex の設定（CONTRACTS §30.2。-c とその値は別々の引数）。
+// この設定は localhost だけに絞れないので、開けるとインターネットにも出られる（§32.3 で知らせる）
+const LISTEN_ARGS = ['-c', 'sandbox_workspace_write.network_access=true'];
 
-/** `--agent` の文字列を、起動コマンドに直す。network が true で codex のときだけ、箱のネットワークを開ける（§30）。 */
-export function resolveAgent(agent, model, root, { network = false } = {}) {
+/** `--agent` の文字列を、起動コマンドに直す。allowListen が true で codex のときだけ、箱のソケットを開ける（§30）。 */
+export function resolveAgent(agent, model, root, { allowListen = false } = {}) {
   if (agent === 'claude') {
     const name = model || 'sonnet';
     const args = ['-p', '--model', name, '--permission-mode', 'bypassPermissions'];
@@ -25,7 +26,7 @@ export function resolveAgent(agent, model, root, { network = false } = {}) {
   if (agent === 'codex') {
     const args = [
       'exec', '-C', root, '-s', 'workspace-write',
-      ...(network === true ? NETWORK_ARGS : []),
+      ...(allowListen === true ? LISTEN_ARGS : []),
       '--skip-git-repo-check', ...(model ? ['-m', model] : []), '-',
     ];
     return { name: 'codex', model: model || null, file: 'codex', args, display: ['codex', ...args].join(' ') };

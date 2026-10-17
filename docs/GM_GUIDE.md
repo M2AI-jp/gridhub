@@ -99,20 +99,24 @@ masume serve                               # 盤面を開く
 
 ### エージェントの箱（サンドボックス）を確かめる
 
-判定が手元にサーバーを立てる（`127.0.0.1` で listen する）なら、エージェントの箱の中でもそれができるかを出撃の前に確かめる。
-Codex の `-s workspace-write` は既定でネットワークを閉じているので、listen が `EPERM` で落ち、素振りも宣言判定も通らない（キャラクターのせいではないのにレベルが下がる）。
-そのときは、箱のネットワークを開けて出撃させる（CONTRACTS §30。codex のコマンドの `-s workspace-write` の後ろに `-c sandbox_workspace_write.network_access=true` が足される。claude と `cmd:` には効かない）:
+判定が手元にサーバーを立てる（テストの中で `127.0.0.1` で listen する。偽の API・盤面の窓口など）なら、エージェントの箱の中でもそれができるかを出撃の前に確かめる。
+Codex の `-s workspace-write` の箱は、既定でソケットを閉じていて、**`127.0.0.1` での listen まで** `EPERM` で止める。素振りも宣言判定も通らない（キャラクターのせいではないのにレベルが下がる）。
+そのときは、箱のソケットを開けて出撃させる（CONTRACTS §30・§32）:
 
 ```sh
-masume party --dry-run --agent codex --network            # 起動するコマンドを先に見る
-masume party --agent codex --network --only engine,server # その出撃だけ開ける
+masume party --dry-run --agent codex --allow-listen             # 起動するコマンドを先に見る
+masume party --agent codex --allow-listen --only engine,server  # その出撃だけ開ける
 ```
 
-いつも開けるなら `.masume/party.json` に `"network": true` を書く（盤面の「出撃させる」もこれに従う）。その回だけ閉じるなら `--no-network`。
-願いから始めるときは `masume quest "<願い>" --gm codex --network` で GM の箱も開けられ、生まれた冒険の `party.json` にも `"network": true` が書かれる（§31）。
-`masume init --agent codex --network` でも書ける。開けるのは、判定が本当に手元のサーバーを要るときだけ。既定は閉じたまま。
+- **ゲームはローカルのまま**。インターネットが要るわけではない。開けるのは、判定が手元でサーバーを立てるときだけ。既定は閉じたまま。
+- **注意**: 開けるのに使う Codex の設定（`sandbox_workspace_write.network_access`）は、localhost だけを許すことができない。開けると、その出撃中のエージェントは**インターネットにも出られる**。開けている出撃では、最初に「箱のソケット:」の知らせが出る。
+- codex にだけ効く（codex のコマンドの `-s workspace-write` の後ろに `-c sandbox_workspace_write.network_access=true` が入る）。claude と `cmd:` のコマンドは変わらない。
 
-マスメ自身の第4章では、伝令（窓口のサーバー）と地図職人（偽物の Linear・Jira を立てる判定）がこれにあたった。まだ `--network` が無かったので、`MASUME_AGENT_OVERRIDE` でアダプタごと差し替えた。第5章で、それを `--network` にした。
+いつも開けるなら `.masume/party.json` に `"allow_listen": true` を書く（盤面の「出撃させる」もこれに従う）。その回だけ閉じるなら `--no-allow-listen`。
+願いから始めるときは `masume quest "<願い>" --gm codex --allow-listen` で GM の箱も開けられ（GM が判定を素振りするときも手元でサーバーを立てられる）、生まれた冒険の `party.json` にも `"allow_listen": true` が書かれる。`masume init --agent codex --allow-listen` でも書ける。
+
+マスメ自身の第4章では、伝令（窓口のサーバー）と地図職人（偽物の Linear・Jira を立てる判定）がこれにあたった。まだ選択肢が無かったので、`MASUME_AGENT_OVERRIDE` でアダプタごと差し替えた。
+第5章でそれを選択肢にし、第6章で名前を `--network` から `--allow-listen` に改めた（「ローカルのゲームなのに、なぜネットワーク？」と誤解されたため）。
 
 ---
 
@@ -141,7 +145,7 @@ masume party --agent codex --network --only engine,server # その出撃だけ�
 - [ ] モジュールが初めてつながる所にゲートがある
 - [ ] 縄張りが重なっていない
 - [ ] 本物の外部サービス・本番の鍵に触る判定がない（人間のマスに分けた）
-- [ ] 判定が手元にサーバーを立てるなら、Codex の出撃は箱のネットワークを開けた（`masume party --network` か `party.json` の `"network": true`）
+- [ ] 判定が手元にサーバーを立てるなら、Codex の出撃は箱のソケットを開けた（`masume party --allow-listen` か `party.json` の `"allow_listen": true`。その出撃中はインターネットにも出られることを承知のうえで）
 - [ ] `masume validate` が通る
 - [ ] ボス戦（ゲート）の前に、GM 自身がゲートの判定を素振りした（判定のバグで仲間を全滅させない）
 - [ ] 判定の中で `node --test` を入れ子に呼ぶなら、環境変数 `NODE_TEST_CONTEXT` を外している（受け継ぐと何も走らずに通ってしまう）

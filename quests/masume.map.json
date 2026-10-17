@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "マスメ — マスメでマスメをつくる",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、Codex エージェントの箱（サンドボックス）のネットワークを開ける選択肢を製品の機能にする。",
-    "goal": "GOAL5"
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。",
+    "goal": "GOAL6"
   },
   "characters": [
     {
@@ -35,7 +35,8 @@
         "GOAL3",
         "B7",
         "GOAL4",
-        "GOAL5"
+        "GOAL5",
+        "GOAL6"
       ]
     },
     {
@@ -69,7 +70,8 @@
         "E7",
         "G6",
         "GOAL4",
-        "GOAL5"
+        "GOAL5",
+        "GOAL6"
       ]
     },
     {
@@ -102,7 +104,8 @@
         "S6",
         "G6",
         "GOAL4",
-        "GOAL5"
+        "GOAL5",
+        "GOAL6"
       ]
     },
     {
@@ -129,7 +132,9 @@
         "GOAL4",
         "Q4",
         "G7",
-        "GOAL5"
+        "GOAL5",
+        "Q5",
+        "GOAL6"
       ]
     },
     {
@@ -155,7 +160,9 @@
         "GOAL4",
         "P4",
         "G7",
-        "GOAL5"
+        "GOAL5",
+        "P5",
+        "GOAL6"
       ]
     },
     {
@@ -185,7 +192,8 @@
         "GOAL3",
         "M6",
         "GOAL4",
-        "GOAL5"
+        "GOAL5",
+        "GOAL6"
       ]
     },
     {
@@ -210,7 +218,8 @@
         "GOAL2",
         "GOAL3",
         "GOAL4",
-        "GOAL5"
+        "GOAL5",
+        "GOAL6"
       ]
     },
     {
@@ -229,7 +238,8 @@
         "H3",
         "GOAL3",
         "GOAL4",
-        "GOAL5"
+        "GOAL5",
+        "GOAL6"
       ]
     }
   ],
@@ -1058,8 +1068,8 @@
     },
     "P4": {
       "type": "task",
-      "title": "箱のネットワークを開ける",
-      "detail": "CONTRACTS §30: masume party --network / --no-network と .masume/party.json の network。codex なら -s workspace-write のすぐ後ろに -c sandbox_workspace_write.network_access=true。claude と cmd: は変えない。--dry-run と出撃準備の行も同じコマンド。既定は閉じたまま。",
+      "title": "箱のソケットを開ける",
+      "detail": "CONTRACTS §30: masume party --allow-listen / --no-allow-listen と .masume/party.json の allow_listen（第5章の初版の名前は --network）。codex なら -s workspace-write のすぐ後ろに -c sandbox_workspace_write.network_access=true。claude と cmd: は変えない。--dry-run と出撃準備の行も同じコマンド。既定は閉じたまま。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/P4.test.mjs",
@@ -1079,7 +1089,7 @@
     "Q4": {
       "type": "task",
       "title": "GM の箱を開けて持ち越す",
-      "detail": "CONTRACTS §31: masume quest --network で codex の GM の箱を開ける（--dry-run も同じコマンド）。生まれた冒険の .masume/party.json に network: true を持ち越す。init --agent A --network も。",
+      "detail": "CONTRACTS §31: masume quest --allow-listen で codex の GM の箱を開ける（--dry-run も同じコマンド）。生まれた冒険の .masume/party.json に allow_listen: true を持ち越す。init --agent A --allow-listen も（第5章の初版の名前は --network）。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/Q4.test.mjs",
@@ -1099,7 +1109,7 @@
     "G7": {
       "type": "gate",
       "title": "結合: 願いから出撃まで箱が開く",
-      "detail": "quest --gm codex --network で GM の箱が開き、party.json に network: true が残り、何も指定しない masume party が codex の箱を開けて出撃し、ボス戦まで進む。",
+      "detail": "quest --gm codex --allow-listen で GM の箱が開き、party.json に allow_listen: true が残り、何も指定しない masume party が codex の箱を開けて出撃し、ボス戦まで進む。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/G7.test.mjs",
@@ -1114,12 +1124,69 @@
     "GOAL5": {
       "type": "gate",
       "title": "あがり（第5章）: エージェントの箱",
-      "detail": "第1章〜第5章のすべての判定がまとめて通り、すべての冒険の書が正常で、遊び方（README・GM_GUIDE）に箱のネットワークが書いてある。",
+      "detail": "第1章〜第5章のすべての判定がまとめて通り、すべての冒険の書が正常で、遊び方（README・GM_GUIDE）に箱のソケット（--allow-listen）が書いてある。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/GOAL5.test.mjs",
         "seal": [
           "tests/e2e/GOAL5.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      }
+    },
+    "P5": {
+      "type": "task",
+      "title": "箱のソケットの名前と説明を正す",
+      "detail": "CONTRACTS §32: --network を --allow-listen / --no-allow-listen / allow_listen に改め、古い名前は受け付けない。party --help / -h に目的（127.0.0.1 にサーバーを立てる）・ゲームはローカルのまま・インターネットにも出られる注意・codex だけを書く。効くときは「箱のソケット:」の知らせを出撃準備より前に1行。判定は P4（改名した挙動）と P5。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/P4.test.mjs tests/e2e/P5.test.mjs",
+        "seal": [
+          "tests/e2e/P4.test.mjs",
+          "tests/e2e/P5.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "party",
+        "sandbox"
+      ]
+    },
+    "Q5": {
+      "type": "task",
+      "title": "GM の箱のソケットの名前と説明を正す",
+      "detail": "CONTRACTS §32: quest / init の --network を --allow-listen に改め、古い名前は受け付けない。quest --help・init --help（-h も）に目的・ローカルのまま・インターネットの注意・codex だけを書く。GM の箱を開けるときは「箱のソケット:」の知らせを GM を呼ぶ前に1行（--json なら stderr）。判定は Q4（改名した挙動）と Q5。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/Q4.test.mjs tests/e2e/Q5.test.mjs",
+        "seal": [
+          "tests/e2e/Q4.test.mjs",
+          "tests/e2e/Q5.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "quest",
+        "sandbox"
+      ]
+    },
+    "GOAL6": {
+      "type": "gate",
+      "title": "あがり（第6章）: 箱のソケットの名前",
+      "detail": "第1章〜第6章のすべての判定がまとめて通り、すべての冒険の書が正常で、遊び方（README・GM_GUIDE・masume --help）に --allow-listen の目的・ローカルのまま・インターネットの注意が書いてある。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/GOAL6.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL6.test.mjs",
           "tests/helpers.mjs",
           "tests/helpers2.mjs",
           "tests/helpers3.mjs"

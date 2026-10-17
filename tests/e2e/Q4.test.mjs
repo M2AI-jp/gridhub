@@ -1,5 +1,5 @@
 // Q4「GM の箱を開けて持ち越す」— CONTRACTS §31（第5章）。
-// masume quest --network で codex の GM の箱を開け、生まれた冒険の .masume/party.json に network: true を持ち越す。init --network も。
+// masume quest --allow-listen で codex の GM の箱を開け、生まれた冒険の .masume/party.json に allow_listen: true を持ち越す。init --allow-listen も。
 // 本物の codex は呼ばない。--dry-run と、PATH の先頭に置いた偽の codex（引数を書き残して偽の GM を走らせる）で確かめる。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -35,31 +35,31 @@ const WITH_CODEX = { PATH: `${FAKE_BIN}:${process.env.PATH}` };
 
 // ---- §31.1・§31.2 ----
 
-test('§31.1・§31.2 quest --network --dry-run: codex の GM のコマンドに -c が入る。claude は変わらない。無ければ閉じたまま', async () => {
+test('§31.1・§31.2 quest --allow-listen --dry-run: codex の GM のコマンドに -c が入る。claude は変わらない。無ければ閉じたまま', async () => {
   const root = tmp('masume-q4-');
-  const d = await quest([WISH, '--dir', root, '--gm', 'codex', '--network', '--dry-run']);
+  const d = await quest([WISH, '--dir', root, '--gm', 'codex', '--allow-listen', '--dry-run']);
   assert.equal(d.code, 0, d.all);
   assert.ok(d.all.includes(codexLine(root, { net: true })), `GM のコマンドに -c ${NET}:\n${d.all}`);
 
-  const m = await quest([WISH, '--dir', root, '--gm', 'codex', '--model', 'gpt-5', '--network', '--dry-run']);
+  const m = await quest([WISH, '--dir', root, '--gm', 'codex', '--model', 'gpt-5', '--allow-listen', '--dry-run']);
   assert.equal(m.code, 0, m.all);
   assert.ok(m.all.includes(codexLine(root, { net: true, model: 'gpt-5' })), `-m は -c の後ろ:\n${m.all}`);
 
   const closed = await quest([WISH, '--dir', root, '--gm', 'codex', '--dry-run']);
   assert.equal(closed.code, 0, closed.all);
   assert.ok(closed.all.includes(codexLine(root)), closed.all);
-  assert.doesNotMatch(closed.all, /network_access/, '--network が無ければ閉じたまま');
+  assert.doesNotMatch(closed.all, /network_access/, '--allow-listen が無ければ閉じたまま');
 
-  const c = await quest([WISH, '--dir', root, '--gm', 'claude', '--network', '--dry-run']);
+  const c = await quest([WISH, '--dir', root, '--gm', 'claude', '--allow-listen', '--dry-run']);
   assert.equal(c.code, 0, c.all);
   assert.match(c.all, /claude -p --model sonnet --permission-mode bypassPermissions/);
   assert.doesNotMatch(c.all, /network_access/, 'claude の GM には足さない');
 
-  const j = await quest([WISH, '--dir', root, '--gm', 'codex', '--network', '--dry-run', '--json']);
+  const j = await quest([WISH, '--dir', root, '--gm', 'codex', '--allow-listen', '--dry-run', '--json']);
   assert.equal(j.code, 0, j.all);
   assert.equal(JSON.parse(j.out).command, codexLine(root, { net: true }), '--json の command も同じ');
 
-  const o = await quest([WISH, '--dir', root, '--gm', 'claude', '--network', '--dry-run'], { MASUME_GM_OVERRIDE: 'codex' });
+  const o = await quest([WISH, '--dir', root, '--gm', 'claude', '--allow-listen', '--dry-run'], { MASUME_GM_OVERRIDE: 'codex' });
   assert.equal(o.code, 0, o.all);
   assert.ok(o.all.includes(codexLine(root, { net: true })), `MASUME_GM_OVERRIDE が codex なら開ける:\n${o.all}`);
 
@@ -68,42 +68,42 @@ test('§31.1・§31.2 quest --network --dry-run: codex の GM のコマンドに
 
 // ---- §31.1・§31.3（本当に起動する） ----
 
-test('§31.1・§31.3 偽の codex: quest --network で GM の箱を開け、生まれた冒険の party.json に network: true を持ち越す', async () => {
+test('§31.1・§31.3 偽の codex: quest --allow-listen で GM の箱を開け、生まれた冒険の party.json に allow_listen: true を持ち越す', async () => {
   const root = join(tmp('masume-q4-'), 'memo');
-  const r = await quest([WISH, '--dir', root, '--gm', 'codex', '--network'], WITH_CODEX);
+  const r = await quest([WISH, '--dir', root, '--gm', 'codex', '--allow-listen'], WITH_CODEX);
   assert.equal(r.code, 0, r.all);
   const argv = JSON.parse(readFileSync(join(root, 'codex-argv-1.json'), 'utf8'));
   assert.deepEqual(argv, codexArgv(root, { net: true }), '-s workspace-write のすぐ後ろに -c と値（別々の引数）');
   assert.equal(readLog(root).find((e) => e.type === 'wish').data.gm, 'codex');
-  assert.deepEqual(partyJsonOf(root), { agent: 'codex', parallel: 3, network: true }, '出撃の箱も開けたまま始まる');
+  assert.deepEqual(partyJsonOf(root), { agent: 'codex', parallel: 3, allow_listen: true }, '出撃の箱も開けたまま始まる');
   assert.equal(masume(['verify', '--dir', root]).code, 0);
 
   const root2 = join(tmp('masume-q4-'), 'memo');
   const n = await quest([WISH, '--dir', root2, '--gm', 'codex'], WITH_CODEX);
   assert.equal(n.code, 0, n.all);
-  assert.deepEqual(JSON.parse(readFileSync(join(root2, 'codex-argv-1.json'), 'utf8')), codexArgv(root2), '--network が無ければ -c は入らない');
-  assert.deepEqual(partyJsonOf(root2), { agent: 'codex', parallel: 3 }, '--network が無ければ network に触らない（第3章どおり）');
+  assert.deepEqual(JSON.parse(readFileSync(join(root2, 'codex-argv-1.json'), 'utf8')), codexArgv(root2), '--allow-listen が無ければ -c は入らない');
+  assert.deepEqual(partyJsonOf(root2), { agent: 'codex', parallel: 3 }, '--allow-listen が無ければ allow_listen に触らない（第3章どおり）');
   assert.doesNotMatch(n.all, /network_access/);
 });
 
 // ---- §31.4 ----
 
-test('§31.4 init --agent codex --network は party.json に network: true を足す。ほかの項目は残す。--agent なしは E_USAGE', () => {
+test('§31.4 init --agent codex --allow-listen は party.json に allow_listen: true を足す。ほかの項目は残す。--agent なしは E_USAGE', () => {
   const dir = newToy();
-  const r = masume(['init', '--dir', dir, '--agent', 'codex', '--network']);
+  const r = masume(['init', '--dir', dir, '--agent', 'codex', '--allow-listen']);
   assert.equal(r.code, 0, r.all);
-  assert.deepEqual(partyJsonOf(dir), { agent: 'codex', parallel: 3, network: true });
+  assert.deepEqual(partyJsonOf(dir), { agent: 'codex', parallel: 3, allow_listen: true });
 
   writeFileSync(join(dir, '.masume', 'party.json'), JSON.stringify({ agent: 'claude', model: 'opus', parallel: 2 }));
-  const k = masume(['init', '--dir', dir, '--agent', 'codex', '--network']);
+  const k = masume(['init', '--dir', dir, '--agent', 'codex', '--allow-listen']);
   assert.equal(k.code, 0, k.all);
-  assert.deepEqual(partyJsonOf(dir), { agent: 'codex', model: 'opus', parallel: 2, network: true }, 'ほかの項目は残す');
+  assert.deepEqual(partyJsonOf(dir), { agent: 'codex', model: 'opus', parallel: 2, allow_listen: true }, 'ほかの項目は残す');
 
   const plain = masume(['init', '--dir', dir, '--agent', 'claude']);
   assert.equal(plain.code, 0, plain.all);
-  assert.deepEqual(partyJsonOf(dir), { agent: 'claude', model: 'opus', parallel: 2, network: true }, '--network の無い init は network に触らない');
+  assert.deepEqual(partyJsonOf(dir), { agent: 'claude', model: 'opus', parallel: 2, allow_listen: true }, '--allow-listen の無い init は allow_listen に触らない');
 
-  const u = masume(['init', '--dir', dir, '--network']);
+  const u = masume(['init', '--dir', dir, '--allow-listen']);
   assert.equal(u.code, 2, u.all);
   assert.match(u.all, /E_USAGE/);
   assert.equal(masume(['verify', '--dir', dir]).code, 0, '冒険の書は壊さない');

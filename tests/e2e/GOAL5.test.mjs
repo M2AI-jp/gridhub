@@ -35,11 +35,11 @@ test('マスメ自身と、残っているすべての冒険の書が正常', ()
   for (const d of ['.', 'examples/omikuji', 'demos/mcp-tutorial']) assert.equal(masume(['verify', '--dir', join(ROOT, d)]).code, 0, d);
 });
 
-test('遊び方に第5章（箱のネットワーク）が書いてある', () => {
+test('遊び方に第5章（箱のソケット）が書いてある', () => {
   const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
   const guide = readFileSync(join(ROOT, 'docs', 'GM_GUIDE.md'), 'utf8');
   assert.match(readme, /第5章/);
-  assert.match(readme, /masume party[^\n]*--network/, 'README に party --network');
-  assert.match(guide, /masume party[^\n]*--network/, 'GM_GUIDE の「エージェントの箱を確かめる」に party --network');
-  assert.match(guide, /"network": true/, 'GM_GUIDE に party.json の network');
+  assert.match(readme, /masume party[^\n]*--allow-listen/, 'README に party --allow-listen（第6章で --network から改名）');
+  assert.match(guide, /masume party[^\n]*--allow-listen/, 'GM_GUIDE の「エージェントの箱を確かめる」に party --allow-listen');
+  assert.match(guide, /"allow_listen": true/, 'GM_GUIDE に party.json の allow_listen');
 });

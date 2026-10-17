@@ -737,41 +737,65 @@ export function recordWish(root, { actor = 'gm', text, gm = null, model = null }
 
 ---
 
-# 第5章の契約 — エージェントの箱（サンドボックス）のネットワーク
+# 第5章の契約 — エージェントの箱（サンドボックス）のソケット
 
-Codex の `-s workspace-write` は、既定で箱のネットワークを閉じている。判定が手元にサーバーを立てる（`127.0.0.1` で listen する）と `EPERM` で落ち、キャラクターのせいではないのにレベルが下がる。
+マスメの判定（E2E）は、テストの中で手元に小さなサーバーを立てることがある（`127.0.0.1` で listen する。偽の Linear・偽の Jira・盤面の窓口など）。
+Codex の `-s workspace-write` の箱（サンドボックス）は、既定でソケットを閉じていて、**`127.0.0.1` での listen まで** `EPERM` で止める。素振りも宣言判定も通らず、キャラクターのせいではないのにレベルが下がる。
 第4章では `MASUME_AGENT_OVERRIDE` でアダプタを差し替えて開けた（GM_GUIDE「エージェントの箱を確かめる」）。第5章では、それを製品の選択肢にする。
-**既定は閉じたまま**（開けるのは、頼まれたときだけ）。ここに書く挙動は、第1章〜第4章の契約に足すもの。
 
-| 縄張り（第5章で触るもの） | 持ち主 |
+- **ゲームはローカルのまま**。この選択肢はインターネットのためのものではなく、判定が手元でサーバーを立てられるようにするためのもの。
+- **注意**: 開けるのに使う Codex の設定（`sandbox_workspace_write.network_access`）は localhost だけを許すことができない。開けると、**その出撃中のエージェントはインターネットにも出られる**。
+- **既定は閉じたまま**（開けるのは、頼まれたときだけ）。名前は第5章の初版では `--network` / `network` だったが、「インターネットが要る」と誤解されるので、第6章で `--allow-listen` / `allow_listen` に改めた（§32）。以下は改めた名前で書く。
+
+ここに書く挙動は、第1章〜第4章の契約に足すもの。
+
+| 縄張り（第5章・第6章で触るもの） | 持ち主 |
 | --- | --- |
 | `src/party/**`、`src/commands/party.js` | 軍師 `party` |
 | `src/quest/**`、`src/commands/quest.js`、`src/commands/init.js` | 語り部 `teller` |
 
-伝令（HTTP の `POST /api/sortie`・`POST /api/quest`、MCP の `masume_quest`）と盤面は変えない。盤面から出撃させるときは、`.masume/party.json` の `network` が効く（伝令は `masume party` を起動するだけなので）。
+伝令（HTTP の `POST /api/sortie`・`POST /api/quest`、MCP の `masume_quest`）と盤面は変えない。盤面から出撃させるときは、`.masume/party.json` の `allow_listen` が効く（伝令は `masume party` を起動するだけなので）。
 
-## 30. 軍師: 箱のネットワーク
+## 30. 軍師: 箱のソケットを開ける（`--allow-listen`）
 
-`masume party [...] [--network | --no-network]`
+`masume party [...] [--allow-listen | --no-allow-listen]`
 
-1. 箱のネットワークを開けるか（`network`）は、`--network`（開ける）/ `--no-network`（閉じる）> `.masume/party.json` の `network` > 既定 `false` の順に決める。
-   - `party.json` の `network` は `true` か `false`（書かなければ `false`）。ほかの値（文字列・数・null など）は `E_USAGE`/2。
-   - `--network` と `--no-network` は値を取らない（`--network=…` は `E_USAGE`/2）。両方を付けたら `E_USAGE`/2。
-2. `network` が `true` で、エージェントが `codex` なら、アダプタ（§13）のコマンドは `-s workspace-write` の**すぐ後ろ**に `-c sandbox_workspace_write.network_access=true` を足したものになる。
+1. 箱のソケットを開けるか（`allow_listen`）は、`--allow-listen`（開ける）/ `--no-allow-listen`（閉じる）> `.masume/party.json` の `allow_listen` > 既定 `false` の順に決める。
+   - `party.json` の `allow_listen` は `true` か `false`（書かなければ `false`）。ほかの値（文字列・数・null など）は `E_USAGE`/2。
+   - `--allow-listen` と `--no-allow-listen` は値を取らない（`--allow-listen=…` は `E_USAGE`/2）。両方を付けたら `E_USAGE`/2。
+2. `allow_listen` が `true` で、エージェントが `codex` なら、アダプタ（§13）のコマンドは `-s workspace-write` の**すぐ後ろ**に `-c sandbox_workspace_write.network_access=true` を足したものになる。
    `codex exec -C <root> -s workspace-write -c sandbox_workspace_write.network_access=true --skip-git-repo-check [-m <M>] -`
    （`-c` とその値は別々の引数。シェルを通さずに起動するので、引用符は付けない）
-3. `claude` と `cmd:<command>` のコマンドは `network` に関係なく変わらない（`claude` には §13 の箱の指定が無い。`cmd:` は持ち主が自分で決める）。
+3. `claude` と `cmd:<command>` のコマンドは `allow_listen` に関係なく変わらない（`claude` には §13 の箱の指定が無い。`cmd:` は持ち主が自分で決める）。
    `MASUME_AGENT_OVERRIDE` が `codex` なら 2. が効き、`cmd:…` なら効かない。
 4. `--dry-run` の `出撃予定: <キャラID> <コマンド>` と、巡回を始めるときの見出しの行（行頭から `出撃準備: `。`あがり！` の行と同じく時刻の接頭辞を付けない）に出すコマンドは、実際に起動するコマンドと同じ（2. の引数を含む）。
-5. `network` が `false` のときは、コマンドにも出力にも `network_access` を出さない（第2章どおりの、閉じた箱）。
+5. `allow_listen` が `false` のときは、コマンドにも出力にも `network_access` を出さない（第2章どおりの、閉じた箱）。
 
 ## 31. 語り部: GM の箱と、出撃への持ち越し
 
-`masume quest "<願い>" [...] [--network]` / `masume init [...] [--agent claude|codex] [--network]`
+`masume quest "<願い>" [...] [--allow-listen]` / `masume init [...] [--agent claude|codex] [--allow-listen]`
 
-1. `quest --network` で GM が `codex`（`--gm codex`、または `MASUME_GM_OVERRIDE` が `codex`）なら、GM のコマンドは §30.2 と同じく `-s workspace-write` のすぐ後ろに `-c sandbox_workspace_write.network_access=true` を足したもの。
-   `claude` と `cmd:` の GM のコマンドは変わらない。`--network` が無ければ、どこにも `network_access` を出さない。
+1. `quest --allow-listen` で GM が `codex`（`--gm codex`、または `MASUME_GM_OVERRIDE` が `codex`）なら、GM のコマンドは §30.2 と同じく `-s workspace-write` のすぐ後ろに `-c sandbox_workspace_write.network_access=true` を足したもの（GM が判定を素振りするときにも、手元でサーバーを立てられる）。
+   `claude` と `cmd:` の GM のコマンドは変わらない。`--allow-listen` が無ければ、どこにも `network_access` を出さない。
 2. `quest --dry-run` の `コマンド:` の行（`--json` なら `command`）は、実際に起動するコマンドと同じ（1. の引数を含む）。
-3. `quest --network` で冒険が生まれ、支度（§21）が `.masume/party.json` を書くときは、`"network": true` も書く（GM の箱を開けた冒険は、出撃の箱も開けたまま始まる）。
-   `--network` が無ければ `network` には触らない（第3章どおり `{agent, parallel}`）。
-4. `init --agent <A> --network` は、`.masume/party.json` に `"network": true` も書く（ほかの項目は §21 どおり残す）。`--network` の無い `init` は `network` に触らない。`--agent` の無い `--network` は `E_USAGE`/2。
+3. `quest --allow-listen` で冒険が生まれ、支度（§21）が `.masume/party.json` を書くときは、`"allow_listen": true` も書く（GM の箱を開けた冒険は、出撃の箱も開けたまま始まる）。
+   `--allow-listen` が無ければ `allow_listen` には触らない（第3章どおり `{agent, parallel}`）。
+4. `init --agent <A> --allow-listen` は、`.masume/party.json` に `"allow_listen": true` も書く（ほかの項目は §21 どおり残す）。`--allow-listen` の無い `init` は `allow_listen` に触らない。`--agent` の無い `--allow-listen` は `E_USAGE`/2。
+
+---
+
+# 第6章の契約 — 箱のソケットの名前と説明
+
+第5章の `--network` という名前は「ネットワークって何？ これはローカルのゲームなのに」と誤解された。第6章では、名前と説明で次のことが分かるようにする:
+**目的**（判定が `127.0.0.1` にサーバーを立てられるように、Codex の箱のソケットを開ける）・**ゲームはローカルのまま**（インターネットは要らない）・**注意**（Codex の設定は localhost だけに絞れないので、開けるとその出撃中のエージェントはインターネットにも出られる）。
+
+## 32. 名前・`--help`・知らせ
+
+1. 名前: §30・§31 の `--network` / `--no-network` / `network`（第5章の初版）は、`--allow-listen` / `--no-allow-listen` / `allow_listen` に改める。古い名前は残さない（`--network` は `E_USAGE`/2。`party.json` の `network` は、ほかの知らない項目と同じく読まない）。
+2. `masume party --help`・`masume quest --help`・`masume init --help`（`-h` も同じ）は、使い方と各オプションの説明を **stdout** に出して終了コード 0（ほかの引数があっても、何も記録・起動しない。冒険の書が無くてもよい）。
+   `--allow-listen` の説明には、少なくとも次の4つを書く: `127.0.0.1` にサーバーを立てられるようにすること / ゲームはローカルのまま（「ローカル」の語）/ 使う Codex の設定の名前 `sandbox_workspace_write.network_access` と、localhost だけに絞れないので**インターネット**にも出られること / codex にだけ効く（claude と `cmd:` は変わらない）こと。
+   `party --help` には `--no-allow-listen` と `.masume/party.json` の `"allow_listen": true` も、`init --help` には `--agent` といっしょに使うことも書く。
+3. 知らせ: `allow_listen` が効くとき（エージェントや GM が `codex` のとき）は、`party`（`--dry-run` を含む。巡回の見出しより前）と `quest`（`--dry-run` を含む。GM を呼ぶ前。`--json` のときは stderr）が、**行頭から `箱のソケット: `** で始まる1行を出す。その行には `127.0.0.1` と `インターネット` を含める。
+   `--allow-listen` を頼まれたがエージェントや GM が `codex` でないときは、同じく `箱のソケット: ` で始まり `codex にだけ効きます` を含む1行を出す（コマンドは変えない。`quest` は §31.3 どおり `party.json` には書く）。
+   頼まれていないときは `箱のソケット:` の行を出さない。
+4. `masume --help`（受付係・GM の縄張り）の一覧にも `--allow-listen` を出す。

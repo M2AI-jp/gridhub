@@ -55,10 +55,10 @@ GM の LLM（Claude か Codex）が、開発のロードマップ全体を地図
 masume quest "おみくじを引けるコマンドラインのアプリを作りたい" --gm claude   # 願いから地図と判定を作る
 masume party --agent claude --model sonnet --parallel 3                       # パーティ出撃（codex も可）
 masume party --dry-run                                                        # 誰に何を出撃させるかだけ見る
-masume party --agent codex --network                                          # Codex の箱のネットワークを開けて出撃（判定が手元にサーバーを立てるとき）
+masume party --agent codex --allow-listen                                     # 判定が 127.0.0.1 にサーバーを立てるとき、Codex の箱のソケットを開けて出撃
 ```
 
-Codex の箱（`-s workspace-write`）は既定でネットワークが閉じています。判定が `127.0.0.1` でサーバーを立てるなら `--network` で開けます（`.masume/party.json` の `"network": true` でいつも開ける。`masume quest --gm codex --network` なら GM の箱も開け、出撃にも持ち越す）。
+Codex の箱（`-s workspace-write` のサンドボックス）は、既定で `127.0.0.1` での listen まで止めます。判定がテストの中で手元にサーバーを立てるなら、`--allow-listen` で箱のソケットを開けます。ゲームはローカルのままで、インターネットが要るわけではありません。ただし Codex の設定（`sandbox_workspace_write.network_access`）は localhost だけに絞れないので、開けている出撃中のエージェントはインターネットにも出られます（くわしくは `masume party --help`）。
 
 `examples/` に、本物の願いから本物のエージェントであがった冒険が残っています。
 
@@ -138,13 +138,13 @@ JIRA_BASE_URL=… JIRA_EMAIL=… JIRA_API_TOKEN=… masume jira pull --project E
 
 | コマンド | すること |
 | --- | --- |
-| `masume quest "<願い>" [--gm claude\|codex] [--network]` | 願いから GM の LLM が地図と判定を書き、冒険を始める |
-| `masume party [--agent claude\|codex] [--parallel N] [--network]` | キャラクターごとにエージェントを出撃させ、ボス戦をしながら進める |
+| `masume quest "<願い>" [--gm claude\|codex] [--allow-listen]` | 願いから GM の LLM が地図と判定を書き、冒険を始める |
+| `masume party [--agent claude\|codex] [--parallel N] [--allow-listen]` | キャラクターごとにエージェントを出撃させ、ボス戦をしながら進める（`--help` で各オプションの説明） |
 | `masume sortie` / `masume return` / `masume wish` | 出撃・帰還・願いを冒険の書に記録する（外の指揮役用） |
 | `masume linear push\|pull` | Linear 本体と同期する |
 | `masume jira push\|pull` | Jira と同期する |
 | `masume mcp` | LLM の道具箱（MCP サーバー） |
-| `masume init [--agent claude\|codex] [--network]` | よそのプロジェクトに支度をする（AGENTS.md・CLAUDE.md・.gitignore・`.masume/party.json`） |
+| `masume init [--agent claude\|codex] [--allow-listen]` | よそのプロジェクトに支度をする（AGENTS.md・CLAUDE.md・.gitignore・`.masume/party.json`） |
 | `masume new <map>` | 地図から冒険の書をつくる |
 | `masume validate <map>` | 地図を検査する |
 | `masume serve [--port 5005]` | 盤面を開く（ライブ更新・ハンコ・ボス戦のボタン） |
@@ -258,30 +258,50 @@ GM の判定の不備ではないので、ロードはしませんでした。�
 
 ### 第5章: エージェントの箱
 
-第4章では、Codex のキャラクターの判定が手元にサーバーを立てるので、`MASUME_AGENT_OVERRIDE` でアダプタごと差し替えて、箱（サンドボックス）のネットワークを開けました。
-第5章では、それを製品の選択肢にしました（契約 §30・§31）。**既定は閉じたまま**で、頼んだときだけ開けます。
+マスメの判定（E2E）は、テストの中で手元に小さなサーバーを立てることがあります（`127.0.0.1` で listen する。偽の Linear・偽の Jira・盤面の窓口など）。
+Codex の `-s workspace-write` の箱（サンドボックス）は、既定でソケットを閉じていて、**`127.0.0.1` での listen まで** `EPERM` で止めます。
+第4章では `MASUME_AGENT_OVERRIDE` でアダプタごと差し替えて箱のソケットを開けました。第5章では、それを製品の選択肢にしました（契約 §30・§31）。
 
 ```sh
-masume party --agent codex --network          # その出撃だけ、Codex の箱のネットワークを開ける
-masume party --no-network                     # party.json で開けていても、その回だけ閉じる
-masume quest "<願い>" --gm codex --network     # GM の箱も開け、生まれた冒険の party.json に "network": true を持ち越す
-masume init --agent codex --network           # よそのプロジェクトの party.json に "network": true を書く
+masume party --agent codex --allow-listen          # その出撃だけ、Codex の箱のソケットを開ける
+masume party --no-allow-listen                     # party.json で開けていても、その回だけ閉じる
+masume quest "<願い>" --gm codex --allow-listen     # GM の箱も開け、生まれた冒険の party.json に "allow_listen": true を持ち越す
+masume init --agent codex --allow-listen           # よそのプロジェクトの party.json に "allow_listen": true を書く
 ```
 
-開けると、codex のコマンドの `-s workspace-write` のすぐ後ろに `-c sandbox_workspace_write.network_access=true` が入ります（`--dry-run` でそのまま見えます）。claude と `cmd:` のコマンドは変わりません。
-盤面の「出撃させる」は `masume party` を起動するので、`.masume/party.json` の `"network": true` がそのまま効きます。
+- **ゲームはローカルのまま**です。インターネットが要るわけではありません。**既定は閉じたまま**で、頼んだときだけ開けます。
+- **注意**: 開けるのに使う Codex の設定（`sandbox_workspace_write.network_access`）は localhost だけを許すことができません。開けると、その出撃中のエージェントは**インターネットにも出られます**。開けている出撃では、最初に「箱のソケット:」の知らせが出ます。
+- 開けると、codex のコマンドの `-s workspace-write` のすぐ後ろに `-c sandbox_workspace_write.network_access=true` が入ります（`--dry-run` でそのまま見えます）。claude と `cmd:` のコマンドは変わりません。
+- 盤面の「出撃させる」は `masume party` を起動するので、`.masume/party.json` の `"allow_listen": true` がそのまま効きます。
 
 | キャラクター | 第5章でつくったもの | 中の人 |
 | --- | --- | --- |
-| 軍師 | `masume party --network / --no-network` と `party.json` の `network` | Claude Sonnet |
-| 語り部 | `masume quest --network`（GM の箱）、`party.json` への持ち越し、`masume init --network` | Claude Sonnet |
+| 軍師 | 出撃の箱のソケットを開ける選択肢と `party.json` の既定 | Claude Sonnet |
+| 語り部 | GM の箱のソケットを開ける選択肢と、`party.json` への持ち越し（`quest`・`init`） | Claude Sonnet |
 
 GM は判定（P4・Q4・結合 G7・あがり GOAL5）を先に書き、今のコードで落ちることを確かめてから封印しました。本物の Codex は呼ばず、`PATH` の先頭に置いた偽の `codex`（受け取った引数を書き残す）で、本当に起動されるコマンドを確かめています。
-結合 G7 は「`quest --gm codex --network` で GM の箱が開き、`party.json` に `"network": true` が残り、何も指定しない `masume party` が codex の箱を開けて出撃し、ボス戦まで進む」という一続きの流れです。
+結合 G7 は「`quest --gm codex` に箱を開ける選択肢を付けると GM の箱が開き、`party.json` に残り、何も指定しない `masume party` が codex の箱を開けて出撃し、ボス戦まで進む」という一続きの流れです。
 
 P4 の判定は「出撃準備:」の行が行頭から始まることを求めていましたが、契約には書いていませんでした。軍師が宣言のあとの報告でそれを指摘し、GM は軍師の変更を了承して契約に明記しました（冒険の書 seq 203）。
 
-第5章のあがり GOAL5 は、GM がボス戦と同じ環境で G7 と GOAL5 を素振りしてから、パーティ自身（`masume party --agent codex --network`）が G7・GOAL5 を続けて一度で突破しました。全199判定が通ります。
+第5章のあがり GOAL5 は、GM がボス戦と同じ環境で G7 と GOAL5 を素振りしてから、パーティ自身（codex の箱のソケットを開けた `masume party`）が G7・GOAL5 を続けて一度で突破しました。
+
+### 第6章: 箱のソケットの名前
+
+第5章では、この選択肢の名前を `--network` にしていました。すると「ネットワークって何？ これはローカルのゲームなのに」と誤解されかけました。
+第6章では、名前と説明を、目的（判定が `127.0.0.1` にサーバーを立てられるようにする）・ゲームはローカルのまま・注意（インターネットにも出られる）が伝わるものに改めました（契約 §32）。
+
+- 名前: `--network` / `--no-network` / `"network"` → `--allow-listen` / `--no-allow-listen` / `"allow_listen"`。古い名前は受け付けません。
+- `masume party --help`・`masume quest --help`・`masume init --help`（`-h` も）が、各オプションの説明を出します。`masume --help` の一覧にも出ます（パイプで受けても途中で切れないように、受付係も直しました）。
+- 開けるときは、出撃や GM を呼ぶ前に「箱のソケット: …」の知らせを1行出します。codex 以外に頼んだときは「codex にだけ効きます」と知らせます。
+
+| キャラクター | 第6章で直したもの | 中の人 |
+| --- | --- | --- |
+| 軍師 | `party` の名前・`--help`・知らせ | Claude Sonnet |
+| 語り部 | `quest`・`init` の名前・`--help`・知らせ | Claude Sonnet |
+
+GM は、第5章の判定（P4・Q4・G7・GOAL5）を新しい名前に直して封印し直し（期待の中身は変えていない）、`--help` と知らせの判定（P5・Q5）とあがり GOAL6 を足しました。
+第6章のあがり GOAL6 は、GM の素振りのあと、パーティ自身（`masume party --agent codex --allow-listen`）が一度で突破しました。全208判定が通ります。
 
 ```sh
 masume status       # 全員「あがり」

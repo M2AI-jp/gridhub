@@ -1,0 +1,19 @@
+=== Q5: node --test tests/e2e/Q4.test.mjs tests/e2e/Q5.test.mjs ===
+✔ §31.1・§31.2 quest --allow-listen --dry-run: codex の GM のコマンドに -c が入る。claude は変わらない。無ければ閉じたまま (329.00825ms)
+✔ §31.1・§31.3 偽の codex: quest --allow-listen で GM の箱を開け、生まれた冒険の party.json に allow_listen: true を持ち越す (747.580125ms)
+✔ §31.4 init --agent codex --allow-listen は party.json に allow_listen: true を足す。ほかの項目は残す。--agent なしは E_USAGE (313.195375ms)
+✔ §32.2 quest --help / -h: 使い方と --allow-listen の説明を stdout に出して 0。願いといっしょでも GM を呼ばない (156.858ms)
+✔ §32.2 init --help / -h: --allow-listen の説明（--agent といっしょに使う）を stdout に出して 0。何も書かない (104.805916ms)
+✔ §32.3 GM の箱を開けるときは「箱のソケット:」の知らせ（127.0.0.1・インターネット）。codex でなければ「codex にだけ効きます」。頼まれなければ出さない (277.231875ms)
+✔ §32.3 本当に GM を呼ぶときも、呼ぶ前に知らせる（偽の codex） (602.023334ms)
+✔ §32.1 古い名前: quest --network と init --network は E_USAGE/2 (165.759042ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1448.874209
+
+(exit 0, 1495ms)

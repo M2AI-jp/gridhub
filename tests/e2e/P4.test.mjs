@@ -1,5 +1,5 @@
-// P4「箱のネットワークを開ける」— CONTRACTS §30（第5章）。
-// codex の箱（-s workspace-write）のネットワークを、--network / --no-network / .masume/party.json の network で開け閉めする。
+// P4「箱のソケットを開ける」— CONTRACTS §30（第5章）。
+// codex の箱（-s workspace-write）のソケット（127.0.0.1 で listen できるか）を、--allow-listen / --no-allow-listen / .masume/party.json の allow_listen で開け閉めする（第6章 §32 で --network から改名）。
 // 本物の codex は呼ばない。--dry-run と、PATH の先頭に置いた偽の codex（引数を書き残す）で確かめる。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -47,47 +47,47 @@ const recorded = (dir) => {
 
 // ---- §30.2・§30.4・§30.5 ----
 
-test('§30.2 --network で codex の箱を開ける。--dry-run の出撃予定は起動するコマンドと同じ。既定は閉じたまま', async () => {
+test('§30.2 --allow-listen で codex の箱を開ける。--dry-run の出撃予定は起動するコマンドと同じ。既定は閉じたまま', async () => {
   const dir = newToy();
   const before = readLog(dir).length;
 
-  const open = await party(dir, ['--dry-run', '--agent', 'codex', '--network']);
+  const open = await party(dir, ['--dry-run', '--agent', 'codex', '--allow-listen']);
   assert.equal(open.code, 0, open.all);
   assert.ok(open.all.includes(`出撃予定: a ${codexLine(dir, { net: true })}`), `a のコマンドに -c ${NET}:\n${open.all}`);
   assert.ok(open.all.includes(`出撃予定: b ${codexLine(dir, { net: true })}`), `b のコマンドに -c ${NET}:\n${open.all}`);
   assert.doesNotMatch(open.all, /出撃予定: h /, '人間には出撃しない');
 
-  const model = await party(dir, ['--dry-run', '--agent', 'codex', '--model', 'gpt-5', '--network']);
+  const model = await party(dir, ['--dry-run', '--agent', 'codex', '--model', 'gpt-5', '--allow-listen']);
   assert.equal(model.code, 0, model.all);
   assert.ok(model.all.includes(`出撃予定: a ${codexLine(dir, { net: true, model: 'gpt-5' })}`), `-m は -c の後ろ:\n${model.all}`);
 
   const closed = await party(dir, ['--dry-run', '--agent', 'codex']);
   assert.equal(closed.code, 0, closed.all);
   assert.ok(closed.all.includes(`出撃予定: a ${codexLine(dir)}`), closed.all);
-  assert.doesNotMatch(closed.all, /network_access/, '--network が無ければ箱は閉じたまま（§30.5）');
+  assert.doesNotMatch(closed.all, /network_access/, '--allow-listen が無ければ箱は閉じたまま（§30.5）');
 
   assert.equal(readLog(dir).length, before, 'dry-run は冒険の書に書かない');
 });
 
 // ---- §30.3 ----
 
-test('§30.3 claude と cmd: のコマンドは --network でも変わらない。MASUME_AGENT_OVERRIDE が codex なら開ける', async () => {
+test('§30.3 claude と cmd: のコマンドは --allow-listen でも変わらない。MASUME_AGENT_OVERRIDE が codex なら開ける', async () => {
   const dir = newToy();
-  const c = await party(dir, ['--dry-run', '--agent', 'claude', '--network']);
+  const c = await party(dir, ['--dry-run', '--agent', 'claude', '--allow-listen']);
   assert.equal(c.code, 0, c.all);
   assert.match(c.all, /^出撃予定: a claude -p --model sonnet --permission-mode bypassPermissions$/m, c.all);
   assert.doesNotMatch(c.all, /network_access/, 'claude には足さない');
 
-  const x = await party(dir, ['--dry-run', '--agent', 'cmd:echo やあ', '--network']);
+  const x = await party(dir, ['--dry-run', '--agent', 'cmd:echo やあ', '--allow-listen']);
   assert.equal(x.code, 0, x.all);
   assert.match(x.all, /^出撃予定: a echo やあ$/m, x.all);
   assert.doesNotMatch(x.all, /network_access/, 'cmd: には足さない');
 
-  const oc = await party(dir, ['--dry-run', '--agent', 'claude', '--network'], { MASUME_AGENT_OVERRIDE: 'codex' });
+  const oc = await party(dir, ['--dry-run', '--agent', 'claude', '--allow-listen'], { MASUME_AGENT_OVERRIDE: 'codex' });
   assert.equal(oc.code, 0, oc.all);
   assert.ok(oc.all.includes(`出撃予定: a ${codexLine(dir, { net: true })}`), `上書きが codex なら開ける:\n${oc.all}`);
 
-  const ox = await party(dir, ['--dry-run', '--agent', 'codex', '--network'], { MASUME_AGENT_OVERRIDE: 'cmd:echo うわがき' });
+  const ox = await party(dir, ['--dry-run', '--agent', 'codex', '--allow-listen'], { MASUME_AGENT_OVERRIDE: 'cmd:echo うわがき' });
   assert.equal(ox.code, 0, ox.all);
   assert.match(ox.all, /^出撃予定: a echo うわがき$/m, ox.all);
   assert.doesNotMatch(ox.all, /network_access/, '上書きが cmd: なら足さない');
@@ -95,56 +95,56 @@ test('§30.3 claude と cmd: のコマンドは --network でも変わらない�
 
 // ---- §30.1 ----
 
-test('§30.1 .masume/party.json の network が既定になり、--network / --no-network がそれに勝つ', async () => {
+test('§30.1 .masume/party.json の allow_listen が既定になり、--allow-listen / --no-allow-listen がそれに勝つ', async () => {
   const dir = newToy();
-  partyJson(dir, { agent: 'codex', network: true });
+  partyJson(dir, { agent: 'codex', allow_listen: true });
   const p = await party(dir, ['--dry-run']);
   assert.equal(p.code, 0, p.all);
-  assert.ok(p.all.includes(`出撃予定: a ${codexLine(dir, { net: true })}`), `party.json の network: true で開ける:\n${p.all}`);
+  assert.ok(p.all.includes(`出撃予定: a ${codexLine(dir, { net: true })}`), `party.json の allow_listen: true で開ける:\n${p.all}`);
 
-  const n = await party(dir, ['--dry-run', '--no-network']);
+  const n = await party(dir, ['--dry-run', '--no-allow-listen']);
   assert.equal(n.code, 0, n.all);
-  assert.ok(n.all.includes(`出撃予定: a ${codexLine(dir)}`), `--no-network が party.json に勝つ:\n${n.all}`);
+  assert.ok(n.all.includes(`出撃予定: a ${codexLine(dir)}`), `--no-allow-listen が party.json に勝つ:\n${n.all}`);
   assert.doesNotMatch(n.all, /network_access/);
 
-  partyJson(dir, { agent: 'codex', network: false });
+  partyJson(dir, { agent: 'codex', allow_listen: false });
   const f = await party(dir, ['--dry-run']);
   assert.equal(f.code, 0, f.all);
-  assert.doesNotMatch(f.all, /network_access/, 'party.json の network: false なら閉じたまま');
-  const o = await party(dir, ['--dry-run', '--network']);
+  assert.doesNotMatch(f.all, /network_access/, 'party.json の allow_listen: false なら閉じたまま');
+  const o = await party(dir, ['--dry-run', '--allow-listen']);
   assert.equal(o.code, 0, o.all);
-  assert.ok(o.all.includes(`出撃予定: a ${codexLine(dir, { net: true })}`), `--network が party.json に勝つ:\n${o.all}`);
+  assert.ok(o.all.includes(`出撃予定: a ${codexLine(dir, { net: true })}`), `--allow-listen が party.json に勝つ:\n${o.all}`);
 
   partyJson(dir, { agent: 'codex', parallel: 2 });
   const none = await party(dir, ['--dry-run']);
   assert.equal(none.code, 0, none.all);
-  assert.doesNotMatch(none.all, /network_access/, 'network を書かなければ閉じたまま');
+  assert.doesNotMatch(none.all, /network_access/, 'allow_listen を書かなければ閉じたまま');
 });
 
-test('§30.1 使い方の誤り: party.json の network が true/false でない・--network=… ・両方を付ける', async () => {
+test('§30.1 使い方の誤り: party.json の allow_listen が true/false でない・--allow-listen=… ・両方を付ける', async () => {
   const dir = newToy();
   for (const bad of ['yes', 1, null, 'true']) {
-    partyJson(dir, { agent: 'codex', network: bad });
+    partyJson(dir, { agent: 'codex', allow_listen: bad });
     const r = await party(dir, ['--dry-run']);
-    assert.equal(r.code, 2, `network: ${JSON.stringify(bad)} は E_USAGE/2\n${r.all}`);
+    assert.equal(r.code, 2, `allow_listen: ${JSON.stringify(bad)} は E_USAGE/2\n${r.all}`);
     assert.match(r.all, /E_USAGE/, r.all);
   }
   partyJson(dir, { agent: 'codex' });
-  const both = await party(dir, ['--dry-run', '--network', '--no-network']);
+  const both = await party(dir, ['--dry-run', '--allow-listen', '--no-allow-listen']);
   assert.equal(both.code, 2, both.all);
   assert.match(both.all, /E_USAGE/);
-  const eq = await party(dir, ['--dry-run', '--network=true']);
+  const eq = await party(dir, ['--dry-run', '--allow-listen=true']);
   assert.equal(eq.code, 2, eq.all);
   assert.match(eq.all, /E_USAGE/);
-  const ok = await party(dir, ['--dry-run', '--network']);
+  const ok = await party(dir, ['--dry-run', '--allow-listen']);
   assert.equal(ok.code, 0, `正しい使い方は通る:\n${ok.all}`);
 });
 
 // ---- 本当に起動する（偽の codex） ----
 
-test('§30.2・§30.4 偽の codex: --network なら起動する codex の引数に -c が入り、そのまま進める。無ければ入らない', async () => {
+test('§30.2・§30.4 偽の codex: --allow-listen なら起動する codex の引数に -c が入り、そのまま進める。無ければ入らない', async () => {
   const dir = newToy();
-  const r = await party(dir, ['--agent', 'codex', '--network', '--only', 'a', '--rounds', '1'], WITH_CODEX);
+  const r = await party(dir, ['--agent', 'codex', '--allow-listen', '--only', 'a', '--rounds', '1'], WITH_CODEX);
   assert.equal(r.code, 2, `巡回の上限で止まる\n${r.all}`);
   assert.equal(char(view(dir), 'a').at, 'A2', `偽の codex で1マス進んだ\n${r.all}`);
   const [rec] = recorded(dir);
@@ -158,20 +158,20 @@ test('§30.2・§30.4 偽の codex: --network なら起動する codex の引数
   const c = await party(dir2, ['--agent', 'codex', '--only', 'b', '--rounds', '1'], WITH_CODEX);
   assert.equal(c.code, 2, c.all);
   assert.equal(char(view(dir2), 'b').at, 'B2', c.all);
-  assert.deepEqual(recorded(dir2)[0]?.argv, codexArgv(dir2), '--network が無ければ -c は入らない');
+  assert.deepEqual(recorded(dir2)[0]?.argv, codexArgv(dir2), '--allow-listen が無ければ -c は入らない');
   assert.doesNotMatch(c.all, /network_access/);
 });
 
-test('§30.1 偽の codex: party.json の network: true で開け、--no-network で閉じる', async () => {
+test('§30.1 偽の codex: party.json の allow_listen: true で開け、--no-allow-listen で閉じる', async () => {
   const dir = newToy();
-  partyJson(dir, { agent: 'codex', network: true, parallel: 1 });
+  partyJson(dir, { agent: 'codex', allow_listen: true, parallel: 1 });
   const r = await party(dir, ['--only', 'a', '--rounds', '1'], WITH_CODEX);
   assert.equal(r.code, 2, r.all);
   assert.deepEqual(recorded(dir)[0]?.argv, codexArgv(dir, { net: true }), r.all);
 
-  const n = await party(dir, ['--only', 'b', '--rounds', '1', '--no-network'], WITH_CODEX);
+  const n = await party(dir, ['--only', 'b', '--rounds', '1', '--no-allow-listen'], WITH_CODEX);
   assert.equal(n.code, 2, n.all);
   const b = recorded(dir).find((x) => x.file.startsWith('b-'));
   assert.ok(b, n.all);
-  assert.deepEqual(b.argv, codexArgv(dir), '--no-network なら閉じたまま');
+  assert.deepEqual(b.argv, codexArgv(dir), '--no-allow-listen なら閉じたまま');
 });

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import * as engine from '../engine/index.js';
 import { gmCommand, gmTimeoutSeconds, parseGm, runGm, tail } from './adapter.js';
+import { listenNotice } from './help.js';
 import { inspectMap, MAP_FILE } from './inspect.js';
 import { buildPrompt, buildRetryPrompt } from './prompt.js';
 import { AGENT_KINDS, fileEntry, printSetup, setupProject } from './setup.js';
@@ -50,10 +51,10 @@ function summarize(root, view, jumon, seq) {
 }
 
 /** 冒険の書が生まれたあとの支度（CONTRACTS §21）。失敗しても冒険は始められるので、止めずに知らせる */
-function prepareProject(root, { gm, override, network, ctx }) {
+function prepareProject(root, { gm, override, allowListen, ctx }) {
   const requested = (gm ?? (override ? '' : 'claude')).trim();
   try {
-    return setupProject({ root, agent: AGENT_KINDS.includes(requested) ? requested : undefined, network }, ctx);
+    return setupProject({ root, agent: AGENT_KINDS.includes(requested) ? requested : undefined, allowListen }, ctx);
   } catch (error) {
     return { root, files: [], error: error.message };
   }
@@ -97,7 +98,7 @@ function printDryRun({ out, gm, command, root, override, prompt, promptFile, exi
 }
 
 /**
- * opts: { wish, dir, gm, model, force, retries, dryRun, json, actor, network }
+ * opts: { wish, dir, gm, model, force, retries, dryRun, json, actor, allowListen }
  * ctx:  { bin, root（リポジトリ）, cwd, env }
  */
 export async function runQuest(opts, ctx) {
@@ -107,8 +108,8 @@ export async function runQuest(opts, ctx) {
   const override = (env.MASUME_GM_OVERRIDE ?? '').trim();
   const gm = parseGm(override || opts.gm || 'claude');
   const model = opts.model ?? null;
-  const network = opts.network === true;
-  const command = gmCommand(gm, { root, model, network });
+  const allowListen = opts.allowListen === true;
+  const command = gmCommand(gm, { root, model, allowListen });
   const retries = opts.retries ?? DEFAULT_RETRIES;
   const out = (text) => console.log(text);
   const say = opts.json ? (text) => console.error(text) : out;
@@ -117,6 +118,10 @@ export async function runQuest(opts, ctx) {
   if (exists && !opts.force && !opts.dryRun) {
     throw new MasumeError('E_EXISTS', `ここにはもう冒険の書があります（${root}）。新しく始めるなら別の --dir を、作り直すなら --force を指定してください`);
   }
+
+  // 箱のソケットを開ける（または効かない）ことは、GM を呼ぶ前に1行で知らせる（--dry-run でも。§32.3）
+  const notice = listenNotice({ allowListen, gmKind: gm.kind });
+  if (notice) say(notice);
 
   const original = buildPrompt({ wish: opts.wish, root, repoRoot: ctx.root });
 
@@ -200,7 +205,7 @@ export async function runQuest(opts, ctx) {
   }
   const jumon = engine.jumonOf((wish?.hash) ?? head.hash);
   const summary = summarize(root, engine.buildView(root), jumon, wish?.seq ?? head.seq);
-  summary.setup = prepareProject(root, { gm: opts.gm, override, network, ctx });
+  summary.setup = prepareProject(root, { gm: opts.gm, override, allowListen, ctx });
 
   if (opts.json) {
     const { setup, ...rest } = summary;

@@ -1,10 +1,16 @@
 import { parseArgs } from 'node:util';
 import { MasumeError } from '../engine/index.js';
+import { questHelp, wantsHelp } from '../quest/help.js';
 import { runQuest } from '../quest/index.js';
 
-const USAGE = '使い方: masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--network] [--dry-run] [--json]';
+const USAGE = '使い方: masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--allow-listen] [--dry-run] [--json]';
 
 export async function run(argv, ctx) {
+  // --help は何より先に答える。ほかの引数があっても、何も書かず GM も呼ばない（§32.2）
+  if (wantsHelp(argv)) {
+    console.log(questHelp());
+    return 0;
+  }
   let parsed;
   try {
     parsed = parseArgs({
@@ -17,7 +23,7 @@ export async function run(argv, ctx) {
         retries: { type: 'string' },
         force: { type: 'boolean' },
         'dry-run': { type: 'boolean' },
-        network: { type: 'boolean' },
+        'allow-listen': { type: 'boolean' },
         json: { type: 'boolean' },
       },
       strict: true,
@@ -46,7 +52,7 @@ export async function run(argv, ctx) {
     force: values.force,
     retries: values.retries === undefined ? undefined : Number(values.retries),
     dryRun: values['dry-run'],
-    network: Boolean(values.network),
+    allowListen: Boolean(values['allow-listen']),
     json: values.json,
     actor: values.as ?? (env.MASUME_ACTOR || 'gm'),
   }, ctx);

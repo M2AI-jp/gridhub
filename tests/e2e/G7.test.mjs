@@ -1,4 +1,4 @@
-// G7「結合: 願いから出撃まで、箱が開いたまま」— 語り部（quest --network → .masume/party.json）＋軍師（party が party.json の network で codex の箱を開ける）。
+// G7「結合: 願いから出撃まで、箱が開いたまま」— 語り部（quest --allow-listen → .masume/party.json）＋軍師（party が party.json の allow_listen で codex の箱を開ける）。
 // CONTRACTS §30・§31 を、外から流れで確かめる。本物の codex は呼ばない（PATH の先頭に置いた偽の codex が、GM もエージェントも演じる）。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -58,22 +58,22 @@ const agentArgvs = (root) => {
   return files.map((f) => ({ file: f, argv: readJson(join(root, 'codex-argv', f)) }));
 };
 
-test('願いから出撃まで: quest --network が GM の箱を開けて party.json に持ち越し、何も指定しない party がそれを読んで codex の箱を開けて進む', { timeout: 240000 }, async () => {
+test('願いから出撃まで: quest --allow-listen が GM の箱を開けて party.json に持ち越し、何も指定しない party がそれを読んで codex の箱を開けて進む', { timeout: 240000 }, async () => {
   const root = join(tmp('masume-g7-'), 'memo');
 
-  // 1. 語り部: 願い → codex の GM（箱を開ける）→ 冒険が生まれ、party.json に network: true
-  const q = await masumeEnv(['quest', WISH, '--dir', root, '--gm', 'codex', '--network'], { cwd: tmp('masume-cwd-'), env: ENV });
+  // 1. 語り部: 願い → codex の GM（箱を開ける）→ 冒険が生まれ、party.json に allow_listen: true
+  const q = await masumeEnv(['quest', WISH, '--dir', root, '--gm', 'codex', '--allow-listen'], { cwd: tmp('masume-cwd-'), env: ENV });
   const gmArgv = readJson(join(root, 'codex-argv', 'gm-1.json'));
   const partyJson = readJson(join(root, '.masume', 'party.json'));
   const tellerOk = q.code === 0 && isDeepStrictEqual(gmArgv, codexArgv(root, { net: true }))
-    && partyJson?.agent === 'codex' && partyJson?.network === true;
+    && partyJson?.agent === 'codex' && partyJson?.allow_listen === true;
   if (!tellerOk) console.log('MASUME_BLAME: teller');
   assert.equal(q.code, 0, q.all);
   assert.deepEqual(gmArgv, codexArgv(root, { net: true }), 'GM の箱が開いた');
   assert.equal(partyJson?.agent, 'codex', JSON.stringify(partyJson));
-  assert.equal(partyJson?.network, true, `出撃の箱も開けたまま始まる: ${JSON.stringify(partyJson)}`);
+  assert.equal(partyJson?.allow_listen, true, `出撃の箱も開けたまま始まる: ${JSON.stringify(partyJson)}`);
 
-  // 2. 軍師: 何も指定せずに出撃（party.json の agent と network が既定）→ ボス戦 G1 → ハンコ待ちで止まる
+  // 2. 軍師: 何も指定せずに出撃（party.json の agent と allow_listen が既定）→ ボス戦 G1 → ハンコ待ちで止まる
   //    G1 の判定の材料（work/G1.txt）は、偽の GM の地図では誰の task にもないので、ここで置く
   mkdirSync(join(root, 'work'), { recursive: true });
   writeFileSync(join(root, 'work', 'G1.txt'), 'done');

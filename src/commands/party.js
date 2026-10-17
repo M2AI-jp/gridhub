@@ -9,8 +9,41 @@ import { buildPrompt } from '../party/prompt.js';
 const DEFAULTS = { agent: 'claude', parallel: 3, rounds: 40 };
 const OPTIONS = {
   dir: 'string', agent: 'string', model: 'string', parallel: 'string',
-  rounds: 'string', only: 'string', 'dry-run': 'boolean', network: 'boolean', 'no-network': 'boolean',
+  rounds: 'string', only: 'string', 'dry-run': 'boolean', 'allow-listen': 'boolean', 'no-allow-listen': 'boolean',
 };
+
+// party --help / -h（CONTRACTS §32.2）。何も記録・起動せず、冒険の書が無くても出せる
+const HELP = `masume party — キャラクターごとにエージェントを出撃させ、ボス戦を指揮します（軍師）
+
+つかいかた:
+  masume party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R]
+               [--only id,id] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]
+  masume party --help | -h
+
+オプション:
+  --agent A            出撃させるエージェント。claude（既定）/ codex / cmd:<command>（/bin/sh -c で起動）
+  --model M            エージェントのモデル（claude は何も指定しなければ sonnet）
+  --parallel N         同時に出撃させる人数（既定 3）
+  --rounds R           巡回の上限。帰還1回で1巡と数えます（既定 40）
+  --only id,id         出撃させるキャラクターIDを、カンマ区切りで絞ります
+  --allow-listen       判定（E2E）がテストの中で 127.0.0.1 にサーバーを立てられるよう、
+                       Codex の箱（サンドボックス）のソケットを開けます。
+                       ゲームはローカルのままで、インターネットは要りません。
+                       ただし、開けるのに使う Codex の設定 sandbox_workspace_write.network_access は
+                       localhost だけに絞れないので、開けると、その出撃中のエージェントは
+                       インターネットにも出られます（頼んだときだけ開けます。既定は閉じたまま）。
+                       codex にだけ効きます（claude と cmd: のコマンドは変わりません）。
+  --no-allow-listen    箱のソケットを開けません（.masume/party.json で開けているときの上書き）
+  --dry-run            何も記録・起動せず、どのキャラクターが出るかと、渡すプロンプトの先頭だけを出します
+  --dir D              ゲームのルート（既定: 今いる場所から探します）
+  -h, --help           この説明を出します
+
+.masume/party.json に既定を書けます（オプションがあればそちらが優先）:
+  { "agent": "codex", "model": "M", "parallel": 3, "allow_listen": true }
+  箱のソケットを開けるかは、--allow-listen / --no-allow-listen > party.json の "allow_listen": true | false > 閉じたまま、の順で決まります。
+
+環境変数 MASUME_AGENT_OVERRIDE があれば、--agent に関係なくそれを使います。
+`;
 
 function usage(message) {
   throw new MasumeError('E_USAGE', message);
@@ -20,7 +53,7 @@ function parseOptions(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--network | --no-network] [--dry-run] [--dir D]（余計な引数: ${arg}）`);
+    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]（余計な引数: ${arg}。くわしくは party --help）`);
     const eq = arg.indexOf('=');
     const key = arg.slice(2, eq === -1 ? undefined : eq);
     if (!Object.hasOwn(OPTIONS, key)) usage(`知らないオプションです: --${key}`);
@@ -52,7 +85,7 @@ function readConfig(root) {
     usage(`.masume/party.json を読めません: ${error.message}`);
   }
   if (config === null || typeof config !== 'object' || Array.isArray(config)) usage('.masume/party.json はオブジェクトで書いてください');
-  if (Object.hasOwn(config, 'network') && typeof config.network !== 'boolean') usage('party.json の network は true か false で書いてください');
+  if (Object.hasOwn(config, 'allow_listen') && typeof config.allow_listen !== 'boolean') usage('party.json の allow_listen は true か false で書いてください');
   return config;
 }
 
@@ -84,6 +117,10 @@ function survive(stream) {
 export async function run(argv, ctx) {
   survive(process.stdout);
   survive(process.stderr);
+  if (argv.includes('--help') || argv.includes('-h')) {
+    process.stdout.write(HELP);
+    return 0;
+  }
   const options = parseOptions(argv);
   const cwd = ctx.cwd ?? process.cwd();
   const env = ctx.env ?? process.env;
@@ -97,9 +134,9 @@ export async function run(argv, ctx) {
   const parallel = options.parallel !== undefined ? positive('--parallel', options.parallel)
     : config.parallel !== undefined ? positive('party.json の parallel', config.parallel) : DEFAULTS.parallel;
   const rounds = options.rounds !== undefined ? positive('--rounds', options.rounds) : DEFAULTS.rounds;
-  if (options.network && options['no-network']) usage('--network と --no-network は一緒に指定できません');
-  const network = options.network ? true : options['no-network'] ? false : (config.network ?? false); // §30.1
-  const agent = resolveAgent(agentName, model, root, { network });
+  if (options['allow-listen'] && options['no-allow-listen']) usage('--allow-listen と --no-allow-listen は一緒に指定できません');
+  const allowListen = options['allow-listen'] ? true : options['no-allow-listen'] ? false : (config.allow_listen ?? false); // §30.1
+  const agent = resolveAgent(agentName, model, root, { allowListen });
   const timeoutMs = timeoutSeconds(env) * 1000;
 
   const view = buildView(root);
@@ -115,6 +152,9 @@ export async function run(argv, ctx) {
     }
   }
 
+  // 箱のソケットを頼まれたら、巡回の見出し（出撃準備:）より前に知らせる（§32.3）
+  if (allowListen) console.log(listenNotice(agent));
+
   if (options['dry-run']) return dryRun({ root, bin: ctx.bin, view, agent, only });
 
   const party = new Party({ root, bin: ctx.bin, env, agent, parallel, rounds, only, timeoutMs });
@@ -129,6 +169,14 @@ export async function run(argv, ctx) {
   // 中断のときは、ボス戦の判定など手放せない子が残っていても、ここで終わる
   if (code === 130) exitAfterFlush(130);
   return code;
+}
+
+// 行頭から「箱のソケット: 」で始まる1行（§32.3）。codex でなければ効かないことを知らせる
+function listenNotice(agent) {
+  if (agent.name !== 'codex') {
+    return `箱のソケット: --allow-listen は codex にだけ効きます（${agent.name === 'claude' ? 'claude' : 'cmd:'} のコマンドは変わりません）`;
+  }
+  return '箱のソケット: 判定が 127.0.0.1 にサーバーを立てられるよう、codex の箱を開けて出撃します（ゲームはローカルのままですが、この出撃中のエージェントはインターネットにも出られます）';
 }
 
 function dryRun({ root, bin, view, agent, only }) {

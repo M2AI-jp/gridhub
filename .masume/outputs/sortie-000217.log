@@ -1,0 +1,6 @@
+軍師（Claude Sonnet サブエージェント）P5 の報告
+宣言判定: P5 突破（seq 219、--no-boss）。GOAL6 で待機。日誌 seq 220。
+変更: src/commands/party.js（--allow-listen / --no-allow-listen と party.json の allow_listen に改名、party --help / -h、「箱のソケット:」の知らせ）、src/party/agents.js（resolveAgent の { allowListen }）
+素振り: P4+P5 10/10、P1+P2+P3+G4+SOLO 24/24。
+契約の解釈（GM 了承）: 引数のどこかに --help / -h があれば説明を出す。知らせは --only と冒険の書の検査を通ってから出す。
+判定が契約より厳しい点（GM 了承・直さない）: P5 は --help の出力全体に「出撃予定」「出撃準備」の語が無いことを求めている（出撃しなかったことの確かめ方として）。

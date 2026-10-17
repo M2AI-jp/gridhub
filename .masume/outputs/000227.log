@@ -1,0 +1,14 @@
+=== GOAL6: node --test tests/e2e/GOAL6.test.mjs ===
+✔ 第1章〜第6章のすべての判定が、まとめて本当に通る (168466.555375ms)
+✔ マスメ自身と、残っているすべての冒険の書が正常 (188.229625ms)
+✔ 遊び方に第6章（箱のソケットの名前と説明）が書いてある。masume --help にも出て、パイプでも途中で切れない (40.114542ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 168751.561583
+
+(exit 0, 168797ms)
