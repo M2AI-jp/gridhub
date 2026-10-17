@@ -1,0 +1,15 @@
+=== B8: node --test tests/e2e/B8.test.mjs ===
+✔ §34.1 入口: #gm-allow-listen と説明があり、チェックしたときだけ allow_listen: true を送る (1540.114375ms)
+✔ §34.2 出撃の窓: 開くたびに GET /api/party の既定値（allow_listen・agent・parallel）を使い、チェックの状態を必ず送る (2005.591834ms)
+✔ §34.3 エージェントが codex でないあいだは押せず「codex にだけ効きます」。本文に allow_listen を入れない (1257.500625ms)
+✔ §34.2 GET /api/party が失敗しても窓はひらき、チェックは外れている (2132.692ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6993.413042
+
+(exit 0, 7039ms)

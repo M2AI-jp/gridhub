@@ -49,7 +49,8 @@ test('出撃中の駒にはふきだし、出撃の指揮と止める', async ()
     })()`);
     await waitUntil(() => posts.length === 1, { message: '出撃の POST' });
     assert.equal(posts[0].headers['x-masume'], '1');
-    assert.deepEqual(posts[0].body, { agent: 'codex', model: 'gpt-5', parallel: 2, only: [boxes[0]] });
+    // 第7章 §34.2: codex のときはチェックの状態（ここでは既定の外れ）を allow_listen として必ず送る
+    assert.deepEqual(posts[0].body, { agent: 'codex', model: 'gpt-5', parallel: 2, only: [boxes[0]], allow_listen: false });
     await page.waitFor(`document.querySelector('#party-status')?.dataset.running === 'true'`, { message: '出撃中の表示' });
     assert.match(await page.eval(`document.querySelector('#party-status').innerText`), /出撃中/);
     await page.eval(`document.querySelector('#party-stop').click()`);

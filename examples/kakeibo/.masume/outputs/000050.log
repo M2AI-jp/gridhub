@@ -1,0 +1,6 @@
+=== S3: node checks/S3.mjs ===
+PASS S3
+(node:45306) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+(exit 0, 1694ms)

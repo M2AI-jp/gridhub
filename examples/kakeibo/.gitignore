@@ -1,0 +1,4 @@
+# マスメ（セーブデータ本体 .masume/log.jsonl は残す）
+.masume/lock
+.masume/state.json
+.masume/party.log

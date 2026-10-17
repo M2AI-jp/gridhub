@@ -100,14 +100,15 @@ export const TOOLS = [
   {
     name: 'masume_quest',
     title: '願いから冒険をはじめる',
-    description: '「メモアプリのようなアプリを作りたい」のような願いから、GM の LLM に地図をつくらせて冒険をはじめる。時間がかかる。冒険の書がすでにあるときは失敗する。',
+    description: '「メモアプリのようなアプリを作りたい」のような願いから、GM の LLM に地図をつくらせて冒険をはじめる。時間がかかる。冒険の書がすでにあるときは失敗する。allow_listen は、判定が 127.0.0.1 にサーバーを立てられるように Codex の箱のソケットを開ける。ゲームはローカルのままだが、Codex の設定は localhost だけに絞れないため、エージェントはインターネットにも出られる。codex にだけ効き、生まれた冒険の出撃にも設定を引き継ぐ。',
     properties: {
       wish: str(`作りたいものの願い（前後の空白を除いて1〜${MAX_WISH}コードポイント）`),
       gm: { type: 'string', enum: GMS, description: '地図をつくる GM の LLM（claude または codex）' },
       model: str('GM のモデル名（省略可）'),
+      allow_listen: { type: 'boolean', description: 'true なら Codex の箱のソケットを開ける（省略可）' },
     },
     required: ['wish'],
-    argv: (a) => ['quest', ...(a.gm !== undefined ? [`--gm=${a.gm}`] : []), ...(a.model !== undefined ? [`--model=${a.model}`] : []), '--', a.wish],
+    argv: (a) => ['quest', ...(a.gm !== undefined ? [`--gm=${a.gm}`] : []), ...(a.model !== undefined ? [`--model=${a.model}`] : []), ...(a.allow_listen === true ? ['--allow-listen'] : []), '--', a.wish],
     validate: (a) => {
       if (a.wish.trim() === '') throw invalid('wish が空です');
       if ([...a.wish.trim()].length > MAX_WISH) throw invalid(`wish は${MAX_WISH}文字までです`);

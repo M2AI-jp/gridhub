@@ -1,0 +1,16 @@
+=== S7: node --test tests/e2e/S7.test.mjs ===
+✔ §33.1 POST /api/sortie の allow_listen: true は --allow-listen、false は --no-allow-listen、省略は party.json のまま (57010.478125ms)
+✔ §33.1 allow_listen が真偽値でなければ 400 E_USAGE で、パーティは起動しない (14184.187167ms)
+✔ §33.3 GET /api/party は party.json の出撃の既定値（allow_listen・agent・parallel）を見せる (500.524416ms)
+✔ §33.2 POST /api/quest の allow_listen: true は quest に --allow-listen を渡す（生まれた冒険の party.json に持ち越す） (862.120125ms)
+✔ §33.4 MCP の masume_quest も allow_listen を受け取る（説明にも目的と注意） (185.659625ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75613.879709
+
+(exit 0, 75660ms)

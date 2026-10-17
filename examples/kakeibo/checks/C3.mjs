@@ -1,0 +1,31 @@
+import { assert, check, run, success, failure, expense } from './lib/harness.mjs';
+import { fixture, response } from './fixtures/setup.mjs';
+await check('C3', dir => {
+  const f = fixture(dir);
+  const expenses = [expense('a', '2026-10-01', 1200, '食費'), expense('b', '2026-09-30', 700, '交通費')];
+  const summary = { month: '2026-10', currency: 'JPY', count: 1, total: 1200, byCategory: [{ category: '食費', count: 1, total: 1200 }] };
+  const args = ['summary', '--month', '2026-10'];
+  const verify = (records, result) => {
+    f.set({ store: response({ expenses: records }), tally: response(result) });
+    assert.deepEqual(success(run('cli', args, { env: f.env, cwd: dir })), result);
+    const calls = f.calls();
+    assert.equal(calls.length, 2, 'summaryはstore→tallyを各1回呼びます');
+    assert.deepEqual(calls[0], { name: 'store', args: ['list'], input: '', file: f.file });
+    assert.equal(calls[1].name, 'tally'); assert.deepEqual(calls[1].args, ['month', '2026-10']); assert.equal(calls[1].file, f.file);
+    assert.deepEqual(JSON.parse(calls[1].input), { expenses: records }, '別月も除外せず全件渡してください');
+  };
+  verify(expenses, summary);
+  verify([], { month: '2026-10', currency: 'JPY', count: 0, total: 0, byCategory: [] });
+  const storeError = '[E_STORE] 台帳が破損しています\n';
+  f.set({ store: { status: 1, stderr: storeError }, tally: response(summary) });
+  let result = run('cli', args, { env: f.env }); failure(result, 'E_STORE', 1); assert.equal(result.stderr, storeError);
+  assert.deepEqual(f.calls().map(c => c.name), ['store'], 'store失敗後にtallyを呼ばないでください');
+  const tallyError = '[E_INPUT] 支出が不正です\n';
+  f.set({ store: response({ expenses }), tally: { status: 2, stderr: tallyError } });
+  result = run('cli', args, { env: f.env }); failure(result, 'E_INPUT', 2); assert.equal(result.stderr, tallyError);
+  assert.deepEqual(f.calls().map(c => c.name), ['store', 'tally']);
+  f.set({ store: { stdout: 'invalid JSON' }, tally: response(summary) });
+  failure(run('cli', args, { env: f.env }), 'E_BACKEND', 1); assert.deepEqual(f.calls().map(c => c.name), ['store']);
+  f.set({ store: response({ expenses }), tally: { stdout: 'invalid JSON' } });
+  failure(run('cli', args, { env: f.env }), 'E_BACKEND', 1); assert.deepEqual(f.calls().map(c => c.name), ['store', 'tally']);
+});

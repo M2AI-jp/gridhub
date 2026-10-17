@@ -799,3 +799,33 @@ Codex の `-s workspace-write` の箱（サンドボックス）は、既定で�
    `--allow-listen` を頼まれたがエージェントや GM が `codex` でないときは、同じく `箱のソケット: ` で始まり `codex にだけ効きます` を含む1行を出す（コマンドは変えない。`quest` は §31.3 どおり `party.json` には書く）。
    頼まれていないときは `箱のソケット:` の行を出さない。
 4. `masume --help`（受付係・GM の縄張り）の一覧にも `--allow-listen` を出す。
+
+---
+
+# 第7章: 盤面から箱のソケットを開ける
+
+第6章までは、`--allow-listen` は CLI（`party`・`quest`・`init`）と `.masume/party.json` でしか決められなかった。
+盤面だけで遊ぶ人（入口で願いを書き、「出撃させる」で出撃させる人）も、Codex の箱のソケットを開けられるようにする。
+意味と注意（127.0.0.1 にサーバーを立てるため・ゲームはローカルのまま・Codex の設定は localhost だけに絞れないのでインターネットにも出られる・codex にだけ効く）は §30〜§32 と同じ。
+
+## 33. 伝令: 窓口の `allow_listen`
+
+1. `POST /api/sortie` の本文に `allow_listen`（省略可）を足す。`true` なら `masume party … --allow-listen`、`false` なら `… --no-allow-listen`、省略（`undefined`・`null`）なら何も足さない（`party.json` の値が効く）。真偽値以外は 400 `E_USAGE`（何も起動しない）。
+2. `POST /api/quest` の本文に `allow_listen`（省略可）を足す。`true` なら `masume quest … --allow-listen`（`--` と願いより前）。`false`・省略なら何も足さない。真偽値以外は 400 `E_USAGE`。
+3. `GET /api/party` の応答に、出撃の既定値を足す（`<root>/.masume/party.json` から。冒険の書が無くても答える）:
+   - `allow_listen`: `party.json` の `allow_listen` が `true` なら `true`、それ以外（ファイルが無い・読めない・壊れている・値が `true` でない）は `false`。
+   - `agent`: `party.json` の `agent` が `claude` か `codex` ならその文字列、それ以外（無い・`cmd:…`・ほかの値・壊れている）は `null`。
+   - `parallel`: `party.json` の `parallel` が 1〜8 の整数ならその数、それ以外は `null`。
+4. MCP の `masume_quest` の入力に `allow_listen`（boolean、省略可）を足す。意味は 33.2 と同じ（真偽値以外は道具のエラー）。道具の説明（description）には、127.0.0.1 にサーバーを立てるためであることと、インターネットにも出られることを書く。
+
+## 34. 盤面: ソケットを開ける切り替え
+
+1. 入口（ロビー）のフォームに、チェックボックス `#gm-allow-listen`（既定は外れている）と、その説明を置く。説明には `127.0.0.1`・`ローカル`・`インターネット`・`codex にだけ効く` を含める。
+   チェックが入っていれば `POST /api/quest` の本文に `allow_listen: true` を入れる。外れていれば `allow_listen` を入れない。
+2. 出撃の窓（`#sortie-modal`）に、チェックボックス `#sortie-allow-listen` と同じ説明を置く。窓を開くたびに `GET /api/party` を読み、
+   `allow_listen` を既定のチェックに、`agent`（`null` でなければ）を `#sortie-agent` の既定に、`parallel`（`null` でなければ）を `#sortie-parallel` の既定にする（読めなければ、チェックは外し、ほかは今のまま）。
+   願いから生まれた冒険では `party.json` に GM と同じエージェントが書かれているので、Codex の GM で始めた冒険は、窓を開くと Codex が選ばれている。
+   `POST /api/sortie` の本文には、チェックの状態をそのまま `allow_listen: true` / `false` として必ず入れる。
+3. エージェント（`#sortie-agent`）が `codex` でないあいだは `#sortie-allow-listen` を押せなくし（`disabled`）、`codex にだけ効きます` と見せる。そのときは本文に `allow_listen` を入れない。
+   入口の GM（`#gm`）が `codex` でないときも、`#gm-allow-listen` は押せる（§31.3 どおり、生まれた冒険の `party.json` に持ち越すため）。説明に `codex にだけ効く` があればよい。
+4. 見本の盤面（`?fixture=`）では、どちらのチェックボックスもあってよいが、何も送らない（§29 までどおり）。

@@ -6,6 +6,12 @@
       "runtimeExecutable": "node",
       "runtimeArgs": ["bin/masume.js", "serve", "--port", "5005"],
       "port": 5005
+    },
+    {
+      "name": "kakeibo-board",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["bin/masume.js", "serve", "--dir", "examples/kakeibo", "--port", "5010"],
+      "port": 5010
     }
   ]
 }

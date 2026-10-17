@@ -29,6 +29,8 @@ export function initCommand(c) {
     const body = { wish: wish.value.trim(), gm: $('#gm').value };
     const model = $('#gm-model').value.trim();
     if (model) body.model = model;
+    // 箱のソケット（§34.1）: チェックしたときだけ頼む。GM が codex でなくても、生まれた冒険の party.json に持ち越す
+    if ($('#gm-allow-listen').checked) body.allow_listen = true;
     start.disabled = true;
     const j = await ctx.post('api/quest', body);
     if (!j || j.ok === false) {
@@ -45,7 +47,13 @@ export function initCommand(c) {
     if (!ctx.live) return ctx.toast({ text: '見本の盤面なので出撃はできません（masume serve で開くと本物のエージェントを出撃させられます）', ok: null });
     fillSortieChoices();
     modal.showModal();
+    loadSortieDefaults();
   });
+  // 窓を開いたあとで自分で触った欄は、あとから届いた既定値で上書きしない
+  for (const id of ['#sortie-agent', '#sortie-parallel', '#sortie-allow-listen'])
+    for (const type of ['input', 'change']) $(id).addEventListener(type, () => (touched[id] = true));
+  $('#sortie-agent').addEventListener('change', syncListen);
+  syncListen();
   $('#sortie-cancel').addEventListener('click', () => modal.close());
   $('#sortie-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -56,6 +64,8 @@ export function initCommand(c) {
     const model = $('#sortie-model').value.trim();
     if (model) body.model = model;
     if (chosen.length < boxes.length) body.only = chosen;
+    // 箱のソケット（§34.2・34.3）: codex のときはチェックの状態を必ず送る。codex でなければ送らない
+    if (body.agent === 'codex') body.allow_listen = $('#sortie-allow-listen').checked;
     $('#sortie-go').disabled = true;
     const j = await ctx.post('api/sortie', body);
     $('#sortie-go').disabled = false;
@@ -115,6 +125,35 @@ async function pollQuest() {
 }
 
 // ---- 出撃 ----
+
+let touched = {};
+let defaultsSeq = 0;
+
+/** 窓を開くたびに、この冒険の party.json の既定値（allow_listen・agent・parallel）を読む（§34.2） */
+async function loadSortieDefaults() {
+  touched = {};
+  const mine = ++defaultsSeq;
+  let p = null;
+  try {
+    const r = await fetch('api/party', { cache: 'no-store' });
+    if (r.ok) p = await r.json();
+  } catch {
+    p = null;
+  }
+  if (mine !== defaultsSeq) return; // もっと新しく開き直した
+  const listen = $('#sortie-allow-listen');
+  if (!touched['#sortie-allow-listen']) listen.checked = p?.allow_listen === true;
+  if (p && (p.agent === 'claude' || p.agent === 'codex') && !touched['#sortie-agent']) $('#sortie-agent').value = p.agent;
+  if (p && Number.isInteger(p.parallel) && p.parallel >= 1 && p.parallel <= 8 && !touched['#sortie-parallel']) $('#sortie-parallel').value = String(p.parallel);
+  syncListen();
+}
+
+/** エージェントが codex でないあいだは、ソケットの切り替えを押せなくする（§34.3） */
+function syncListen() {
+  const codex = $('#sortie-agent').value === 'codex';
+  $('#sortie-allow-listen').disabled = !codex;
+  $('#sortie-allow-listen-note').hidden = codex;
+}
 
 function fillSortieChoices() {
   const v = ctx.getView();

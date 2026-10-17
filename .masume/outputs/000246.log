@@ -1,0 +1,13 @@
+=== G8: node --test tests/e2e/G8.test.mjs ===
+✔ 盤面だけで: 入口でソケットを開けて願いを出し、生まれた冒険では出撃の窓が Codex・開けた状態で始まり、パーティに届く (15888.079875ms)
+✔ 盤面だけで: 出撃の窓でチェックを外せば、party.json が開けていてもその出撃だけ閉じる (15553.114208ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 34497.991417
+
+(exit 0, 34544ms)

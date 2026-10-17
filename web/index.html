@@ -113,6 +113,10 @@
                 <input id="gm-model" type="text" placeholder="sonnet / opus / gpt-5 …" autocomplete="off">
               </label>
             </div>
+            <div class="listen">
+              <label class="check-field"><input id="gm-allow-listen" type="checkbox"> <span>Codex の箱のソケットを開ける</span></label>
+              <p class="hint listen-hint">判定（E2E）が <code>127.0.0.1</code> に手元のサーバーを立てるときに使います。ゲームはローカルのままです。ただし Codex の設定は localhost だけに絞れないので、開けているあいだはエージェントが<b>インターネット</b>にも出られます。codex にだけ効きます（チェックすると、生まれた冒険の出撃にも持ち越します）。</p>
+            </div>
             <button id="start-quest" class="act quest" type="submit" disabled>冒険をはじめる</button>
             <p class="hint">GM は地図（quest.map.json）と最初の判定（E2E）を書くだけで、アプリは作りません。作るのは、このあと出撃させるキャラクターたちです。</p>
           </form>
@@ -145,6 +149,10 @@
         <label class="field narrow"><span>同時に</span>
           <input id="sortie-parallel" type="number" min="1" max="8" value="3">
         </label>
+      </div>
+      <div class="listen">
+        <label class="check-field"><input id="sortie-allow-listen" type="checkbox"> <span>Codex の箱のソケットを開ける</span> <small id="sortie-allow-listen-note" class="listen-note" hidden>codex にだけ効きます</small></label>
+        <p class="hint listen-hint">判定（E2E）が <code>127.0.0.1</code> に手元のサーバーを立てるときに使います。ゲームはローカルのままです。ただし Codex の設定は localhost だけに絞れないので、開けているあいだはエージェントが<b>インターネット</b>にも出られます。codex にだけ効きます。既定は、この冒険の <code>.masume/party.json</code> の <code>allow_listen</code>。</p>
       </div>
       <fieldset class="field"><legend>だれを</legend><div id="sortie-choices"></div></fieldset>
       <div class="dialog-actions">

@@ -11,7 +11,7 @@
   },
   "scripts": {
     "test": "node --test tests/e2e/[ABEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs",
-    "test:goal": "node --test tests/e2e/GOAL6.test.mjs",
+    "test:goal": "node --test tests/e2e/GOAL7.test.mjs",
     "serve": "node bin/masume.js serve",
     "board": "node bin/masume.js serve"
   },

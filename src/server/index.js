@@ -74,6 +74,13 @@ function parseModel(value) {
   return value;
 }
 
+function parseAllowListen(value) {
+  if (value !== undefined && typeof value !== 'boolean') {
+    throw badRequest('allow_listen は真偽値で指定してください');
+  }
+  return value;
+}
+
 function parseQuestBody(body) {
   if (typeof body.wish !== 'string') throw badRequest('wish を文字列で指定してください');
   const wish = body.wish.trim();
@@ -81,7 +88,7 @@ function parseQuestBody(body) {
   if (length < 1 || length > 2000) throw badRequest('wish は 1〜2000 文字で書いてください');
   if (wish.includes('\0')) throw badRequest('wish に使えない文字が含まれています');
   if (!GMS.includes(body.gm)) throw badRequest('gm は claude か codex を指定してください');
-  return { wish, gm: body.gm, model: parseModel(body.model) };
+  return { wish, gm: body.gm, model: parseModel(body.model), allow_listen: parseAllowListen(body.allow_listen) };
 }
 
 function parseSortieBody(body) {
@@ -101,7 +108,26 @@ function parseSortieBody(body) {
     }
     only = [...new Set(body.only)];
   }
-  return { agent: body.agent, model: parseModel(body.model), parallel, only: only?.length ? only : undefined };
+  return {
+    agent: body.agent, model: parseModel(body.model), parallel, only: only?.length ? only : undefined,
+    allow_listen: parseAllowListen(body.allow_listen ?? undefined),
+  };
+}
+
+async function readPartyDefaults(root) {
+  let config;
+  try {
+    config = JSON.parse(await readFile(join(root, '.masume', 'party.json'), 'utf8'));
+  } catch {
+    // 設定が無い・読めない・壊れている場合も、出撃の窓には既定値を返す。
+  }
+  if (!isObject(config)) config = {};
+  return {
+    allow_listen: config.allow_listen === true,
+    agent: GMS.includes(config.agent) ? config.agent : null,
+    parallel: Number.isInteger(config.parallel) && config.parallel >= 1 && config.parallel <= 8
+      ? config.parallel : null,
+  };
 }
 
 function allowedOrigin(request) {
@@ -479,6 +505,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     code: code(),
     log: await tailLines(file),
   });
+  const partyStatus = job(() => party.running, () => party.code, partyLog);
 
   const server = createServer({
     webRoot: webRoot ?? fileURLToPath(new URL('../../web/', import.meta.url)),
@@ -515,7 +542,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     },
 
     // ---- 入口（語り部）----
-    onQuest: async ({ wish, gm, model }) => {
+    onQuest: async ({ wish, gm, model, allow_listen }) => {
       // 確認から起動までに await を挟まない（同時に2つ起こさないため）
       requireOpen();
       if (hasGame() || existsSync(join(gameRoot, '.masume'))) {
@@ -524,7 +551,12 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       if (quest.running) throw apiError('E_BUSY', 'いま冒険をつくっています');
       mkdirSync(gameRoot, { recursive: true });
       // 願いは「--」のあとに置く（先頭が - の願いがオプションに化けないように）
-      const args = [bin, 'quest', '--dir', gameRoot, '--gm', gm, ...(model ? ['--model', model] : []), '--', wish];
+      const args = [
+        bin, 'quest', '--dir', gameRoot, '--gm', gm,
+        ...(model ? ['--model', model] : []),
+        ...(allow_listen === true ? ['--allow-listen'] : []),
+        '--', wish,
+      ];
       try {
         await quest.start(args, { cwd: gameRoot, logFile: questLog });
       } catch (error) {
@@ -535,7 +567,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     getQuest: job(() => quest.running, () => quest.code, questLog),
 
     // ---- 出撃（軍師）----
-    onSortie: async ({ agent, model, parallel, only }) => {
+    onSortie: async ({ agent, model, parallel, only, allow_listen }) => {
       requireOpen();
       requireGame();
       if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
@@ -552,6 +584,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
         ...(model ? ['--model', model] : []),
         ...(parallel === undefined ? [] : ['--parallel', String(parallel)]),
         ...(only === undefined ? [] : ['--only', only.join(',')]),
+        ...(allow_listen === undefined ? [] : [allow_listen ? '--allow-listen' : '--no-allow-listen']),
       ];
       const heading = `\n===== 出撃 ${new Date().toISOString()} =====\n$ masume ${args.slice(1).join(' ')}\n`;
       try {
@@ -561,7 +594,10 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       }
       return { ok: true };
     },
-    getParty: job(() => party.running, () => party.code, partyLog),
+    getParty: async () => {
+      const [status, defaults] = await Promise.all([partyStatus(), readPartyDefaults(gameRoot)]);
+      return { ...status, ...defaults };
+    },
     onPartyStop: () => ({ ok: true, stopped: party.interrupt() }),
   });
 

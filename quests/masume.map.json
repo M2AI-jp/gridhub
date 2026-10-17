@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "マスメ — マスメでマスメをつくる",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。",
-    "goal": "GOAL6"
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。",
+    "goal": "GOAL7"
   },
   "characters": [
     {
@@ -36,7 +36,10 @@
         "B7",
         "GOAL4",
         "GOAL5",
-        "GOAL6"
+        "GOAL6",
+        "B8",
+        "G8",
+        "GOAL7"
       ]
     },
     {
@@ -71,7 +74,8 @@
         "G6",
         "GOAL4",
         "GOAL5",
-        "GOAL6"
+        "GOAL6",
+        "GOAL7"
       ]
     },
     {
@@ -105,7 +109,10 @@
         "G6",
         "GOAL4",
         "GOAL5",
-        "GOAL6"
+        "GOAL6",
+        "S7",
+        "G8",
+        "GOAL7"
       ]
     },
     {
@@ -134,7 +141,8 @@
         "G7",
         "GOAL5",
         "Q5",
-        "GOAL6"
+        "GOAL6",
+        "GOAL7"
       ]
     },
     {
@@ -162,7 +170,8 @@
         "G7",
         "GOAL5",
         "P5",
-        "GOAL6"
+        "GOAL6",
+        "GOAL7"
       ]
     },
     {
@@ -193,7 +202,8 @@
         "M6",
         "GOAL4",
         "GOAL5",
-        "GOAL6"
+        "GOAL6",
+        "GOAL7"
       ]
     },
     {
@@ -219,7 +229,8 @@
         "GOAL3",
         "GOAL4",
         "GOAL5",
-        "GOAL6"
+        "GOAL6",
+        "GOAL7"
       ]
     },
     {
@@ -239,7 +250,8 @@
         "GOAL3",
         "GOAL4",
         "GOAL5",
-        "GOAL6"
+        "GOAL6",
+        "GOAL7"
       ]
     }
   ],
@@ -1187,6 +1199,77 @@
         "run": "node --test tests/e2e/GOAL6.test.mjs",
         "seal": [
           "tests/e2e/GOAL6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      }
+    },
+    "S7": {
+      "type": "task",
+      "title": "窓口から箱のソケットを開ける",
+      "detail": "CONTRACTS §33: POST /api/sortie の allow_listen（true → --allow-listen、false → --no-allow-listen、省略 → party.json のまま、真偽値以外は 400）、POST /api/quest の allow_listen（true → --allow-listen）、GET /api/party に party.json の既定値（allow_listen・agent・parallel）、MCP の masume_quest にも allow_listen（説明に目的と注意）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/S7.test.mjs",
+        "seal": [
+          "tests/e2e/S7.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "server",
+        "mcp",
+        "sandbox"
+      ]
+    },
+    "B8": {
+      "type": "task",
+      "title": "盤面から箱のソケットを開ける",
+      "detail": "CONTRACTS §34: 入口に #gm-allow-listen（チェックしたら allow_listen: true）、出撃の窓に #sortie-allow-listen（開くたびに GET /api/party の allow_listen・agent・parallel を既定にし、チェックの状態を必ず送る。codex 以外では押せず「codex にだけ効きます」）。説明に 127.0.0.1・ローカル・インターネット・codex にだけ効く。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/B8.test.mjs",
+        "seal": [
+          "tests/e2e/B8.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "sandbox"
+      ]
+    },
+    "G8": {
+      "type": "gate",
+      "title": "結合: 盤面だけで箱が開く",
+      "detail": "本物の masume serve と盤面で、入口のチェック → 生まれた冒険の party.json（Codex・開けた状態）→ 出撃の窓の既定 → パーティの「箱のソケット:」まで流れで通る。窓でチェックを外せば、その出撃だけ閉じる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/G8.test.mjs",
+        "seal": [
+          "tests/e2e/G8.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs"
+        ]
+      }
+    },
+    "GOAL7": {
+      "type": "gate",
+      "title": "あがり（第7章）: 盤面から箱のソケットを開ける",
+      "detail": "第1章〜第7章のすべての判定がまとめて通り、すべての冒険の書（盤面だけで遊んだ本物の冒険 examples/kakeibo を含む）が正常で、kakeibo はあがっていて、README に第7章が書いてある。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/GOAL7.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL7.test.mjs",
           "tests/helpers.mjs",
           "tests/helpers2.mjs",
           "tests/helpers3.mjs"

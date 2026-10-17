@@ -1,0 +1,1237 @@
+OpenAI Codex v0.153.4
+--------
+[1mworkdir:[0m /Users/amano/dev/masume/examples/kakeibo
+[1mmodel:[0m gpt-6-astra
+[1mprovider:[0m openai
+[1mapproval:[0m never
+[1msandbox:[0m workspace-write [workdir, /tmp, $TMPDIR]
+[1mreasoning effort:[0m ultra
+[1mreasoning summaries:[0m none
+[1msession id:[0m 01a14874-ee11-73e1-9ce9-939a321cd4f8
+--------
+[36muser[0m
+あなたは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）の冒険に参加しているキャラクター「案内人」（ID: cli）です。
+
+冒険: 月ごとに振り返る家計簿 — 手元のCLIで支出を残し、月合計とカテゴリ別内訳を確かめる
+作業場所（ゲームのルート。ここで作業する）: /Users/amano/dev/masume/examples/kakeibo
+
+マスメでは、作るものを「マス」に分け、キャラクターが1マスずつ進みます。マスを突破できるのは、封印された判定（E2Eテスト）に通ったときだけで、「できました」という自己申告では進めません。
+あなたの仕事は、いまのマス（C2「追加と一覧を保存先へ渡す」）の1つだけを実装して宣言判定に通し、そこで止まって報告することです。先のマスには手を出しません。
+
+## 指令書
+
+次は `masume brief cli` の出力です。現在のマス・判定・視界・仲間・自分の前の日誌が書いてあります。
+
+指令書: 案内人（cli / agent）
+Lv1 / 経験値 1/2 / 視界 0マス先 / 作業中
+担当: 利用コマンドとモジュール接続
+縄張り: src/cli/**
+現在のマス: C2「追加と一覧を保存先へ渡す」（task）
+案内人がadd/listを保存バックエンドへ接続する。SSoTは CONTRACTS.md §2・§3・§5。入口は KAKEIBO_FILE=<一時パス> KAKEIBO_STORE_CLI=<判定用偽store.mjs> node src/cli/main.mjs add --date YYYY-MM-DD --amount 円 --category 名前 [--note メモ] と list。判定は固定応答の偽storeを用意し、受信した引数・stdin・保存先・呼出回数を検査する。数値変換・カテゴリtrim・note省略・オプション順序・シェル特殊文字を含む値が契約どおり運ばれ、バックエンドJSONが返ることが合格条件。E_STOREの終了1を中継し、不正な成功JSONや起動失敗はE_BACKEND/終了1。実storeは不要。子プロセスはシェル文字列で実行しない。
+判定: node checks/C2.mjs
+封印: 封印済み
+失敗時の戻り先: C1
+視界に入っている先のマス:
+霧の中: 3マス
+仲間:
+  倉庫番（store）: S3 / 作業中 / Lv3
+  算術師（tally）: T3 / 作業中 / Lv3
+自分の日誌（新しい順）:
+  seq 27 2026-10-17T06:02:31.038Z: C1突破。src/cli/main.mjsに日本語ヘルプ、arguments.mjsに引数・値検証を実装。素振りPASS C1、宣言判定成功。実在日・金額・Unicode文字数・カテゴリtrim・メモ原文保持を検証し、各オプション直後の1引数を値として扱う。保存・集計の接続は未実装で、有効な要求にはE_BACKENDを返す。次回は検証後の要求を接続する。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: ねびえ ちづふ ぎよら るほち（seq 35）
+
+## 守ること
+
+- 現在のマスだけをやる。指令書に出ていない先のマス（霧の向こう）の内容は実装しない。
+- 自分の縄張りの中だけを編集する。縄張り: src/cli/**。縄張りの外のファイルを作らない・編集しない。必要なら最終報告の「GMへの依頼」に書く。
+- 封印された判定ファイル（checks/C2.mjs、checks/lib/harness.mjs、checks/fixtures/setup.mjs、checks/fixtures/store.mjs、checks/fixtures/tally.mjs、checks/fixtures/backend.mjs、CONTRACTS.md）と、地図（*.map.json）と、冒険の書（.masume/）は編集しない。封印を破ると記録され、判定できなくなる。
+- 判定のほうがおかしい（契約や指令書どおりに作っても通らない）と思ったら、判定を直さず、宣言もせずに、そこで止まって報告する。
+- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。
+- マスメのコマンドは brief / check / note だけを使う。new / seal / amend / load / repair / stamp / party / quest などは使わない。
+- 判定を通すために、テストの意図を回避する実装（テスト環境の検出、出力の決め打ち）をしない。
+- 外部パッケージを勝手に増やさない。本物の外部サービスや課金・秘密の鍵を使わない。
+
+## 進め方
+
+1. 上の指令書の「現在のマス」の内容を読み、実装する。
+2. 素振り（判定コマンドを自分で走らせる。何度走らせてもよく、記録されない）:
+
+       node checks/C2.mjs
+
+   通るまで直す。
+3. 素振りが通ったら、宣言判定（公式の判定。記録される。素振りが通ってからにする）:
+
+       node '/Users/amano/dev/masume/bin/masume.js' check cli --as cli --no-boss --dir '/Users/amano/dev/masume/examples/kakeibo'
+
+   - 通ると「判定成功」と出て、1マス進む。
+   - 落ちるとレベルが下がり、前のマスに巻き戻されることがある（累積判定: 宿屋より後の自分のマスの判定をまとめて走らせる）。失敗の出力を読み、`node '/Users/amano/dev/masume/bin/masume.js' brief cli --dir '/Users/amano/dev/masume/examples/kakeibo'` で現在のマスを確かめ直して、直してから素振りをやり直す。
+   - 結合ゲート（ボス戦）に着いたら「待機」になる。ボス戦は軍師（パーティ）がやるので、あなたは何もしなくてよい。
+4. 日誌（次の自分への申し送りを短く。何を作ったか、次のマスで気をつけること。`<申し送り>` を書き換える。単一引用符 ' で囲んであるので、文の中に ' を入れたいときは '\'' と書く）:
+
+       node '/Users/amano/dev/masume/bin/masume.js' note cli '<申し送り>' --as cli --dir '/Users/amano/dev/masume/examples/kakeibo'
+
+## 止まる条件
+
+- 現在のマスを1つ突破したら（宣言判定が「判定成功」になったら）、日誌を書いて、そこで止まる。次のマスには進まない。
+- 宣言判定に2回失敗したら、そこで止まる。なぜ落ちたかを報告する。
+- 結合ゲートに着いて待機になったら、そこで止まる。
+- 判定や契約がおかしくて進めないと分かったら、そこで止まる。
+
+止まったら、次の形で短く報告して終わる:
+
+    ## 報告書 案内人 <マスID>
+    - 変更したファイル:
+    - 判定の結果（最後の数行）:
+    - 申し送り（次のマスの自分へ）:
+    - GMへの依頼（契約の不足・縄張りの外で必要なこと）:
+
+[35m[3mcodex[0m[0m
+私は案内人（cli）として、C2のadd/list接続だけを実装します。まずルールブック、SSoTの`CONTRACTS.md` §2・§3・§5、現在の指令書を読み、既存コードと照合します。現時点では、実装状態は未確認です。
+
+ユーザーの明示許可に基づき、私は`src/cli/**`だけを編集し、素振り通過後に宣言判定と日誌を実行します。副作用は担当コードの変更と、公式コマンドによる冒険の書への記録です。C2の判定成功と日誌記録を完了条件とし、次のマスは実装しません。
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc pwd[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 0ms:[0m
+/Users/amano/dev/masume/examples/kakeibo
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'cat /Users/amano/dev/masume/docs/RULEBOOK.md'[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 0ms:[0m
+# マスメ ルールブック（rules 1）
+
+> 5mm方眼ノートに描いたすごろくで、ソフトウェア開発を進めるゲーム。
+> Linear や Jira の「文字だけのタスク」に、**盤面・駒・セーブデータ**という「状態」を持たせる。
+
+小学生のころ、方眼ノートにマス目を引いて、すごろく兼RPGを作って兄弟で遊んだ。
+マスメはそれを開発に持ち込む。人間も LLM エージェントも、同じ盤面を見て「いまどこにいて、次に何をして、どこで合流するか」を共有する。
+
+---
+
+## 0. なぜゲームにするのか
+
+LLM エージェントに開発を任せると、だいたい次のことが起きる。
+
+| 起きること | マスメのルール |
+| --- | --- |
+| コンテキストが切れると、どこまでやったか分からなくなる | 進捗は**冒険の書**（追記専用のセーブデータ）にだけ記録される。`masume brief` を読めば誰でも再開できる |
+| 「できました」と言うが、実は動いていない | 進めるのは**判定（E2E）に通ったときだけ**。自己申告では1マスも進めない |
+| テストを書き換えて通してしまう | 判定ファイルは GM が**封印**する。改変すると「封印が破れている」と記録され、判定できない |
+| 頼んでいない所まで手を出して全体を壊す | 見えるのは**視界**の範囲だけ（霧）。触ってよいのは**縄張り**だけ |
+| 後から別の変更で、前にできたことが壊れる | 判定は**累積**。宿屋（セーブポイント）以降のマスの判定を毎回まとめて再実行する |
+| モジュールを結合したら動かない | 道は一本道ではない。要所に**結合ゲート（ボス戦）**があり、仲間が全員そろってから結合E2Eで戦う |
+| セーブデータ自体が壊れる・食い違う | 冒険の書は**ハッシュの鎖**。1文字でも改ざんされると「呪われています」と検出され、修復・ロードできる |
+| いまの状態を短く伝えられない | **ふっかつのじゅもん**（12文字）で「その時点の盤面」を一意に指せる |
+
+Git/GitHub はコードの履歴を守る。マスメは**「誰が・どこまで・何を検証済みか」という進行の履歴**を守る。
+
+---
+
+## 1. 登場するもの
+
+| ゲーム | 開発での意味 | Linear でいうと |
+| --- | --- | --- |
+| **冒険（クエスト）** | 作りたいプロダクト全体 | Project |
+| **地図**（`*.map.json`） | 開発ロードマップ全体。GM が作る | Project の issue 群と依存関係 |
+| **キャラクター（駒）** | 完成させるべき**モジュール1つ**を担当するエージェント（または人間） | Assignee |
+| **道** | そのキャラクターが通る一方通行のマスの列（`path`） | Assignee ごとの issue の並び |
+| **マス（task）** | 1つのタスク。1回のコンテキストで終わる大きさ | Issue |
+| **結合ゲート（gate）** | 複数の道が合流する、結合E2Eテストのマス。ボス戦 | Milestone |
+| **宿屋（camp）** | セーブポイント。失敗してもここより前には戻らない | Cycle の区切り |
+| **あがり（goal）** | 全員が合流する最後の結合ゲート。完成 | Project 完了 |
+| **GM** | 地図を描き、判定（E2E）を書いて封印する人。実装はしない | PM / テックリード |
+| **勇者（人間）** | 人間にしかできないマス（契約・鍵・決済・承認）を**ハンコ**で進める | 人間の Assignee |
+| **冒険の書**（`.masume/`） | セーブデータ。追記専用のイベントログ | Issue の履歴 |
+
+盤面は 5mm 方眼ノートとして描かれる。マスは 4×4 目（2cm角）、道は蛍光ペン、判定に通ったマスには赤ペンの**はなまる**、巻き戻されたマスには**消しゴムの跡**が残る。
+
+---
+
+## 2. 1ターンの流れ（キャラクター）
+
+1. **指令書を読む** — `masume brief <自分のID>`
+   いまのマス・判定コマンド・視界に入っている先のマス・仲間の位置・前の自分の日誌・ふっかつのじゅもん が出る。
+2. **実装する** — 現在のマスの内容だけ。縄張りの中だけ。
+3. **素振り** — 判定コマンドを自分で何度走らせてもよい（記録されない）。
+4. **宣言判定** — `masume check <自分のID>`。これが公式の判定で、冒険の書に記録される。
+5. **日誌** — `masume note <自分のID> "次の自分への申し送り"`（任意だが強く推奨）。
+
+> 素振りは自由、宣言は一発勝負。TRPG で「判定します」と宣言してからダイスを振るのと同じ。
+
+---
+
+## 3. 判定
+
+- 判定はすべて**コマンド**（E2Eテスト）で行う。終了コード 0 なら成功。
+  例外は人間のマス（`stamp`）で、これは人間のハンコで成功になる。
+- 判定コマンドは地図に書かれ、地図は冒険の書に**ハッシュ付きで凍結**される。キャラクターは変えられない。
+- 判定が参照するファイル（`check.seal`）は GM が**封印**する（ハッシュを記録）。
+  - 封印前のマスは判定できない（`未封印` → GM に依頼）。
+  - 封印後にファイルが変わっていたら判定できない（`封印が破れています` が記録される）。GM が再封印するか、元に戻す。
+- **累積判定**: 宣言判定では、直近のセーブポイント（宿屋・突破済みゲート・ふりだし）より後の、自分の道のマスの判定を**古い順にすべて**走らせる。どれか1つでも落ちたら失敗。
+  - 「前にできていたことを壊していない」ことまで含めて、はじめて1マス進める。
+
+## 4. 成功・経験値・レベル・視界
+
+- 成功すると 1 マス進み、そのマスの経験値（task 1 / gate 3 / camp 0）を得る。
+- 経験値が `レベル + 1` に達するとレベルアップ（余りは繰り越し）。最大 Lv9。
+- **視界** = `min(レベル − 1, 4)` マス先まで。Lv1 は現在のマスしか見えない。
+  - 指令書には視界の外のマスのタイトルは**出ない**（霧）。
+  - 信頼は実績で増える。失敗すると視界が狭まり、小さく確実に進むことを強いられる。
+- 宿屋に着くと自動で休んで（判定なし）通過し、そこがセーブポイントになる。
+
+## 5. 失敗・レベルダウン・巻き戻し
+
+宣言判定に失敗すると:
+
+1. **レベル −1**（最低 Lv1）、経験値は 0 に。
+2. **所定の位置まで戻される**。所定の位置は、落ちたマスの `rollback_to` で決まる。
+   - `@camp`（既定）… 直近のセーブポイントの次のマス
+   - `@here` … 落ちたマスそのもの
+   - マスID … 同じ道の、それより前のマス
+   - ただし**セーブポイントより前には戻らない**。
+3. 戻った位置から失敗地点までに通過していたマスは**消しゴムで消される**（`stale`：要再検証）。
+4. 消されたマスは、もう一度判定に通れば元に戻る。ただし**経験値は入らない**。
+
+> 巻き戻されるのは「コード」ではなく「できた、という主張」。コードが正しければ再判定はすぐ通る。正しくなければ、どこで壊れたかが盤面に出る。
+
+## 6. 結合ゲート（合流・ボス戦・解散）
+
+- ゲートは複数の道に同じIDで現れるマス。そこを通る全キャラクターが**メンバー**。
+  - 例外: キャラクターが1人だけの冒険では、**あがり**のゲートだけはその1人で戦う（ほかのゲートは置けない）。
+- ゲートに着いたキャラクターは**待機**する。
+- メンバー全員がそろうと、そろえた最後の判定（またはハンコ）の直後に**自動でボス戦**（ゲートの判定）が始まる（`--no-boss` で保留、あとで `masume check <gateId>`）。
+- **勝利**: 全員が経験値 3 を得て、ゲートの次のマスへ進む（**解散**）。ゲートは全員のセーブポイントになる。
+- **敗北**: 判定の出力に `MASUME_BLAME: <id>,<id>` 行があれば、そのキャラクターだけが責任を負う（**差し戻し**）。無ければメンバー全員（**全滅**）。
+  - 責任を負ったキャラクターはレベル −1、直近のセーブポイントの次まで戻り、その間のマスは消しゴムで消される。
+  - 責任のないキャラクターはゲートで待ち続ける。
+- ゲートの判定は「そのゲートの結合E2E」だけを走らせる。
+
+## 7. 人間のマス（ハンコ）
+
+- `check.kind: "stamp"` のマスは、指定された人間（`by`）の**ハンコ**で成功になる。
+  - `masume stamp <nodeId> --as <humanId>` または盤面の「ハンコを押す」ボタン。
+- 人間のマスは、アカウント作成・契約・支払い・本番鍵・デザイン承認など、人間にしかできない／人間が決めるべきことに使う。
+- ハンコで最後のメンバーがゲートにそろえば、そのままボス戦が始まる。
+
+## 8. セーブデータ（冒険の書）
+
+- `.masume/log.jsonl` に**追記だけ**される。1行1イベント。各行は前の行のハッシュを含む（ハッシュの鎖）。
+- 盤面の状態は、イベントを最初から再生して毎回つくり直す（状態ファイルはただのキャッシュ）。
+- `masume verify` で鎖・地図・判定ログの改ざんを検出する。壊れていたら「呪われています（seq N）」。
+- `masume repair` で、壊れた所から後ろを退避して鎖を直す。
+- **ふっかつのじゅもん**: 最新イベントのハッシュから作る 12 文字のひらがな（例: `ゆうて いみや おうき むこう`）。
+  - コミットメッセージ・PR・Linear のコメント・日誌に書いておけば、「その時点の盤面」を一意に指せる。
+  - `masume verify --jumon "..."` で、その状態が冒険の書に実在するか確かめられる。
+  - `masume load "..."` でその時点の状態に戻せる（戻したこと自体も記録される）。
+- 書き込みはロックで1人ずつ。判定中に盤面が動いたら、その判定は無効（もう一度）。
+
+## 9. 地図の改訂
+
+- 計画は変わる。`masume amend <新しい地図>` で地図を改訂できる。
+- ただし**歴史は書き換えられない**: すでに通過したマスを消したり、判定を変えたり、その前に新しいマスを差し込んだりはできない。
+  タイトル・説明・ラベル・見積もりの修正だけは許される。
+- 新しいキャラクター（新しいモジュール）を途中から加えるのは自由。
+
+## 10. 状態と Linear のステータス
+
+| マスの状態 | 盤面の見え方 | Linear |
+| --- | --- | --- |
+| `fog` 霧 | 鉛筆の下書き | Backlog |
+| `open` 視界の中 | ボールペン | Todo |
+| `current` 駒がいる | 蛍光ペンで塗られ、駒が立つ | In Progress |
+| `waiting` / `ready` ゲートで待機 | 「待機中 2/3」 | In Review |
+| `cleared` 突破 | 赤ペンのはなまる | Done |
+| `stale` 消された | 消しゴムの跡 | Todo（要再検証） |
+
+`masume export linear` で Linear 形式（CSV/JSON）に書き出せる。`masume import linear` で既存の Linear CSV から地図の下書きを作れる。
+
+---
+
+## 11. 役割の分離（いちばん大事なルール）
+
+- **GM** は地図を描き、判定を書いて封印する。**実装しない。**
+- **キャラクター**は実装する。**判定を書かない・変えない。**
+- **人間（勇者）**は、人間にしかできないマスと、最後の「あがり」の手前でハンコを押す。
+
+この分離があるから、エージェントの「できました」がそのまま信用できる。
+
+詳しい仕様: [SAVE_FORMAT.md](SAVE_FORMAT.md)（セーブデータ） / [CONTRACTS.md](CONTRACTS.md)（地図・CLI・API） / [GM_GUIDE.md](GM_GUIDE.md)（「xxxのようなアプリを作りたい」から地図を作る手順）
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'cat CONTRACTS.md'[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 0ms:[0m
+# 家計簿の契約
+
+この文書は今回の家計簿のモジュール間契約のSSoTである。依頼書に基づいてGMが決めた前提は `ASSUMPTIONS.md` にある。実装担当は現在のマスと自分の縄張りだけを変更する。契約の変更はGMに依頼する。
+
+## 1. 担当と共通実行規約
+
+| ID | 担当 | 縄張り | 公開CLI |
+| --- | --- | --- | --- |
+| store | 倉庫番：保存と入力検証 | `src/store/**` | `node src/store/cli.mjs add` / `list` |
+| tally | 算術師：月別集計 | `src/tally/**` | `node src/tally/cli.mjs month YYYY-MM` |
+| cli | 案内人：利用者のコマンド | `src/cli/**` | `node src/cli/main.mjs …` |
+
+GMが `quest.map.json`、`CONTRACTS.md`、`ASSUMPTIONS.md`、`checks/**` を所有する。これらは誰の縄張りにも含めない。実装は `.mjs` を用い、設定ファイルや外部パッケージを追加せず、Node.js 20以上の標準ライブラリのみを使う。
+
+すべてのコマンドはルートから実行可能とする。成功時は終了コード0、標準出力はJSONオブジェクト1個と任意の末尾改行のみ、標準エラーは空。例外は利用者向け `--help` の日本語テキストである。失敗時は標準出力を空にし、標準エラーに `[E_コード] 日本語の説明` を1行出す。スタックトレースは不要。未知のコマンド・引数・オプション・欠落・重複オプションは `E_USAGE` / 終了2。
+
+CLIは同期的な1回の処理で終了し、サーバーや常駐プロセスを起動しない。判定は `process.execPath` で子プロセスを起動する。内部の関数やファイル分割は自由である。判定環境の検出や固定回答による合格は認めない。
+
+## 2. 支出の形式
+
+追加入力は `{ "date": "2026-10-01", "amount": 1200, "category": "食費", "note": "昼食" }`。
+
+- `date` は厳密な `YYYY-MM-DD`。年は0001〜9999、月日とうるう年はグレゴリオ暦の実在日とする。自動的な翌月への繰り上げやタイムゾーン変換をしない。
+- `amount` はJSON数値で、1〜1,000,000,000の整数円。数値文字列、0、負数、小数は不正。
+- `category` は文字列を `trim()` した後、Unicodeコードポイントで1〜40文字。保存値はtrim後の値とする。
+- `note` は省略時 `""`。指定時は文字列、Unicodeコードポイントで0〜200文字。空白や改行を含め、値を変えず保存する。
+- 追加入力の未知フィールドは `E_INPUT`。`id` は利用者から指定しない。
+- 保存済み支出は上記4フィールドに `id` を加えたもの。`id` は `/^[A-Za-z0-9_-]{1,80}$/` を満たす不透明な文字列で、同じ台帳内で一意。生成方法は自由。保存済みレコードに欠落や余分なフィールドは許可しない。保存済みカテゴリは既にtrim済みでなければならない。
+
+## 3. 倉庫番の入口と永続化
+
+環境変数 `KAKEIBO_FILE` は台帳JSONの絶対パスで、必須。未指定は `E_CONFIG` / 終了2。今回の判定では親ディレクトリが存在する書き込み可能な一時パスを渡す。
+
+### add
+
+`node src/store/cli.mjs add` は標準入力のJSONオブジェクト1個を読み、§2を検証する。成功時は支出に新しいIDを付け、既存レコードの末尾に追加して永続化し、`{ "expense": <保存した支出> }` を出力する。再度同じ内容を追加しても別の支出として新IDを発行する。入力やJSON構文の誤りは `E_INPUT` / 終了2で、既存のファイルを変更しない。
+
+### list
+
+`node src/store/cli.mjs list` は `{ "expenses": [<保存した順の支出>] }` を出力する。標準入力は使わない。存在しない台帳は空として扱い、読み取りだけではファイルを作らない。
+
+### ファイル
+
+UTF-8のJSONで `{ "version": 1, "expenses": [...] }` を保存する。この2フィールド以外は許可しない。JSONのインデントと末尾改行は自由。`add` 後に終了し、別プロセスの `list` が全レコードとIDを同じ値で取得できること。
+
+不正なJSON、未対応version、不正レコード、ID重複を含む既存ファイルは `E_STORE` / 終了1。`list` も `add` も破損を黙って空に戻さず、元ファイルをバイト単位で変更しない。読み書きのOSエラーも `E_STORE` / 終了1。失敗を成功として報告しない。同時書き込みの競合制御・クラッシュ耐性は今回の合格条件に含めない。
+
+## 4. 算術師の入口と月次結果
+
+`node src/tally/cli.mjs month YYYY-MM` は標準入力の `{ "expenses": [...] }` を読む。他のフィールドは許可しない。支出配列は§2の保存済み形式で、全件を検証する（対象外の月の不正レコードも拒否）。台帳ファイルを直接開かず、`KAKEIBO_FILE` を必要としない。
+
+月は厳密な `YYYY-MM`、年0001〜9999、月01〜12。引数の形・月の不正は `E_USAGE` / 終了2。入力JSON・レコード・ID重複の不正は `E_INPUT` / 終了2。
+
+結果の例:
+
+```json
+{
+  "month": "2026-10",
+  "currency": "JPY",
+  "count": 3,
+  "total": 1700,
+  "byCategory": [
+    { "category": "交通費", "count": 1, "total": 300 },
+    { "category": "食費", "count": 2, "total": 1400 }
+  ]
+}
+```
+
+日付の先頭7文字が月に一致した支出だけを数える。`count` は件数、`total` は整数円の合計。カテゴリ配列には該当月に存在するカテゴリだけを入れ、カテゴリ文字列のJavaScript既定の辞書順（UTF-16コード単位順、locale非依存）で昇順にする。カテゴリ名 `__proto__` なども普通の文字列として集計する。
+
+空の月は `count: 0, total: 0, byCategory: []`。入力順を変えても同じ結果になる。合計を32ビット整数に丸めず、JavaScriptの安全な整数として計算する。扱う全支出の各金額上限は§2のとおり。判定は現実的な件数で合計が32ビットを超える場合まで検査する。
+
+## 5. 案内人の利用者向けCLI
+
+### ヘルプと引数
+
+`node src/cli/main.mjs --help` は終了0、日本語のヘルプを標準出力に返す。`add`・`list`・`summary`・`--date`・`--amount`・`--category`・`--note`・`--month`・`KAKEIBO_FILE` を含める。台帳や他モジュールを必要としない。
+
+無引数、未知のコマンド、余分な位置引数、未知または重複オプション、必須オプションの欠落は `E_USAGE` / 終了2。引数解析は他モジュールを起動する前に行う。
+
+### 記録と一覧
+
+```sh
+KAKEIBO_FILE=/absolute/ledger.json node src/cli/main.mjs add --date 2026-10-01 --amount 1200 --category 食費 --note 昼食
+KAKEIBO_FILE=/absolute/ledger.json node src/cli/main.mjs list
+```
+
+`add` の必須オプションは `--date`・`--amount`・`--category`。任意の `--note` は省略時 `""`。オプション順序は自由。金額のCLI表記は `/^[1-9][0-9]*$/` を満たし、1〜1,000,000,000であること。日付とカテゴリとメモは§2の規則に従う。値の不正は `E_INPUT` / 終了2で、バックエンドを起動しない。
+
+`add` は倉庫番の `add` にJSONを標準入力で渡し、`list` は倉庫番の `list` を呼ぶ。成功時のJSONは§3と同じ内容を返す。
+
+### 月次集計
+
+```sh
+KAKEIBO_FILE=/absolute/ledger.json node src/cli/main.mjs summary --month 2026-10
+```
+
+月指定は必須で§4と同じ規則。不正な月は `E_USAGE` / 終了2で、バックエンドを起動しない。倉庫番の `list` のJSONを、算術師の `month 2026-10` の標準入力に渡し、§4と同じJSONを返す。別月のレコードをCLI側で事前に除外しない。空の月も算術師に渡す。
+
+### 接続先とエラー
+
+通常の接続先は、このアプリ自身の `src/store/cli.mjs` と `src/tally/cli.mjs`。呼び出し元のcwdではなく `main.mjs` の位置から解決する。`KAKEIBO_STORE_CLI`・`KAKEIBO_TALLY_CLI` があれば、対応する絶対パスの `.mjs` に差し替える。これらは契約検証や代替バックエンドのための正式な入口である。
+
+子プロセスはNode実行ファイルと引数配列で起動し、シェルで文字列を評価しない。`KAKEIBO_FILE` を引き継ぐ。バックエンドの失敗は、その終了コードと標準エラーの1行を利用者へ返し、成功JSONを出さない。バックエンドが成功終了したのにJSONを返さない場合や起動できない場合は `E_BACKEND` / 終了1。モジュールの実装をコピーしてCLIだけで保存・集計を完結させない。
+
+## 6. マスごとの範囲と結合
+
+| マス | 担当が今回完成させる範囲 | 独立した判定の入口 |
+| --- | --- | --- |
+| S1 | 正常な追加・一覧・プロセスを越える保存 | 倉庫番の `add` / `list`、台帳JSON |
+| S2 | 追加入力の拒否と非破壊性 | 倉庫番の `add` / `list`、台帳の前後比較 |
+| T1 | 正常な月合計・カテゴリ別合計 | 算術師の `month`、標準入力に判定が用意する支出 |
+| T2 | 月・入力JSON・レコードの検証 | 算術師の `month` と不正入力 |
+| G1 | 保存した支出を集計へ渡す初結合 | 実storeの `list` → 実tallyの `month` |
+| S3 | 破損した既存台帳を守る | 倉庫番の `add` / `list`、判定が作る破損ファイル |
+| T3 | 空月・年境界・うるう日・大きな合計・入力順 | 算術師の `month` |
+| C1 | 日本語ヘルプ・引数と値の検証 | 案内人の公開CLI。依存モジュール不要 |
+| C2 | 追加・一覧と保存エラーの中継 | 案内人の公開CLI＋固定応答の偽store |
+| C3 | 月次の接続と集計エラーの中継 | 案内人の公開CLI＋固定応答の偽store/偽tally |
+| GOAL | 利用者の支出記録から月次確認まで | 実CLI → 実store / 実tally、台帳JSON |
+
+フェイクは判定用の固定応答と呼び出し記録だけを行い、家計簿の保存・集計機能を実装しない。各担当はG1/GOALまで他担当の成果を待たず、契約だけで作業する。ゲートは責任を識別できる段階で担当IDを報告し、識別できない結合不一致を一人の責任と断定しない。
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "node '/Users/amano/dev/masume/bin/masume.js' brief cli --dir '/Users/amano/dev/masume/examples/kakeibo'"[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 0ms:[0m
+指令書: 案内人（cli / agent）
+Lv1 / 経験値 1/2 / 視界 0マス先 / 作業中
+担当: 利用コマンドとモジュール接続
+縄張り: src/cli/**
+出撃中: codex（seq 36 から）
+現在のマス: C2「追加と一覧を保存先へ渡す」（task）
+案内人がadd/listを保存バックエンドへ接続する。SSoTは CONTRACTS.md §2・§3・§5。入口は KAKEIBO_FILE=<一時パス> KAKEIBO_STORE_CLI=<判定用偽store.mjs> node src/cli/main.mjs add --date YYYY-MM-DD --amount 円 --category 名前 [--note メモ] と list。判定は固定応答の偽storeを用意し、受信した引数・stdin・保存先・呼出回数を検査する。数値変換・カテゴリtrim・note省略・オプション順序・シェル特殊文字を含む値が契約どおり運ばれ、バックエンドJSONが返ることが合格条件。E_STOREの終了1を中継し、不正な成功JSONや起動失敗はE_BACKEND/終了1。実storeは不要。子プロセスはシェル文字列で実行しない。
+(node:95040) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+判定: node checks/C2.mjs
+封印: 封印済み
+失敗時の戻り先: C1
+視界に入っている先のマス:
+霧の中: 3マス
+仲間:
+  倉庫番（store）: S3 / 作業中 / Lv3
+  算術師（tally）: T3 / 作業中 / Lv3
+自分の日誌（新しい順）:
+  seq 27 2026-10-17T06:02:31.038Z: C1突破。src/cli/main.mjsに日本語ヘルプ、arguments.mjsに引数・値検証を実装。素振りPASS C1、宣言判定成功。実在日・金額・Unicode文字数・カテゴリtrim・メモ原文保持を検証し、各オプション直後の1引数を値として扱う。保存・集計の接続は未実装で、有効な要求にはE_BACKENDを返す。次回は検証後の要求を接続する。
+守ること:
+  現在のマスだけをやる
+  自分の縄張りの中だけを編集する
+  判定ファイルと地図を変更しない
+  判定コマンドを自分で走らせ、結果を確認する
+  宣言判定と日誌で進行を冒険の書に記録する
+ふっかつのじゅもん: すゆね めたて しぶぢ じうも（seq 36）
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc "rg --files -g AGENTS.md -g '*.mjs' src/cli checks"[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 0ms:[0m
+checks/S1.mjs
+checks/S3.mjs
+checks/S2.mjs
+checks/G1.mjs
+src/cli/main.mjs
+src/cli/arguments.mjs
+checks/GOAL.mjs
+checks/C1.mjs
+checks/C2.mjs
+checks/C3.mjs
+checks/T2.mjs
+checks/T3.mjs
+checks/T1.mjs
+checks/fixtures/store.mjs
+checks/fixtures/backend.mjs
+checks/fixtures/tally.mjs
+checks/fixtures/setup.mjs
+checks/lib/harness.mjs
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'git status --short'[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 0ms:[0m
+ M ../../.claude/launch.json
+ M ../../.masume/log.jsonl
+ M ../../docs/CONTRACTS.md
+ M ../../package.json
+ M ../../quests/masume.map.json
+ M ../../tests/e2e/B5.test.mjs
+ M ../../web/board/board.css
+ M ../../web/board/command.js
+ M ../../web/index.html
+?? ../../.masume/maps/0007.json
+?? ./
+?? ../../tests/e2e/B8.test.mjs
+?? ../../tests/e2e/G8.test.mjs
+?? ../../tests/e2e/GOAL7.test.mjs
+?? ../../tests/e2e/S7.test.mjs
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'cat AGENTS.md src/cli/main.mjs src/cli/arguments.mjs'[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 0ms:[0m
+# AGENTS.md — このプロジェクトで働くエージェントへ
+
+このプロジェクトは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）で進めています。
+あなたは盤上のキャラクターの1人です。進捗は冒険の書（`.masume/`）にだけ記録され、進めるのは**判定（E2E）に通ったときだけ**です。
+ルールブック: /Users/amano/dev/masume/docs/RULEBOOK.md（迷ったら読む）
+
+以降の `<ID>` は、あなたのキャラクターID（依頼文か `MASUME_CHARACTER` で渡される）。
+コマンドはこのプロジェクトのフォルダで打つ（別の場所なら `--dir <このフォルダ>` を足す）。
+
+## 1ターンの流れ
+
+1. 指令書を読む。いまのマス・判定コマンド・縄張り・仲間の位置・前の自分の日誌が出る:
+
+   ```sh
+   node '/Users/amano/dev/masume/bin/masume.js' brief <ID>
+   ```
+
+2. 指令書の「現在のマス」だけを、縄張りの中で実装する。
+3. 素振り: 指令書の「判定:」のコマンドを、通るまで何度走らせてもよい（記録されない）。
+4. 宣言判定（公式。冒険の書に記録される一発勝負）。素振りが通ってから打つ。GM から「まだ打つな」と言われているときは打たない:
+
+   ```sh
+   node '/Users/amano/dev/masume/bin/masume.js' check <ID> --as <ID>
+   ```
+
+   現在のマスが結合ゲート（gate）やあがりのときは `--no-boss` を付ける。ボス戦は仲間がそろってから GM（パーティ）がやる:
+
+   ```sh
+   node '/Users/amano/dev/masume/bin/masume.js' check <ID> --as <ID> --no-boss
+   ```
+
+5. 日誌: 次の自分への申し送りを残す。
+
+   ```sh
+   node '/Users/amano/dev/masume/bin/masume.js' note <ID> "申し送り" --as <ID>
+   ```
+
+宣言判定に落ちるとレベルが下がって戻される。2回落ちたら、そこで止まって報告する。
+
+## 守ること
+
+- **現在のマスだけ**を実装する。指令書に出ていない先のマス（霧の向こう）には手を出さない。
+- **縄張り**（指令書の「縄張り」＝地図の `territory`）の外のファイルを作らない・編集しない。必要なら報告の「GMへの依頼」に書く。
+- **封印**された判定ファイルと地図（`quest.map.json`、`.masume/` の中）は編集しない。改変は「封印が破れています」と記録され、判定できなくなる。
+- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。GM がやる。
+- 判定を通すために、テストの意図を回避する実装（テスト環境の検出、出力の決め打ち）をしない。通らないなら通らないと正直に書く。
+- 指令書が足りない・矛盾しているときは、解釈を広げず、自然な最小の解釈で実装して報告に書く。
+
+## 最終報告
+
+```
+## 報告書 <キャラ名> <マスID>
+- 変更したファイル:
+- 判定コマンドの結果（最後の数行）:
+- 申し送り（次のマスの自分へ）:
+- GMへの依頼（足りない契約・縄張りの外で必要なこと）:
+```
+import { CliError, parseArguments } from './arguments.mjs';
+
+const HELP = `家計簿 — 支出を記録し、月ごとに振り返ります。
+
+使い方:
+  node src/cli/main.mjs --help
+  node src/cli/main.mjs add --date YYYY-MM-DD --amount 金額 --category カテゴリ [--note メモ]
+  node src/cli/main.mjs list
+  node src/cli/main.mjs summary --month YYYY-MM
+
+コマンド:
+  add       支出を追加します。
+  list      保存した順で支出を一覧表示します。引数は不要です。
+  summary   指定した月の合計とカテゴリ別内訳を表示します。
+  --help    この使い方を表示します。台帳の指定は不要です。
+
+入力条件:
+  --date      必須。年0001〜9999の実在日を YYYY-MM-DD 形式で指定します。
+  --amount    必須。1〜1,000,000,000円の整数を半角数字で指定します。
+              先頭のゼロ、符号、小数、指数表記は使えません。
+  --category  必須。前後の空白を除いて1〜40文字で指定します。
+  --note      任意。200文字以内。省略時は空文字列です。空白や改行を保持します。
+  --month     summary で必須。年0001〜9999、月01〜12を YYYY-MM 形式で指定します。
+  文字数はUnicodeコードポイントで数えます。
+  オプションの順序は自由です。各オプションは1回だけ指定できます。
+  空白を含む値は引用符で囲んでください。
+
+環境変数:
+  KAKEIBO_FILE  台帳JSONの絶対パスを指定します。保存・一覧・集計で必要です。
+`;
+
+try {
+  const request = parseArguments(process.argv.slice(2));
+  if (request.command === 'help') {
+    process.stdout.write(HELP);
+  } else {
+    // C1はヘルプと入力検証まで。後続マスで検証済みの要求を接続先へ渡す。
+    throw new CliError('E_BACKEND', '保存・集計の接続は未実装です。', 1);
+  }
+} catch (error) {
+  const failure = error instanceof CliError
+    ? error
+    : new CliError('E_BACKEND', '処理を完了できませんでした。', 1);
+  process.stderr.write(`[${failure.code}] ${failure.message}\n`);
+  process.exitCode = failure.exitCode;
+}
+export class CliError extends Error {
+  constructor(code, message, exitCode = 2) {
+    super(message);
+    this.code = code;
+    this.exitCode = exitCode;
+  }
+}
+
+function usage(message) {
+  throw new CliError('E_USAGE', message);
+}
+
+function input(message) {
+  throw new CliError('E_INPUT', message);
+}
+
+function parseOptions(args, allowed, required) {
+  const options = new Map();
+
+  for (let index = 0; index < args.length; index += 2) {
+    const name = args[index];
+    if (!allowed.includes(name)) {
+      usage('未知のオプション、または余分な引数があります。');
+    }
+    if (options.has(name)) {
+      usage('同じオプションを複数回指定できません。');
+    }
+
+    const value = args[index + 1];
+    if (value === undefined) {
+      usage('オプションの値がありません。');
+    }
+    options.set(name, value);
+  }
+
+  if (required.some((name) => !options.has(name))) {
+    usage('必須オプションがありません。使い方は --help で確認できます。');
+  }
+  return options;
+}
+
+function isMonth(value) {
+  return value.length === 7
+    && /^[0-9]{4}-[0-9]{2}$/u.test(value)
+    && Number(value.slice(0, 4)) >= 1
+    && Number(value.slice(5, 7)) >= 1
+    && Number(value.slice(5, 7)) <= 12;
+}
+
+function isDate(value) {
+  if (value.length !== 10
+      || !/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/u.test(value)
+      || !isMonth(value.slice(0, 7))) {
+    return false;
+  }
+
+  const year = Number(value.slice(0, 4));
+  const month = Number(value.slice(5, 7));
+  const day = Number(value.slice(8, 10));
+  const leapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, leapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  return day >= 1 && day <= daysInMonth[month - 1];
+}
+
+function parseExpense(options) {
+  const date = options.get('--date');
+  if (!isDate(date)) {
+    input('日付は年0001〜9999の実在する日を YYYY-MM-DD 形式で指定してください。');
+  }
+
+  const amountText = options.get('--amount');
+  const amount = Number(amountText);
+  if (!/^[1-9][0-9]*$/u.test(amountText)
+      || !Number.isInteger(amount)
+      || amount < 1
+      || amount > 1_000_000_000
+      || String(amount) !== amountText) {
+    input('金額は1〜1,000,000,000円の整数を、先頭のゼロや符号なしの半角数字で指定してください。');
+  }
+
+  const category = options.get('--category').trim();
+  const categoryLength = [...category].length;
+  if (categoryLength < 1 || categoryLength > 40) {
+    input('カテゴリは前後の空白を除いて1〜40文字で指定してください。');
+  }
+
+  const note = options.get('--note') ?? '';
+  if ([...note].length > 200) {
+    input('メモは200文字以内で指定してください。');
+  }
+
+  return { date, amount, category, note };
+}
+
+export function parseArguments(args) {
+  const [command, ...rest] = args;
+  switch (command) {
+    case '--help':
+      if (rest.length !== 0) {
+        usage('--help に追加の引数は指定できません。');
+      }
+      return { command: 'help' };
+    case 'add': {
+      const options = parseOptions(
+        rest,
+        ['--date', '--amount', '--category', '--note'],
+        ['--date', '--amount', '--category'],
+      );
+      return { command, expense: parseExpense(options) };
+    }
+    case 'list':
+      if (rest.length !== 0) {
+        usage('list に引数やオプションは指定できません。');
+      }
+      return { command };
+    case 'summary': {
+      const options = parseOptions(rest, ['--month'], ['--month']);
+      const month = options.get('--month');
+      if (!isMonth(month)) {
+        usage('月は年0001〜9999、月01〜12の YYYY-MM 形式で指定してください。');
+      }
+      return { command, month };
+    }
+    default:
+      usage('add、list、summary のいずれかを指定してください。使い方は --help で確認できます。');
+  }
+}
+
+[35m[3mcodex[0m[0m
+私はSSoTと最新の`brief cli`を読み、現在地がC2であること、既存コードが引数検証までを実装していることを確認しました。契約では、CLIが検証済み入力をstoreへ渡し、storeの応答を利用者へ返します。
+
+私は`src/cli/**`に接続処理を追加します。Node実行ファイルと引数配列でstoreを呼び、環境変数とJSON入力を渡します。成功時はJSONオブジェクトを返し、バックエンドの失敗は終了コードと標準エラーを中継します。起動不能・不正JSONは`E_BACKEND`とします。別エージェントはC2判定と契約の照合を読み取り専用で進めています。
+
+[1mapply patch[0m
+[1mpatch:[0m completed
+[2m/Users/amano/dev/masume/examples/kakeibo/src/cli/backend.mjs[0m
+[2m/Users/amano/dev/masume/examples/kakeibo/src/cli/main.mjs[0m
+diff --git a/examples/kakeibo/src/cli/backend.mjs b/examples/kakeibo/src/cli/backend.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..e08e59f9c13a6df3ddfef545e2aa5d2a2ac1117a
+--- /dev/null
++++ b/examples/kakeibo/src/cli/backend.mjs
+@@ -0,0 +1,55 @@
++import { spawnSync } from 'node:child_process';
++import { accessSync, constants, statSync } from 'node:fs';
++import { isAbsolute } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CliError } from './arguments.mjs';
++
++function backendError(message) {
++  return new CliError('E_BACKEND', message, 1);
++}
++
++export function callStore(request) {
++  const storePath = process.env.KAKEIBO_STORE_CLI
++    ?? fileURLToPath(new URL('../store/cli.mjs', import.meta.url));
++
++  try {
++    if (!isAbsolute(storePath) || !storePath.endsWith('.mjs') || !statSync(storePath).isFile()) {
++      throw backendError('保存バックエンドを起動できませんでした。');
++    }
++    accessSync(storePath, constants.R_OK);
++  } catch {
++    throw backendError('保存バックエンドを起動できませんでした。');
++  }
++
++  const result = spawnSync(process.execPath, [storePath, request.command], {
++    encoding: 'utf8',
++    input: request.command === 'add' ? JSON.stringify(request.expense) : '',
++    env: process.env,
++    shell: false,
++    maxBuffer: Infinity,
++  });
++
++  if (result.error || result.signal || result.status === null) {
++    throw backendError('保存バックエンドを実行できませんでした。');
++  }
++
++  if (result.status !== 0) {
++    const errorLine = result.stderr.split(/\r?\n/u, 1)[0];
++    if (!errorLine) {
++      throw backendError('保存バックエンドからエラーの説明が返りませんでした。');
++    }
++    return { stdout: '', stderr: `${errorLine}\n`, exitCode: result.status };
++  }
++
++  let response;
++  try {
++    response = JSON.parse(result.stdout);
++  } catch {
++    throw backendError('保存バックエンドから正しいJSONが返りませんでした。');
++  }
++  if (response === null || typeof response !== 'object' || Array.isArray(response)) {
++    throw backendError('保存バックエンドからJSONオブジェクトが返りませんでした。');
++  }
++
++  return { stdout: `${JSON.stringify(response)}\n`, stderr: '', exitCode: 0 };
++}
+diff --git a/examples/kakeibo/src/cli/main.mjs b/examples/kakeibo/src/cli/main.mjs
+index 1e4607479d84a48a6ce4a928ab3d2bfb07ceadb9..650d88d1e9a82cb20883aa4f1c1f32d3e55ef9ee
+--- a/examples/kakeibo/src/cli/main.mjs
++++ b/examples/kakeibo/src/cli/main.mjs
+@@ -1,4 +1,5 @@
+ import { CliError, parseArguments } from './arguments.mjs';
++import { callStore } from './backend.mjs';
+ 
+ const HELP = `家計簿 — 支出を記録し、月ごとに振り返ります。
+ 
+@@ -33,9 +34,13 @@
+   const request = parseArguments(process.argv.slice(2));
+   if (request.command === 'help') {
+     process.stdout.write(HELP);
++  } else if (request.command === 'add' || request.command === 'list') {
++    const response = callStore(request);
++    process.stdout.write(response.stdout);
++    process.stderr.write(response.stderr);
++    process.exitCode = response.exitCode;
+   } else {
+-    // C1はヘルプと入力検証まで。後続マスで検証済みの要求を接続先へ渡す。
+-    throw new CliError('E_BACKEND', '保存・集計の接続は未実装です。', 1);
++    throw new CliError('E_BACKEND', '集計の接続は未実装です。', 1);
+   }
+ } catch (error) {
+   const failure = error instanceof CliError
+
+diff --git a/examples/kakeibo/src/cli/backend.mjs b/examples/kakeibo/src/cli/backend.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..e08e59f9c13a6df3ddfef545e2aa5d2a2ac1117a
+--- /dev/null
++++ b/examples/kakeibo/src/cli/backend.mjs
+@@ -0,0 +1,55 @@
++import { spawnSync } from 'node:child_process';
++import { accessSync, constants, statSync } from 'node:fs';
++import { isAbsolute } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CliError } from './arguments.mjs';
++
++function backendError(message) {
++  return new CliError('E_BACKEND', message, 1);
++}
++
++export function callStore(request) {
++  const storePath = process.env.KAKEIBO_STORE_CLI
++    ?? fileURLToPath(new URL('../store/cli.mjs', import.meta.url));
++
++  try {
++    if (!isAbsolute(storePath) || !storePath.endsWith('.mjs') || !statSync(storePath).isFile()) {
++      throw backendError('保存バックエンドを起動できませんでした。');
++    }
++    accessSync(storePath, constants.R_OK);
++  } catch {
++    throw backendError('保存バックエンドを起動できませんでした。');
++  }
++
++  const result = spawnSync(process.execPath, [storePath, request.command], {
++    encoding: 'utf8',
++    input: request.command === 'add' ? JSON.stringify(request.expense) : '',
++    env: process.env,
++    shell: false,
++    maxBuffer: Infinity,
++  });
++
++  if (result.error || result.signal || result.status === null) {
++    throw backendError('保存バックエンドを実行できませんでした。');
++  }
++
++  if (result.status !== 0) {
++    const errorLine = result.stderr.split(/\r?\n/u, 1)[0];
++    if (!errorLine) {
++      throw backendError('保存バックエンドからエラーの説明が返りませんでした。');
++    }
++    return { stdout: '', stderr: `${errorLine}\n`, exitCode: result.status };
++  }
++
++  let response;
++  try {
++    response = JSON.parse(result.stdout);
++  } catch {
++    throw backendError('保存バックエンドから正しいJSONが返りませんでした。');
++  }
++  if (response === null || typeof response !== 'object' || Array.isArray(response)) {
++    throw backendError('保存バックエンドからJSONオブジェクトが返りませんでした。');
++  }
++
++  return { stdout: `${JSON.stringify(response)}\n`, stderr: '', exitCode: 0 };
++}
+diff --git a/examples/kakeibo/src/cli/main.mjs b/examples/kakeibo/src/cli/main.mjs
+index 1e4607479d84a48a6ce4a928ab3d2bfb07ceadb9..650d88d1e9a82cb20883aa4f1c1f32d3e55ef9ee
+--- a/examples/kakeibo/src/cli/main.mjs
++++ b/examples/kakeibo/src/cli/main.mjs
+@@ -1,4 +1,5 @@
+ import { CliError, parseArguments } from './arguments.mjs';
++import { callStore } from './backend.mjs';
+ 
+ const HELP = `家計簿 — 支出を記録し、月ごとに振り返ります。
+ 
+@@ -33,9 +34,13 @@
+   const request = parseArguments(process.argv.slice(2));
+   if (request.command === 'help') {
+     process.stdout.write(HELP);
++  } else if (request.command === 'add' || request.command === 'list') {
++    const response = callStore(request);
++    process.stdout.write(response.stdout);
++    process.stderr.write(response.stderr);
++    process.exitCode = response.exitCode;
+   } else {
+-    // C1はヘルプと入力検証まで。後続マスで検証済みの要求を接続先へ渡す。
+-    throw new CliError('E_BACKEND', '保存・集計の接続は未実装です。', 1);
++    throw new CliError('E_BACKEND', '集計の接続は未実装です。', 1);
+   }
+ } catch (error) {
+   const failure = error instanceof CliError
+
+diff --git a/examples/kakeibo/src/cli/backend.mjs b/examples/kakeibo/src/cli/backend.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..e08e59f9c13a6df3ddfef545e2aa5d2a2ac1117a
+--- /dev/null
++++ b/examples/kakeibo/src/cli/backend.mjs
+@@ -0,0 +1,55 @@
++import { spawnSync } from 'node:child_process';
++import { accessSync, constants, statSync } from 'node:fs';
++import { isAbsolute } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CliError } from './arguments.mjs';
++
++function backendError(message) {
++  return new CliError('E_BACKEND', message, 1);
++}
++
++export function callStore(request) {
++  const storePath = process.env.KAKEIBO_STORE_CLI
++    ?? fileURLToPath(new URL('../store/cli.mjs', import.meta.url));
++
++  try {
++    if (!isAbsolute(storePath) || !storePath.endsWith('.mjs') || !statSync(storePath).isFile()) {
++      throw backendError('保存バックエンドを起動できませんでした。');
++    }
++    accessSync(storePath, constants.R_OK);
++  } catch {
++    throw backendError('保存バックエンドを起動できませんでした。');
++  }
++
++  const result = spawnSync(process.execPath, [storePath, request.command], {
++    encoding: 'utf8',
++    input: request.command === 'add' ? JSON.stringify(request.expense) : '',
++    env: process.env,
++    shell: false,
++    maxBuffer: Infinity,
++  });
++
++  if (result.error || result.signal || result.status === null) {
++    throw backendError('保存バックエンドを実行できませんでした。');
++  }
++
++  if (result.status !== 0) {
++    const errorLine = result.stderr.split(/\r?\n/u, 1)[0];
++    if (!errorLine) {
++      throw backendError('保存バックエンドからエラーの説明が返りませんでした。');
++    }
++    return { stdout: '', stderr: `${errorLine}\n`, exitCode: result.status };
++  }
++
++  let response;
++  try {
++    response = JSON.parse(result.stdout);
++  } catch {
++    throw backendError('保存バックエンドから正しいJSONが返りませんでした。');
++  }
++  if (response === null || typeof response !== 'object' || Array.isArray(response)) {
++    throw backendError('保存バックエンドからJSONオブジェクトが返りませんでした。');
++  }
++
++  return { stdout: `${JSON.stringify(response)}\n`, stderr: '', exitCode: 0 };
++}
+diff --git a/examples/kakeibo/src/cli/main.mjs b/examples/kakeibo/src/cli/main.mjs
+index 1e4607479d84a48a6ce4a928ab3d2bfb07ceadb9..650d88d1e9a82cb20883aa4f1c1f32d3e55ef9ee
+--- a/examples/kakeibo/src/cli/main.mjs
++++ b/examples/kakeibo/src/cli/main.mjs
+@@ -1,4 +1,5 @@
+ import { CliError, parseArguments } from './arguments.mjs';
++import { callStore } from './backend.mjs';
+ 
+ const HELP = `家計簿 — 支出を記録し、月ごとに振り返ります。
+ 
+@@ -33,9 +34,13 @@
+   const request = parseArguments(process.argv.slice(2));
+   if (request.command === 'help') {
+     process.stdout.write(HELP);
++  } else if (request.command === 'add' || request.command === 'list') {
++    const response = callStore(request);
++    process.stdout.write(response.stdout);
++    process.stderr.write(response.stderr);
++    process.exitCode = response.exitCode;
+   } else {
+-    // C1はヘルプと入力検証まで。後続マスで検証済みの要求を接続先へ渡す。
+-    throw new CliError('E_BACKEND', '保存・集計の接続は未実装です。', 1);
++    throw new CliError('E_BACKEND', '集計の接続は未実装です。', 1);
+   }
+ } catch (error) {
+   const failure = error instanceof CliError
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'node checks/C2.mjs'[0m in /Users/amano/dev/masume/examples/kakeibo
+[32m succeeded in 385ms:[0m
+PASS C2
+(node:97494) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+diff --git a/examples/kakeibo/src/cli/backend.mjs b/examples/kakeibo/src/cli/backend.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..e08e59f9c13a6df3ddfef545e2aa5d2a2ac1117a
+--- /dev/null
++++ b/examples/kakeibo/src/cli/backend.mjs
+@@ -0,0 +1,55 @@
++import { spawnSync } from 'node:child_process';
++import { accessSync, constants, statSync } from 'node:fs';
++import { isAbsolute } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CliError } from './arguments.mjs';
++
++function backendError(message) {
++  return new CliError('E_BACKEND', message, 1);
++}
++
++export function callStore(request) {
++  const storePath = process.env.KAKEIBO_STORE_CLI
++    ?? fileURLToPath(new URL('../store/cli.mjs', import.meta.url));
++
++  try {
++    if (!isAbsolute(storePath) || !storePath.endsWith('.mjs') || !statSync(storePath).isFile()) {
++      throw backendError('保存バックエンドを起動できませんでした。');
++    }
++    accessSync(storePath, constants.R_OK);
++  } catch {
++    throw backendError('保存バックエンドを起動できませんでした。');
++  }
++
++  const result = spawnSync(process.execPath, [storePath, request.command], {
++    encoding: 'utf8',
++    input: request.command === 'add' ? JSON.stringify(request.expense) : '',
++    env: process.env,
++    shell: false,
++    maxBuffer: Infinity,
++  });
++
++  if (result.error || result.signal || result.status === null) {
++    throw backendError('保存バックエンドを実行できませんでした。');
++  }
++
++  if (result.status !== 0) {
++    const errorLine = result.stderr.split(/\r?\n/u, 1)[0];
++    if (!errorLine) {
++      throw backendError('保存バックエンドからエラーの説明が返りませんでした。');
++    }
++    return { stdout: '', stderr: `${errorLine}\n`, exitCode: result.status };
++  }
++
++  let response;
++  try {
++    response = JSON.parse(result.stdout);
++  } catch {
++    throw backendError('保存バックエンドから正しいJSONが返りませんでした。');
++  }
++  if (response === null || typeof response !== 'object' || Array.isArray(response)) {
++    throw backendError('保存バックエンドからJSONオブジェクトが返りませんでした。');
++  }
++
++  return { stdout: `${JSON.stringify(response)}\n`, stderr: '', exitCode: 0 };
++}
+diff --git a/examples/kakeibo/src/cli/main.mjs b/examples/kakeibo/src/cli/main.mjs
+index 1e4607479d84a48a6ce4a928ab3d2bfb07ceadb9..650d88d1e9a82cb20883aa4f1c1f32d3e55ef9ee
+--- a/examples/kakeibo/src/cli/main.mjs
++++ b/examples/kakeibo/src/cli/main.mjs
+@@ -1,4 +1,5 @@
+ import { CliError, parseArguments } from './arguments.mjs';
++import { callStore } from './backend.mjs';
+ 
+ const HELP = `家計簿 — 支出を記録し、月ごとに振り返ります。
+ 
+@@ -33,9 +34,13 @@
+   const request = parseArguments(process.argv.slice(2));
+   if (request.command === 'help') {
+     process.stdout.write(HELP);
++  } else if (request.command === 'add' || request.command === 'list') {
++    const response = callStore(request);
++    process.stdout.write(response.stdout);
++    process.stderr.write(response.stderr);
++    process.exitCode = response.exitCode;
+   } else {
+-    // C1はヘルプと入力検証まで。後続マスで検証済みの要求を接続先へ渡す。
+-    throw new CliError('E_BACKEND', '保存・集計の接続は未実装です。', 1);
++    throw new CliError('E_BACKEND', '集計の接続は未実装です。', 1);
+   }
+ } catch (error) {
+   const failure = error instanceof CliError
+
+[35m[3mexec[0m[0m
+[1m/bin/zsh -lc 'node checks/C1.mjs'[0m in /Users/amano/dev/masume/examples/kakeibo
+diff --git a/examples/kakeibo/src/cli/backend.mjs b/examples/kakeibo/src/cli/backend.mjs
+new file mode 100644
+index 0000000000000000000000000000000000000000..e08e59f9c13a6df3ddfef545e2aa5d2a2ac1117a
+--- /dev/null
++++ b/examples/kakeibo/src/cli/backend.mjs
+@@ -0,0 +1,55 @@
++import { spawnSync } from 'node:child_process';
++import { accessSync, constants, statSync } from 'node:fs';
++import { isAbsolute } from 'node:path';
++import { fileURLToPath } from 'node:url';
++import { CliError } from './arguments.mjs';
++
++function backendError(message) {
++  return new CliError('E_BACKEND', message, 1);
++}
++
++export function callStore(request) {
++  const storePath = process.env.KAKEIBO_STORE_CLI
++    ?? fileURLToPath(new URL('../store/cli.mjs', import.meta.url));
++
++  try {
++    if (!isAbsolute(storePath) || !storePath.endsWith('.mjs') || !statSync(storePath).isFile()) {
++      throw backendError('保存バックエンドを起動できませんでした。');
++    }
++    accessSync(storePath, constants.R_OK);
++  } catch {
++    throw backendError('保存バックエンドを起動できませんでした。');
++  }
++
++  const result = spawnSync(process.execPath, [storePath, request.command], {
++    encoding: 'utf8',
++    input: request.command === 'add' ? JSON.stringify(request.expense) : '',
++    env: process.env,
++    shell: false,
++    maxBuffer: Infinity,
++  });
++
++  if (result.error || result.signal || result.status === null) {
++    throw backendError('保存バックエンドを実行できませんでした。');
++  }
++
++  if (result.status !== 0) {
++    const errorLine = result.stderr.split(/\r?\n/u, 1)[0];
++    if (!errorLine) {
++      throw backendError('保存バックエンドからエラーの説明が返りませんでした。');
++    }
++    return { stdout: '', stderr: `${errorLine}\n`, exitCode: result.status };
++  }
++
++  let response;
++  try {
++    response = JSON.parse(result.stdout);
++  } catch {
++    throw backendError('保存バックエンドから正しいJSONが返りませんでした。');
++  }
++  if (response === null || typeof response !== 'object' || Array.isArray(response)) {
++    throw backendError('保存バックエンドからJSONオブジェクトが返りませんでした。');
++  }
++
++  return { stdout: `${JSON.stringify(response)}\n`, stderr: '', exitCode: 0 };
++}
+diff --git a/examples/kakeibo/src/cli/main.mjs b/examples/kakeibo/src/cli/main.mjs
+index 1e4607479d84a48a6ce4a928ab3d2bfb07ceadb9..650d88d1e9a82cb20883aa4f1c1f32d3e55ef9ee
+--- a/examples/kakeibo/src/cli/main.mjs
++++ b/examples/kakeibo/src/cli/main.mjs
+@@ -1,4 +1,5 @@
+ import { CliError, parseArguments } from './arguments.mjs';
++import { callStore } from './backend.mjs';
+ 
+ const HELP = `家計簿 — 支出を記録し、月ごとに振り返ります。
+ 
+@@ -33,9 +34,13 @@
+   const request = parseArguments(process.argv.slice(2));
+   if (request.command === 'help') {
+     process.stdout.write(HELP);
++  } else if (request.command === 'add' || request.command === 'list') {
++    const response = callStore(request);
++    process.stdout.write(response.stdout);
++    process.stderr.write(response.stderr);
++    process.exitCode = response.exitCode;
+   } else {
+-    // C1はヘルプと入力検証まで。後続マスで検証済みの要求を接続先へ渡す。
+-    throw new CliError('E_BACKEND', '保存・集計の接続は未実装です。', 1);
++    throw new CliError('E_BACKEND', '集計の接続は未実装です。', 1);
+   }
+ } catch (error) {
+   const failure = error instanceof CliError
+
+[32m succeeded in 1187ms:[0m
+PASS C1
+(node:97650) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+[2m2026-10-17T06:07:39.535673Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[2m2026-10-17T06:10:42.424802Z[0m [31mERROR[0m [2mcodex_api::endpoint::responses_websocket[0m[2m:[0m failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+[1m[31mERROR:[0m[0m Reconnecting... 2/5
+[2m2026-10-17T06:10:42.973924Z[0m [31mERROR[0m [2mcodex_api::endpoint::responses_websocket[0m[2m:[0m failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+[1m[31mERROR:[0m[0m Reconnecting... 3/5
+[2m2026-10-17T06:10:43.928968Z[0m [31mERROR[0m [2mcodex_api::endpoint::responses_websocket[0m[2m:[0m failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+[1m[31mERROR:[0m[0m Reconnecting... 4/5
+[2m2026-10-17T06:10:45.512493Z[0m [31mERROR[0m [2mcodex_api::endpoint::responses_websocket[0m[2m:[0m failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+[1m[31mERROR:[0m[0m Reconnecting... 5/5
+[2m2026-10-17T06:10:49.220363Z[0m [31mERROR[0m [2mcodex_api::endpoint::responses_websocket[0m[2m:[0m failed to connect to websocket: IO error: failed to lookup address information: nodename nor servname provided, or not known, url: wss://chatgpt.com/backend-api/codex/responses
+[1m[33mwarning:[0m[0m Falling back from WebSockets to HTTPS transport. stream disconnected before completion: failed to lookup address information: nodename nor servname provided, or not known
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:12:12.717614Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:16:45.874313Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:21:18.755121Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:25:51.891603Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:30:24.946141Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:34:58.054833Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:39:30.891280Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:44:03.778638Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:48:36.710516Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:53:09.815738Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T06:57:42.841229Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+[2m2026-10-17T07:02:15.798548Z[0m [31mERROR[0m [2mcodex_models_manager::manager[0m[2m:[0m failed to refresh available models: Connection failed: error sending request
+[1m[31mERROR:[0m[0m Reconnecting... waiting for network
+（制限時間 3600 秒を超えたので止めました）

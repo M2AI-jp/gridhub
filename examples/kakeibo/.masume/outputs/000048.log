@@ -1,0 +1,12 @@
+=== C1: node checks/C1.mjs ===
+PASS C1
+(node:44065) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+(exit 0, 1589ms)
+=== C2: node checks/C2.mjs ===
+PASS C2
+(node:44202) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+(exit 0, 781ms)

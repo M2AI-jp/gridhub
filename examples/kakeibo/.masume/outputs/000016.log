@@ -1,0 +1,6 @@
+=== T1: node checks/T1.mjs ===
+PASS T1
+(node:90332) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+(exit 0, 81ms)
