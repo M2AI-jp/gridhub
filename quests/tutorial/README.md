@@ -28,11 +28,13 @@ masume new tutorial.map.json
 同じターミナルで続けます。
 
 ```sh
-masume serve --port 0 &
+node "$TUTORIAL_REPO/bin/masume.js" serve --port 0 --dir "$TUTORIAL_PLAY" &
 TUTORIAL_SERVER_PID=$!
 ```
 
 表示された `盤面: http://127.0.0.1:…/` のURLをブラウザーで開きます。`--port 0` は空いているポートを選び、`&` は盤面を動かしたままターミナルで続きを入力できるようにします。以降の操作も同じターミナルで行います。
+
+サーバーは `node` で直接起動し、`$!` でサーバー本体のプロセスIDを保存します。最後にこのIDを使ってサーバーを止めます。
 
 ## 3. 勇者が名前を決める — masume brief → 作業 → masume stamp
 

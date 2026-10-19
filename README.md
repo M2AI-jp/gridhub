@@ -28,7 +28,7 @@ npm link            # masume コマンドを使えるようにする（または
 ```sh
 cp -r quests/tutorial ~/masume-tutorial && cd ~/masume-tutorial
 masume new tutorial.map.json      # 冒険の書をつくる（判定ファイルは自動で封印される）
-masume serve                      # 盤面（5mm方眼ノート）を開く → http://127.0.0.1:5005/
+masume serve                      # 盤面（5mm方眼ノート）を開く → http://127.0.0.1:5005/（動かしたままにするので、続きは別のターミナルで）
 masume brief apprentice           # 指令書: いまのマス・判定・見えている先・仲間
 # …作業する…
 masume check apprentice           # 宣言判定（E2E を走らせて、通れば進む・落ちれば戻る）
@@ -334,6 +334,21 @@ node ../../bin/masume.js serve                                                # 
 | 賢者クロード | 盤面の入口と出撃の窓の、ソケットの切り替えと既定値 | Claude |
 
 伝令の出撃は、1回目がネットワーク障害で2回とも1時間の時間切れになりました。GM がその旨を日誌に書いてから出撃させ直し、7分で突破しています。
+
+### 第8章: 最終確認
+
+完成の前に、GM が最初から全部を確かめ直しました。
+
+- すべての冒険の書（マスメ自身・`examples/omikuji`・`examples/kakeibo`・`demos/mcp-tutorial`）が正常。
+- `npm test`（すべての判定を1回ずつ）と `npm run test:goal`（いまのあがりのボス戦と同じ）が通る。
+- 5分のチュートリアル（`quests/tutorial/README.md`）を、新しいフォルダで書いてあるとおりに最後まで遊ぶ。
+
+チュートリアルは最後まで遊べました。ただ、最後のブロックの `kill "$TUTORIAL_SERVER_PID"` で、盤面のサーバーが止まらずに残っていました。
+2 の `masume serve --port 0 &` が `masume` 関数（子のシェル）を通して起動していたので、`$!` がサーバー本体を指していなかったためです。
+地図職人が直しました（契約 §35）。判定 M7 は、README の sh のブロックをそのまま本物の bash と zsh に貼って走らせ、冒険があがることと、サーバーが残らないことを確かめます。
+
+ここでも GM が間違えました。最初の M7 は、サーバーが残っていないかを `ps` で調べていました。Codex の箱の中では `ps` が禁止されている（`EPERM`）ので、地図職人は素振りを通せません。地図職人は宣言せずに、GM に直すよう頼みました。
+GM は判定を「盤面のポートにまだつながるか」で確かめる形に直しました。古い README では赤、直した README では緑になることを確かめてから封印し直し、地図職人を出撃させ直しています。
 
 ```sh
 masume status       # 全員「あがり」

@@ -1,0 +1,13 @@
+=== M7: node --test tests/e2e/M7.test.mjs ===
+✔ §35 bash: チュートリアルのブロックを上から貼ると最後まで遊べ、最後に盤面のサーバーが止まる (3409.193667ms)
+✔ §35 zsh: チュートリアルのブロックを上から貼ると最後まで遊べ、最後に盤面のサーバーが止まる (3451.188042ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9046.91975
+
+(exit 0, 9096ms)

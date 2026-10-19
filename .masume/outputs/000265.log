@@ -1,0 +1,14 @@
+=== GOAL8: node --test tests/e2e/GOAL8.test.mjs ===
+✔ 第1章〜第8章のすべての判定が、まとめて本当に通る (211281.764834ms)
+✔ マスメ自身と、残っているすべての冒険の書が正常 (295.643ms)
+✔ 遊び方に第8章（最終確認: チュートリアルは書いてあるとおりに動く）が書いてある (2.505833ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 211637.155667
+
+(exit 0, 211682ms)
