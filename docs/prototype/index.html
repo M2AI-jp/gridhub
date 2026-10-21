@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<title>試作2</title>
+<link rel="stylesheet" href="/fonts/local.css">
+<style>
+  :root { --ink:#1d2b5c; --red:#d94a3a; --pencil:#8a8f98; --paper:#fdfbf3; --hand:'Klee One',sans-serif; --marker:'Yusei Magic','Klee One',sans-serif; --pencil-hand:'Yomogi','Klee One',sans-serif; }
+  html,body{margin:0;height:100%}
+  body{background:#c9a47a linear-gradient(176deg,#d3b083,#bf9668);font-family:var(--hand);color:var(--ink);overflow:hidden;display:flex;align-items:stretch}
+  #desk{flex:1;display:flex;align-items:center;justify-content:center;perspective:2600px;position:relative}
+  #book{position:relative;height:calc(100vh - 56px);aspect-ratio:73/52;perspective:2400px;transform-style:preserve-3d}
+  .leaf{position:absolute;top:0;width:50%;height:100%;}
+  .leaf.l{left:0}.leaf.r{left:50%}
+  .leaf > svg{width:100%;height:100%;display:block}
+  .flip{position:absolute;top:0;left:50%;width:50%;height:100%;transform-origin:0 50%;transform-style:preserve-3d;transition:transform .9s cubic-bezier(.45,.05,.3,1)}
+  .flip .face{position:absolute;inset:0;backface-visibility:hidden}
+  .flip .face.back{transform:rotateY(180deg)}
+  .flip .face > svg{width:100%;height:100%;display:block}
+  .flip .face.front::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,rgba(60,40,10,.28),rgba(60,40,10,.04) 35%,rgba(255,255,255,.18) 70%,rgba(60,40,10,.12));pointer-events:none}.flip{filter:drop-shadow(-14px 10px 14px rgba(40,25,5,.35))}
+  .nav{position:absolute;bottom:4px;left:50%;transform:translateX(-50%);display:flex;gap:10px;font-family:var(--marker);font-size:15px}
+  .nav button{font:inherit;background:#fffdf6;border:1.5px solid var(--ink);border-radius:6px;padding:2px 12px;color:var(--ink)}
+  .nav span{background:#fffdf6;border-radius:6px;padding:2px 10px}
+  #side{width:250px;margin:12px 12px 12px 0;background:#fffefa;border-radius:3px;box-shadow:0 6px 18px -8px rgba(60,40,10,.6);padding:12px 14px;font-size:12px}
+  .logo{font-family:var(--marker);font-size:22px;letter-spacing:1px}
+  .logo small{display:block;font-family:var(--hand);font-size:11px;letter-spacing:0;color:#45517a}
+  h2{font-family:var(--marker);font-weight:normal;font-size:15px;margin:14px 0 6px}
+  .who{margin:7px 0}
+  .who b{font-weight:600}
+  .who small{color:#45517a}
+  .bar{height:7px;background:#eef3f6;border-radius:4px;margin-top:3px;position:relative}
+  .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
+  .stars{color:#b58500}
+  .jumon{font-size:11px;color:#45517a;margin-top:6px}.jumon b{font-size:13px;color:var(--ink);letter-spacing:1px;display:block}
+  /* ページ */
+  .page-sheet{fill:var(--paper)}
+  .printed{font-size:9px;fill:#7aa9bf}.printed-line{stroke:#7aa9bf;stroke-width:.8}
+  .hand.date{font-size:11px;fill:var(--ink)}
+  .page-no{font-family:var(--hand);font-size:10px;fill:#7aa9bf}
+  .title-box{fill:none;stroke:var(--ink);stroke-width:1.3;stroke-linecap:round}
+  .title-char{font-family:var(--marker);font-size:22px;fill:var(--ink)}
+  .start-char{font-family:var(--marker);font-size:20px;fill:var(--red)}
+  .pitch{font-size:10.5px;fill:#45517a}
+  .cont-head{font-family:var(--marker);font-size:13px;fill:#45517a}
+  .fence{fill:none;stroke:#9b7653;stroke-width:1.1;stroke-linecap:round}
+  .doodle path{fill:none;stroke:#e0a030;stroke-width:1.2;stroke-linecap:round}
+  .lane-tag text{font-size:10px;font-weight:600;fill:var(--ink)}.tag-bg{opacity:.75}.tag-mark{font-weight:600;fill:#b25b00}
+  .terrain .mt{fill:#efe4cf;stroke:#9b7653;stroke-width:1.2;stroke-linejoin:round}
+  .terrain .mt-snow{fill:none;stroke:#9b7653;stroke-width:.9}
+  .terrain .mt-shade{fill:none;stroke:#b79b78;stroke-width:.8}
+  .terrain .crown{fill:#d7ecc8;stroke:#5f9a5f;stroke-width:1.1}
+  .terrain .trunk{stroke:#8a6a48;stroke-width:1.3;stroke-linecap:round}
+  .terrain.grass path{fill:none;stroke:#7fae6f;stroke-width:1;stroke-linecap:round}
+  .terrain .wall{fill:#fffaf0;stroke:#7b6a58;stroke-width:1}.terrain .roof{fill:#f2c7b5;stroke:#b4624a;stroke-width:1.1;stroke-linejoin:round}.terrain .door{fill:none;stroke:#7b6a58;stroke-width:.9}
+  .terrain .flag{fill:#f6b3a5;stroke:#b4624a;stroke-width:1}
+  .terrain .sea-water{fill:#d6ecf7;stroke:#6fa8d6;stroke-width:1.2;opacity:.85}.terrain .boat{fill:#fffaf0;stroke:#7b6a58;stroke-width:1.1;stroke-linejoin:round}.title-char.small{font-size:11px}
+  .terrain .water{fill:#d6ecf7;stroke:#6fa8d6;stroke-width:1.2}.terrain .waves{fill:none;stroke:#6fa8d6;stroke-width:1;stroke-linecap:round}
+  .road{fill:none;stroke-width:11;stroke-linejoin:round;stroke-linecap:butt;opacity:.55;mix-blend-mode:multiply}
+  .sq-paper{fill:#fffdf6;opacity:.4}
+  .pen{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round}
+  .pencil{fill:none;stroke:var(--pencil);stroke-width:1;stroke-linecap:round}
+  .sq-line{stroke-width:1.05}
+  .ev-glyph{font-family:var(--marker);font-size:14px;fill:#9aa0aa}
+  .sq.fired .ev-glyph{fill:var(--ink)}.ev-plus.fired .ev-glyph{fill:#c46b00}
+  .ev-omikuji.fired .ev-glyph{font-size:10px;transform:translateY(-4px)}
+  .fortune{font-size:7.5px;fill:#b25b00;font-weight:600}
+  .dot{stroke:#fff;stroke-width:1}
+  .cont-arrow{fill:none;stroke:var(--ink);stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round}
+  .st-paper{fill:#fffdf6;opacity:.9}
+  .owner-band{opacity:.75}.owner-band.faint{opacity:.28}.wash{opacity:.6}
+  .st-id{font-weight:600;font-size:10.5px;fill:var(--ink)}
+  .st-owner{font-size:9px;font-weight:400;fill:#33406b}
+  .st-title{font-size:10.2px;fill:var(--ink)}
+  .st-status{font-size:9px;fill:#45517a;font-weight:600}
+  .st-status.s-cleared{fill:#2f7d32}.st-status.s-current{fill:#b25b00}
+  text.pencil{font-family:var(--pencil-hand);fill:#7c818a;stroke:none}
+  .hanamaru{fill:none;stroke:var(--red);stroke-width:1.5;stroke-linecap:round;opacity:.9}
+  .hanko circle{fill:none;stroke:var(--red);stroke-width:1.6}.hanko .thin{stroke-width:.8}.hanko text{font-family:var(--marker);font-size:12px;fill:var(--red)}
+  .cup path{fill:none;stroke:var(--ink);stroke-width:1.1;stroke-linecap:round}
+  .erased{fill:#e9e4d6;opacity:.7}
+  .band-paper{fill:#fbf6e8;opacity:.95}
+  .merlons{fill:#efe6cf}
+  .crenel{stroke-width:1.15}.band-line{stroke-width:1.35}
+  .door-line{fill:none;stroke-width:2.2;stroke-linecap:round}
+  .door-who{font-size:9px;font-weight:600;fill:#45517a}
+  .band-id{font-family:var(--marker);font-size:12.5px;font-weight:normal}
+  .band-title{font-size:11px;fill:var(--ink);font-weight:600}
+  .band-status{font-size:10px;fill:#7a4fb5;font-weight:600}
+  .goal-char{font-family:var(--marker);font-size:20px;fill:var(--red)}
+  .boss path{fill:none;stroke:var(--ink);stroke-width:1.1;stroke-linecap:round}.boss .head{fill:#fffdf6}.boss .eye{fill:var(--ink)}.boss.pencil path{stroke:var(--pencil)}
+  .boss-x{fill:none;stroke:var(--red);stroke-width:2;stroke-linecap:round}
+  .monster .m-body{fill:#fff;stroke:var(--ink);stroke-width:1.1;stroke-linejoin:round;stroke-linecap:round}.monster .m-eyes circle{fill:var(--ink)}
+  .monster.alive .m-body{fill:#eef0ff}.monster.slime.alive .m-body{fill:#cfe6ff}.monster.mushroom.alive .m-body{fill:#ffd9d2}.monster.ghost.alive .m-body{fill:#f2efff}
+  .monster.slain-m .m-body{stroke:#a3a7ae;fill:none}.monster.slain-m .m-eyes circle{fill:#a3a7ae}.slain{stroke:var(--red);stroke-width:1.3;stroke-linecap:round}
+  .chest .c-body,.chest .c-lid{fill:#f6d38a;stroke:#8a5a1e;stroke-width:1.1}.chest .c-lock{fill:#8a5a1e}
+  .fortune-teller .ball{fill:#e4dcff;stroke:#7a4fb5;stroke-width:1.1}.fortune-teller .stand{fill:#c9a27a;stroke:#7b5a38;stroke-width:1}.fortune-teller .shine{fill:none;stroke:#fff;stroke-width:1.2}
+  .fountain .basin{fill:#d6ecf7;stroke:#4f8fc4;stroke-width:1.1}.fountain .spray{fill:none;stroke:#4f8fc4;stroke-width:1.1;stroke-linecap:round}
+  .temple .t-roof{fill:#fff6dc;stroke:#a07b2a;stroke-width:1.2;stroke-linejoin:round}.temple .t-cols{fill:none;stroke:#a07b2a;stroke-width:1.2}.temple .t-label{font-family:var(--marker);font-size:8.5px;fill:#a07b2a}
+  .ev-glyph.medal{font-size:15px;fill:#c49000}.ev-glyph.trap{font-size:13px;fill:#7a4fb5}
+  .town-mark .wall,.village .wall{fill:#fffaf0;stroke:#7b6a58;stroke-width:1}.town-mark .roof,.village .roof{fill:#f2c7b5;stroke:#b4624a;stroke-width:1.1;stroke-linejoin:round}.town-mark .door,.village .door{fill:none;stroke:#7b6a58;stroke-width:.9}
+  .town-label{font-size:8.5px;fill:#7b6a58;font-weight:600}.village-label{font-family:var(--marker);font-size:12px;fill:#7b6a58}.sign{fill:#fffaf0;stroke:#7b5a38;stroke-width:1}.sign-text{font-size:9px;font-weight:600;fill:#7b5a38}
+  .lg-glyph{font-family:var(--marker);font-size:10px;fill:var(--ink)}.lg-name{font-size:9.5px;fill:var(--ink)}
+</style>
+</head>
+<body>
+<div id="desk"><div id="book"></div><div class="nav"><button id="prev">◀ まえ</button><span id="pno"></span><button id="next">つぎ ▶</button></div></div>
+<aside id="side"></aside>
+<script type="module">
+import { layoutWorld, PAGE } from './world.mjs';
+import { renderPage, U } from './draw.mjs';
+import { hl } from '/web/board/sketch.js';
+const params = new URLSearchParams(location.search);
+const view = await (await fetch('/view.json')).json();
+const idx = await (await fetch('/web/assets/sprites/index.json')).json();
+const sprites = {};
+for (const j of idx.jobs) { const t = await (await fetch(`/web/assets/sprites/${j.id}.svg`)).text(); const m = t.match(/<svg[^>]*>([\s\S]*)<\/svg>/); sprites[j.id] = m[1].replace(/<title>[\s\S]*?<\/title>/, ''); }
+const lay = layoutWorld(view);
+window.__lay = lay;
+const W = PAGE.w * U, H = PAGE.h * U;
+const defs = `<defs>
+<pattern id="g5" width="${U}" height="${U}" patternUnits="userSpaceOnUse"><path d="M${U} 0V${U}M0 ${U}H${U}" fill="none" stroke="#a9d0e2" stroke-width=".7"/></pattern>
+<pattern id="g10" width="${U*5}" height="${U*5}" patternUnits="userSpaceOnUse"><path d="M${U*5} 0V${U*5}M0 ${U*5}H${U*5}" fill="none" stroke="#a9d0e2" stroke-width=".7"/></pattern>
+<linearGradient id="gutterL" x1="1" x2="0"><stop offset="0" stop-color="#5b4a2e" stop-opacity=".32"/><stop offset="1" stop-color="#5b4a2e" stop-opacity="0"/></linearGradient>
+<linearGradient id="gutterR" x1="0" x2="1"><stop offset="0" stop-color="#5b4a2e" stop-opacity=".32"/><stop offset="1" stop-color="#5b4a2e" stop-opacity="0"/></linearGradient>
+<filter id="sticker" x="-25%" y="-25%" width="150%" height="160%"><feMorphology in="SourceAlpha" operator="dilate" radius="2.2" result="fat"/><feFlood flood-color="#fffdf6"/><feComposite in2="fat" operator="in" result="edge"/><feGaussianBlur in="fat" stdDeviation="1.4" result="blur"/><feOffset in="blur" dx="1" dy="2" result="drop"/><feComponentTransfer in="drop" result="shadow"><feFuncA type="linear" slope="0.3"/></feComponentTransfer><feMerge><feMergeNode in="shadow"/><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+</defs>`;
+const pageSvg = (p, side) => {
+  if (p < 0 || p >= lay.pages.length) return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><rect width="${W}" height="${H}" fill="#fdfbf3"/><rect width="${W}" height="${H}" fill="url(#g5x)"/>${p >= lay.pages.length ? `<text x="${W/2}" y="${H/2}" text-anchor="middle" style="font-family:var(--pencil-hand);font-size:16px;fill:#9aa0aa">（まだ白いページ）</text>` : ''}</svg>`;
+  const gut = side === 'l' ? `<rect x="${W - 22}" y="0" width="22" height="${H}" fill="url(#gutterL)"/>` : `<rect x="0" y="0" width="22" height="${H}" fill="url(#gutterR)"/>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${defs}${renderPage(view, lay, p, sprites)}${gut}</svg>`;
+};
+// 駒がいちばん多いページから開く
+const counts = lay.pages.map(() => 0);
+for (const c of view.characters) { const pl = lay.place[c.at ?? view.quest.goal]; if (pl) counts[pl.page]++; }
+let spread = Math.floor(counts.indexOf(Math.max(...counts)) / 2) * 2;
+if (params.has('spread')) spread = +params.get('spread');
+const book = document.querySelector('#book');
+function show() {
+  book.innerHTML = `<div class="leaf l">${pageSvg(spread, 'l')}</div><div class="leaf r">${pageSvg(spread + 1, 'r')}</div>`;
+  document.querySelector('#pno').textContent = `${spread + 1}–${Math.min(spread + 2, lay.pages.length)} / ${lay.pages.length} ページ`;
+}
+function flip(dir, still) {
+  const to = spread + dir * 2;
+  if (to < 0 || to >= lay.pages.length) return;
+  const f = document.createElement('div');
+  f.className = 'flip';
+  if (dir > 0) {
+    f.innerHTML = `<div class="face front">${pageSvg(spread + 1, 'r')}</div><div class="face back">${pageSvg(to, 'l')}</div><div class="shade"></div>`;
+    book.querySelector('.leaf.r').innerHTML = pageSvg(to + 1, 'r');
+  }
+  book.appendChild(f);
+  if (still != null) { f.style.transition = 'none'; f.style.transform = `rotateY(${-180 * still}deg)`; return; }
+  requestAnimationFrame(() => requestAnimationFrame(() => (f.style.transform = 'rotateY(-180deg)')));
+  setTimeout(() => { spread = to; show(); }, 950);
+}
+show();
+document.querySelector('#next').onclick = () => flip(1);
+document.querySelector('#prev').onclick = () => { if (spread >= 2) { spread -= 2; show(); } };
+if (params.has('flip')) flip(1, +params.get('flip'));
+// なかま（進み具合のばらつき）
+const CLASSES = { hero: [['騎士', '剣士'], ['聖騎士', '魔剣士']], warrior: [['剣豪', '狂戦士'], ['剣聖', '修羅']], mage: [['魔導士', '黒魔導士'], ['大魔導士', '死霊術師']], priest: [['司祭', '祈祷師'], ['大司教', '闇の司祭']], thief: [['レンジャー', '忍者'], ['トレジャーハンター', '影の忍']], merchant: [['豪商', '闇商人'], ['大富豪', '黒幕']], sage: [['大賢者', '魔賢者'], ['賢王', '禁術師']], scribe: [['司書', '写本師'], ['大司書', '禁書の番人']], herald: [['吟遊詩人', '密偵'], ['宮廷楽士', '影の使者']], cartographer: [['探検家', '開拓者'], ['大航海者', '秘境の主']], painter: [['画家', '幻術師'], ['宮廷画家', '夢幻師']], villager: [['自警団', '流れ者'], ['村長', 'さすらいの旅人']] };
+const JOB = { hero: '勇者', warrior: '戦士', mage: '魔法使い', priest: '僧侶', thief: '盗賊', merchant: '商人', sage: '賢者', scribe: '書記', herald: '伝令', cartographer: '地図職人', painter: '絵師', villager: '村人' };
+const className = (c) => { const tier = c.level >= 6 ? 1 : c.level >= 3 ? 0 : -1; if (tier < 0) return JOB[c.job]; const light = (c.fails || 0) * 3 <= (c.clears || 0); return `${CLASSES[c.job][tier][light ? 0 : 1]}（${light ? '光' : '闇'}）`; };
+const medals = (c) => c.path.filter((id) => view.nodes[id].state === 'cleared' && view.nodes[id].type === 'task' && view.nodes[id].check?.kind === 'cmd' && !view.nodes[id].fails).length;
+const side = document.querySelector('#side');
+const rows = view.characters.map((c) => {
+  const pct = Math.round((c.pos / c.path.length) * 100);
+  const pl = lay.place[c.at ?? view.quest.goal];
+  return `<div class="who"><b>${c.name}</b> <small>${className(c)} · Lv${c.level} · <span class="stars">◎${medals(c)}</span></small><br><small>${c.status === 'done' ? 'あがり' : c.status === 'waiting' ? '待機' : '作業中'} @ ${c.at ?? 'GOAL'}（p.${(pl?.page ?? 0) + 1}）</small><div class="bar"><i style="width:${pct}%;background:${hl(c.color)}"></i></div></div>`;
+}).join('');
+side.innerHTML = `<div class="logo">${params.get('name') || '（名前）'}<small>テストに通ったぶんだけ進む、開発すごろく</small></div><div class="jumon">ふっかつのじゅもん<b>${view.head.jumon}</b></div><h2>なかま（道のり）</h2>${rows}<h2>モンスター図鑑</h2><div class="who">倒したテスト <b>${view.bestiary?.defeated ?? 0}</b> 種</div>`;
+window.__ready = true;
+</script>
+</body>
+</html>
