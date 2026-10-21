@@ -97,8 +97,8 @@
      "strong": 1,
      "skills": [
       {
-       "seq": 15,
-       "ts": "2026-10-19T02:00:00.000Z",
+       "seq": 20,
+       "ts": "2026-10-19T02:30:00.000Z",
        "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる",
        "node": "E2",
        "case": "落ちれば Lv−1 で町へ"
@@ -108,12 +108,12 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "grave": {
-      "seq": 12,
+      "seq": 16,
       "node": "E2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
@@ -208,7 +208,7 @@
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
      },
      "grave": {
-      "seq": 21,
+      "seq": 26,
       "node": "M2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -673,9 +673,9 @@
       "total": 0
      },
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "first_try": null
     },
@@ -1680,6 +1680,46 @@
     {
      "seq": 4,
      "ts": "2026-10-19T00:54:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B1",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（claude）"
+    },
+    {
+     "seq": 5,
+     "ts": "2026-10-19T01:00:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": "S1",
+     "ok": null,
+     "type": "sortie",
+     "text": "伝令 が出撃した（codex gpt-5）"
+    },
+    {
+     "seq": 6,
+     "ts": "2026-10-19T01:06:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（claude）"
+    },
+    {
+     "seq": 7,
+     "ts": "2026-10-19T01:12:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A1",
+     "ok": null,
+     "type": "sortie",
+     "text": "絵師 が出撃した（claude）"
+    },
+    {
+     "seq": 8,
+     "ts": "2026-10-19T01:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -1688,8 +1728,8 @@
      "text": "書記 が E1 を歩いた（テスト 1/3）"
     },
     {
-     "seq": 5,
-     "ts": "2026-10-19T01:00:00.000Z",
+     "seq": 9,
+     "ts": "2026-10-19T01:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -1698,8 +1738,8 @@
      "text": "書記 が E1 を歩いた（テスト 3/3）"
     },
     {
-     "seq": 6,
-     "ts": "2026-10-19T01:06:00.000Z",
+     "seq": 10,
+     "ts": "2026-10-19T01:30:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S1",
@@ -1708,8 +1748,8 @@
      "text": "伝令 が S1「GET /api/state でビューを返す」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 7,
-     "ts": "2026-10-19T01:12:00.000Z",
+     "seq": 11,
+     "ts": "2026-10-19T01:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -1718,8 +1758,8 @@
      "text": "書記 が E1「log.jsonl に genesis を書く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 8,
-     "ts": "2026-10-19T01:18:00.000Z",
+     "seq": 12,
+     "ts": "2026-10-19T01:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A1",
@@ -1728,8 +1768,8 @@
      "text": "絵師 が A1「駒の絵 sprites 12枚」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 9,
-     "ts": "2026-10-19T01:24:00.000Z",
+     "seq": 13,
+     "ts": "2026-10-19T01:48:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B1",
@@ -1738,8 +1778,8 @@
      "text": "賢者クロード が B1「svg#board に方眼ノートを描く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 10,
-     "ts": "2026-10-19T01:30:00.000Z",
+     "seq": 14,
+     "ts": "2026-10-19T01:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -1748,8 +1788,8 @@
      "text": "地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 11,
-     "ts": "2026-10-19T01:36:00.000Z",
+     "seq": 15,
+     "ts": "2026-10-19T02:00:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -1758,8 +1798,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から"
     },
     {
-     "seq": 12,
-     "ts": "2026-10-19T01:42:00.000Z",
+     "seq": 16,
+     "ts": "2026-10-19T02:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -1768,8 +1808,18 @@
      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
     },
     {
-     "seq": 13,
-     "ts": "2026-10-19T01:48:00.000Z",
+     "seq": 17,
+     "ts": "2026-10-19T02:12:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E2",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（2代目・codex gpt-5）"
+    },
+    {
+     "seq": 18,
+     "ts": "2026-10-19T02:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -1778,8 +1828,8 @@
      "text": "書記 が E2 を歩いた（テスト 3/4）"
     },
     {
-     "seq": 14,
-     "ts": "2026-10-19T01:54:00.000Z",
+     "seq": 19,
+     "ts": "2026-10-19T02:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -1788,8 +1838,8 @@
      "text": "書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！"
     },
     {
-     "seq": 15,
-     "ts": "2026-10-19T02:00:00.000Z",
+     "seq": 20,
+     "ts": "2026-10-19T02:30:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": null,
@@ -1798,8 +1848,8 @@
      "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
     },
     {
-     "seq": 16,
-     "ts": "2026-10-19T02:06:00.000Z",
+     "seq": 21,
+     "ts": "2026-10-19T02:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -1808,8 +1858,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4"
     },
     {
-     "seq": 17,
-     "ts": "2026-10-19T02:12:00.000Z",
+     "seq": 22,
+     "ts": "2026-10-19T02:42:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "C1",
@@ -1818,8 +1868,8 @@
      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
     },
     {
-     "seq": 18,
-     "ts": "2026-10-19T02:18:00.000Z",
+     "seq": 23,
+     "ts": "2026-10-19T02:48:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
@@ -1828,8 +1878,8 @@
      "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 19,
-     "ts": "2026-10-19T02:24:00.000Z",
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -1838,8 +1888,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 20,
-     "ts": "2026-10-19T02:30:00.000Z",
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -1848,8 +1898,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 21,
-     "ts": "2026-10-19T02:36:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -1858,8 +1908,38 @@
      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
     },
     {
-     "seq": 22,
-     "ts": "2026-10-19T02:42:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B2",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（3代目・codex gpt-5）"
+    },
+    {
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -1868,8 +1948,8 @@
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
     },
     {
-     "seq": 23,
-     "ts": "2026-10-19T02:48:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -1878,8 +1958,8 @@
      "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -1889,9 +1969,9 @@
     }
    ],
    "head": {
-    "seq": 24,
-    "hash": "3269b386f05b1a1a2c20daecc7291178016bb51af6e1126cedebf23e1463aee7",
-    "jumon": "すらら ずめげ いふき めるが"
+    "seq": 32,
+    "hash": "5c4e54aa01ff0982f940dcea5d548bd595ad2ad5b6692ea5df920cad691c2031",
+    "jumon": "ねおで なろむ くぼう のしで"
    },
    "integrity": {
     "ok": true,
@@ -2002,8 +2082,8 @@
      "strong": 1,
      "skills": [
       {
-       "seq": 15,
-       "ts": "2026-10-19T02:00:00.000Z",
+       "seq": 20,
+       "ts": "2026-10-19T02:30:00.000Z",
        "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる",
        "node": "E2",
        "case": "落ちれば Lv−1 で町へ"
@@ -2013,12 +2093,12 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "grave": {
-      "seq": 12,
+      "seq": 16,
       "node": "E2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
@@ -2113,7 +2193,7 @@
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
      },
      "grave": {
-      "seq": 21,
+      "seq": 26,
       "node": "M2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -2578,9 +2658,9 @@
       "total": 0
      },
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "first_try": null
     },
@@ -3585,6 +3665,46 @@
     {
      "seq": 4,
      "ts": "2026-10-19T00:54:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B1",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（claude）"
+    },
+    {
+     "seq": 5,
+     "ts": "2026-10-19T01:00:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": "S1",
+     "ok": null,
+     "type": "sortie",
+     "text": "伝令 が出撃した（codex gpt-5）"
+    },
+    {
+     "seq": 6,
+     "ts": "2026-10-19T01:06:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（claude）"
+    },
+    {
+     "seq": 7,
+     "ts": "2026-10-19T01:12:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A1",
+     "ok": null,
+     "type": "sortie",
+     "text": "絵師 が出撃した（claude）"
+    },
+    {
+     "seq": 8,
+     "ts": "2026-10-19T01:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -3593,8 +3713,8 @@
      "text": "書記 が E1 を歩いた（テスト 1/3）"
     },
     {
-     "seq": 5,
-     "ts": "2026-10-19T01:00:00.000Z",
+     "seq": 9,
+     "ts": "2026-10-19T01:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -3603,8 +3723,8 @@
      "text": "書記 が E1 を歩いた（テスト 3/3）"
     },
     {
-     "seq": 6,
-     "ts": "2026-10-19T01:06:00.000Z",
+     "seq": 10,
+     "ts": "2026-10-19T01:30:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S1",
@@ -3613,8 +3733,8 @@
      "text": "伝令 が S1「GET /api/state でビューを返す」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 7,
-     "ts": "2026-10-19T01:12:00.000Z",
+     "seq": 11,
+     "ts": "2026-10-19T01:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -3623,8 +3743,8 @@
      "text": "書記 が E1「log.jsonl に genesis を書く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 8,
-     "ts": "2026-10-19T01:18:00.000Z",
+     "seq": 12,
+     "ts": "2026-10-19T01:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A1",
@@ -3633,8 +3753,8 @@
      "text": "絵師 が A1「駒の絵 sprites 12枚」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 9,
-     "ts": "2026-10-19T01:24:00.000Z",
+     "seq": 13,
+     "ts": "2026-10-19T01:48:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B1",
@@ -3643,8 +3763,8 @@
      "text": "賢者クロード が B1「svg#board に方眼ノートを描く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 10,
-     "ts": "2026-10-19T01:30:00.000Z",
+     "seq": 14,
+     "ts": "2026-10-19T01:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -3653,8 +3773,8 @@
      "text": "地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 11,
-     "ts": "2026-10-19T01:36:00.000Z",
+     "seq": 15,
+     "ts": "2026-10-19T02:00:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -3663,8 +3783,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から"
     },
     {
-     "seq": 12,
-     "ts": "2026-10-19T01:42:00.000Z",
+     "seq": 16,
+     "ts": "2026-10-19T02:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -3673,8 +3793,18 @@
      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
     },
     {
-     "seq": 13,
-     "ts": "2026-10-19T01:48:00.000Z",
+     "seq": 17,
+     "ts": "2026-10-19T02:12:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E2",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（2代目・codex gpt-5）"
+    },
+    {
+     "seq": 18,
+     "ts": "2026-10-19T02:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -3683,8 +3813,8 @@
      "text": "書記 が E2 を歩いた（テスト 3/4）"
     },
     {
-     "seq": 14,
-     "ts": "2026-10-19T01:54:00.000Z",
+     "seq": 19,
+     "ts": "2026-10-19T02:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -3693,8 +3823,8 @@
      "text": "書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！"
     },
     {
-     "seq": 15,
-     "ts": "2026-10-19T02:00:00.000Z",
+     "seq": 20,
+     "ts": "2026-10-19T02:30:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": null,
@@ -3703,8 +3833,8 @@
      "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
     },
     {
-     "seq": 16,
-     "ts": "2026-10-19T02:06:00.000Z",
+     "seq": 21,
+     "ts": "2026-10-19T02:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -3713,8 +3843,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4"
     },
     {
-     "seq": 17,
-     "ts": "2026-10-19T02:12:00.000Z",
+     "seq": 22,
+     "ts": "2026-10-19T02:42:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "C1",
@@ -3723,8 +3853,8 @@
      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
     },
     {
-     "seq": 18,
-     "ts": "2026-10-19T02:18:00.000Z",
+     "seq": 23,
+     "ts": "2026-10-19T02:48:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
@@ -3733,8 +3863,8 @@
      "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 19,
-     "ts": "2026-10-19T02:24:00.000Z",
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -3743,8 +3873,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 20,
-     "ts": "2026-10-19T02:30:00.000Z",
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -3753,8 +3883,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 21,
-     "ts": "2026-10-19T02:36:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -3763,8 +3893,38 @@
      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
     },
     {
-     "seq": 22,
-     "ts": "2026-10-19T02:42:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B2",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（3代目・codex gpt-5）"
+    },
+    {
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -3773,8 +3933,8 @@
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
     },
     {
-     "seq": 23,
-     "ts": "2026-10-19T02:48:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -3783,8 +3943,8 @@
      "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -3793,8 +3953,8 @@
      "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 33,
+     "ts": "2026-10-19T03:48:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -3804,9 +3964,9 @@
     }
    ],
    "head": {
-    "seq": 25,
-    "hash": "a472d536291e64a2f0e60a84922db9daa78612f4887309d048beef83ad3eabf2",
-    "jumon": "れくし にせも ゆまは さしご"
+    "seq": 33,
+    "hash": "879d83576cdc83eae7153e5f4a82188ad0801ff6f1f836cb4ea6efb2a0b1b99f",
+    "jumon": "めでだ えにだ ずへむ べわり"
    },
    "integrity": {
     "ok": true,
@@ -3917,8 +4077,8 @@
      "strong": 1,
      "skills": [
       {
-       "seq": 15,
-       "ts": "2026-10-19T02:00:00.000Z",
+       "seq": 20,
+       "ts": "2026-10-19T02:30:00.000Z",
        "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる",
        "node": "E2",
        "case": "落ちれば Lv−1 で町へ"
@@ -3928,12 +4088,12 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "grave": {
-      "seq": 12,
+      "seq": 16,
       "node": "E2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
@@ -4028,7 +4188,7 @@
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
      },
      "grave": {
-      "seq": 21,
+      "seq": 26,
       "node": "M2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -4493,9 +4653,9 @@
       "total": 0
      },
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "first_try": null
     },
@@ -5500,6 +5660,46 @@
     {
      "seq": 4,
      "ts": "2026-10-19T00:54:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B1",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（claude）"
+    },
+    {
+     "seq": 5,
+     "ts": "2026-10-19T01:00:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": "S1",
+     "ok": null,
+     "type": "sortie",
+     "text": "伝令 が出撃した（codex gpt-5）"
+    },
+    {
+     "seq": 6,
+     "ts": "2026-10-19T01:06:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（claude）"
+    },
+    {
+     "seq": 7,
+     "ts": "2026-10-19T01:12:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A1",
+     "ok": null,
+     "type": "sortie",
+     "text": "絵師 が出撃した（claude）"
+    },
+    {
+     "seq": 8,
+     "ts": "2026-10-19T01:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -5508,8 +5708,8 @@
      "text": "書記 が E1 を歩いた（テスト 1/3）"
     },
     {
-     "seq": 5,
-     "ts": "2026-10-19T01:00:00.000Z",
+     "seq": 9,
+     "ts": "2026-10-19T01:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -5518,8 +5718,8 @@
      "text": "書記 が E1 を歩いた（テスト 3/3）"
     },
     {
-     "seq": 6,
-     "ts": "2026-10-19T01:06:00.000Z",
+     "seq": 10,
+     "ts": "2026-10-19T01:30:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S1",
@@ -5528,8 +5728,8 @@
      "text": "伝令 が S1「GET /api/state でビューを返す」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 7,
-     "ts": "2026-10-19T01:12:00.000Z",
+     "seq": 11,
+     "ts": "2026-10-19T01:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -5538,8 +5738,8 @@
      "text": "書記 が E1「log.jsonl に genesis を書く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 8,
-     "ts": "2026-10-19T01:18:00.000Z",
+     "seq": 12,
+     "ts": "2026-10-19T01:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A1",
@@ -5548,8 +5748,8 @@
      "text": "絵師 が A1「駒の絵 sprites 12枚」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 9,
-     "ts": "2026-10-19T01:24:00.000Z",
+     "seq": 13,
+     "ts": "2026-10-19T01:48:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B1",
@@ -5558,8 +5758,8 @@
      "text": "賢者クロード が B1「svg#board に方眼ノートを描く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 10,
-     "ts": "2026-10-19T01:30:00.000Z",
+     "seq": 14,
+     "ts": "2026-10-19T01:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -5568,8 +5768,8 @@
      "text": "地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 11,
-     "ts": "2026-10-19T01:36:00.000Z",
+     "seq": 15,
+     "ts": "2026-10-19T02:00:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -5578,8 +5778,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から"
     },
     {
-     "seq": 12,
-     "ts": "2026-10-19T01:42:00.000Z",
+     "seq": 16,
+     "ts": "2026-10-19T02:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -5588,8 +5788,18 @@
      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
     },
     {
-     "seq": 13,
-     "ts": "2026-10-19T01:48:00.000Z",
+     "seq": 17,
+     "ts": "2026-10-19T02:12:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E2",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（2代目・codex gpt-5）"
+    },
+    {
+     "seq": 18,
+     "ts": "2026-10-19T02:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -5598,8 +5808,8 @@
      "text": "書記 が E2 を歩いた（テスト 3/4）"
     },
     {
-     "seq": 14,
-     "ts": "2026-10-19T01:54:00.000Z",
+     "seq": 19,
+     "ts": "2026-10-19T02:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -5608,8 +5818,8 @@
      "text": "書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！"
     },
     {
-     "seq": 15,
-     "ts": "2026-10-19T02:00:00.000Z",
+     "seq": 20,
+     "ts": "2026-10-19T02:30:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": null,
@@ -5618,8 +5828,8 @@
      "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
     },
     {
-     "seq": 16,
-     "ts": "2026-10-19T02:06:00.000Z",
+     "seq": 21,
+     "ts": "2026-10-19T02:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -5628,8 +5838,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4"
     },
     {
-     "seq": 17,
-     "ts": "2026-10-19T02:12:00.000Z",
+     "seq": 22,
+     "ts": "2026-10-19T02:42:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "C1",
@@ -5638,8 +5848,8 @@
      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
     },
     {
-     "seq": 18,
-     "ts": "2026-10-19T02:18:00.000Z",
+     "seq": 23,
+     "ts": "2026-10-19T02:48:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
@@ -5648,8 +5858,8 @@
      "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 19,
-     "ts": "2026-10-19T02:24:00.000Z",
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -5658,8 +5868,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 20,
-     "ts": "2026-10-19T02:30:00.000Z",
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -5668,8 +5878,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 21,
-     "ts": "2026-10-19T02:36:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -5678,8 +5888,38 @@
      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
     },
     {
-     "seq": 22,
-     "ts": "2026-10-19T02:42:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B2",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（3代目・codex gpt-5）"
+    },
+    {
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -5688,8 +5928,8 @@
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
     },
     {
-     "seq": 23,
-     "ts": "2026-10-19T02:48:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -5698,8 +5938,8 @@
      "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -5708,8 +5948,8 @@
      "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 33,
+     "ts": "2026-10-19T03:48:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -5718,8 +5958,8 @@
      "text": "書記 が E3 を歩いた（テスト 4/5）"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 34,
+     "ts": "2026-10-19T03:54:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -5728,8 +5968,8 @@
      "text": "書記 が E3「gridhub step で1件ずつ歩く」の判定に成功！ テスト 5/5、G1 で待機"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 35,
+     "ts": "2026-10-19T04:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -5739,9 +5979,9 @@
     }
    ],
    "head": {
-    "seq": 27,
-    "hash": "acb20e2728c5a8449a0a1f6093da9820720a45800a57cb53ba59c46fc4b69252",
-    "jumon": "わしけ そこじ やかろ おてひ"
+    "seq": 35,
+    "hash": "a899a75e8ce50766d2072f839fcdefc540433324fc074d501302eb2b93e25547",
+    "jumon": "ろこら りねる ずよい だふて"
    },
    "integrity": {
     "ok": true,
@@ -5807,9 +6047,9 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 1,
-      "node": null,
-      "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+      "seq": 38,
+      "node": "G1",
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "grave": null,
      "square": 0
@@ -5852,8 +6092,8 @@
      "strong": 1,
      "skills": [
       {
-       "seq": 15,
-       "ts": "2026-10-19T02:00:00.000Z",
+       "seq": 20,
+       "ts": "2026-10-19T02:30:00.000Z",
        "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる",
        "node": "E2",
        "case": "落ちれば Lv−1 で町へ"
@@ -5863,12 +6103,12 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 17,
-      "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "seq": 38,
+      "node": "G1",
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "grave": {
-      "seq": 12,
+      "seq": 16,
       "node": "E2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
@@ -5914,9 +6154,9 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 31,
+      "seq": 38,
       "node": "G1",
-      "commit": "96499778121cbf51f2b8209c582fefa6f6438523"
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "grave": null,
      "square": null
@@ -5963,7 +6203,7 @@
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
      },
      "grave": {
-      "seq": 21,
+      "seq": 26,
       "node": "M2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -6428,9 +6668,9 @@
       "total": 0
      },
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "first_try": null
     },
@@ -7276,9 +7516,9 @@
       "total": 3
      },
      "save": {
-      "seq": 31,
+      "seq": 38,
       "node": "G1",
-      "commit": "96499778121cbf51f2b8209c582fefa6f6438523"
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "first_try": null
     },
@@ -7439,6 +7679,46 @@
     {
      "seq": 4,
      "ts": "2026-10-19T00:54:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B1",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（claude）"
+    },
+    {
+     "seq": 5,
+     "ts": "2026-10-19T01:00:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": "S1",
+     "ok": null,
+     "type": "sortie",
+     "text": "伝令 が出撃した（codex gpt-5）"
+    },
+    {
+     "seq": 6,
+     "ts": "2026-10-19T01:06:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（claude）"
+    },
+    {
+     "seq": 7,
+     "ts": "2026-10-19T01:12:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A1",
+     "ok": null,
+     "type": "sortie",
+     "text": "絵師 が出撃した（claude）"
+    },
+    {
+     "seq": 8,
+     "ts": "2026-10-19T01:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -7447,8 +7727,8 @@
      "text": "書記 が E1 を歩いた（テスト 1/3）"
     },
     {
-     "seq": 5,
-     "ts": "2026-10-19T01:00:00.000Z",
+     "seq": 9,
+     "ts": "2026-10-19T01:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -7457,8 +7737,8 @@
      "text": "書記 が E1 を歩いた（テスト 3/3）"
     },
     {
-     "seq": 6,
-     "ts": "2026-10-19T01:06:00.000Z",
+     "seq": 10,
+     "ts": "2026-10-19T01:30:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S1",
@@ -7467,8 +7747,8 @@
      "text": "伝令 が S1「GET /api/state でビューを返す」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 7,
-     "ts": "2026-10-19T01:12:00.000Z",
+     "seq": 11,
+     "ts": "2026-10-19T01:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -7477,8 +7757,8 @@
      "text": "書記 が E1「log.jsonl に genesis を書く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 8,
-     "ts": "2026-10-19T01:18:00.000Z",
+     "seq": 12,
+     "ts": "2026-10-19T01:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A1",
@@ -7487,8 +7767,8 @@
      "text": "絵師 が A1「駒の絵 sprites 12枚」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 9,
-     "ts": "2026-10-19T01:24:00.000Z",
+     "seq": 13,
+     "ts": "2026-10-19T01:48:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B1",
@@ -7497,8 +7777,8 @@
      "text": "賢者クロード が B1「svg#board に方眼ノートを描く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 10,
-     "ts": "2026-10-19T01:30:00.000Z",
+     "seq": 14,
+     "ts": "2026-10-19T01:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -7507,8 +7787,8 @@
      "text": "地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 11,
-     "ts": "2026-10-19T01:36:00.000Z",
+     "seq": 15,
+     "ts": "2026-10-19T02:00:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -7517,8 +7797,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から"
     },
     {
-     "seq": 12,
-     "ts": "2026-10-19T01:42:00.000Z",
+     "seq": 16,
+     "ts": "2026-10-19T02:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -7527,8 +7807,18 @@
      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
     },
     {
-     "seq": 13,
-     "ts": "2026-10-19T01:48:00.000Z",
+     "seq": 17,
+     "ts": "2026-10-19T02:12:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E2",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（2代目・codex gpt-5）"
+    },
+    {
+     "seq": 18,
+     "ts": "2026-10-19T02:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -7537,8 +7827,8 @@
      "text": "書記 が E2 を歩いた（テスト 3/4）"
     },
     {
-     "seq": 14,
-     "ts": "2026-10-19T01:54:00.000Z",
+     "seq": 19,
+     "ts": "2026-10-19T02:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -7547,8 +7837,8 @@
      "text": "書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！"
     },
     {
-     "seq": 15,
-     "ts": "2026-10-19T02:00:00.000Z",
+     "seq": 20,
+     "ts": "2026-10-19T02:30:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": null,
@@ -7557,8 +7847,8 @@
      "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
     },
     {
-     "seq": 16,
-     "ts": "2026-10-19T02:06:00.000Z",
+     "seq": 21,
+     "ts": "2026-10-19T02:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -7567,8 +7857,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4"
     },
     {
-     "seq": 17,
-     "ts": "2026-10-19T02:12:00.000Z",
+     "seq": 22,
+     "ts": "2026-10-19T02:42:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "C1",
@@ -7577,8 +7867,8 @@
      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
     },
     {
-     "seq": 18,
-     "ts": "2026-10-19T02:18:00.000Z",
+     "seq": 23,
+     "ts": "2026-10-19T02:48:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
@@ -7587,8 +7877,8 @@
      "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 19,
-     "ts": "2026-10-19T02:24:00.000Z",
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -7597,8 +7887,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 20,
-     "ts": "2026-10-19T02:30:00.000Z",
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -7607,8 +7897,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 21,
-     "ts": "2026-10-19T02:36:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -7617,8 +7907,38 @@
      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
     },
     {
-     "seq": 22,
-     "ts": "2026-10-19T02:42:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B2",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（3代目・codex gpt-5）"
+    },
+    {
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -7627,8 +7947,8 @@
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
     },
     {
-     "seq": 23,
-     "ts": "2026-10-19T02:48:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -7637,8 +7957,8 @@
      "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -7647,8 +7967,8 @@
      "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 33,
+     "ts": "2026-10-19T03:48:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -7657,8 +7977,8 @@
      "text": "書記 が E3 を歩いた（テスト 4/5）"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 34,
+     "ts": "2026-10-19T03:54:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -7667,8 +7987,8 @@
      "text": "書記 が E3「gridhub step で1件ずつ歩く」の判定に成功！ テスト 5/5、G1 で待機"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 35,
+     "ts": "2026-10-19T04:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -7677,8 +7997,8 @@
      "text": "地図職人 が M1 の復活したテストを倒し直した（テスト 3/3）"
     },
     {
-     "seq": 28,
-     "ts": "2026-10-19T03:18:00.000Z",
+     "seq": 36,
+     "ts": "2026-10-19T04:06:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -7687,8 +8007,8 @@
      "text": "賢者クロード が B2「駒が1マスずつ歩く」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 29,
-     "ts": "2026-10-19T03:24:00.000Z",
+     "seq": 37,
+     "ts": "2026-10-19T04:12:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -7697,8 +8017,8 @@
      "text": "中ボス G1「結合: 冒険が盤面に映る」を撃破！ テスト 3/3 — 賢者クロード・書記・伝令 が解散"
     },
     {
-     "seq": 30,
-     "ts": "2026-10-19T03:30:00.000Z",
+     "seq": 38,
+     "ts": "2026-10-19T04:18:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -7708,9 +8028,9 @@
     }
    ],
    "head": {
-    "seq": 30,
-    "hash": "99b9f21607b68af4b56a3b2c46a39c4cb709d1e7632667547e7cd3e046654786",
-    "jumon": "らふり じかむ まだも げてぞ"
+    "seq": 38,
+    "hash": "252a86b6025f0fcfdf947ed7f3ae35c856a30545ca3512f4dfa95a03169c5a67",
+    "jumon": "こてろ きぎむ こみえ びぼみ"
    },
    "integrity": {
     "ok": true,
@@ -7776,9 +8096,9 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 1,
-      "node": null,
-      "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+      "seq": 38,
+      "node": "G1",
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "grave": null,
      "square": 0
@@ -7821,8 +8141,8 @@
      "strong": 1,
      "skills": [
       {
-       "seq": 15,
-       "ts": "2026-10-19T02:00:00.000Z",
+       "seq": 20,
+       "ts": "2026-10-19T02:30:00.000Z",
        "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる",
        "node": "E2",
        "case": "落ちれば Lv−1 で町へ"
@@ -7832,12 +8152,12 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 17,
-      "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "seq": 38,
+      "node": "G1",
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "grave": {
-      "seq": 12,
+      "seq": 16,
       "node": "E2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
@@ -7883,9 +8203,9 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 31,
+      "seq": 38,
       "node": "G1",
-      "commit": "96499778121cbf51f2b8209c582fefa6f6438523"
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "grave": null,
      "square": null
@@ -7932,7 +8252,7 @@
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
      },
      "grave": {
-      "seq": 21,
+      "seq": 26,
       "node": "M2",
       "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -8397,9 +8717,9 @@
       "total": 0
      },
      "save": {
-      "seq": 17,
+      "seq": 22,
       "node": "C1",
-      "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
      },
      "first_try": null
     },
@@ -9245,9 +9565,9 @@
       "total": 3
      },
      "save": {
-      "seq": 31,
+      "seq": 38,
       "node": "G1",
-      "commit": "96499778121cbf51f2b8209c582fefa6f6438523"
+      "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
      },
      "first_try": null
     },
@@ -9408,6 +9728,46 @@
     {
      "seq": 4,
      "ts": "2026-10-19T00:54:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B1",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（claude）"
+    },
+    {
+     "seq": 5,
+     "ts": "2026-10-19T01:00:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": "S1",
+     "ok": null,
+     "type": "sortie",
+     "text": "伝令 が出撃した（codex gpt-5）"
+    },
+    {
+     "seq": 6,
+     "ts": "2026-10-19T01:06:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（claude）"
+    },
+    {
+     "seq": 7,
+     "ts": "2026-10-19T01:12:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A1",
+     "ok": null,
+     "type": "sortie",
+     "text": "絵師 が出撃した（claude）"
+    },
+    {
+     "seq": 8,
+     "ts": "2026-10-19T01:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -9416,8 +9776,8 @@
      "text": "書記 が E1 を歩いた（テスト 1/3）"
     },
     {
-     "seq": 5,
-     "ts": "2026-10-19T01:00:00.000Z",
+     "seq": 9,
+     "ts": "2026-10-19T01:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -9426,8 +9786,8 @@
      "text": "書記 が E1 を歩いた（テスト 3/3）"
     },
     {
-     "seq": 6,
-     "ts": "2026-10-19T01:06:00.000Z",
+     "seq": 10,
+     "ts": "2026-10-19T01:30:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S1",
@@ -9436,8 +9796,8 @@
      "text": "伝令 が S1「GET /api/state でビューを返す」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 7,
-     "ts": "2026-10-19T01:12:00.000Z",
+     "seq": 11,
+     "ts": "2026-10-19T01:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E1",
@@ -9446,8 +9806,8 @@
      "text": "書記 が E1「log.jsonl に genesis を書く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 8,
-     "ts": "2026-10-19T01:18:00.000Z",
+     "seq": 12,
+     "ts": "2026-10-19T01:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A1",
@@ -9456,8 +9816,8 @@
      "text": "絵師 が A1「駒の絵 sprites 12枚」の判定に成功！ テスト 2/2"
     },
     {
-     "seq": 9,
-     "ts": "2026-10-19T01:24:00.000Z",
+     "seq": 13,
+     "ts": "2026-10-19T01:48:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B1",
@@ -9466,8 +9826,8 @@
      "text": "賢者クロード が B1「svg#board に方眼ノートを描く」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 10,
-     "ts": "2026-10-19T01:30:00.000Z",
+     "seq": 14,
+     "ts": "2026-10-19T01:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -9476,8 +9836,8 @@
      "text": "地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3"
     },
     {
-     "seq": 11,
-     "ts": "2026-10-19T01:36:00.000Z",
+     "seq": 15,
+     "ts": "2026-10-19T02:00:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -9486,8 +9846,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から"
     },
     {
-     "seq": 12,
-     "ts": "2026-10-19T01:42:00.000Z",
+     "seq": 16,
+     "ts": "2026-10-19T02:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -9496,8 +9856,18 @@
      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
     },
     {
-     "seq": 13,
-     "ts": "2026-10-19T01:48:00.000Z",
+     "seq": 17,
+     "ts": "2026-10-19T02:12:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E2",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（2代目・codex gpt-5）"
+    },
+    {
+     "seq": 18,
+     "ts": "2026-10-19T02:18:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -9506,8 +9876,8 @@
      "text": "書記 が E2 を歩いた（テスト 3/4）"
     },
     {
-     "seq": 14,
-     "ts": "2026-10-19T01:54:00.000Z",
+     "seq": 19,
+     "ts": "2026-10-19T02:24:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -9516,8 +9886,8 @@
      "text": "書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！"
     },
     {
-     "seq": 15,
-     "ts": "2026-10-19T02:00:00.000Z",
+     "seq": 20,
+     "ts": "2026-10-19T02:30:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": null,
@@ -9526,8 +9896,8 @@
      "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
     },
     {
-     "seq": 16,
-     "ts": "2026-10-19T02:06:00.000Z",
+     "seq": 21,
+     "ts": "2026-10-19T02:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E2",
@@ -9536,8 +9906,8 @@
      "text": "書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4"
     },
     {
-     "seq": 17,
-     "ts": "2026-10-19T02:12:00.000Z",
+     "seq": 22,
+     "ts": "2026-10-19T02:42:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "C1",
@@ -9546,8 +9916,8 @@
      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
     },
     {
-     "seq": 18,
-     "ts": "2026-10-19T02:18:00.000Z",
+     "seq": 23,
+     "ts": "2026-10-19T02:48:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
@@ -9556,8 +9926,8 @@
      "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 19,
-     "ts": "2026-10-19T02:24:00.000Z",
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -9566,8 +9936,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 20,
-     "ts": "2026-10-19T02:30:00.000Z",
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -9576,8 +9946,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 21,
-     "ts": "2026-10-19T02:36:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -9586,8 +9956,38 @@
      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
     },
     {
-     "seq": 22,
-     "ts": "2026-10-19T02:42:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
+     "actor": "gmkit",
+     "character": "gmkit",
+     "node": "M1",
+     "ok": null,
+     "type": "sortie",
+     "text": "地図職人 が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": "B2",
+     "ok": null,
+     "type": "sortie",
+     "text": "賢者クロード が出撃した（2代目・claude）"
+    },
+    {
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": null,
+     "type": "sortie",
+     "text": "書記 が出撃した（3代目・codex gpt-5）"
+    },
+    {
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -9596,8 +9996,8 @@
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
     },
     {
-     "seq": 23,
-     "ts": "2026-10-19T02:48:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -9606,8 +10006,8 @@
      "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -9616,8 +10016,8 @@
      "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 33,
+     "ts": "2026-10-19T03:48:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -9626,8 +10026,8 @@
      "text": "書記 が E3 を歩いた（テスト 4/5）"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 34,
+     "ts": "2026-10-19T03:54:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -9636,8 +10036,8 @@
      "text": "書記 が E3「gridhub step で1件ずつ歩く」の判定に成功！ テスト 5/5、G1 で待機"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 35,
+     "ts": "2026-10-19T04:00:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -9646,8 +10046,8 @@
      "text": "地図職人 が M1 の復活したテストを倒し直した（テスト 3/3）"
     },
     {
-     "seq": 28,
-     "ts": "2026-10-19T03:18:00.000Z",
+     "seq": 36,
+     "ts": "2026-10-19T04:06:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -9656,8 +10056,8 @@
      "text": "賢者クロード が B2「駒が1マスずつ歩く」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 29,
-     "ts": "2026-10-19T03:24:00.000Z",
+     "seq": 37,
+     "ts": "2026-10-19T04:12:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -9666,8 +10066,8 @@
      "text": "中ボス G1「結合: 冒険が盤面に映る」を撃破！ テスト 3/3 — 賢者クロード・書記・伝令 が解散"
     },
     {
-     "seq": 30,
-     "ts": "2026-10-19T03:30:00.000Z",
+     "seq": 38,
+     "ts": "2026-10-19T04:18:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -9676,8 +10076,8 @@
      "text": "賢者クロード、書記、伝令 が G1 でセーブした（commit 7c4e9a0）"
     },
     {
-     "seq": 31,
-     "ts": "2026-10-19T03:36:00.000Z",
+     "seq": 39,
+     "ts": "2026-10-19T04:24:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "A2",
@@ -9686,8 +10086,8 @@
      "text": "A2 の判定を封印しなおした（宝箱: 判定のバグを見つけた）"
     },
     {
-     "seq": 32,
-     "ts": "2026-10-19T03:42:00.000Z",
+     "seq": 40,
+     "ts": "2026-10-19T04:30:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -9697,9 +10097,9 @@
     }
    ],
    "head": {
-    "seq": 32,
-    "hash": "166af8ce12f5859bdc0bea01b0365e265b554a81b6692ea5df920cad691c2031",
-    "jumon": "からわ づずめ しぞめ はげへ"
+    "seq": 40,
+    "hash": "61110b78894fd6d4566b9cfe395f597f6ace747a761f22b2c1593d0bb87e0b60",
+    "jumon": "のつお しまけ よたぞ ぎつぬ"
    },
    "integrity": {
     "ok": true,
