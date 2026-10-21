@@ -83,7 +83,14 @@ function casesOf(n, code, ranCases) {
   const names = n.check?.cases || ranCases || [];
   return names.map((name, i) => {
     const c = (code || '').charAt(i) || '-';
-    const base = { name, ok: null, losses: 0, revived: 0, strong: false };
+    /** 冒険の書の中で、条件に合う最初のイベントの seq */
+const seqOf = (list, pred) => list.findIndex(pred);
+const NOTE = seqOf(log, (e) => e.type === 'note' && e.character === 'engine');
+const SAVE_C1 = seqOf(log, (e) => e.type === 'saved' && e.node === 'C1');
+const GRAVE_E = seqOf(log, (e) => e.type === 'restored' && e.character === 'engine');
+const GRAVE_M = seqOf(log, (e) => e.type === 'restored' && e.character === 'gmkit');
+
+const base = { name, ok: null, losses: 0, revived: 0, strong: false };
     if (c === 'o') return { ...base, ok: true };
     if (c === 'x') return { ...base, ok: false, losses: 1 };
     if (c === 'X') return { ...base, ok: false, losses: 2 };
@@ -200,6 +207,10 @@ const log = [
   { type: 'saved', text: '賢者クロード、書記、伝令、地図職人、絵師 が ふりだし でセーブした（commit 3f9a2c1）' },
   { type: 'sealed', node: 'E1', text: 'E1 の判定を封印した' },
   { type: 'sortie', character: 'engine', node: 'E1', text: '書記 が出撃した（codex gpt-5）' },
+  { type: 'sortie', character: 'board', node: 'B1', text: '賢者クロード が出撃した（claude）' },
+  { type: 'sortie', character: 'server', node: 'S1', text: '伝令 が出撃した（codex gpt-5）' },
+  { type: 'sortie', character: 'gmkit', node: 'M1', text: '地図職人 が出撃した（claude）' },
+  { type: 'sortie', character: 'assets', node: 'A1', text: '絵師 が出撃した（claude）' },
   { type: 'stepped', character: 'engine', node: 'E1', ok: false, text: '書記 が E1 を歩いた（テスト 1/3）' },
   { type: 'stepped', character: 'engine', node: 'E1', ok: true, text: '書記 が E1 を歩いた（テスト 3/3）' },
   { type: 'check_passed', character: 'server', node: 'S1', ok: true, text: '伝令 が S1「GET /api/state でビューを返す」の判定に成功！ テスト 2/2' },
@@ -209,6 +220,7 @@ const log = [
   { type: 'check_passed', character: 'gmkit', node: 'M1', ok: true, text: '地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3' },
   { type: 'check_failed', character: 'engine', node: 'E2', ok: false, text: '書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から' },
   { type: 'restored', character: 'engine', node: 'E2', text: '書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）' },
+  { type: 'sortie', character: 'engine', node: 'E2', text: '書記 が出撃した（2代目・codex gpt-5）' },
   { type: 'stepped', character: 'engine', node: 'E2', ok: false, text: '書記 が E2 を歩いた（テスト 3/4）' },
   { type: 'stepped', character: 'engine', node: 'E2', ok: true, text: '書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！' },
   { type: 'note', character: 'engine', text: '技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる' },
@@ -218,17 +230,27 @@ const log = [
   { type: 'stepped', character: 'gmkit', node: 'M2', ok: false, text: '地図職人 が M2 を歩いた（テスト 2/3）' },
   { type: 'check_failed', character: 'gmkit', node: 'M2', ok: false, text: '地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから' },
   { type: 'restored', character: 'gmkit', node: 'M2', text: '地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）' },
+  { type: 'sortie', character: 'gmkit', node: 'M1', text: '地図職人 が出撃した（2代目・claude）' },
+  { type: 'sortie', character: 'board', node: 'B2', text: '賢者クロード が出撃した（2代目・claude）' },
+  { type: 'sortie', character: 'engine', node: 'E3', text: '書記 が出撃した（3代目・codex gpt-5）' },
   { type: 'stepped', character: 'board', node: 'B2', ok: false, text: '賢者クロード が B2 を歩いた（テスト 1/4）' },
   { type: 'stepped', character: 'engine', node: 'E3', ok: false, text: '書記 が E3 を歩いた（テスト 2/5）' },
   { type: 'seal_broken', character: 'assets', node: 'A2', ok: false, text: 'A2 の封印が破れている！（判定ファイルが書き換えられた）' },
 ];
 
+/** 冒険の書の中で、条件に合う最初のイベントの seq */
+const seqOf = (list, pred) => list.findIndex(pred);
+const NOTE = seqOf(log, (e) => e.type === 'note' && e.character === 'engine');
+const SAVE_C1 = seqOf(log, (e) => e.type === 'saved' && e.node === 'C1');
+const GRAVE_E = seqOf(log, (e) => e.type === 'restored' && e.character === 'engine');
+const GRAVE_M = seqOf(log, (e) => e.type === 'restored' && e.character === 'gmkit');
+
 const base = {
   chars: {
     board: { pos: 1, level: 2, xp: 0, clears: 1, gen: 2, medals: 1, save: save(1, null) },
-    engine: { pos: 3, level: 2, xp: 0, checkpoint: 'C1', clears: 3, fails: 1, gen: 3, medals: 1, strong: 1, note: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', skills: [{ seq: 15, ts: new Date(T0 + 15 * 360000).toISOString(), text: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', node: 'E2', case: '落ちれば Lv−1 で町へ' }], save: save(17, 'C1'), grave: { seq: 12, node: 'E2', commit: commit('null:1'), stash: sha('grave:engine') } },
+    engine: { pos: 3, level: 2, xp: 0, checkpoint: 'C1', clears: 3, fails: 1, gen: 3, medals: 1, strong: 1, note: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', skills: [{ seq: NOTE, ts: new Date(T0 + NOTE * 360000).toISOString(), text: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', node: 'E2', case: '落ちれば Lv−1 で町へ' }], save: save(SAVE_C1, 'C1'), grave: { seq: GRAVE_E, node: 'E2', commit: commit('null:1'), stash: sha('grave:engine') } },
     server: { pos: 2, level: 2, xp: 1, clears: 2, gen: 1, medals: 2, save: save(1, null) },
-    gmkit: { pos: 0, level: 1, xp: 0, clears: 1, fails: 1, gen: 2, revived: 1, medals: 1, save: save(1, null), grave: { seq: 21, node: 'M2', commit: commit('null:1'), stash: sha('grave:gmkit') } },
+    gmkit: { pos: 0, level: 1, xp: 0, clears: 1, fails: 1, gen: 2, revived: 1, medals: 1, save: save(1, null), grave: { seq: GRAVE_M, node: 'M2', commit: commit('null:1'), stash: sha('grave:gmkit') } },
     assets: { pos: 1, level: 2, xp: 0, clears: 1, gen: 1, medals: 1, traps: 1, save: save(1, null) },
     player: { pos: 0, level: 1, xp: 0, clears: 0 },
   },
@@ -239,7 +261,7 @@ const base = {
   unsealed: ['E4'],
   broken: ['A2'],
   fails: { E2: 1, M2: 1 },
-  saves: { C1: save(17, 'C1') },
+  saves: { C1: save(SAVE_C1, 'C1') },
 };
 
 const clone = (x) => JSON.parse(JSON.stringify(x));
@@ -275,12 +297,13 @@ frames.push(build(scene, L));
 // 3) 賢者クロードが B2 を抜け、G1 がそろって中ボス戦 → 撃破
 scene = clone(scene);
 scene.cases.B2 = 'oooo';
-scene.chars.board = { ...scene.chars.board, pos: 3, level: 3, xp: 1, checkpoint: 'G1', clears: 3 };
-scene.chars.engine = { ...scene.chars.engine, pos: 5, level: 3, xp: 1, checkpoint: 'G1', clears: 5 };
-scene.chars.server = { ...scene.chars.server, pos: 3, level: 3, xp: 0, checkpoint: 'G1', clears: 3, save: save(31, 'G1') };
+const SAVE_G1 = L.length + 2;
+scene.chars.board = { ...scene.chars.board, pos: 3, level: 3, xp: 1, checkpoint: 'G1', clears: 3, save: save(SAVE_G1, 'G1') };
+scene.chars.engine = { ...scene.chars.engine, pos: 5, level: 3, xp: 1, checkpoint: 'G1', clears: 5, save: save(SAVE_G1, 'G1') };
+scene.chars.server = { ...scene.chars.server, pos: 3, level: 3, xp: 0, checkpoint: 'G1', clears: 3, save: save(SAVE_G1, 'G1') };
 scene.cleared.push('B2', 'G1');
 scene.cases.G1 = 'ooo';
-scene.saves.G1 = save(31, 'G1');
+scene.saves.G1 = save(SAVE_G1, 'G1');
 L = [
   ...L,
   { type: 'check_passed', character: 'board', node: 'B2', ok: true, text: '賢者クロード が B2「駒が1マスずつ歩く」の判定に成功！ G1 で待機' },

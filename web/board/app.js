@@ -150,7 +150,7 @@ function render(input) {
   $('#road-layer').innerHTML = roadLayer(view, lay);
   $('#monster-layer').innerHTML = monsterLayer(view, lay, state.monsters, { fresh: slain });
   $('#node-layer').innerHTML = nodeLayer(view, lay, state.monsters, { fresh, selected: sel });
-  $('#head-layer').innerHTML = headLayer(view, lay, state.sprites);
+  $('#head-layer').innerHTML = headLayer(view, lay, state.sprites, state.monsters);
   penIn(view);
   const moved = pawns.update(view, lay, state.sprites, sameQuest ? prev : null);
   book.setPages(lay.pages.length, firstPage(view, lay));

@@ -3,7 +3,8 @@
 //   node docs/shots/shot.mjs <ビューの JSON> <出力のフォルダ> [--fonts <字のフォルダ>] [--width 1600] [--height 1000] [--name board]
 //
 // ビューの JSON は、見本（web/fixtures/demo-state.json）か、本物の冒険の `gridhub status --json` の出力。
-// 撮るもの: <name>-spread.png（見開き）・<name>-flip.png（ページをめくっている途中）・<name>-zoom.png（拡大）・<name>-narrow.png（スマホの幅）。
+// 撮るもの: <name>-spread.png（見開き）・<name>-flip.png（ページをめくっている途中）・<name>-zoom.png（拡大）・<name>-narrow.png（スマホの幅）、
+// ビューに ending があれば <name>-ending.png（エンディング）も。
 // --fonts には Google Fonts の字を手元に置いたフォルダ（local.css と、それが指す字のファイル）を渡す。リポジトリには入れない。
 // 判定の Chrome は外のホストを引けないので、字が無ければ手元の書体で撮る。
 import http from 'node:http';
@@ -74,21 +75,39 @@ async function shoot(file, { w = width, h = height, prep = '', after = 0 } = {})
   }
 }
 
+const hasEnding = (() => {
+  try {
+    return !!JSON.parse(String(view)).ending;
+  } catch {
+    return false;
+  }
+})();
+const closeEnding = `document.querySelector('#ending-close')?.click();`;
 try {
-  await shoot(`${name}-spread.png`);
+  if (hasEnding) await shoot(`${name}-ending.png`, { after: 600 });
+  await shoot(`${name}-spread.png`, { prep: `(() => { ${closeEnding} return true; })()`, after: 200 });
   // めくっている途中: 葉の回転を途中で止める
   await shoot(`${name}-flip.png`, {
-    prep: `(() => { window.__masume.turnTo(window.__masume.spread + 2); return true; })()`,
-    after: 380,
+    prep: `(async () => {
+      ${closeEnding}
+      const m = window.__masume;
+      const forward = m.spread + 2 <= m.pages;
+      m.turnTo(forward ? m.spread + 2 : m.spread - 2);
+      await new Promise((r) => setTimeout(r, 80));
+      const leaf = document.querySelector('.page-flip');
+      if (leaf) { leaf.style.transition = 'none'; leaf.style.transform = 'rotateY(' + (forward ? -68 : 68) + 'deg)'; }
+      return true;
+    })()`,
+    after: 150,
   });
   // 拡大: 作業中の駒のまわり
   await shoot(`${name}-zoom.png`, {
     w: 1200,
     h: 900,
-    prep: `(() => { const p = [...document.querySelectorAll('.pawn[data-status="working"]')].find((g) => { const r = g.getBoundingClientRect(); return r.width && r.left > 0 && r.left < innerWidth; }) || document.querySelector('.pawn'); if (!p) return false; const b = p.getBoundingClientRect(); for (let i = 0; i < 4; i++) document.querySelector('[data-zoom="in"]').click(); const svg = document.querySelector('#board'); const r = svg.getBoundingClientRect(); const b2 = p.getBoundingClientRect(); svg.dispatchEvent(new WheelEvent('wheel', { deltaX: b2.left + b2.width / 2 - (r.left + r.width / 2), deltaY: b2.top - (r.top + r.height / 2) + 40, bubbles: true, cancelable: true })); void b; return true; })()`,
+    prep: `(() => { ${closeEnding} const p = [...document.querySelectorAll('.pawn[data-status="working"]')].find((g) => { const r = g.getBoundingClientRect(); return r.width && r.left > 0 && r.left < innerWidth; }) || document.querySelector('.pawn'); if (!p) return false; const b = p.getBoundingClientRect(); for (let i = 0; i < 4; i++) document.querySelector('[data-zoom="in"]').click(); const svg = document.querySelector('#board'); const r = svg.getBoundingClientRect(); const b2 = p.getBoundingClientRect(); svg.dispatchEvent(new WheelEvent('wheel', { deltaX: b2.left + b2.width / 2 - (r.left + r.width / 2), deltaY: b2.top - (r.top + r.height / 2) + 40, bubbles: true, cancelable: true })); void b; return true; })()`,
     after: 300,
   });
-  await shoot(`${name}-narrow.png`, { w: 390, h: 844 });
+  await shoot(`${name}-narrow.png`, { w: 390, h: 844, prep: `(() => { document.querySelector('#stage').scrollIntoView(); return true; })()` });
 } finally {
   server.close();
 }

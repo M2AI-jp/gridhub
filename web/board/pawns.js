@@ -26,7 +26,7 @@ function bubble(c) {
 }
 
 export function pawnMarkup(c, sprites) {
-  return `<ellipse class="pawn-foot" cx="0" cy="0" rx="${0.75 * U}" ry="${0.24 * U}"/><g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.25 * U, SIZE, 'pawn')}</g>${badge(c)}${bubble(c)}`;
+  return `<ellipse class="pawn-foot" cx="0" cy="0" rx="${0.95 * U}" ry="${0.32 * U}" fill="${hl(c.color)}"/><g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.25 * U, SIZE, 'pawn')}</g>${badge(c)}${bubble(c)}`;
 }
 
 /** 駒の世界座標（同じ場所に何人もいれば、少しずらす） */
@@ -36,7 +36,7 @@ function targets(view, lay) {
   for (const c of view.characters) {
     const s = stopOf(view, lay, c);
     if (!s) continue;
-    const key = `${s.node}:${s.square}`;
+    const key = `${s.node}:${s.square}:${s.page}:${s.x}`;
     const k = seen.get(key) || 0;
     seen.set(key, k + 1);
     const shift = s.square == null ? (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 1.6 * U : 0;

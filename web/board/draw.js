@@ -101,7 +101,28 @@ export function paperLayer(view, lay) {
 }
 
 // ---------- 見出し（題名・ふりだし・名札）と、2ページ目からの道の名札、最後のページの凡例 ----------
-export function headLayer(view, lay, sprites) {
+let monstersRef = {};
+/** 1ページ目の右上: 章のあがり（魔王の城）がここから見える（GAME_DESIGN §1・§6） */
+function goalPreview(view, pl, monsters) {
+  const n = own(view.nodes, view.quest.goal);
+  const x = wx(0, 26.2);
+  const y = wy(2.9);
+  const w = 8.6 * U;
+  const h = 3.9 * U;
+  const cleared = n?.state === 'cleared';
+  const tests = n?.tests?.total ? `テスト ${n.tests.pass}/${n.tests.total}` : '';
+  return `<g class="goal-preview" aria-label="章のあがり ${esc(view.quest.goal)}（p.${pl.page + 1}）">
+    <path class="pencil-line preview-frame" d="${box(x, y, w, h, 'preview', 0.8)}"/>
+    <path class="pen castle-mini" d="M${f1(x + 6)} ${f1(y + h - 4)} V${f1(y + h * 0.42)} h5 v-4 h4 v4 h5 V${f1(y + h * 0.3)} l5 -8 l5 8 V${f1(y + h * 0.42)} h5 v-4 h4 v4 h5 V${f1(y + h - 4)} Z M${f1(x + 25)} ${f1(y + h - 4)} v-9 q5 -6 10 0 v9"/>
+    ${monsterMarkup(monsters, 'maou', x + 2.75 * U, y + 0.15 * U, 1.9 * U, cleared ? '#ffffff' : '#e6dcff', cleared ? 'is-slain' : '')}
+    <text class="marker-text preview-head" x="${f1(x + 4.7 * U)}" y="${f1(y + 1.3 * U)}">あがり</text>
+    <text class="hand preview-sub" x="${f1(x + 4.7 * U)}" y="${f1(y + 2.25 * U)}">魔王の城 ↓p.${pl.page + 1}</text>
+    <text class="hand preview-sub" x="${f1(x + 4.7 * U)}" y="${f1(y + 3.15 * U)}">${esc(tests)}</text>
+  </g>`;
+}
+
+export function headLayer(view, lay, sprites, monsters = {}) {
+  monstersRef = monsters;
   const chars = byId(view.characters);
   let out = '<g id="heads">';
   // 題名は1字1マス（16字までは 2×2 目、それより長ければ 1×1 目で折り返す）
@@ -120,14 +141,17 @@ export function headLayer(view, lay, sprites) {
   const titleW = big ? title.length * 2 : Math.min(title.length, perRow);
   if (big && titleW > 0) out += `<path class="title-swipe" data-tool="marker" d="M${wx(0, X0 + 1)} ${wy(3 + 1.55)} L${wx(0, X0 + 1 + titleW)} ${wy(3 + 1.5)}"/>`;
   const pitchY = 3 + rowsUsed + 0.95;
-  out += `<text class="hand quest-pitch" x="${wx(0, X0 + 1)}" y="${wy(pitchY)}">${esc(wrap(view.quest?.pitch || '', 54, 1)[0] || '')}</text>`;
+  const goalPl = lay.place[view.quest?.goal];
+  const preview = goalPl && title.length * cell <= 24 && rowsUsed <= 2;
+  out += `<text class="hand quest-pitch" x="${wx(0, X0 + 1)}" y="${wy(pitchY)}">${esc(wrap(view.quest?.pitch || '', preview ? 33 : 54, 1)[0] || '')}</text>`;
+  if (preview) out += goalPreview(view, goalPl, monstersRef);
   // ふりだし（マジックの赤い字。2×2 目の枠に1字ずつ）
   const fy = 7;
   out += `<g class="start-label">`;
   for (let k = 0; k < 4; k++) out += `<path class="pen title-box" data-tool="ballpoint" d="${ruled(wx(0, X0 + 1 + k * 2), wy(fy), 2 * U, 2 * U, `fd${k}`, 0.3)}"/>`;
   out += `<text class="furidashi" x="${wx(0, X0 + 1) + (2 * U - 22) / 2}" y="${wy(fy + 1.52)}" letter-spacing="${2 * U - 22}">ふりだし</text>`;
-  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 0.85)}">上から下へ進む。モンスター1体 ＝ テスト1件。</text>`;
-  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 1.85)}">倒したら赤い斜線、出口の札で宣言（gridhub check）。</text>`;
+  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 0.85)}">上から下へ。モンスター1体 ＝ テスト1件</text>`;
+  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 1.85)}">倒すと斜線、出口で gridhub check</text>`;
   out += '</g>';
   // 名札（ふりだしの付箋。1ページ目の道の上）
   const g0 = lay.pages[0].lanes;
@@ -168,7 +192,9 @@ export function headLayer(view, lay, sprites) {
       const mark = where === p ? '' : where > p ? `↓p.${where + 1}` : `↑p.${where + 1}`;
       const label = g.w >= 4 ? `${c.name}${mark ? ' ' + mark : ''}` : mark ? mark.replace('p.', '') : [...c.name][0];
       const fit = wrap(label, Math.max(1.5, (g.w * U - 6) / 9.5), 1)[0] || '';
-      out += `<g class="lane-tag" data-char="${esc(id)}"><rect class="tag-bg" x="${wx(p, g.x) + 1}" y="${wy(PN_TOP - 2)}" width="${g.w * U - 2}" height="${U - 1}" fill="${hl(c.color)}"/><text class="hand tag-text" x="${wx(p, g.x) + 3}" y="${wy(PN_TOP - 1.25)}">${esc(fit)}</text></g>`;
+      const tw = Math.min(g.w * U - 2, textW(fit, 9.5) + 8);
+      const tx = Math.max(wx(p, g.x) + 1, Math.min(wx(p, g.x + g.w) - tw - 1, wx(p, g.mid) - tw / 2));
+      out += `<g class="lane-tag" data-char="${esc(id)}"><path class="tag-bg" d="${box(tx, wy(PN_TOP - 2) + 1, tw, U - 2, `tag:${id}:${p}`, 0.4)}" fill="${tint(hl(c.color), 0.15)}"/><text class="hand tag-text" x="${f1(tx + 4)}" y="${wy(PN_TOP - 1.3)}">${esc(fit)}</text></g>`;
     }
   }
   // 最後のページ: 凡例（字だけで読めるように）
@@ -188,6 +214,14 @@ export function headLayer(view, lay, sprites) {
     out += `<g class="legend-page"><text class="marker-text legend-head" x="${wx(lp, X0 + 1)}" y="${wy(ly0 - 1.2)}">このノートの読み方</text>`;
     items.forEach(([k, t], i) => (out += `<text class="hand legend-item" x="${wx(lp, X0 + 3)}" y="${wy(ly0 + 0.75 + i * 1.6)}">${esc(t)}</text>${legendGlyph(k, wx(lp, X0 + 1.5), wy(ly0 + 0.45 + i * 1.6))}`));
     out += '</g>';
+    // あがったら、エンディングを赤ペンで日記のように書きこむ
+    if (view.ending && typeof view.ending.text === 'string') {
+      const ey = ly0 + 15;
+      const lines = view.ending.text.split('\n').filter(Boolean).flatMap((l) => wrap(l, 30, 2));
+      out += `<g class="ending-note"><text class="marker-text ending-note-head" x="${wx(lp, X0 + 1)}" y="${wy(ey)}">エンディング</text>`;
+      lines.slice(0, 12).forEach((l, i) => (out += `<text class="hand ending-note-line" x="${wx(lp, X0 + 1)}" y="${wy(ey + 1.6 + i * 1.25)}">${esc(l)}</text>`));
+      out += '</g>';
+    }
   }
   return out + '</g>';
 }
@@ -309,6 +343,51 @@ function sceneryMarkup(p, t) {
 }
 
 // ---------- 道（キャラクターごとの蛍光ペン） ----------
+/** 長くまっすぐ下りる所は、ゆるく蛇行させる（目の単位。端の点は動かさない） */
+function meander(pts, seed) {
+  const out = [pts[0]];
+  const r = rng(`meander:${seed}`);
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1];
+    const [bx, by] = pts[i];
+    const len = by - ay;
+    if (Math.abs(bx - ax) < 0.01 && len > 5) {
+      const amp = 0.32 + r() * 0.12;
+      const period = 5 + r() * 2;
+      const phase = r() < 0.5 ? 1 : -1;
+      const n = Math.ceil(len / 0.7);
+      for (let k = 1; k < n; k++) {
+        const t = k / n;
+        const y = ay + len * t;
+        out.push([ax + phase * amp * Math.sin((2 * Math.PI * (y - ay)) / period) * Math.sin(Math.PI * t), y]);
+      }
+    }
+    out.push(pts[i]);
+  }
+  return out;
+}
+
+/** 折れ線の角を丸くする（蛍光ペンで道を引いたように） */
+function roundedPath(pts, r) {
+  if (pts.length < 2) return '';
+  let d = `M${f1(pts[0][0])} ${f1(pts[0][1])}`;
+  for (let i = 1; i < pts.length - 1; i++) {
+    const [ax, ay] = pts[i - 1];
+    const [px, py] = pts[i];
+    const [bx, by] = pts[i + 1];
+    const la = Math.hypot(px - ax, py - ay);
+    const lb = Math.hypot(bx - px, by - py);
+    const cross = (px - ax) * (by - py) - (py - ay) * (bx - px);
+    if (!la || !lb || Math.abs(cross) < 0.01) {
+      d += ` L${f1(px)} ${f1(py)}`;
+      continue;
+    }
+    const k = Math.min(r, la / 2, lb / 2);
+    d += ` L${f1(px - ((px - ax) / la) * k)} ${f1(py - ((py - ay) / la) * k)} Q${f1(px)} ${f1(py)} ${f1(px + ((bx - px) / lb) * k)} ${f1(py + ((by - py) / lb) * k)}`;
+  }
+  const [lx, ly] = pts[pts.length - 1];
+  return d + ` L${f1(lx)} ${f1(ly)}`;
+}
 export function roadLayer(view, lay) {
   let out = '<g id="roads">';
   view.characters.forEach((c, i) => {
@@ -317,7 +396,7 @@ export function roadLayer(view, lay) {
     const color = hl(c.color);
     let paths = '';
     for (const piece of rd.pieces) {
-      const d = 'M' + piece.pts.map(([x, y]) => `${f1(wx(piece.page, x))} ${f1(wy(y))}`).join(' L');
+      const d = roundedPath(meander(piece.pts, `${c.id}:${piece.page}`).map(([x, y]) => [wx(piece.page, x), wy(y)]), 0.55 * U);
       paths += `<path class="road-ink" data-tool="marker" d="${d}" stroke="${color}" pathLength="1"/>`;
     }
     let arrows = '';
@@ -372,7 +451,11 @@ export function monsterLayer(view, lay, monsters, { fresh = null } = {}) {
       let inner = `<title>${esc(name)}${!unknown ? `（${ok === true ? '✔ 通った' : ok === false ? '✖ 落ちている' : '・ まだ'}${c.strong ? '・強敵' : ''}${c.revived ? `・復活 ${c.revived}` : ''}）` : ''}</title>`;
       inner += `<rect class="sq-paper" x="${X}" y="${Y}" width="${2 * U}" height="${2 * U}"/>`;
       inner += `<path class="${fog ? 'pencil-sq' : 'pen'} sq-line" data-tool="${fog ? 'pencil' : 'ballpoint'}" d="${ruled(X, Y, 2 * U, 2 * U, `sq:${id}:${s.i}`, 0.35)}"/>`;
-      if (unknown) inner += `<text class="sq-q" x="${X + U}" y="${Y + U * 1.42}" text-anchor="middle">？</text>`;
+      if (unknown) {
+        inner += `<text class="sq-q${n.state === 'cleared' ? ' done' : ''}" x="${X + U}" y="${Y + U * 1.42}" text-anchor="middle">？</text>`;
+        // テストの中身は分からないが、出口は抜けた（第10章までの冒険の書）
+        if (n.state === 'cleared') inner += `<path class="slain" data-tool="redpen" d="${line(X + 5, Y + 2 * U - 5, X + 2 * U - 5, Y + 5, `sl:${id}:?`, 0.6)}"/>`;
+      }
       else inner += monsterMarkup(monsters, species, X + 3, Y + 2, 2 * U - 6, fill, slain ? 'is-slain' : fog ? 'is-fog' : '');
       if (slain) inner += `<path class="slain" data-tool="redpen" d="${line(X + 5, Y + 2 * U - 5, X + 2 * U - 5, Y + 5, `sl:${id}:${s.i}`, 0.6)}"/>`;
       if (revived) inner += `<path class="revived" data-tool="redpen" d="${circle(X + U, Y + U, U * 0.98, `rv:${id}:${s.i}`, 0.7)}"/>`;
@@ -558,9 +641,10 @@ function gateMarkup(view, pl, n, chars, monsters, attrs, extra) {
     if (!here(m)) s += `<text class="hand door-who${t}" x="${f1(cx)}" y="${f1(Y + 1.75 * U)}" text-anchor="middle">${esc([...c.name][0])}</text>`;
   }
   // ボス（中ボスはドラゴン、あがりは魔王）
-  const bs = goal ? 4.4 * U : 2.7 * U;
-  const bx = X + W - bs - (goal ? 0.6 * U : 0.3 * U);
-  const by = Y + Hh - bs - (goal ? 0.4 * U : 0.2 * U);
+  // 魔王は城のまん中の塔の前に大きく。中ボス（ドラゴン）は帯の右の端
+  const bs = goal ? 5.2 * U : 2.7 * U;
+  const bx = goal ? X + W / 2 - bs / 2 : X + W - bs - 0.3 * U;
+  const by = goal ? Y + 0.2 * U : Y + Hh - bs - 0.2 * U;
   const beaten = st === 'cleared';
   const bossFill = beaten ? '#ffffff' : pencil ? '#ffffff' : goal ? '#e6dcff' : '#c9f0dc';
   s += `<g class="boss${beaten ? ' beaten' : st === 'ready' ? ' angry' : ''}${pencil ? ' is-fog' : ''}">${monsterMarkup(monsters, goal ? 'maou' : 'dragon', bx, by, bs, bossFill, beaten ? 'is-slain' : pencil ? 'is-fog' : '')}</g>`;
@@ -575,12 +659,12 @@ function gateMarkup(view, pl, n, chars, monsters, attrs, extra) {
       s += `<path class="${ink} title-box" data-tool="${tool}" d="${ruled(cx, Y + 1.2 * U, 2 * U, 2 * U, `goal${k}`, 0.3)}"/>`;
     });
     s += `<text class="goal-char" x="${wx(pl.page, pl.x + 1) + (2 * U - 22) / 2}" y="${f1(Y + 2.73 * U)}" letter-spacing="${2 * U - 22}">あがり</text>`;
-    tx = wx(pl.page, pl.x + 7.6);
-    ty = Y + 2 * U;
+    tx = wx(pl.page, pl.x + 1);
+    ty = Y + 4.3 * U;
   }
   const kind = goal ? '魔王の城・章のあがり' : '中ボス・結合テスト';
   const title = n.title.replace(/^(結合|あがり)[:：]\s*/, '');
-  const room = bx - tx - 6;
+  const room = (goal ? X + W / 2 - bs / 2 : bx) - tx - 6;
   const head = `${id} `;
   const fit = (str, size, w) => {
     let o = '';
@@ -604,9 +688,8 @@ function gateMarkup(view, pl, n, chars, monsters, attrs, extra) {
   if (beaten) label = goal ? 'あがり！' : '撃破！';
   else if (st === 'ready') label = '全員そろった → 結合テスト！';
   else label = `待機 ${waiting.length}/${members.length}`;
-  const lx = goal ? tx : tx;
-  const lyy = goal ? ty + 2.95 * U : Y + Hh - 0.35 * U;
-  if (!goal || true) s += `<text class="hand gate-count${t}${beaten ? ' done' : ''}" x="${f1(goal ? lx : X + W - bs - 0.7 * U)}" y="${f1(lyy)}"${goal ? '' : ' text-anchor="end"'}>${esc(label)}</text>`;
+  if (goal) s += `<text class="hand gate-count big${t}${beaten ? ' done' : ''}" x="${f1(X + W - 0.8 * U)}" y="${f1(Y + 2 * U)}" text-anchor="end">${esc(label)}</text>`;
+  else s += `<text class="hand gate-count${t}${beaten ? ' done' : ''}" x="${f1(X + W - bs - 0.7 * U)}" y="${f1(Y + Hh - 0.35 * U)}" text-anchor="end">${esc(label)}</text>`;
   if (beaten) s += `<path d="${hanamaru(bx + bs / 2, by + bs / 2, bs * 0.62, `hm:${id}`)}" class="hanamaru big" data-tool="redpen" pathLength="1"/>`;
   if (n.fails > 0 && !beaten) s += `<text class="hand fail-tally" x="${X + 4}" y="${Y + Hh - 5}">${'✗'.repeat(Math.min(n.fails, 3))}</text>`;
   if (n.save?.commit) s += `<text class="hand save-commit gate-commit${t}" x="${f1(X + W - bs - 0.7 * U)}" y="${f1(Y + 1.75 * U)}" text-anchor="end">commit ${esc(String(n.save.commit).slice(0, 7))}</text>`;

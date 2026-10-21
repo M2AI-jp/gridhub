@@ -1,7 +1,7 @@
 // 世界地図の割り付け。ビュー（CONTRACTS §5・§40〜§43）から、縦の B5 の5mm方眼ノートの何ページかに、
 // キャラクターごとの道・モンスターのマス（テスト1件 = 1マス）・ダンジョンの出口の札・町・城を置く。
 // 座標はすべて「目」（1目 = 5mm = U）の整数。ページの左上からの目で考え、世界の座標はページの位置を足す。
-import { rng, own, wrap } from './sketch.js';
+import { rng, own } from './sketch.js';
 
 export const U = 16;
 export const PAGE = { w: 36, h: 51 };
@@ -13,7 +13,7 @@ export const PN_TOP = 6; // 2ページ目から: 道の上の名札の下から
 export const BOTTOM = 49; // マスや札の下の端の限り
 export const SPREAD_GAP = 6; // 見開きと見開きのあいだの机
 const SQ = 2;
-const H = { camp: 4, gate: 4, goal: 7, stamp: 5 };
+const H = { camp: 4, gate: 4, goal: 10, stamp: 5 };
 
 /** ページ（0始まり）の左上の世界座標（目） */
 export function pageOrigin(p) {
@@ -77,7 +77,62 @@ const topOf = (p) => (p === 0 ? P1_TOP : PN_TOP);
 
 /** 札の題が何行になるか（幅 w 目の札に 10.5px の字で書く） */
 export function titleLines(title, w, max = 3) {
-  return wrap(title, Math.max(3, (w * U - 8) / 10.5), max);
+  return wrapJa(title, Math.max(3, (w * U - 7) / 10.5), max);
+}
+
+const isA = (c) => /[\x21-\x7e]/.test(c);
+const cw = (t) => [...t].reduce((a, c) => a + (/[\x20-\x7e]/.test(c) ? 0.56 : 1), 0);
+/**
+ * 日本語の題を、なるべく言葉の切れ目で折り返す（英数字の語 GET /api/memos は割らない。助詞のあと・空白で切る）。
+ * 幅は全角1字 = 1。入りきらなければ最後の行を … で終える
+ */
+export function wrapJa(text, max, maxLines = 2) {
+  const chars = [...String(text || '')];
+  const parts = [];
+  let cur = '';
+  for (let i = 0; i < chars.length; i++) {
+    const c = chars[i];
+    const n = chars[i + 1];
+    cur += c;
+    const brk =
+      c === ' ' ||
+      (/[をにがはでとのへも、。・）」]/.test(c) && n && !/[をにがはでとのへもる、。）」ー]/.test(n) && !isA(n)) ||
+      (isA(c) && n && !isA(n) && n !== ' ' && !/[）」、。・ー]/.test(n)) ||
+      (!isA(c) && n && isA(n) && !/[（「]/.test(c));
+    if (brk) (parts.push(cur), (cur = ''));
+  }
+  if (cur) parts.push(cur);
+  const lines = [];
+  let line = '';
+  for (let p of parts) {
+    while (cw(p) > max) {
+      if (line) (lines.push(line.trimEnd()), (line = ''));
+      let head = '';
+      for (const c of [...p]) {
+        if (cw(head + c) > max) break;
+        head += c;
+      }
+      if (!head) head = [...p][0];
+      lines.push(head);
+      p = p.slice(head.length);
+    }
+    if (line && cw(line + p.trimEnd()) > max) (lines.push(line.trimEnd()), (line = p.trimStart()));
+    else line += p;
+  }
+  if (line.trim()) lines.push(line.trimEnd());
+  for (let k = 1; k < lines.length; k++) {
+    const m = lines[k].match(/^[）」、。]+/);
+    if (m) (lines[k - 1] += m[0]), (lines[k] = lines[k].slice(m[0].length));
+  }
+  const out = lines.filter(Boolean);
+  if (out.length > maxLines) {
+    const kept = out.slice(0, maxLines);
+    let last = kept[maxLines - 1];
+    while (last && cw(last + '…') > max) last = [...last].slice(0, -1).join('');
+    kept[maxLines - 1] = last + '…';
+    return kept;
+  }
+  return out;
 }
 
 export function layoutWorld(view) {
@@ -397,6 +452,7 @@ function scenery(view, lay, p) {
   const top = p === 0 ? P1_TOP - 1 : PN_TOP - 1;
   for (let y = 0; y < Hh; y++) for (let x = 0; x < W; x++) if (x < X0 || x >= X1 || y < top || y > BOTTOM) used[y][x] = 1;
   if (p === 0) mark(X0, 0, X1 - X0, P1_TOP); // 見出し
+  if (p === lay.pages.length - 1 && !page.units.length) mark(X0, 5, 24, view.ending ? 33 : 16); // 最後の白いページの「読み方」（とエンディング）
   for (const id of page.units) {
     const pl = lay.place[id];
     if (pl.page === p) mark(pl.x, pl.y, pl.w, pl.h, 1);

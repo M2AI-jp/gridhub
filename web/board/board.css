@@ -306,7 +306,7 @@ body.drawer-open #rail > #party { display: none; }
 .pencil-line { fill: none; stroke: var(--pencil); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; filter: url(#graphite); }
 .pencil-line.pass2 { stroke-width: 1; opacity: 0.5; }
 .pencil-text { fill: var(--pencil-ink); font-family: var(--pencil-hand); }
-.road-ink { fill: none; stroke-width: 21px; stroke-linecap: round; stroke-linejoin: round; opacity: 0.5; mix-blend-mode: multiply; }
+.road-ink { fill: none; stroke-width: 22px; stroke-linecap: round; stroke-linejoin: round; opacity: 0.62; mix-blend-mode: multiply; }
 .cont-arrow { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 
 /* 景色（マスではない） */
@@ -342,6 +342,7 @@ body.drawer-open #rail > #party { display: none; }
 .revived { fill: none; stroke: var(--red); stroke-width: 2; stroke-linecap: round; }
 .sq.alive.failing .sq-line:not(.pass2) { stroke-width: 1.6; }
 .sq-q { font-family: var(--marker); font-size: 20px; fill: var(--ink-soft); }
+.sq-q.done { opacity: 0.45; }
 .sq-strong { font-family: var(--marker); font-size: 9px; fill: #b25b00; }
 .sq:hover .sq-paper { fill: #fff8cf; }
 .fresh-slain .slain { stroke-dasharray: 40; animation: slash 0.5s ease-out both; }
@@ -355,7 +356,7 @@ body.drawer-open #rail > #party { display: none; }
 .head-name { font-size: 11px; font-weight: 600; }
 .head-sub { font-size: 9.5px; fill: var(--ink-soft); }
 .lane-tag { cursor: pointer; }
-.lane-tag .tag-bg { opacity: 0.6; }
+.lane-tag .tag-bg { stroke: rgba(29, 43, 92, 0.35); stroke-width: 0.8; filter: url(#lift); }
 .tag-text { font-size: 9.5px; font-weight: 600; }
 
 /* ダンジョンの出口の札・町・王様の城 */
@@ -416,6 +417,7 @@ body.drawer-open #rail > #party { display: none; }
 .hp-pip { fill: #fff; stroke: var(--red); stroke-width: 1.1; }
 .hp-pip.done { fill: var(--red); }
 .gate-count { font-size: 10.5px; font-weight: 700; fill: #8a4f00; }
+.gate-count.big { font-size: 13px; }
 .gate-count.done { font-family: var(--marker); font-size: 15px; fill: var(--red); font-weight: 400; }
 .gate-ready { fill: none; stroke: var(--red); stroke-width: 2.2; stroke-dasharray: 7 5; animation: march 0.9s linear infinite; }
 .boss .monster { overflow: visible; }
@@ -425,7 +427,7 @@ body.drawer-open #rail > #party { display: none; }
 
 /* 駒（白いふちのシール） */
 .pawn { cursor: pointer; outline: none; }
-.pawn-foot { fill: rgba(29, 43, 92, 0.18); }
+.pawn-foot { stroke: var(--ink); stroke-width: 1.1; opacity: 0.85; }
 .pawn-body { filter: url(#sticker); }
 .pawn .badge-bg { fill: #fffdf6; stroke-width: 1.4; }
 .badge-text { font-size: 9px; font-weight: 700; }
@@ -440,7 +442,15 @@ body.drawer-open #rail > #party { display: none; }
 .float-text.up { fill: var(--red); }
 .float-text.down { fill: var(--ink); }
 
-/* 最後のページ: 読み方 */
+/* 1ページ目の右上: あがりの予告 */
+.preview-frame { stroke-dasharray: 3 3; fill: rgba(233, 222, 249, 0.35); }
+.castle-mini { fill: #f2ecfb; stroke-width: 1.2; }
+.preview-head { font-size: 15px; fill: #6a2bb0; }
+.preview-sub { font-size: 10px; fill: var(--ink-soft); }
+
+/* 最後のページ: 読み方とエンディング */
+.ending-note-head { font-size: 20px; fill: var(--red); }
+.ending-note-line { font-size: 13px; fill: var(--red); }
 .legend-head { font-size: 20px; }
 .legend-item { font-size: 13px; }
 .lg-card { fill: #fffdf6; stroke: var(--ink); stroke-width: 1.3; }

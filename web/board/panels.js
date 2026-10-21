@@ -34,7 +34,7 @@ export function renderParty(view, sprites, selectedChar) {
       const medals = Number.isInteger(c.medals) ? c.medals : 0;
       const cases = node && Array.isArray(node.cases) ? node.cases : [];
       const fight = c.status === 'working' && node?.check?.kind === 'cmd' ? (!cases.length ? '？ まだ走らせていない' : c.square != null && c.square < cases.length ? cases[c.square].name : '全部倒した → gridhub check') : '';
-      const where = c.status === 'done' ? 'あがり' : node ? `${c.at} ${node.title}` : '';
+      const where = c.status !== 'done' && node ? `${c.at} ${node.title}` : '';
       return `<button class="party-card${selectedChar === c.id ? ' selected' : ''}" data-char="${esc(c.id)}" style="--hl:${hl(c.color)}" aria-label="${esc(c.name)}のキャラクターシートを開く">
         ${mini(sprites, c, 40)}
         <span class="pc-body">
