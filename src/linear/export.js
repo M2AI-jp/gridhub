@@ -13,6 +13,14 @@ const STATUSES = {
   fog: 'Backlog',
 };
 
+// 地図に check.cases があるマスは、テストのチェックリストを足す（§48）。無いマスの文は第10章どおり。
+function checklist(node) {
+  if (node.check?.kind !== 'cmd' || !Array.isArray(node.check.cases) || node.check.cases.length === 0) return '';
+  const results = new Map((node.cases ?? []).map((entry) => [entry.name, entry.ok]));
+  const lines = node.check.cases.map((name) => `- [${results.get(name) === true ? 'x' : ' '}] ${name}`);
+  return `\n\nテスト:\n${lines.join('\n')}`;
+}
+
 export function exportIssues(view) {
   const characters = new Map(view.characters.map((character) => [character.id, character]));
   return Object.entries(view.nodes)
@@ -28,7 +36,7 @@ export function exportIssues(view) {
       return {
         ID: id,
         Title: node.title,
-        Description: `${node.detail ?? ''}\n\n判定: ${judgment}`,
+        Description: `${node.detail ?? ''}\n\n判定: ${judgment}${checklist(node)}`,
         Status: STATUSES[node.state],
         Assignee: gate ? node.members.map((member) => characters.get(member).name).join(' & ') : owner.name,
         Project: view.quest.title,

@@ -15,6 +15,17 @@ const isText = (value) => typeof value === 'string' && value.trim().length > 0;
 const isTitle = (value) => isText(value) && Array.from(value).length <= 80;
 const isStrings = (value) => Array.isArray(value) && value.every((item) => typeof item === 'string');
 
+function validCases(cases) {
+  if (!Array.isArray(cases) || cases.length < 1 || cases.length > 50) return 'cases は1〜50件のテストの名前の配列です';
+  const seen = new Set();
+  for (const name of cases) {
+    if (!isText(name) || Array.from(name).length > 120) return 'cases のテストの名前は1〜120文字の空でない文字列です';
+    if (seen.has(name.trim())) return `cases のテストの名前が重複しています: ${name}`;
+    seen.add(name.trim());
+  }
+  return null;
+}
+
 export function validateMap(map) {
   const errors = [];
   const warnings = [];
@@ -36,6 +47,7 @@ export function validateMap(map) {
     }
     if (!isTitle(map.quest.title)) format('quest.title', 'タイトルは1〜80文字です');
     optional(map.quest, 'pitch', (v) => typeof v === 'string', 'quest');
+    if (Object.hasOwn(map.quest, 'save') && map.quest.save !== 'git') format('quest.save', 'save は "git" だけです');
   }
   if (!Array.isArray(map.characters) || map.characters.length === 0) {
     format('characters', 'キャラクターを1人以上、配列で指定してください');
@@ -125,7 +137,12 @@ export function validateMap(map) {
           || !check.seal.every((file) => containedFile('/', file)))) {
           checkError('seal はルート内の相対ファイルパスの配列です');
         }
+        if (Object.hasOwn(check, 'cases')) {
+          const message = validCases(check.cases);
+          if (message) checkError(message);
+        }
       } else if (check.kind === 'stamp') {
+        if (Object.hasOwn(check, 'cases')) checkError('ハンコの判定に cases は書けません');
         if (node.type !== 'task' || !characters.some((c) =>
           isObject(c) && c.id === check.by && c.kind === 'human')) {
           checkError('ハンコは task に限り、by に人間のキャラクターIDが必要です');

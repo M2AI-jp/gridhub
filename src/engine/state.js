@@ -211,7 +211,8 @@ export function reduceEvent(state, event) {
   return state;
 }
 
-export function replay(root, events) {
+// hooks.before / hooks.after は、イベントを適用する前・後の状態を見る（ビューの積み上げ用。状態は変えないこと）。
+export function replay(root, events, hooks = {}) {
   const genesis = events[0];
   if (!genesis || genesis.type !== 'genesis') return null;
   let state = initialState(readMap(root, genesis.data.map_file), genesis.data.version);
@@ -219,6 +220,7 @@ export function replay(root, events) {
   const targets = new Set(events.filter(({ type }) => type === 'loaded').map(({ data }) => data.to_seq));
   const snapshots = new Map();
   for (const event of events) {
+    hooks.before?.(state, event);
     if (event.type === 'amended') {
       state = amendState(state, readMap(root, event.data.map_file), event.data.version, event.seq);
     } else if (event.type === 'loaded') {
@@ -228,6 +230,7 @@ export function replay(root, events) {
     } else {
       reduceEvent(state, event);
     }
+    hooks.after?.(state, event);
     if (targets.has(event.seq)) snapshots.set(event.seq, structuredClone(state));
   }
   return state;

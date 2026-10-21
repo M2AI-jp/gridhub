@@ -5,6 +5,7 @@ import { MasumeError } from './errors.js';
 import { findJumon, headOf } from './jumon.js';
 import { readMapFile, validateMap } from './map.js';
 import { containedFile, logFile } from './paths.js';
+import { saveTerritory } from './save.js';
 import { gateMembers, isSealed, replay, sealFiles } from './state.js';
 import {
   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
@@ -80,6 +81,12 @@ export function newGame(root, mapPath, { actor = defaultActor(), force = false }
       },
       ...seals,
     ], { actor });
+    // Git でセーブする冒険は、ふりだしで全員の縄張りをセーブする（§43.3）。
+    if (map.quest.save === 'git') {
+      events.push(...appendEventsLocked(root, [{
+        type: 'saved', data: saveTerritory(root, map, map.characters.map(({ id }) => id), null),
+      }], { actor, previous: events.at(-1) }));
+    }
     return { head: headOf(events) };
   });
 }

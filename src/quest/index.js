@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import * as engine from '../engine/index.js';
 import { gmCommand, gmTimeoutSeconds, parseGm, runGm, tail } from './adapter.js';
+import { commitBeginning, ensureGitSave, ensureRepository } from './git.js';
 import { listenNotice } from './help.js';
 import { inspectMap, MAP_FILE } from './inspect.js';
 import { buildPrompt, buildRetryPrompt } from './prompt.js';
@@ -72,6 +73,7 @@ function printSummary(say, { root, cwd, bin }, s) {
   }
   if (s.setup.error) say(`※ 支度（AGENTS.md ほか）に失敗しました: ${s.setup.error}\n  あとで masume init${root === cwd ? '' : ` --dir ${quote(root)}`} を打ってください`);
   else printSetup(say, s.setup);
+  if (s.beginning?.commit) say(`  最初のコミット: ${s.beginning.commit.slice(0, 7)} gridhub: 冒険のはじまり`);
   say(`ふっかつのじゅもん: ${s.jumon}`);
   say('');
   say('次の一手:');
@@ -196,6 +198,11 @@ export async function runQuest(opts, ctx) {
     prompt = buildRetryPrompt({ original, problems, warnings, missing, attempt: round + 1 });
   }
 
+  // Git でセーブする冒険にする（§46.2・§46.3）。地図に quest.save が無ければ足し、Git の外なら git init する
+  if (ensureGitSave(mapFile)) say(`${MAP_FILE} に quest.save: "git" を足しました（町 = セーブ = Git のコミット）`);
+  const repository = ensureRepository(root);
+  if (repository.error) say(`※ ${repository.error}。Git のセーブなしで続けます（町に着いてもコミットされません）`);
+  else if (repository.initialized) say('ここは Git の作業ツリーではなかったので、git init しました');
   const { head } = engine.newGame(root, mapFile, { actor: opts.actor, force: Boolean(opts.force) });
   const wish = recordWish(root, { actor: opts.actor, text: opts.wish, gm: gm.kind, model });
   try {
@@ -206,6 +213,11 @@ export async function runQuest(opts, ctx) {
   const jumon = engine.jumonOf((wish?.hash) ?? head.hash);
   const summary = summarize(root, engine.buildView(root), jumon, wish?.seq ?? head.seq);
   summary.setup = prepareProject(root, { gm: opts.gm, override, allowListen, ctx });
+  if (repository.initialized) {
+    const beginning = commitBeginning(root);
+    summary.beginning = beginning;
+    if (beginning.error) say(`※ 最初のコミットができませんでした: ${beginning.error}`);
+  }
 
   if (opts.json) {
     const { setup, ...rest } = summary;
@@ -213,6 +225,7 @@ export async function runQuest(opts, ctx) {
       ok: true, root, ...rest,
       setup: setup.error ? { ok: false, error: setup.error } : { ok: true, files: setup.files.map(fileEntry) },
       files: { map: mapFile, wish: join(root, 'WISH.md'), log: logFile },
+      git: { initialized: repository.initialized, error: repository.error ?? null, commit: summary.beginning?.commit ?? null },
     }));
   } else {
     printSummary(say, { root, cwd, bin: ctx.bin }, summary);

@@ -23,7 +23,11 @@ test('load: seq でも、ふっかつのじゅもんでも、その時の盤面�
   assert.equal(ev.type, 'loaded');
   assert.deepEqual(ev.data, { to_seq: seq1 });
   let v = view(dir);
-  assert.deepEqual(v.characters, snap.characters, 'キャラクターはその時の状態');
+  // 第11章（CONTRACTS §40・§42）: 戦いの記録（テスト1件ずつの成否から導く square・メダルなど）は、ロードしても巻き戻らない。
+  // それ以外（位置・レベル・経験値など）がその時の状態に戻ることを確かめる。
+  const BATTLE = ['square', 'medals', 'revived', 'strong', 'skills', 'treasures', 'traps'];
+  const timeless = (characters) => characters.map((c) => Object.fromEntries(Object.entries(c).filter(([k]) => !BATTLE.includes(k))));
+  assert.deepEqual(timeless(v.characters), timeless(snap.characters), 'キャラクターはその時の状態');
   for (const id of Object.keys(snap.nodes)) assert.equal(v.nodes[id].state, snap.nodes[id].state, `${id} の state`);
   assert.equal(masume(['verify', '--dir', dir]).code, 0, 'ロードしても鎖は正常');
 
