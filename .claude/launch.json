@@ -4,14 +4,47 @@
     {
       "name": "masume-board",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["bin/masume.js", "serve", "--port", "5005"],
+      "runtimeArgs": [
+        "bin/masume.js",
+        "serve",
+        "--port",
+        "5005"
+      ],
       "port": 5005
     },
     {
       "name": "kakeibo-board",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["bin/masume.js", "serve", "--dir", "examples/kakeibo", "--port", "5010"],
+      "runtimeArgs": [
+        "bin/masume.js",
+        "serve",
+        "--dir",
+        "examples/kakeibo",
+        "--port",
+        "5010"
+      ],
       "port": 5010
+    },
+    {
+      "name": "memo-board",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "bin/masume.js",
+        "serve",
+        "--dir",
+        "examples/memo",
+        "--port",
+        "5011"
+      ],
+      "port": 5011
+    },
+    {
+      "name": "memo-app",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "examples/memo/src/server/main.mjs"
+      ],
+      "port": 3000
     }
   ]
 }

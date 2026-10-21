@@ -1,0 +1,52 @@
+GM を呼びます（claude）。地図ができるまで数分かかることがあります
+  GM の出力: /Users/amano/dev/masume/examples/memo/quest.log
+
+===== GM 1回目 =====
+$ claude -p --model sonnet --permission-mode bypassPermissions
+[mcp-sdk] SEP-2352: stored OAuth credential has no 'issuer' stamp (pre-upgrade storage or provider not round-tripping the value). SEP-2352 isolation is inactive for this read; ensure your provider round-trips the issuer field.
+地図の検査は通りました。判定の素振りは、すでに全13件を「実装がまだない」で落ちることまで確認してあります。
+
+## 報告
+
+**願い**: メモを書いて一覧できる、ブラウザで動くメモアプリ。保存は Node 標準だけで作る小さな HTTP サーバーで行い、データは `memos.json` に置きます。
+
+**キャラクター（4人）**
+- 倉庫番 `store`（`src/store/**`）: S1 保存と一覧 → S2 取得・更新・削除 → S3 入力検査と検索
+- 伝令 `api`（`src/server/**`）: A1 起動と静的配信 → A2 CRUD → 宿屋 → A3 エラーと検索
+- 絵師 `ui`（`web/**`）: U1 骨組み → U2 描画関数 → 宿屋 → U3 APIクライアント → U4 コントローラと app.mjs
+- 勇者 `hero`（人間）: H1 方針の承認（ハンコ）→ G2 → H2 ブラウザで触って承認（ハンコ）
+
+**ゲート**
+- G1 結合: 保存したメモが再起動後も残る（倉庫番と伝令）
+- G2 結合: 画面部品が API とつながる（伝令、絵師、勇者）
+- GOAL あがり: メモを書く、新しい順の一覧、検索、編集、削除、空メモの拒否、再起動後も残る、全部消すと空に戻る（全員）
+
+**判定と文書**
+- 判定は `checks/` の S1〜S3、A1〜A3、U1〜U4、G1、G2、GOAL の13本です。共通部品は `checks/lib/helpers.mjs`、API 用のにせストアは `checks/fixtures/fake-store.mjs` です。
+- 各道の最初の task は他の人の成果を待ちません。API の判定は `MEMO_STORE_MODULE` で、にせストアに差し替えて走ります。
+- ゲートの判定は、落ちたときに `MASUME_BLAME` を出します。
+- モジュール間の約束は `CONTRACTS.md`、聞かずに決めた前提は `ASSUMPTIONS.md` に書きました。
+
+**確認できていないこと**
+- 判定が「実装があれば通る」ことは確かめていません。参照実装を一時フォルダで走らせる確認は許可されなかったので、やっていません。
+- そのため、判定自身のバグが残っている可能性があります。エージェントが素振りで「判定のほうがおかしい」と報告してきたら、直して封印し直してください。
+
+**判定の限界**
+- ヘッドレスブラウザは使いません。`app.mjs` と DOM の最後のつなぎは、勇者の H2（実ブラウザで確認するハンコ）に任せています。
+
+(GM の終了コード: 0)
+冒険がはじまります！
+「メモアプリ」（MEMO）  メモを書いて一覧できる、ブラウザで動くメモアプリ
+  キャラクター 4人（エージェント 3・人間 1）: 倉庫番、伝令、絵師、勇者
+  マス 17（task 12・結合ゲート 3・宿屋 2）  あがり: GOAL
+  封印した判定: 13/13 マス
+書きました: AGENTS.md
+書きました: CLAUDE.md
+書きました: .gitignore（足した行: .masume/lock .masume/state.json .masume/party.log）
+書きました: .masume/party.json（agent: claude, parallel: 3）
+ふっかつのじゅもん: ねほぼ もぢじ ろほせ のがみ
+
+次の一手:
+  盤面を開く      masume serve
+  パーティ出撃    masume party
+（masume が PATH に無いときは、masume の代わりに node /Users/amano/dev/masume/bin/masume.js と打ってください）

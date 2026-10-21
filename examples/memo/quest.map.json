@@ -1,0 +1,334 @@
+{
+  "masume": 1,
+  "quest": {
+    "id": "MEMO",
+    "title": "メモアプリ",
+    "pitch": "メモを書いて一覧できる、ブラウザで動くメモアプリ",
+    "goal": "GOAL"
+  },
+  "characters": [
+    {
+      "id": "store",
+      "name": "倉庫番",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "merchant",
+      "color": "yellow",
+      "module": "メモの保存（ファイル）",
+      "territory": [
+        "src/store/**"
+      ],
+      "path": [
+        "S1",
+        "S2",
+        "S3",
+        "G1",
+        "GOAL"
+      ]
+    },
+    {
+      "id": "api",
+      "name": "伝令",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "herald",
+      "color": "blue",
+      "module": "HTTP サーバーと API",
+      "territory": [
+        "src/server/**"
+      ],
+      "path": [
+        "A1",
+        "A2",
+        "CA",
+        "A3",
+        "G1",
+        "G2",
+        "GOAL"
+      ]
+    },
+    {
+      "id": "ui",
+      "name": "絵師",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "painter",
+      "color": "pink",
+      "module": "ブラウザの画面",
+      "territory": [
+        "web/**"
+      ],
+      "path": [
+        "U1",
+        "U2",
+        "CU",
+        "U3",
+        "U4",
+        "G2",
+        "GOAL"
+      ]
+    },
+    {
+      "id": "hero",
+      "name": "勇者",
+      "kind": "human",
+      "job": "hero",
+      "color": "green",
+      "module": "承認と最終確認",
+      "path": [
+        "H1",
+        "G2",
+        "H2",
+        "GOAL"
+      ]
+    }
+  ],
+  "nodes": {
+    "S1": {
+      "type": "task",
+      "title": "メモを保存して一覧する",
+      "detail": "src/store/memo-store.mjs に createStore(dir) を作る（CONTRACTS.md §2）。create / list を実装し、<dir>/memos.json に保存する。合格: 判定 node checks/S1.mjs が通る。判定が見るもの: create が Memo{id,title,body,createdAt,updatedAt} を返す／list が新しい順／dir が無くても作られ memos.json ができる／createStore を作り直しても残っている／同時に10件 create しても取りこぼさない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/S1.mjs",
+        "seal": [
+          "checks/S1.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "labels": [
+        "store"
+      ]
+    },
+    "S2": {
+      "type": "task",
+      "title": "メモを取得・更新・削除する",
+      "detail": "get / update / remove を実装する（CONTRACTS.md §2）。update は指定項目だけ変え updatedAt を更新し、一覧の順序は変えない。無い id の update/remove は error.code === 'E_NOT_FOUND' で reject。get は無ければ null。変更は保存される。判定: node checks/S2.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/S2.mjs",
+        "seal": [
+          "checks/S2.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "rollback_to": "@here",
+      "labels": [
+        "store"
+      ]
+    },
+    "S3": {
+      "type": "task",
+      "title": "入力検査と検索を付ける",
+      "detail": "create/update の検査（E_INVALID / E_TOO_LONG(title100・body10000) / E_EMPTY）と list({q}) の部分一致検索（大文字小文字を区別せず、q は正規表現ではなく文字列、結果は新しい順）を実装する。検査に失敗したら何も変えない。判定: node checks/S3.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/S3.mjs",
+        "seal": [
+          "checks/S3.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "labels": [
+        "store"
+      ]
+    },
+    "A1": {
+      "type": "task",
+      "title": "サーバーを起動して画面を配る",
+      "detail": "src/server/main.mjs に HTTP サーバーを作る（CONTRACTS.md §3）。PORT=0 で起動し標準出力に「LISTENING http://127.0.0.1:<port>」を出す。GET /api/health → 200 {\"ok\":true}。静的ファイル配信（MEMO_WEB_DIR、GET / は index.html、.mjs は text/javascript、web の外は読ませない）、未知の /api/ は 404 E_NO_ROUTE、SIGTERM で終了コード0。判定は MEMO_STORE_MODULE でにせストア（checks/fixtures/fake-store.mjs）に差し替えるので、倉庫番の実装を待たなくてよい（ストアは起動時に動的 import する）。判定: node checks/A1.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/A1.mjs",
+        "seal": [
+          "checks/A1.mjs",
+          "checks/lib/helpers.mjs",
+          "checks/fixtures/fake-store.mjs"
+        ]
+      },
+      "labels": [
+        "api"
+      ]
+    },
+    "A2": {
+      "type": "task",
+      "title": "メモのCRUD APIを公開する",
+      "detail": "GET/POST /api/memos、GET/PUT/DELETE /api/memos/:id を CONTRACTS.md §3 の表どおりに作る（POST は 201、DELETE は 204 本文なし、一覧は {\"memos\":[…]}、:id は URL デコード、本文から取り出すのは title と body だけ）。ストアは createStore(MEMO_DATA_DIR) で得る（既定は src/store/memo-store.mjs、MEMO_STORE_MODULE で差し替え）。判定: node checks/A2.mjs（にせストアで動く）",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/A2.mjs",
+        "seal": [
+          "checks/A2.mjs",
+          "checks/lib/helpers.mjs",
+          "checks/fixtures/fake-store.mjs"
+        ]
+      },
+      "labels": [
+        "api"
+      ]
+    },
+    "A3": {
+      "type": "task",
+      "title": "エラーと検索を整える",
+      "detail": "ストアの error.code を HTTP に写す: E_EMPTY/E_TOO_LONG/E_INVALID→400、E_NOT_FOUND→404、壊れた JSON→400 E_BAD_JSON、JSON だがオブジェクトでない→400 E_INVALID、使えないメソッド→405 E_METHOD、想定外→500 E_INTERNAL（サーバーは生き残る）。応答は {\"error\":CODE,\"message\":\"…\"}。GET /api/memos?q= を Store.list({q}) に渡す。判定: node checks/A3.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/A3.mjs",
+        "seal": [
+          "checks/A3.mjs",
+          "checks/lib/helpers.mjs",
+          "checks/fixtures/fake-store.mjs"
+        ]
+      },
+      "labels": [
+        "api"
+      ]
+    },
+    "U1": {
+      "type": "task",
+      "title": "画面の骨組みを作る",
+      "detail": "web/index.html と web/style.css を作る（CONTRACTS.md §4）。doctype・lang=ja・charset・viewport・title(メモ)、form#memo-form（input#memo-title maxlength=100 / textarea#memo-body / submit ボタン）、input#memo-search、ul#memo-list、#memo-empty、#memo-error(role=alert,hidden)、<script type=module src=/app.mjs>、<link rel=stylesheet href=/style.css>。style.css は .memo のスタイルと white-space: pre-wrap を含む。判定: node checks/U1.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/U1.mjs",
+        "seal": [
+          "checks/U1.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "labels": [
+        "ui"
+      ]
+    },
+    "U2": {
+      "type": "task",
+      "title": "メモ一覧の描画関数を作る",
+      "detail": "web/memo-view.mjs に escapeHtml と renderMemoList(memos) を作る（CONTRACTS.md §4 の <li class=\"memo\" data-id> の形、title 空は (無題)、id/title/body は必ずエスケープ、渡された順のまま、空配列は空文字）。ブラウザでも Node でも import できる純粋な関数にする（document に触らない）。判定: node checks/U2.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/U2.mjs",
+        "seal": [
+          "checks/U2.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "labels": [
+        "ui"
+      ]
+    },
+    "U3": {
+      "type": "task",
+      "title": "APIクライアントを作る",
+      "detail": "web/api-client.mjs に createClient(baseUrl, fetchImpl) を作る（CONTRACTS.md §4）。list(q)/create/update/remove。q は encodeURIComponent、2xx 以外は status と code を持つ Error で reject、fetch は差し替え可能。判定: node checks/U3.mjs（にせの HTTP サーバーに向けて確かめる）",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/U3.mjs",
+        "seal": [
+          "checks/U3.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "labels": [
+        "ui"
+      ]
+    },
+    "U4": {
+      "type": "task",
+      "title": "画面の動きをつなぐ",
+      "detail": "web/controller.mjs に createController({client,onChange}) を作り（状態 {memos,query,editingId,error}、init/save/startEdit/cancelEdit/remove/search、失敗しても throw せず error に入れる、search は後から始めた読み込みが勝つ。詳細は CONTRACTS.md §4）、web/app.mjs で api-client・controller・memo-view と index.html の id をつなぐ（submit/検索入力/編集・削除ボタンは data-action でイベント委譲）。判定: node checks/U4.mjs。ブラウザでの実際の動きは勇者が H2 で確かめる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/U4.mjs",
+        "seal": [
+          "checks/U4.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "rollback_to": "@here",
+      "labels": [
+        "ui"
+      ]
+    },
+    "H1": {
+      "type": "task",
+      "title": "画面の見た目の方針を承認",
+      "detail": "メモの項目（タイトルと本文）、一覧は新しい順、検索・編集・削除ができる、という ASSUMPTIONS.md の方針でよいか承認する（ハンコ）。",
+      "check": {
+        "kind": "stamp",
+        "by": "hero"
+      },
+      "labels": [
+        "hero"
+      ]
+    },
+    "H2": {
+      "type": "task",
+      "title": "ブラウザで触って承認",
+      "detail": "`node src/server/main.mjs` を起動して http://127.0.0.1:3000 を開く。メモを書く→一覧に出る→検索→編集→削除→サーバーを止めて起動し直しても残っている、を実際に触って確かめ、問題なければハンコ。",
+      "check": {
+        "kind": "stamp",
+        "by": "hero"
+      },
+      "labels": [
+        "hero"
+      ]
+    },
+    "CA": {
+      "type": "camp",
+      "title": "宿屋（API）"
+    },
+    "CU": {
+      "type": "camp",
+      "title": "宿屋（画面）"
+    },
+    "G1": {
+      "type": "gate",
+      "title": "結合: メモが再起動後も残る",
+      "detail": "本物のストアと本物のサーバーをつなぐ（MEMO_STORE_MODULE なし）。POST した2件が新しい順で返り、検索・更新・削除が効き、検査エラーが 400/404 になり、サーバーを SIGTERM で止めて同じ MEMO_DATA_DIR で起動し直しても残っている。判定: node checks/G1.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/G1.mjs",
+        "seal": [
+          "checks/G1.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "labels": [
+        "gate"
+      ]
+    },
+    "G2": {
+      "type": "gate",
+      "title": "結合: 画面部品がAPIとつながる",
+      "detail": "本物の web/ を配るサーバーを起動し（本物のストア）、GET / の画面から辿れるファイルが全部 200 と正しい Content-Type で取れ、api-client・controller・memo-view が本物の API に対して作成→一覧→検索→更新→削除と描画ができる。判定: node checks/G2.mjs",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/G2.mjs",
+        "seal": [
+          "checks/G2.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "labels": [
+        "gate"
+      ]
+    },
+    "GOAL": {
+      "type": "gate",
+      "title": "あがり: メモを書いて一覧できる",
+      "detail": "ユーザーの願いが叶った一場面を外から確かめる。サーバー起動→画面と部品が届く→メモを3つ書くと新しい順に並ぶ（HTML は無害化）→言葉で絞り込める→直せる→消せる→空メモは弾かれる→memos.json が残る→サーバーを止めて起動し直しても同じ一覧→全部消すと空。判定: node checks/GOAL.mjs。勇者は H2 で実ブラウザでも確認済みであること。",
+      "check": {
+        "kind": "cmd",
+        "run": "node checks/GOAL.mjs",
+        "seal": [
+          "checks/GOAL.mjs",
+          "checks/lib/helpers.mjs"
+        ]
+      },
+      "xp": 5,
+      "labels": [
+        "goal"
+      ]
+    }
+  }
+}

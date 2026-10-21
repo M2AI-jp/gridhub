@@ -1,0 +1,29 @@
+=== S1: node checks/S1.mjs ===
+ok   create が memo を返す
+ok   list は新しい順
+ok   作業フォルダが無くても作られ、memos.json に保存される
+ok   作り直したストアにも残っている
+ok   同時に10件作っても取りこぼさない
+すべて通りました
+
+(exit 0, 67ms)
+=== S2: node checks/S2.mjs ===
+ok   get は memo か null
+ok   update は指定した項目だけ変え、順序を変えない
+ok   update は保存される
+ok   無い id の update / remove は E_NOT_FOUND
+ok   remove で消え、保存される
+すべて通りました
+
+(exit 0, 89ms)
+=== S3: node checks/S3.mjs ===
+ok   空のメモは E_EMPTY
+ok   title だけ・body だけは作れる（そのまま保存、trim しない）
+ok   長さの上限（title 100 / body 10000）
+ok   文字列でない値・入力なしは E_INVALID
+ok   update も同じ検査をし、失敗したら何も変えない
+ok   list({q}) は title / body の部分一致（大文字小文字を区別しない）
+ok   q は正規表現ではなく文字列として探す
+すべて通りました
+
+(exit 0, 66ms)

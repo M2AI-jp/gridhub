@@ -1,0 +1,7 @@
+# マスメ（セーブデータ本体 .masume/log.jsonl は残す）
+.masume/lock
+.masume/state.json
+.masume/party.log
+
+# 手で触って確かめたときのメモ（遊ぶ人のデータ）
+data/

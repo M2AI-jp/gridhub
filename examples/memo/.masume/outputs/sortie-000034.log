@@ -1,0 +1,10 @@
+## 報告書 絵師 U3
+- 変更したファイル: `web/api-client.mjs`（新規）
+- 判定の結果: 素振りも宣言判定も通りました。素振りは「すべて通りました」、宣言判定は「判定成功: ui が U3 を突破しました」と出ました。
+- 申し送り（次のマスの自分へ）: 日誌 seq 40 に記録しました。
+  - `createClient(baseUrl, fetchImpl)` は `list(q)` / `create` / `update` / `remove` を持ちます。
+  - `list` は memos の配列を返し、`remove` は `undefined` を返します。
+  - エラーは `Error` に `status` と `code` を付けて reject します。
+  - `fetchImpl` を渡さないときは `globalThis.fetch` を使います。
+  - U4 の `app.mjs` では `err.code` と `err.status` を見て `#memo-error` に出します。
+- GMへの依頼: ありません。

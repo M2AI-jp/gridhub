@@ -1,0 +1,10 @@
+## 報告書 倉庫番 S2
+- 変更したファイル: `src/store/memo-store.mjs`。`get`、`update`、`remove` を追加し、`E_NOT_FOUND` のエラーを作る `notFound()` も足した。
+- 判定の結果:
+  - 素振り（`node checks/S2.mjs`）は 5 項目すべて通り、「すべて通りました」と出た。
+  - 宣言判定は「判定成功: store が S2 を突破しました」だった。
+- 申し送り（次のマスの自分へ）:
+  - 書き込みは直列化し、保存に失敗したら元のデータに戻す。
+  - 次のマスで残っているのは、`create` / `update` の検査（`E_INVALID` / `E_TOO_LONG` / `E_EMPTY`）と `list({ q })`。契約 §2 に書いてある。
+  - 日誌は seq 36 に記録した。
+- GMへの依頼: なし。

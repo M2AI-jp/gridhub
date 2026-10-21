@@ -1,0 +1,19 @@
+=== U1: node checks/U1.mjs ===
+ok   HTML の基本（doctype / lang=ja / charset / viewport / title）
+ok   入力フォーム #memo-form（title / body / 送信ボタン）
+ok   検索・一覧・空表示・エラー表示の置き場
+ok   app.mjs を module で読む
+ok   style.css が読まれていて、中身がある
+すべて通りました
+
+(exit 0, 43ms)
+=== U2: node checks/U2.mjs ===
+ok   escapeHtml は & < > " ' を置き換える
+ok   空配列は空文字
+ok   1件ぶんの <li class="memo" data-id> と部品
+ok   渡された順のまま並べる
+ok   title が空なら (無題) と出す
+ok   HTML を埋め込まれても無害（エスケープ）
+すべて通りました
+
+(exit 0, 44ms)

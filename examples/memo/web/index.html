@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>メモ</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="app">
+    <h1>メモ</h1>
+    <form id="memo-form">
+      <label for="memo-title">タイトル</label>
+      <input id="memo-title" name="title" type="text" maxlength="100" autocomplete="off">
+      <label for="memo-body">本文</label>
+      <textarea id="memo-body" name="body" rows="4"></textarea>
+      <button type="submit">保存</button>
+    </form>
+    <p id="memo-error" role="alert" hidden></p>
+    <label for="memo-search">検索</label>
+    <input id="memo-search" type="search" placeholder="メモを検索" autocomplete="off">
+    <p id="memo-empty" hidden>メモがありません</p>
+    <ul id="memo-list"></ul>
+  </main>
+  <script type="module" src="/app.mjs"></script>
+</body>
+</html>

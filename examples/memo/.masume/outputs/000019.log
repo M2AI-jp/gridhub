@@ -1,0 +1,9 @@
+=== S1: node checks/S1.mjs ===
+ok   create が memo を返す
+ok   list は新しい順
+ok   作業フォルダが無くても作られ、memos.json に保存される
+ok   作り直したストアにも残っている
+ok   同時に10件作っても取りこぼさない
+すべて通りました
+
+(exit 0, 67ms)

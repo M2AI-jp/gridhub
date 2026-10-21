@@ -1,0 +1,25 @@
+=== U3: node checks/U3.mjs ===
+ok   準備: にせ API を立てる
+ok   list() は memos の配列を返し、q が空なら付けない
+ok   list(q) は q を URL エンコードして付ける
+ok   create は JSON を POST して memo を返す
+ok   update は PUT /api/memos/:id、remove は DELETE（戻りなし）
+ok   エラー応答は status と code 付きで reject する
+ok   つながらないときも reject する
+ok   fetch を差し替えられる（base が空なら相対パス）
+すべて通りました
+
+(exit 0, 103ms)
+=== U4: node checks/U4.mjs ===
+ok   init: 最初の状態と一覧の読み込み
+ok   save: 新規は create → 一覧を読み直す
+ok   save: 空入力は client を呼ばず error を出す
+ok   編集: startEdit → save は update、終わると editingId が null
+ok   remove: 消して読み直す。編集中のものを消すと編集をやめる
+ok   search: query を覚え、以降の読み直しにも使う
+ok   失敗しても throw せず error に出し、成功で消える
+ok   search: 遅れて返った古い結果で上書きしない
+ok   app.mjs: 3つの部品と index.html の id をつなぐ
+すべて通りました
+
+(exit 0, 126ms)

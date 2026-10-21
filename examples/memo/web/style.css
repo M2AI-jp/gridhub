@@ -1,0 +1,21 @@
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Hiragino Sans", sans-serif;
+  background: #f5f5f0;
+  color: #222;
+}
+.app { max-width: 640px; margin: 0 auto; padding: 16px; }
+form { display: grid; gap: 8px; margin-bottom: 16px; }
+label { font-size: 0.85rem; color: #555; }
+input, textarea, button { font: inherit; padding: 8px; border: 1px solid #bbb; border-radius: 4px; }
+button { background: #2d6cdf; color: #fff; border-color: #2d6cdf; cursor: pointer; }
+#memo-error { color: #b00020; background: #fdecea; padding: 8px; border-radius: 4px; }
+#memo-error[hidden], #memo-empty[hidden] { display: none; }
+#memo-list { list-style: none; margin: 16px 0 0; padding: 0; display: grid; gap: 12px; }
+.memo { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 12px; }
+.memo-title { margin: 0 0 4px; font-size: 1.05rem; }
+.memo-body { margin: 0 0 8px; white-space: pre-wrap; word-break: break-word; }
+.memo-time { font-size: 0.75rem; color: #777; margin-right: 8px; }
+.memo-edit, .memo-delete { padding: 4px 8px; font-size: 0.85rem; }
+.memo-delete { background: #fff; color: #b00020; border-color: #b00020; }

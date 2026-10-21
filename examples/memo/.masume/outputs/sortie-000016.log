@@ -1,0 +1,8 @@
+## 報告書 倉庫番 S1
+- 変更したファイル: `src/store/memo-store.mjs`（新規）
+- 判定の結果: 素振り `node checks/S1.mjs` は5件すべて通りました。宣言判定は「判定成功: store が S1 を突破しました」でした。
+- 申し送り（次のマスの自分へ）:
+  - `memos.json` の形は `{nextId, memos[]}` です。id は連番の文字列で、再利用しません。
+  - 書き込みは直列にして、tmp ファイルに書いてから rename します。
+  - 未実装は `get` / `update` / `remove` と、入力の検査（`E_INVALID` / `E_TOO_LONG` / `E_EMPTY` / `E_NOT_FOUND`）、`list({q})` の検索です。契約 §2 に従ってください。
+- GMへの依頼: なし

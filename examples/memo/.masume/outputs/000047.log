@@ -1,0 +1,15 @@
+=== A3: node checks/A3.mjs ===
+ok   起動
+ok   空のメモは 400 E_EMPTY
+ok   長すぎるは 400 E_TOO_LONG
+ok   型が違うは 400 E_INVALID（文字列でない title / JSON が配列）
+ok   壊れた JSON は 400 E_BAD_JSON
+ok   id などの余計な項目は無視する
+ok   無い id は 404 E_NOT_FOUND（PUT / DELETE）
+ok   PUT の入力エラーも 400
+ok   GET /api/memos?q= で絞り込む
+ok   使えないメソッドは 405 E_METHOD
+ok   想定外のエラーは 500 E_INTERNAL で、サーバーは生き残る
+すべて通りました
+
+(exit 0, 148ms)

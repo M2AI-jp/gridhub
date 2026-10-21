@@ -1,0 +1,24 @@
+=== A1: node checks/A1.mjs ===
+ok   起動して LISTENING を出す
+ok   GET /api/health → {ok:true}
+ok   GET / は index.html（text/html; charset=utf-8）
+ok   静的ファイルの Content-Type
+ok   無いファイルは 404
+ok   web の外は読めない（../ と %2e%2e）
+ok   未知の /api/ は 404 + E_NO_ROUTE
+ok   SIGTERM で終了コード 0
+すべて通りました
+
+(exit 0, 147ms)
+=== A2: node checks/A2.mjs ===
+ok   起動
+ok   最初は GET /api/memos が {memos:[]}
+ok   POST /api/memos → 201 + memo
+ok   GET /api/memos は新しい順
+ok   GET /api/memos/:id
+ok   PUT /api/memos/:id は部分更新
+ok   DELETE → 204（本文なし）、その後 404
+ok   id に記号を含んでも壊れない（URL エンコード）
+すべて通りました
+
+(exit 0, 147ms)
