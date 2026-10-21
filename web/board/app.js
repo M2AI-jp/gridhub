@@ -1,18 +1,26 @@
-// マスメの盤面。ビュー（CONTRACTS §5）を受け取り、5mm方眼ノートのすごろくとして描く。
-import { layout, pageBox, U } from './layout.js';
-import { defs, paper, roads, laneHeads, nodesLayer } from './render.js';
+// GridHub の盤面。ビュー（CONTRACTS §5・§40〜§43）を受け取り、縦の5mm方眼ノートの世界地図として描く（§50）。
+import { layoutWorld, stopOf, U, PAGE, pageOrigin } from './world.js';
+import { defs, paperLayer, headLayer, sceneryLayer, roadLayer, monsterLayer, nodeLayer, wx, wy } from './draw.js';
 import { Pawns } from './pawns.js';
-import { renderParty, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
+import { Book } from './book.js';
+import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
 import { initCommand, showLobby, hideLobby, pollParty, noteSorties } from './command.js';
 import { own } from './sketch.js';
 
-// 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、届いたら全部の画面に効かせて差し替える
-const handFonts = document.querySelector('#hand-fonts');
-if (handFonts) {
-  const useHandFonts = () => (handFonts.media = 'all');
-  if (handFonts.sheet) useHandFonts();
-  else handFonts.addEventListener('load', useHandFonts, { once: true });
+// 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
+// （字が届くたび・届かないと分かるたびに、ノート全体の字を組み直すので、最初の描画とは重ねない）
+let fontsAsked = false;
+function askHandFonts() {
+  if (fontsAsked) return;
+  fontsAsked = true;
+  const link = document.querySelector('#hand-fonts');
+  if (!link) return;
+  const start = () => {
+    link.addEventListener('load', () => (link.media = 'all'), { once: true });
+    link.disabled = false;
+  };
+  setTimeout(() => ('requestIdleCallback' in window ? requestIdleCallback(start, { timeout: 2500 }) : start()), 1500);
 }
 
 const params = new URLSearchParams(location.search);
@@ -30,22 +38,25 @@ const state = {
   prev: null,
   lay: null,
   sprites: {},
+  monsters: {},
   selected: params.get('select') ? { kind: 'node', id: params.get('select') } : params.get('char') ? { kind: 'char', id: params.get('char') } : null,
-  cam: null,
   frame: 0,
+  endingSeq: null,
+  turnTimer: null,
 };
 const sound = new Sound();
 
-// ---- 駒の絵 ----
-async function loadSprites() {
+// ---- 絵（駒とモンスター） ----
+async function loadArt(dir, key) {
   try {
-    const index = await (await fetch('assets/sprites/index.json', { cache: 'no-store' })).json();
+    const index = await (await fetch(`assets/${dir}/index.json`, { cache: 'no-store' })).json();
     const entries = await Promise.all(
-      (index.jobs || []).map(async (j) => {
+      (index[key] || []).map(async (j) => {
         try {
-          const text = await (await fetch(`assets/sprites/${j.id}.svg`)).text();
-          const m = text.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
-          return m ? [j.id, m[1].replace(/<title>[\s\S]*?<\/title>/, '')] : null;
+          const r = await fetch(`assets/${dir}/${j.id}.svg`);
+          if (!r.ok) return null;
+          const m = (await r.text()).match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+          return m ? [j.id, m[1].replace(/<title>[\s\S]*?<\/title>/, '').replace(/<desc>[\s\S]*?<\/desc>/, '')] : null;
         } catch {
           return null;
         }
@@ -59,10 +70,11 @@ async function loadSprites() {
 
 // ---- 描画 ----
 let pawns;
+let book;
 function ensureSvg() {
   if (svg.dataset.init) return;
-  svg.innerHTML = `${defs()}<g id="world"><g id="paper-layer"></g><g id="road-layer"></g><g id="head-layer"></g><g id="node-layer"></g><g id="pawns"></g></g>`;
-  pawns = new Pawns($('#pawns'));
+  svg.innerHTML = `${defs()}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
+  pawns = new Pawns($('#pawns'), { walks: window.__masume.walks });
   svg.dataset.init = '1';
 }
 
@@ -73,26 +85,36 @@ function penIn(view) {
   drewOnce = true;
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   svg.classList.add('drawing');
-  setTimeout(() => svg.classList.remove('drawing'), 3800); // いちばん右の列（1.4 秒）＋はなまる（0.75 秒）＋描く時間
+  setTimeout(() => svg.classList.remove('drawing'), 3800);
 }
 
 function freshMap(prev, view) {
   const fresh = Object.create(null);
-  if (!prev) return fresh;
+  const slain = Object.create(null);
+  if (!prev) return { fresh, slain };
   for (const [id, n] of Object.entries(view.nodes)) {
-    const before = own(prev.nodes, id)?.state;
-    if (before === n.state) continue;
-    if (n.state === 'cleared') fresh[id] = 'clear';
-    else if (n.state === 'stale') fresh[id] = 'erase';
-    else if (n.state === 'ready') fresh[id] = 'ready';
+    const p = own(prev.nodes, id);
+    const before = p?.state;
+    if (before !== n.state) {
+      if (n.state === 'cleared') fresh[id] = 'clear';
+      else if (n.state === 'stale') fresh[id] = 'erase';
+      else if (n.state === 'ready') fresh[id] = 'ready';
+    }
+    const now = Array.isArray(n.cases) ? n.cases : [];
+    const was = Array.isArray(p?.cases) ? p.cases : [];
+    const list = [];
+    now.forEach((c, i) => {
+      if (c.ok === true && was[i]?.ok !== true) list.push(i);
+    });
+    if (list.length) slain[id] = list;
   }
-  return fresh;
+  return { fresh, slain };
 }
 
 /** 伝令から来たビューの形を整える（冒険の書が読めないときは head・quest が null で、配列が空のこともある。§29.2） */
 function normalizeView(v) {
   const view = v && typeof v === 'object' ? { ...v } : {};
-  view.characters = Array.isArray(view.characters) ? view.characters : [];
+  view.characters = Array.isArray(view.characters) ? view.characters.filter((c) => c && typeof c === 'object').map((c) => ({ ...c, path: Array.isArray(c.path) ? c.path : [] })) : [];
   view.nodes = view.nodes && typeof view.nodes === 'object' && !Array.isArray(view.nodes) ? view.nodes : {};
   view.log = Array.isArray(view.log) ? view.log : [];
   if (!view.head || typeof view.head !== 'object') view.head = null;
@@ -101,30 +123,45 @@ function normalizeView(v) {
 }
 const seqOf = (v) => (Number.isInteger(v?.head?.seq) ? v.head.seq : -1);
 
+/** はじめに開く見開き: 作業中の駒がいちばん多いページ（同じなら前のページ） */
+function firstPage(view, lay) {
+  const counts = lay.pages.map(() => 0);
+  for (const c of view.characters) {
+    const s = stopOf(view, lay, c);
+    if (s) counts[s.page] += c.status === 'working' ? 2 : 1;
+  }
+  return counts.indexOf(Math.max(...counts, 0));
+}
+
 function render(input) {
   ensureSvg();
   const view = normalizeView(input);
   const prev = state.view;
-  const prevLay = state.lay;
-  const lay = layout(view);
+  const lay = layoutWorld(view);
+  const sameQuest = prev && prev.quest?.id === view.quest?.id;
   state.prev = prev;
   state.view = view;
   state.lay = lay;
   if (view.head) seenHeads.set(view.head.seq, view.head.hash);
-  const fresh = freshMap(prev, view);
+  const { fresh, slain } = freshMap(prev, view);
   const sel = state.selected?.kind === 'node' ? state.selected.id : null;
-  $('#paper-layer').innerHTML = paper(view, lay);
-  $('#road-layer').innerHTML = roads(view, lay);
-  $('#head-layer').innerHTML = laneHeads(view, lay, state.sprites);
-  $('#node-layer').innerHTML = nodesLayer(view, lay, { fresh, selected: sel });
+  $('#paper-layer').innerHTML = paperLayer(view, lay);
+  $('#scenery-layer').innerHTML = sceneryLayer(lay);
+  $('#road-layer').innerHTML = roadLayer(view, lay);
+  $('#monster-layer').innerHTML = monsterLayer(view, lay, state.monsters, { fresh: slain });
+  $('#node-layer').innerHTML = nodeLayer(view, lay, state.monsters, { fresh, selected: sel });
+  $('#head-layer').innerHTML = headLayer(view, lay, state.sprites);
   penIn(view);
-  pawns.update(view, lay, state.sprites, prev, prevLay);
-  // 盤面の大きさが変わったら（呪われた空の盤面から戻ったときなど）、自分で動かしていなければ合わせ直す
-  if (!state.cam) fitCamera({ whole: false });
-  else if (state.cam.auto && (prevLay?.width !== lay.width || prevLay?.height !== lay.height)) fitCamera({ whole: state.cam.auto === 'whole' });
-  else applyCamera();
+  const moved = pawns.update(view, lay, state.sprites, sameQuest ? prev : null);
+  book.setPages(lay.pages.length, firstPage(view, lay));
+  if (!book.cam || book.cam.auto) book.fit();
+  else book.apply();
+  followPawns(moved);
+  updatePageNav();
+  effects(prev, view, lay, sameQuest);
 
   $('#party-list-wrap').innerHTML = renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null);
+  $('#bestiary').innerHTML = renderBestiary(view, state.monsters);
   $('#log').innerHTML = renderLog(view, prev ? seqOf(prev) : -1);
   $('#ledger').innerHTML = renderLedger(view, state.sprites);
   $('#jumon').textContent = view.head?.jumon || '—';
@@ -136,12 +173,42 @@ function render(input) {
   integ.title = ok ? 'ハッシュの鎖は正常です' : curseLines(view).join('\n');
   renderCurse(view, ok);
   document.body.classList.toggle('finished', !!view.finished);
-  document.title = `${view.finished ? '🏁 ' : ''}${view.quest?.title || 'マスメ'} — マスメ`;
+  document.title = `${view.finished ? '🏁 ' : ''}${view.quest?.title ? view.quest.title + ' — ' : ''}GridHub`;
   renderDrawer();
   noteSorties(view);
-  if (prev?.head && view.head && prev.quest?.id === view.quest?.id) announce(prev, view);
+  if (prev?.head && view.head && sameQuest) announce(prev, view);
+  renderEnding(view);
   window.__masume.ready = true;
+  askHandFonts();
   window.__masume.view = view;
+  window.__masume.pages = lay.pages.length;
+  window.__masume.spread = book.left + 1;
+}
+
+/** 駒が今の見開きの外のページへ進んだら、歩き終わったあとで、そのページの見開きへめくる（§50.8） */
+function followPawns(moved) {
+  const out = moved.filter((m) => !m.back && !book.visible().includes(m.page));
+  if (!out.length) return;
+  const last = out.reduce((a, b) => (b.ms >= a.ms ? b : a));
+  clearTimeout(state.turnTimer);
+  state.turnTimer = setTimeout(() => book.turnTo(last.page + 1), last.ms + 150);
+}
+
+/** 新しく起きたこと（強敵・復活・レベルアップ）を、盤面の上の字で見せる */
+function effects(prev, view, lay, sameQuest) {
+  if (!prev || !sameQuest) return;
+  for (const [id, n] of Object.entries(view.nodes)) {
+    const p = own(prev.nodes, id);
+    if (!Array.isArray(n.cases) || !p) continue;
+    n.cases.forEach((c, i) => {
+      const was = Array.isArray(p.cases) ? p.cases[i] : null;
+      const sq = lay.place[id]?.squares?.[i];
+      if (!sq) return;
+      const at = { x: wx(sq.page, sq.x + 1), y: wy(sq.y) + 3.2 * U };
+      if ((c.revived || 0) > (was?.revived || 0)) pawns.float(at, '復活！', 'down');
+      else if (c.strong && !was?.strong) pawns.float(at, '強敵を倒した！', 'up');
+    });
+  }
 }
 
 function curseLines(view) {
@@ -165,7 +232,7 @@ function renderCurse(view, ok) {
   h.textContent = '☠ 冒険の書が呪われています';
   const p = document.createElement('p');
   const code = (t) => Object.assign(document.createElement('code'), { textContent: t });
-  p.append(code('masume verify'), ' で呪いの場所を確かめ、', code('masume repair'), ' で直してください（直すと、ここは消えます）。');
+  p.append(code('masume verify'), ' で呪いの場所を確かめ、', code('masume repair'), ' で直してください（gridhub でも同じ。直すと、ここは消えます）。');
   const detail = document.createElement('small');
   detail.textContent = curseLines(view).join(' ／ ');
   el.replaceChildren(h, p, detail);
@@ -174,6 +241,7 @@ function renderCurse(view, ok) {
 function renderDrawer() {
   const drawer = $('#drawer');
   const sel = state.selected;
+  document.body.classList.toggle('drawer-open', !!(sel && state.view));
   if (!sel || !state.view) {
     drawer.hidden = true;
     drawer.removeAttribute('data-kind');
@@ -184,12 +252,60 @@ function renderDrawer() {
   if (!html) {
     state.selected = null;
     drawer.hidden = true;
+    document.body.classList.remove('drawer-open');
     return;
   }
   drawer.innerHTML = html;
   drawer.hidden = false;
   drawer.dataset.kind = sel.kind;
   drawer.dataset.id = sel.id;
+}
+
+// ---- エンディング（§50.10） ----
+function renderEnding(view) {
+  const e = view.ending;
+  const el = $('#ending');
+  if (!e || typeof e !== 'object' || typeof e.text !== 'string') return;
+  if (state.endingSeq === e.seq) return;
+  state.endingSeq = e.seq;
+  const lines = e.text.split('\n').filter(Boolean);
+  const title = $('#ending-title');
+  title.textContent = view.quest?.title || '';
+  const body = $('#ending-text');
+  body.replaceChildren(
+    ...lines.map((l, i) => {
+      const p = document.createElement('p');
+      p.textContent = l;
+      p.style.setProperty('--i', i);
+      return p;
+    }),
+  );
+  const s = e.stats || {};
+  const stats = [
+    ['テスト', `${s.defeated ?? '?'}/${s.tests ?? '?'}`],
+    ['メダル', s.medals],
+    ['強敵', s.strong],
+    ['復活', s.revived],
+    ['宝箱', s.treasures],
+    ['技', s.skills],
+    ['出撃', s.sorties],
+  ].filter(([, v]) => v !== undefined && v !== null);
+  $('#ending-stats').replaceChildren(
+    ...stats.map(([k, v]) => {
+      const d = document.createElement('div');
+      const b = document.createElement('b');
+      b.textContent = String(v);
+      const sm = document.createElement('small');
+      sm.textContent = k;
+      d.append(b, sm);
+      return d;
+    }),
+  );
+  el.hidden = false;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  sound.play('fanfare');
 }
 
 // ---- 演出（新しく書かれた冒険の書を読み上げる） ----
@@ -206,33 +322,13 @@ function announce(prev, view) {
   if (view.finished && !prev.finished) {
     tone = 'fanfare';
     toast({ text: 'あがり！ 全員そろってゴールしました', ok: true, type: 'finish' });
-    celebrate(view);
   }
   if (tone) sound.play(tone);
 }
 
-function celebrate(view) {
-  const el = document.createElement('div');
-  el.className = 'agari-overlay';
-  el.innerHTML = `<div class="agari-stamp"><span>あがり</span><small>${(view.quest?.title || '').replace(/[&<>]/g, '')}</small></div>`;
-  for (let i = 0; i < 26; i++) {
-    const c = document.createElement('i');
-    c.className = 'confetti';
-    c.style.setProperty('--x', `${Math.random() * 100}%`);
-    c.style.setProperty('--d', `${0.6 + Math.random() * 1.4}s`);
-    c.style.setProperty('--r', `${Math.random() * 360}deg`);
-    c.textContent = ['★', '◎', '✿', '♪'][i % 4];
-    el.appendChild(c);
-  }
-  el.addEventListener('click', () => el.remove());
-  $('#view-board').appendChild(el);
-  setTimeout(() => el.classList.add('out'), 6000);
-  setTimeout(() => el.remove(), 7000);
-}
-
 /** 知らせ。文字はすべてテキストとして入れる（HTML として解釈しない）。sticky なら自分では消えない */
 function toast(e) {
-  const box = $('#toast');
+  const boxEl = $('#toast');
   const el = document.createElement('div');
   const type = String(e.type || '').replace(/[^\w-]/g, '');
   el.className = `toast ${e.ok === true ? 'ok' : e.ok === false ? 'ng' : 'info'}${type ? ` ${type}` : ''}`;
@@ -242,92 +338,42 @@ function toast(e) {
   const text = document.createElement('span');
   text.textContent = String(e.text ?? '');
   el.append(stamp, text);
-  box.appendChild(el);
+  boxEl.appendChild(el);
   if (e.sticky) return;
   setTimeout(() => el.classList.add('out'), 4200);
   setTimeout(() => el.remove(), 5000);
 }
 
-// ---- カメラ（パンとズーム） ----
-function stageSize() {
-  const r = svg.getBoundingClientRect();
-  return { w: Math.max(200, r.width), h: Math.max(200, r.height) };
-}
-function fitCamera({ whole = true } = {}) {
-  const { w, h } = stageSize();
-  const lay = state.lay;
-  if (!lay) return;
-  // ノートの1ページ（綴じのリングまで）を映す
-  const pb = pageBox(lay).outer;
-  const fit = Math.min(w / (pb.w + 2 * U), h / (pb.h + 2 * U), 1.4);
-  if (whole || fit >= 0.5) {
-    state.cam = { scale: fit, x: pb.x + (pb.w - w / fit) / 2, y: pb.y + (pb.h - h / fit) / 2, auto: whole ? 'whole' : 'frontier' };
-  } else {
-    // 小さい画面では読める大きさを保ち、いちばん遅れている駒（まだ仕事が残っている所）から映す
-    const scale = 0.72;
-    const pts = [...pawns.pos.values()];
-    const vw = w / scale;
-    const vh = h / scale;
-    const minX = pts.length ? Math.min(...pts.map((p) => p.x)) : 0;
-    const minY = pts.length ? Math.min(...pts.map((p) => p.y)) : 0;
-    const maxY = pts.length ? Math.max(...pts.map((p) => p.y)) : 0;
-    state.cam = {
-      scale,
-      x: Math.max(pb.x - U, Math.min(pb.x + pb.w - vw + U, minX - 8 * U)),
-      y: Math.max(pb.y - U, Math.min(pb.y + pb.h - vh + U, maxY + 3 * U - vh, minY - 4 * U)),
-      auto: 'frontier',
-    };
-  }
-  applyCamera();
-}
-function applyCamera() {
-  const { w, h } = stageSize();
-  const c = state.cam;
-  svg.setAttribute('viewBox', `${c.x.toFixed(1)} ${c.y.toFixed(1)} ${(w / c.scale).toFixed(1)} ${(h / c.scale).toFixed(1)}`);
-  svg.style.setProperty('--zoom', c.scale);
-}
-function zoomAt(factor, cx, cy) {
-  const c = state.cam;
-  const { w, h } = stageSize();
-  const ns = Math.max(0.25, Math.min(3, c.scale * factor));
-  const wx = c.x + cx / c.scale;
-  const wy = c.y + cy / c.scale;
-  c.x = wx - cx / ns;
-  c.y = wy - cy / ns;
-  c.scale = ns;
-  c.auto = false;
-  applyCamera();
-  void w, h;
-}
-function focusOn(x, y) {
-  const { w, h } = stageSize();
-  const c = state.cam;
-  c.x = x - w / c.scale / 2;
-  c.y = y - h / c.scale / 2;
-  c.auto = false;
-  svg.classList.add('glide');
-  applyCamera();
-  setTimeout(() => svg.classList.remove('glide'), 400);
+// ---- 見開きの操作 ----
+function updatePageNav() {
+  if (!book) return;
+  const n = book.pages;
+  const vis = book.visible();
+  const no = $('#page-no');
+  if (no) no.textContent = n ? (vis.length > 1 ? `${vis[0] + 1}–${vis[1] + 1} / ${n}` : `${vis[0] + 1} / ${n}`) : '— / —';
+  const prevBtn = $('#page-prev');
+  const nextBtn = $('#page-next');
+  if (prevBtn) prevBtn.disabled = book.left <= 0;
+  if (nextBtn) nextBtn.disabled = vis[vis.length - 1] >= n - 1;
+  window.__masume.spread = book.left + 1;
+  window.__masume.pages = n;
 }
 
 function setupCamera() {
   let drag = null;
   svg.addEventListener('pointerdown', (e) => {
-    if (e.button !== 0) return;
-    drag = { x: e.clientX, y: e.clientY, cx: state.cam?.x, cy: state.cam?.y, moved: false };
+    if (e.button !== 0 || !book.cam) return;
+    drag = { x: e.clientX, y: e.clientY, moved: false, lx: e.clientX, ly: e.clientY };
   });
   window.addEventListener('pointermove', (e) => {
-    if (!drag || !state.cam) return;
-    const dx = e.clientX - drag.x;
-    const dy = e.clientY - drag.y;
-    if (Math.abs(dx) + Math.abs(dy) > 4) {
+    if (!drag) return;
+    if (Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 4) {
       drag.moved = true;
       svg.classList.add('dragging');
     }
-    state.cam.x = drag.cx - dx / state.cam.scale;
-    state.cam.y = drag.cy - dy / state.cam.scale;
-    state.cam.auto = false;
-    applyCamera();
+    if (drag.moved) book.pan(drag.lx - e.clientX, drag.ly - e.clientY);
+    drag.lx = e.clientX;
+    drag.ly = e.clientY;
   });
   window.addEventListener('pointerup', () => {
     if (drag?.moved) svg.dataset.justDragged = '1';
@@ -338,31 +384,27 @@ function setupCamera() {
   svg.addEventListener(
     'wheel',
     (e) => {
-      if (!state.cam) return;
+      if (!book.cam) return;
       e.preventDefault();
       const r = svg.getBoundingClientRect();
-      if (e.ctrlKey || e.metaKey) zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX - r.left, e.clientY - r.top);
-      else {
-        state.cam.x += e.deltaX / state.cam.scale;
-        state.cam.y += e.deltaY / state.cam.scale;
-        state.cam.auto = false;
-        applyCamera();
-      }
+      if (e.ctrlKey || e.metaKey) book.zoomAt(Math.exp(-e.deltaY * 0.01), e.clientX - r.left, e.clientY - r.top);
+      else book.pan(e.deltaX, e.deltaY);
     },
     { passive: false },
   );
   document.querySelectorAll('[data-zoom]').forEach((b) =>
     b.addEventListener('click', () => {
-      const { w, h } = stageSize();
-      if (b.dataset.zoom === 'fit') fitCamera();
-      else zoomAt(b.dataset.zoom === 'in' ? 1.25 : 0.8, w / 2, h / 2);
+      const { w, h } = book.stageSize();
+      if (b.dataset.zoom === 'fit') book.fit();
+      else book.zoomAt(b.dataset.zoom === 'in' ? 1.25 : 0.8, w / 2, h / 2);
     }),
   );
-  // 大きさが変わったら、まだ自分で動かしていなければ合わせ直す
+  $('#page-prev').addEventListener('click', () => book.turnTo(book.left + 1 - (book.single ? 1 : 2)));
+  $('#page-next').addEventListener('click', () => book.turnTo(book.left + 1 + (book.single ? 1 : 2)));
   new ResizeObserver(() => {
-    if (!state.cam) return;
-    if (state.cam.auto) fitCamera({ whole: state.cam.auto === 'whole' });
-    else applyCamera();
+    if (!book.cam) return;
+    if (book.cam.auto) book.fit();
+    else book.apply();
   }).observe(svg);
 }
 
@@ -376,50 +418,42 @@ function select(kind, id, { focus = false } = {}) {
   if (kind === 'char') url.searchParams.set('char', id);
   history.replaceState(null, '', url);
   if (state.view) {
-    $('#node-layer').innerHTML = nodesLayer(state.view, state.lay, { selected: kind === 'node' ? id : null });
+    $('#node-layer').innerHTML = nodeLayer(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null });
     $('#party-list-wrap').innerHTML = renderParty(state.view, state.sprites, kind === 'char' ? id : null);
   }
   renderDrawer();
   if (focus && state.lay) {
-    if (kind === 'node' && state.lay.nodes[id]) focusOn(state.lay.nodes[id].x, state.lay.nodes[id].y);
+    let page = null;
+    if (kind === 'node' && state.lay.place[id]) page = state.lay.place[id].page;
     if (kind === 'char') {
-      const p = pawns.pos.get(id);
-      if (p) focusOn(p.x, p.y);
+      const c = state.view.characters.find((x) => x.id === id);
+      page = c ? stopOf(state.view, state.lay, c)?.page ?? null : null;
     }
+    if (page != null && !book.visible().includes(page)) book.turnTo(page + 1);
   }
 }
 
-function setView(name, { flip = true } = {}) {
-  const before = document.body.dataset.view;
+function setView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
-  // ノートのページをめくる（インデックスタブで別のページへ）
-  const page = document.getElementById(`view-${name}`);
-  if (flip && page && before && before !== name) {
-    page.classList.remove('flip-in');
-    void page.offsetWidth;
-    page.classList.add('flip-in');
-    setTimeout(() => page.classList.remove('flip-in'), 700);
-  }
   document.querySelectorAll('button[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === name)));
   document.body.dataset.view = name;
   const url = new URL(location.href);
   if (name === 'board') url.searchParams.delete('view');
   else url.searchParams.set('view', name);
   history.replaceState(null, '', url);
-  if (name === 'board' && state.cam) requestAnimationFrame(applyCamera);
+  if (name === 'board' && book?.cam) requestAnimationFrame(() => (book.cam.auto ? book.fit() : book.apply()));
 }
 
 async function post(path, body) {
   if (!LIVE) {
-    toast({ text: '見本の盤面なので記録はされません（masume serve で開くと本物のハンコが押せます）', ok: null });
+    toast({ text: '見本の盤面なので記録はされません（gridhub serve で開くと本物のハンコが押せます）', ok: null });
     return null;
   }
   let r;
   try {
     r = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json', 'x-masume': '1' }, body: JSON.stringify(body) });
   } catch {
-    // つながらない・途中で切れた（§29.4）。呼んだ側はボタンを押せる状態に戻す
-    toast({ text: 'サーバーに届きません（masume serve が動いているか確かめてください）', ok: false });
+    toast({ text: 'サーバーに届きません（gridhub serve が動いているか確かめてください）', ok: false });
     return { ok: false, code: 'E_NETWORK', error: 'サーバーに届きません' };
   }
   const got = await r.json().catch(() => null);
@@ -433,17 +467,23 @@ async function post(path, body) {
 
 function setupInteractions() {
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-close],[data-stamp],[data-battle],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-jumon,#sound');
+    const t = e.target.closest('[data-close],[data-stamp],[data-battle],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-jumon,#sound,#ending-close');
     const inBoard = e.target.closest('#board');
     if (inBoard && svg.dataset.justDragged) return;
     if (!t && inBoard) {
       const node = e.target.closest('.node');
-      const head = e.target.closest('.lane-head, .pawn');
+      const sq = e.target.closest('.sq');
+      const head = e.target.closest('.lane-head, .pawn, .lane-tag');
       if (node) return select('node', node.dataset.node);
+      if (sq) return select('node', sq.dataset.node);
       if (head) return select('char', head.dataset.char);
       return;
     }
     if (!t) return;
+    if (t.matches('#ending-close')) {
+      $('#ending').hidden = true;
+      return;
+    }
     if (t.matches('[data-close]')) return select(null);
     if (t.matches('button[data-view]')) return setView(t.dataset.view);
     if (t.matches('.party-card')) return select('char', t.dataset.char, { focus: true });
@@ -454,15 +494,15 @@ function setupInteractions() {
     if (t.matches('[data-stamp]')) {
       t.disabled = true;
       const j = await post('api/stamp', { node: t.dataset.stamp, as: t.dataset.as });
-      if (j?.ready) toast({ text: `仲間がそろいました。${j.ready} のボス戦を始めます…`, ok: null, type: 'battle' });
+      if (j?.ready) toast({ text: `仲間がそろいました。${j.ready} の結合テストを始めます…`, ok: null, type: 'battle' });
       t.disabled = false;
       return;
     }
     if (t.matches('[data-battle]')) {
       t.disabled = true;
       const j = await post('api/battle', { gate: t.dataset.battle });
-      if (j?.ok) toast({ text: `${t.dataset.battle} のボス戦が始まりました（結合E2Eを実行中）`, ok: null, type: 'battle' });
-      else t.disabled = false; // 始まらなかったら、もう一度押せるように
+      if (j?.ok) toast({ text: `${t.dataset.battle} の中ボス戦が始まりました（結合テストを実行中）`, ok: null, type: 'battle' });
+      else t.disabled = false;
       return;
     }
     if (t.matches('#copy-jumon')) {
@@ -483,12 +523,16 @@ function setupInteractions() {
     }
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') select(null);
-    if (e.target.closest && e.target.closest('input,textarea')) return;
-    if (e.key === 'f') fitCamera();
+    if (e.key === 'Escape') {
+      if (!$('#ending').hidden) $('#ending').hidden = true;
+      select(null);
+    }
+    if (e.target.closest && e.target.closest('input,textarea,select')) return;
+    if (e.key === 'f') book.fit();
+    if (e.key === 'ArrowRight' && document.body.dataset.view === 'board') $('#page-next').click();
+    if (e.key === 'ArrowLeft' && document.body.dataset.view === 'board') $('#page-prev').click();
     if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('.node, .lane-head, .pawn, tr[data-node]')) {
       e.preventDefault();
-      e.target.click?.();
       const n = e.target.closest('.node');
       if (n) select('node', n.dataset.node);
       const h = e.target.closest('.lane-head, .pawn');
@@ -520,7 +564,7 @@ function showNotice(title, body) {
   code.className = 'notice-code';
   code.textContent = body ? `[${String(body.code ?? 'E_UNKNOWN')}] ${String(body.error ?? '')}` : '';
   const help = document.createElement('p');
-  help.textContent = 'masume serve が動いているか確かめてください。つながれば、ひとりでに盤面が出ます。';
+  help.textContent = 'gridhub serve が動いているか確かめてください。つながれば、ひとりでに盤面が出ます。';
   card.append(h, code, help);
   el.replaceChildren(card);
 }
@@ -539,16 +583,16 @@ function setLive(mode, text, title = '') {
 // さらに、同じ冒険で今より古い head.seq のビューでは描き直さない
 let reqNo = 0;
 let appliedNo = 0;
-const seenHeads = new Map(); // 描いたことのある head.seq → hash（別の冒険の鎖かどうかを見分ける）
-let lastText = null; // 最後に描いた応答の本文。同じ中身なら描き直さない（開いている詳細や演出を崩さない）
+const seenHeads = new Map();
+let lastText = null;
 
 function isOlder(body) {
   const cur = seqOf(state.view);
   const seq = seqOf(body);
   if (seq < 0 || cur < 0 || seq >= cur) return false;
-  if (body.quest?.id !== state.view.quest?.id) return false; // 別の冒険
+  if (body.quest?.id !== state.view.quest?.id) return false;
   const known = seenHeads.get(seq);
-  return known === undefined || known === body.head.hash; // 同じ鎖の昔の姿（または分からない）なら古い
+  return known === undefined || known === body.head.hash;
 }
 
 function enterLobby() {
@@ -558,7 +602,7 @@ function enterLobby() {
   setLive('lobby', '入口');
   window.__masume.ready = true;
   window.__masume.lobby = true;
-  // 次に来る冒険は別の冒険（seq が小さくても描く）。そのノートも、ペンで描くところから
+  askHandFonts();
   state.view = null;
   drewOnce = false;
   seenHeads.clear();
@@ -585,14 +629,13 @@ async function liveRefresh() {
     if (!state.view && !window.__masume.lobby) showNotice('盤面サーバーに届きません', null);
     return;
   }
-  if (no < appliedNo) return; // もっと新しい応答をもう描いた
+  if (no < appliedNo) return;
   const isView = r.ok && body && typeof body === 'object' && !Array.isArray(body) && body.ok !== false;
   if (!isView) {
     if (body?.code === 'E_NO_GAME') {
       appliedNo = no;
       return enterLobby();
     }
-    // 一時的な失敗（§29.3）: 盤面は覆わず、端の表示だけ
     const why = body && typeof body === 'object' ? `[${String(body.code ?? '')}] ${String(body.error ?? '')}` : `HTTP ${r.status}`;
     setLive('off', `読み込めません（${r.status}）`, why);
     if (!state.view && !window.__masume.lobby) showNotice('盤面を読み込めません', body && typeof body === 'object' ? body : { code: `HTTP ${r.status}`, error: '' });
@@ -622,13 +665,15 @@ async function startLive() {
   if ('EventSource' in window && !params.has('nostream')) {
     const connect = () => {
       const es = new EventSource('api/stream');
-      // つながった（つなぎ直した）ら読み直す。切れている間に変わった分を取りこぼさない
-      es.addEventListener('hello', schedule);
+      // つながった（つなぎ直した）ら、待たずにすぐ読み直す。切れている間に変わった分を取りこぼさない（§29.5）
+      es.addEventListener('hello', () => {
+        clearTimeout(timer);
+        liveRefresh();
+      });
       es.addEventListener('change', schedule);
       es.onerror = () => {
         setLive('off', '再接続中…');
         if (es.readyState === EventSource.CLOSED) {
-          // HTTP エラーなどで閉じた EventSource は自分ではつなぎ直さないので、作り直す
           es.close();
           setTimeout(connect, 3000);
         }
@@ -636,7 +681,6 @@ async function startLive() {
     };
     connect();
   }
-  // 入口にいる間は冒険の書が生まれるのをこまめに見る。盤面ではときどき読み直す
   setInterval(() => {
     if (window.__masume.lobby) liveRefresh();
   }, 2000);
@@ -669,7 +713,7 @@ async function startFixture() {
   }
 }
 
-// ---- ノートに書き出す（CONTRACTS §22） ----
+// ---- ノートに書き出す（§22・§50.13: すべてのページを含むノート全体、1目 = 5mm の実寸） ----
 function boardCss() {
   let css = '';
   for (const sheet of document.styleSheets) {
@@ -686,30 +730,31 @@ function boardCss() {
   return `svg { ${vars} } ${css}`;
 }
 
-// XML 1.0 で使えない文字（制御文字・対になっていないサロゲート・U+FFFE/FFFF）
-const XML_BAD = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
+const XML_BAD = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g;
 const xmlText = (s) => String(s).replace(XML_BAD, '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
-/** 盤面全体を1枚の SVG の文字列にする。1目 = 5mm の実寸。XML として正しい（§29.6） */
 function exportSvg() {
   if (!state.view || !state.lay) return '';
-  // ノートの1ページ（綴じのリングと、ページの下の影まで）を1目 = 5mm で
-  const pb = pageBox(state.lay).outer;
-  const x = pb.x - 0.5 * U;
-  const y = pb.y - 0.5 * U;
-  const w = pb.w + 1.2 * U;
-  const h = pb.h + 1.6 * U;
+  const n = state.lay.pages.length;
+  const last = pageOrigin(n - 1);
+  const x = -U;
+  const y = -U;
+  const w = (last.x + PAGE.w) * U + 2 * U;
+  const h = PAGE.h * U + 2 * U;
   const world = $('#world').cloneNode(true);
   world.querySelectorAll('.float-text').forEach((el) => el.remove());
-  // 描いている途中で書き出しても、描き終わった姿で
   world.querySelectorAll('[pathLength]').forEach((el) => el.removeAttribute('pathLength'));
-  // outerHTML は HTML の書き方（&nbsp; など）になるので、XML の書き方で書き出す
+  // 書き出しでは data-node はマス（札・町・城）だけに付ける。モンスターのマスはどのダンジョンのテストかを data-test-of で
+  world.querySelectorAll('.sq[data-node]').forEach((el) => {
+    el.setAttribute('data-test-of', el.getAttribute('data-node'));
+    el.removeAttribute('data-node');
+  });
   const ser = new XMLSerializer();
   const defsEl = svg.querySelector('defs');
   const css = boardCss().replace(/<\/?script/gi, '');
   const out = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" width="${((w / U) * 5).toFixed(1)}mm" height="${((h / U) * 5).toFixed(1)}mm">
-<title>${xmlText(state.view.quest?.title || 'マスメ')}</title>
+<title>${xmlText(state.view.quest?.title || 'GridHub')}</title>
 <style><![CDATA[${css.replace(/]]>/g, ']]]]><![CDATA[>')}]]></style>
 ${defsEl ? ser.serializeToString(defsEl) : ''}
 ${ser.serializeToString(world)}
@@ -723,7 +768,7 @@ function downloadNotebook() {
   if (!text) return;
   const d = new Date();
   const ymd = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}${String(d.getDate()).padStart(2, '0')}`;
-  const filename = `${state.view.quest?.id || 'masume'}-${ymd}.svg`;
+  const filename = `${state.view.quest?.id || 'gridhub'}-${ymd}.svg`;
   const blob = new Blob([text], { type: 'image/svg+xml' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -734,18 +779,35 @@ function downloadNotebook() {
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 5000);
   window.__masume.lastExport = { filename, size: blob.size };
-  toast({ text: `ノートに書き出しました: ${filename}（1目 = 5mm の実寸）`, ok: true });
+  toast({ text: `ノートに書き出しました: ${filename}（${state.lay.pages.length}ページ・1目 = 5mm の実寸）`, ok: true });
 }
 
-window.__masume = { ready: false, view: null, frame: 0, done: false, render: (v) => render(v), select, setView, exportSvg };
+window.__masume = {
+  ready: false,
+  view: null,
+  frame: 0,
+  done: false,
+  walks: [],
+  spread: 1,
+  pages: 0,
+  render: (v) => render(v),
+  select,
+  setView,
+  exportSvg,
+  turnTo: (n, opts) => book.turnTo(n, opts),
+  get flipping() {
+    return !!book?.flipping;
+  },
+};
 
 (async () => {
+  book = new Book(svg, $('#view-board'), { onChange: updatePageNav });
   setupCamera();
   setupInteractions();
   initCommand({ live: LIVE, post, refresh: liveRefresh, toast, getView: () => state.view });
   $('#export-notebook').addEventListener('click', downloadNotebook);
-  state.sprites = await loadSprites();
-  if (params.get('view')) setView(params.get('view'), { flip: false });
+  [state.sprites, state.monsters] = await Promise.all([loadArt('sprites', 'jobs'), loadArt('monsters', 'monsters')]);
+  if (params.get('view')) setView(params.get('view'));
   try {
     if (LIVE) await startLive();
     else await startFixture();

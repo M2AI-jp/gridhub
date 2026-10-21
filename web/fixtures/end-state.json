@@ -1,0 +1,2039 @@
+{
+  "masume": 1,
+  "quest": {
+    "id": "GRID",
+    "title": "GridHubをつくる",
+    "pitch": "テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。",
+    "goal": "GOAL",
+    "save": "git"
+  },
+  "map_version": 1,
+  "characters": [
+    {
+      "id": "board",
+      "name": "賢者クロード",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "sage",
+      "color": "blue",
+      "module": "盤面（web/board）",
+      "territory": [
+        "web/index.html",
+        "web/board/**",
+        "web/fixtures/**"
+      ],
+      "path": [
+        "B1",
+        "B2",
+        "G1",
+        "B3",
+        "B4",
+        "GOAL"
+      ],
+      "pos": 6,
+      "at": null,
+      "level": 5,
+      "xp": 0,
+      "xp_next": 6,
+      "vision": 4,
+      "status": "done",
+      "checkpoint": "G1",
+      "clears": 3,
+      "fails": 0,
+      "last_note": null,
+      "generation": 2,
+      "revived": 0,
+      "strong": 0,
+      "skills": [],
+      "medals": 1,
+      "treasures": 0,
+      "traps": 0,
+      "save": {
+        "seq": 1,
+        "node": null,
+        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+      },
+      "grave": null,
+      "square": null
+    },
+    {
+      "id": "engine",
+      "name": "書記",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "scribe",
+      "color": "yellow",
+      "module": "ルールと冒険の書（src/engine）",
+      "territory": [
+        "src/engine/**"
+      ],
+      "path": [
+        "E1",
+        "E2",
+        "C1",
+        "E3",
+        "G1",
+        "E4",
+        "G2",
+        "E5",
+        "GOAL"
+      ],
+      "pos": 9,
+      "at": null,
+      "level": 5,
+      "xp": 0,
+      "xp_next": 6,
+      "vision": 4,
+      "status": "done",
+      "checkpoint": "G1",
+      "clears": 5,
+      "fails": 1,
+      "last_note": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる",
+      "generation": 3,
+      "revived": 0,
+      "strong": 1,
+      "skills": [
+        {
+          "seq": 15,
+          "ts": "2026-10-19T02:00:00.000Z",
+          "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる",
+          "node": "E2",
+          "case": "落ちれば Lv−1 で町へ"
+        }
+      ],
+      "medals": 2,
+      "treasures": 0,
+      "traps": 0,
+      "save": {
+        "seq": 17,
+        "node": "C1",
+        "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      },
+      "grave": {
+        "seq": 12,
+        "node": "E2",
+        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
+        "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
+      },
+      "square": null
+    },
+    {
+      "id": "server",
+      "name": "伝令",
+      "kind": "agent",
+      "agent": "codex",
+      "job": "herald",
+      "color": "green",
+      "module": "HTTP と SSE（src/server）",
+      "territory": [
+        "src/server/**"
+      ],
+      "path": [
+        "S1",
+        "S2",
+        "G1",
+        "C2",
+        "S3",
+        "S4",
+        "GOAL"
+      ],
+      "pos": 7,
+      "at": null,
+      "level": 5,
+      "xp": 0,
+      "xp_next": 6,
+      "vision": 4,
+      "status": "done",
+      "checkpoint": "G1",
+      "clears": 3,
+      "fails": 0,
+      "last_note": null,
+      "generation": 1,
+      "revived": 0,
+      "strong": 0,
+      "skills": [],
+      "medals": 2,
+      "treasures": 0,
+      "traps": 0,
+      "save": {
+        "seq": 31,
+        "node": "G1",
+        "commit": "96499778121cbf51f2b8209c582fefa6f6438523"
+      },
+      "grave": null,
+      "square": null
+    },
+    {
+      "id": "gmkit",
+      "name": "地図職人",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "cartographer",
+      "color": "orange",
+      "module": "地図と同期（src/linear）",
+      "territory": [
+        "src/linear/**"
+      ],
+      "path": [
+        "M1",
+        "M2",
+        "G2",
+        "M3",
+        "GOAL"
+      ],
+      "pos": 5,
+      "at": null,
+      "level": 3,
+      "xp": 0,
+      "xp_next": 4,
+      "vision": 2,
+      "status": "done",
+      "checkpoint": null,
+      "clears": 2,
+      "fails": 1,
+      "last_note": null,
+      "generation": 2,
+      "revived": 1,
+      "strong": 0,
+      "skills": [],
+      "medals": 1,
+      "treasures": 0,
+      "traps": 0,
+      "save": {
+        "seq": 1,
+        "node": null,
+        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+      },
+      "grave": {
+        "seq": 21,
+        "node": "M2",
+        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
+        "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
+      },
+      "square": null
+    },
+    {
+      "id": "assets",
+      "name": "絵師",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "painter",
+      "color": "pink",
+      "module": "絵（web/assets）",
+      "territory": [
+        "web/assets/**"
+      ],
+      "path": [
+        "A1",
+        "A2",
+        "C3",
+        "A3",
+        "GOAL"
+      ],
+      "pos": 5,
+      "at": null,
+      "level": 4,
+      "xp": 0,
+      "xp_next": 5,
+      "vision": 3,
+      "status": "done",
+      "checkpoint": null,
+      "clears": 2,
+      "fails": 0,
+      "last_note": null,
+      "generation": 1,
+      "revived": 0,
+      "strong": 0,
+      "skills": [],
+      "medals": 1,
+      "treasures": 1,
+      "traps": 1,
+      "save": {
+        "seq": 1,
+        "node": null,
+        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+      },
+      "grave": null,
+      "square": null
+    },
+    {
+      "id": "player",
+      "name": "勇者（あなた）",
+      "kind": "human",
+      "agent": "human",
+      "job": "hero",
+      "color": "purple",
+      "module": "人間の判断",
+      "path": [
+        "H1",
+        "GOAL"
+      ],
+      "pos": 2,
+      "at": null,
+      "level": 3,
+      "xp": 0,
+      "xp_next": 4,
+      "vision": 2,
+      "status": "done",
+      "checkpoint": null,
+      "clears": 0,
+      "fails": 0,
+      "last_note": null,
+      "generation": 1,
+      "revived": 0,
+      "strong": 0,
+      "skills": [],
+      "medals": 0,
+      "treasures": 0,
+      "traps": 0,
+      "save": null,
+      "grave": null,
+      "square": null
+    }
+  ],
+  "nodes": {
+    "B1": {
+      "type": "task",
+      "title": "svg#board に方眼ノートを描く",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/B1.test.mjs",
+        "seal": [
+          "tests/e2e/B1.test.mjs"
+        ],
+        "cases": [
+          "ページは 36×51 目",
+          "方眼はページの中だけ",
+          "No. と Date を刷る"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "B1",
+      "owner": "board",
+      "members": [
+        "board"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "ページは 36×51 目",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "方眼はページの中だけ",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "No. と Date を刷る",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "B2": {
+      "type": "task",
+      "title": "駒が1マスずつ歩く",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/B2.test.mjs",
+        "seal": [
+          "tests/e2e/B2.test.mjs"
+        ],
+        "cases": [
+          "square のマスに立つ",
+          "間のマスを1つずつ踏む",
+          "walks に steps を足す",
+          "動きを減らす設定では跳ぶ"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "B2",
+      "owner": "board",
+      "members": [
+        "board"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "square のマスに立つ",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "間のマスを1つずつ踏む",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "walks に steps を足す",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "動きを減らす設定では跳ぶ",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 4,
+        "total": 4
+      },
+      "save": null,
+      "first_try": true
+    },
+    "B3": {
+      "type": "task",
+      "title": "見開きをめくる #page-next",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/B3.test.mjs",
+        "seal": [
+          "tests/e2e/B3.test.mjs"
+        ],
+        "cases": [
+          "見開きは2ページ",
+          "#page-no は 1–2 / N",
+          ".page-flip が <use> で回る"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "B3",
+      "owner": "board",
+      "members": [
+        "board"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "見開きは2ページ",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "#page-no は 1–2 / N",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": ".page-flip が <use> で回る",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "B4": {
+      "type": "task",
+      "title": "エンディング #ending を出す",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/B4.test.mjs",
+        "seal": [
+          "tests/e2e/B4.test.mjs"
+        ],
+        "cases": [
+          "ending.text を出す",
+          "#ending-close で閉じる"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "B4",
+      "owner": "board",
+      "members": [
+        "board"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "ending.text を出す",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "#ending-close で閉じる",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 2,
+        "total": 2
+      },
+      "save": null,
+      "first_try": true
+    },
+    "E1": {
+      "type": "task",
+      "title": "log.jsonl に genesis を書く",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/E1.test.mjs",
+        "seal": [
+          "tests/e2e/E1.test.mjs"
+        ],
+        "cases": [
+          "genesis が1行",
+          "hash が sha256",
+          "じゅもんは12字"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "E1",
+      "owner": "engine",
+      "members": [
+        "engine"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "genesis が1行",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "hash が sha256",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "じゅもんは12字",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "E2": {
+      "type": "task",
+      "title": "gridhub check で判定をくだす",
+      "detail": "宣言判定: 封印を確かめ、町から今のマスまでを累積で走らせる。通れば前進、落ちれば Lv−1 で町から。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/E2.test.mjs",
+        "seal": [
+          "tests/e2e/E2.test.mjs"
+        ],
+        "cases": [
+          "封印が無ければ E_UNSEALED",
+          "通れば pos+1 と xp",
+          "落ちれば Lv−1 で町へ",
+          "outputs/ に出力を残す"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "E2",
+      "owner": "engine",
+      "members": [
+        "engine"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 1,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "封印が無ければ E_UNSEALED",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "通れば pos+1 と xp",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "落ちれば Lv−1 で町へ",
+          "ok": true,
+          "losses": 1,
+          "revived": 1,
+          "strong": false
+        },
+        {
+          "name": "outputs/ に出力を残す",
+          "ok": true,
+          "losses": 2,
+          "revived": 0,
+          "strong": true
+        }
+      ],
+      "tests": {
+        "pass": 4,
+        "total": 4
+      },
+      "save": null,
+      "first_try": false
+    },
+    "C1": {
+      "type": "camp",
+      "title": "宿屋「ふたつ星亭」",
+      "xp": 0,
+      "id": "C1",
+      "owner": "engine",
+      "members": [
+        "engine"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [],
+      "tests": {
+        "pass": 0,
+        "total": 0
+      },
+      "save": {
+        "seq": 17,
+        "node": "C1",
+        "commit": "798fe229578d0ddc6ec8a2a93126ffbc6e0cd155"
+      },
+      "first_try": null
+    },
+    "E3": {
+      "type": "task",
+      "title": "gridhub step で1件ずつ歩く",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/E3.test.mjs",
+        "seal": [
+          "tests/e2e/E3.test.mjs"
+        ],
+        "cases": [
+          "✔ と ✖ を読む",
+          "TAP の ok / not ok",
+          "cases と名前で結ぶ",
+          "stepped を記録する",
+          "位置もレベルも変えない"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "E3",
+      "owner": "engine",
+      "members": [
+        "engine"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "✔ と ✖ を読む",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "TAP の ok / not ok",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "cases と名前で結ぶ",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "stepped を記録する",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "位置もレベルも変えない",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 5,
+        "total": 5
+      },
+      "save": null,
+      "first_try": true
+    },
+    "E4": {
+      "type": "task",
+      "title": "saved で町に Git セーブ",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/E4.test.mjs",
+        "seal": [
+          "tests/e2e/E4.test.mjs"
+        ],
+        "cases": [
+          "縄張りだけコミット",
+          "index に触れない",
+          "負けたら stash に墓"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "E4",
+      "owner": "engine",
+      "members": [
+        "engine"
+      ],
+      "state": "cleared",
+      "sealed": false,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "縄張りだけコミット",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "index に触れない",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "負けたら stash に墓",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "E5": {
+      "type": "task",
+      "title": "ending の文をつくる",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/E5.test.mjs",
+        "seal": [
+          "tests/e2e/E5.test.mjs"
+        ],
+        "cases": [
+          "テスト 42/42 で始まる",
+          "強敵の数で文が変わる"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "E5",
+      "owner": "engine",
+      "members": [
+        "engine"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "テスト 42/42 で始まる",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "強敵の数で文が変わる",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 2,
+        "total": 2
+      },
+      "save": null,
+      "first_try": true
+    },
+    "S1": {
+      "type": "task",
+      "title": "GET /api/state でビューを返す",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/S1.test.mjs",
+        "seal": [
+          "tests/e2e/S1.test.mjs"
+        ],
+        "cases": [
+          "200 と JSON",
+          "E_NO_GAME なら 404"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "S1",
+      "owner": "server",
+      "members": [
+        "server"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "200 と JSON",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "E_NO_GAME なら 404",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 2,
+        "total": 2
+      },
+      "save": null,
+      "first_try": true
+    },
+    "S2": {
+      "type": "task",
+      "title": "GET /api/stream で change を送る",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/S2.test.mjs",
+        "seal": [
+          "tests/e2e/S2.test.mjs"
+        ],
+        "cases": [
+          "hello を送る",
+          "書かれたら change",
+          "切れても漏れない"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "S2",
+      "owner": "server",
+      "members": [
+        "server"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "hello を送る",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "書かれたら change",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "切れても漏れない",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "C2": {
+      "type": "camp",
+      "title": "港町の宿「しおかぜ」",
+      "xp": 0,
+      "id": "C2",
+      "owner": "server",
+      "members": [
+        "server"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [],
+      "tests": {
+        "pass": 0,
+        "total": 0
+      },
+      "save": null,
+      "first_try": null
+    },
+    "S3": {
+      "type": "task",
+      "title": "POST /api/stamp と /api/battle",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/S3.test.mjs",
+        "seal": [
+          "tests/e2e/S3.test.mjs"
+        ],
+        "cases": [
+          "X-Masume が無ければ 403",
+          "stamp を記録する",
+          "battle で結合を走らせる"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "S3",
+      "owner": "server",
+      "members": [
+        "server"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "X-Masume が無ければ 403",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "stamp を記録する",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "battle で結合を走らせる",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "S4": {
+      "type": "task",
+      "title": "POST /api/sortie に tactic",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/S4.test.mjs",
+        "seal": [
+          "tests/e2e/S4.test.mjs"
+        ],
+        "cases": [
+          "careful / balanced / bold",
+          "ほかの値は 400",
+          "省略なら何も足さない"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "S4",
+      "owner": "server",
+      "members": [
+        "server"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "careful / balanced / bold",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "ほかの値は 400",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "省略なら何も足さない",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "M1": {
+      "type": "task",
+      "title": "quest.map.json を検証する",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/M1.test.mjs",
+        "seal": [
+          "tests/e2e/M1.test.mjs"
+        ],
+        "cases": [
+          "必須の項目が無ければ E_FORMAT",
+          "path のマスが無ければ E_REF",
+          "gate の members を補う"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "M1",
+      "owner": "gmkit",
+      "members": [
+        "gmkit"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "必須の項目が無ければ E_FORMAT",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "path のマスが無ければ E_REF",
+          "ok": true,
+          "losses": 1,
+          "revived": 1,
+          "strong": false
+        },
+        {
+          "name": "gate の members を補う",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "M2": {
+      "type": "task",
+      "title": "check.cases を地図に書く",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/M2.test.mjs",
+        "seal": [
+          "tests/e2e/M2.test.mjs"
+        ],
+        "cases": [
+          "cases は 1〜50 件",
+          "名前の重複は E_CHECK",
+          "stamp には書けない"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "M2",
+      "owner": "gmkit",
+      "members": [
+        "gmkit"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 1,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "cases は 1〜50 件",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "名前の重複は E_CHECK",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "stamp には書けない",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "M3": {
+      "type": "task",
+      "title": "Linear に - [x] で同期",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/M3.test.mjs",
+        "seal": [
+          "tests/e2e/M3.test.mjs"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "M3",
+      "owner": "gmkit",
+      "members": [
+        "gmkit"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "Done なら - [x]",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "Todo なら - [ ]",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 2,
+        "total": 2
+      },
+      "save": null,
+      "first_try": true
+    },
+    "A1": {
+      "type": "task",
+      "title": "駒の絵 sprites 12枚",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/A1.test.mjs",
+        "seal": [
+          "tests/e2e/A1.test.mjs"
+        ],
+        "cases": [
+          "12枚そろう",
+          "6000 バイト以下"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "A1",
+      "owner": "assets",
+      "members": [
+        "assets"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "12枚そろう",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "6000 バイト以下",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 2,
+        "total": 2
+      },
+      "save": null,
+      "first_try": true
+    },
+    "A2": {
+      "type": "task",
+      "title": "モンスターの絵 8枚",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/A2.test.mjs",
+        "seal": [
+          "tests/e2e/A2.test.mjs"
+        ],
+        "cases": [
+          "8枚そろう",
+          "var(--monster) で塗れる",
+          "8枚すべて違う絵"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "A2",
+      "owner": "assets",
+      "members": [
+        "assets"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "8枚そろう",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "var(--monster) で塗れる",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "8枚すべて違う絵",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": true
+    },
+    "C3": {
+      "type": "camp",
+      "title": "アトリエの村",
+      "xp": 0,
+      "id": "C3",
+      "owner": "assets",
+      "members": [
+        "assets"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [],
+      "tests": {
+        "pass": 0,
+        "total": 0
+      },
+      "save": null,
+      "first_try": null
+    },
+    "A3": {
+      "type": "task",
+      "title": "ロゴ GridHub を描く",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/A3.test.mjs",
+        "seal": [
+          "tests/e2e/A3.test.mjs"
+        ],
+        "cases": [
+          "方眼に合う",
+          "GridHub と読める"
+        ]
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "A3",
+      "owner": "assets",
+      "members": [
+        "assets"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "方眼に合う",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "GridHub と読める",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 2,
+        "total": 2
+      },
+      "save": null,
+      "first_try": true
+    },
+    "H1": {
+      "type": "task",
+      "title": "盤面で遊んでハンコを押す",
+      "check": {
+        "kind": "stamp",
+        "by": "player"
+      },
+      "xp": 1,
+      "rollback_to": "@camp",
+      "id": "H1",
+      "owner": "player",
+      "members": [
+        "player"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [],
+      "tests": {
+        "pass": 0,
+        "total": 0
+      },
+      "save": null,
+      "first_try": null
+    },
+    "G1": {
+      "type": "gate",
+      "title": "結合: 冒険が盤面に映る",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/G1.test.mjs",
+        "seal": [
+          "tests/e2e/G1.test.mjs"
+        ],
+        "cases": [
+          "/api/state の駒が盤面に立つ",
+          "step で駒が1マス進む",
+          "SSE で描き直す"
+        ]
+      },
+      "xp": 3,
+      "id": "G1",
+      "owner": null,
+      "members": [
+        "board",
+        "engine",
+        "server"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "/api/state の駒が盤面に立つ",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "step で駒が1マス進む",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "SSE で描き直す",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": {
+        "seq": 31,
+        "node": "G1",
+        "commit": "96499778121cbf51f2b8209c582fefa6f6438523"
+      },
+      "first_try": null
+    },
+    "G2": {
+      "type": "gate",
+      "title": "結合: 地図の cases で歩ける",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/G2.test.mjs",
+        "seal": [
+          "tests/e2e/G2.test.mjs"
+        ],
+        "cases": [
+          "cases のマスが並ぶ",
+          "step の結果が図鑑に入る"
+        ]
+      },
+      "xp": 3,
+      "id": "G2",
+      "owner": null,
+      "members": [
+        "engine",
+        "gmkit"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "cases のマスが並ぶ",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "step の結果が図鑑に入る",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 2,
+        "total": 2
+      },
+      "save": null,
+      "first_try": null
+    },
+    "GOAL": {
+      "type": "gate",
+      "title": "あがり: GridHub で GridHub をつくる",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test tests/e2e/GOAL.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL.test.mjs"
+        ],
+        "cases": [
+          "全部の判定が通る",
+          "冒険の書は正常",
+          "README は GridHub"
+        ]
+      },
+      "xp": 3,
+      "id": "GOAL",
+      "owner": null,
+      "members": [
+        "board",
+        "engine",
+        "server",
+        "gmkit",
+        "assets",
+        "player"
+      ],
+      "state": "cleared",
+      "sealed": true,
+      "seal_broken": false,
+      "clears": 1,
+      "fails": 0,
+      "last_seq": null,
+      "cases": [
+        {
+          "name": "全部の判定が通る",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "冒険の書は正常",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        },
+        {
+          "name": "README は GridHub",
+          "ok": true,
+          "losses": 0,
+          "revived": 0,
+          "strong": false
+        }
+      ],
+      "tests": {
+        "pass": 3,
+        "total": 3
+      },
+      "save": null,
+      "first_try": null
+    }
+  },
+  "log": [
+    {
+      "seq": 0,
+      "ts": "2026-10-19T00:30:00.000Z",
+      "actor": "gm",
+      "character": null,
+      "node": null,
+      "ok": null,
+      "type": "genesis",
+      "text": "冒険の書がひらかれた: GridHubをつくる"
+    },
+    {
+      "seq": 1,
+      "ts": "2026-10-19T00:36:00.000Z",
+      "actor": "gm",
+      "character": null,
+      "node": null,
+      "ok": null,
+      "type": "saved",
+      "text": "賢者クロード、書記、伝令、地図職人、絵師 が ふりだし でセーブした（commit 3f9a2c1）"
+    },
+    {
+      "seq": 2,
+      "ts": "2026-10-19T00:42:00.000Z",
+      "actor": "gm",
+      "character": null,
+      "node": "E1",
+      "ok": null,
+      "type": "sealed",
+      "text": "E1 の判定を封印した"
+    },
+    {
+      "seq": 3,
+      "ts": "2026-10-19T00:48:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E1",
+      "ok": null,
+      "type": "sortie",
+      "text": "書記 が出撃した（codex gpt-5）"
+    },
+    {
+      "seq": 4,
+      "ts": "2026-10-19T00:54:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E1",
+      "ok": false,
+      "type": "stepped",
+      "text": "書記 が E1 を歩いた（テスト 1/3）"
+    },
+    {
+      "seq": 5,
+      "ts": "2026-10-19T01:00:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E1",
+      "ok": true,
+      "type": "stepped",
+      "text": "書記 が E1 を歩いた（テスト 3/3）"
+    },
+    {
+      "seq": 6,
+      "ts": "2026-10-19T01:06:00.000Z",
+      "actor": "server",
+      "character": "server",
+      "node": "S1",
+      "ok": true,
+      "type": "check_passed",
+      "text": "伝令 が S1「GET /api/state でビューを返す」の判定に成功！ テスト 2/2"
+    },
+    {
+      "seq": 7,
+      "ts": "2026-10-19T01:12:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E1",
+      "ok": true,
+      "type": "check_passed",
+      "text": "書記 が E1「log.jsonl に genesis を書く」の判定に成功！ テスト 3/3"
+    },
+    {
+      "seq": 8,
+      "ts": "2026-10-19T01:18:00.000Z",
+      "actor": "assets",
+      "character": "assets",
+      "node": "A1",
+      "ok": true,
+      "type": "check_passed",
+      "text": "絵師 が A1「駒の絵 sprites 12枚」の判定に成功！ テスト 2/2"
+    },
+    {
+      "seq": 9,
+      "ts": "2026-10-19T01:24:00.000Z",
+      "actor": "board",
+      "character": "board",
+      "node": "B1",
+      "ok": true,
+      "type": "check_passed",
+      "text": "賢者クロード が B1「svg#board に方眼ノートを描く」の判定に成功！ テスト 3/3"
+    },
+    {
+      "seq": 10,
+      "ts": "2026-10-19T01:30:00.000Z",
+      "actor": "gmkit",
+      "character": "gmkit",
+      "node": "M1",
+      "ok": true,
+      "type": "check_passed",
+      "text": "地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3"
+    },
+    {
+      "seq": 11,
+      "ts": "2026-10-19T01:36:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E2",
+      "ok": false,
+      "type": "check_failed",
+      "text": "書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から"
+    },
+    {
+      "seq": 12,
+      "ts": "2026-10-19T01:42:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E2",
+      "ok": null,
+      "type": "restored",
+      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
+    },
+    {
+      "seq": 13,
+      "ts": "2026-10-19T01:48:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E2",
+      "ok": false,
+      "type": "stepped",
+      "text": "書記 が E2 を歩いた（テスト 3/4）"
+    },
+    {
+      "seq": 14,
+      "ts": "2026-10-19T01:54:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E2",
+      "ok": true,
+      "type": "stepped",
+      "text": "書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！"
+    },
+    {
+      "seq": 15,
+      "ts": "2026-10-19T02:00:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": null,
+      "ok": null,
+      "type": "note",
+      "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+    },
+    {
+      "seq": 16,
+      "ts": "2026-10-19T02:06:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E2",
+      "ok": true,
+      "type": "check_passed",
+      "text": "書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4"
+    },
+    {
+      "seq": 17,
+      "ts": "2026-10-19T02:12:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "C1",
+      "ok": null,
+      "type": "saved",
+      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
+    },
+    {
+      "seq": 18,
+      "ts": "2026-10-19T02:18:00.000Z",
+      "actor": "server",
+      "character": "server",
+      "node": "S2",
+      "ok": true,
+      "type": "check_passed",
+      "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
+    },
+    {
+      "seq": 19,
+      "ts": "2026-10-19T02:24:00.000Z",
+      "actor": "gmkit",
+      "character": "gmkit",
+      "node": "M2",
+      "ok": false,
+      "type": "stepped",
+      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
+    },
+    {
+      "seq": 20,
+      "ts": "2026-10-19T02:30:00.000Z",
+      "actor": "gmkit",
+      "character": "gmkit",
+      "node": "M2",
+      "ok": false,
+      "type": "check_failed",
+      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
+    },
+    {
+      "seq": 21,
+      "ts": "2026-10-19T02:36:00.000Z",
+      "actor": "gmkit",
+      "character": "gmkit",
+      "node": "M2",
+      "ok": null,
+      "type": "restored",
+      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
+    },
+    {
+      "seq": 22,
+      "ts": "2026-10-19T02:42:00.000Z",
+      "actor": "board",
+      "character": "board",
+      "node": "B2",
+      "ok": false,
+      "type": "stepped",
+      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
+    },
+    {
+      "seq": 23,
+      "ts": "2026-10-19T02:48:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E3",
+      "ok": false,
+      "type": "stepped",
+      "text": "書記 が E3 を歩いた（テスト 2/5）"
+    },
+    {
+      "seq": 24,
+      "ts": "2026-10-19T02:54:00.000Z",
+      "actor": "assets",
+      "character": "assets",
+      "node": "A2",
+      "ok": false,
+      "type": "seal_broken",
+      "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
+    },
+    {
+      "seq": 25,
+      "ts": "2026-10-19T03:00:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E3",
+      "ok": false,
+      "type": "stepped",
+      "text": "書記 が E3 を歩いた（テスト 4/5）"
+    },
+    {
+      "seq": 26,
+      "ts": "2026-10-19T03:06:00.000Z",
+      "actor": "engine",
+      "character": "engine",
+      "node": "E3",
+      "ok": true,
+      "type": "check_passed",
+      "text": "書記 が E3「gridhub step で1件ずつ歩く」の判定に成功！ テスト 5/5、G1 で待機"
+    },
+    {
+      "seq": 27,
+      "ts": "2026-10-19T03:12:00.000Z",
+      "actor": "gmkit",
+      "character": "gmkit",
+      "node": "M1",
+      "ok": true,
+      "type": "check_passed",
+      "text": "地図職人 が M1 の復活したテストを倒し直した（テスト 3/3）"
+    },
+    {
+      "seq": 28,
+      "ts": "2026-10-19T03:18:00.000Z",
+      "actor": "board",
+      "character": "board",
+      "node": "B2",
+      "ok": true,
+      "type": "check_passed",
+      "text": "賢者クロード が B2「駒が1マスずつ歩く」の判定に成功！ G1 で待機"
+    },
+    {
+      "seq": 29,
+      "ts": "2026-10-19T03:24:00.000Z",
+      "actor": "gm",
+      "character": null,
+      "node": "G1",
+      "ok": true,
+      "type": "gate_cleared",
+      "text": "中ボス G1「結合: 冒険が盤面に映る」を撃破！ テスト 3/3 — 賢者クロード・書記・伝令 が解散"
+    },
+    {
+      "seq": 30,
+      "ts": "2026-10-19T03:30:00.000Z",
+      "actor": "gm",
+      "character": null,
+      "node": "G1",
+      "ok": null,
+      "type": "saved",
+      "text": "賢者クロード、書記、伝令 が G1 でセーブした（commit 7c4e9a0）"
+    },
+    {
+      "seq": 31,
+      "ts": "2026-10-19T03:36:00.000Z",
+      "actor": "gm",
+      "character": null,
+      "node": "A2",
+      "ok": null,
+      "type": "sealed",
+      "text": "A2 の判定を封印しなおした（宝箱: 判定のバグを見つけた）"
+    },
+    {
+      "seq": 32,
+      "ts": "2026-10-19T03:42:00.000Z",
+      "actor": "assets",
+      "character": "assets",
+      "node": "A2",
+      "ok": true,
+      "type": "check_passed",
+      "text": "絵師 が A2「モンスターの絵 8枚」の判定に成功！ テスト 3/3"
+    },
+    {
+      "seq": 33,
+      "ts": "2026-10-19T03:48:00.000Z",
+      "actor": "player",
+      "character": "player",
+      "node": "H1",
+      "ok": true,
+      "type": "stamped",
+      "text": "勇者（あなた） が H1 にハンコを押した"
+    },
+    {
+      "seq": 34,
+      "ts": "2026-10-19T03:54:00.000Z",
+      "actor": "gm",
+      "character": null,
+      "node": "GOAL",
+      "ok": true,
+      "type": "gate_cleared",
+      "text": "魔王 GOAL「あがり: GridHub で GridHub をつくる」を撃破！ テスト 3/3 — あがり！"
+    }
+  ],
+  "head": {
+    "seq": 34,
+    "hash": "aeb8bf0f97734ecc3b5666932acee79f8395bf5f972a67c48192728a34979d9a",
+    "jumon": "わわも ぼえで ほずと がごば"
+  },
+  "integrity": {
+    "ok": true,
+    "errors": []
+  },
+  "finished": true,
+  "bestiary": {
+    "total": 63,
+    "defeated": 63,
+    "revived": 2,
+    "strong": 1
+  },
+  "ending": {
+    "seq": 34,
+    "text": "テスト 63/63 が通った。GridHubをつくる、あがり。\n一発で出口を抜けたダンジョンは 14 のうち 12（ちいさなメダル 12枚）。\n書記 は E2 で2度負けたテストを倒し、その技を3代目に伝えた。\n地図職人 の M1 で復活したテストは、町に戻って倒し直した。\n絵師 は判定のバグを見つけて宝箱を1つ開けた。出撃は 19 回。",
+    "stats": {
+      "tests": 63,
+      "defeated": 63,
+      "medals": 12,
+      "strong": 1,
+      "revived": 1,
+      "treasures": 1,
+      "traps": 1,
+      "skills": 1,
+      "sorties": 19,
+      "fails": 2
+    }
+  }
+}

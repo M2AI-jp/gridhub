@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>こうもり</title>
+  <desc>まんまるの体に、ぎざぎざの羽を広げたこうもり。小さなきばが2本。</desc>
+  <ellipse cx="32" cy="57" rx="14" ry="3" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 30Q12 18 3 22Q7 27 6 33Q11 31 13 36Q17 33 20 38Z" fill="var(--monster, #ffffff)"/>
+    <path d="M42 30Q52 18 61 22Q57 27 58 33Q53 31 51 36Q47 33 44 38Z" fill="var(--monster, #ffffff)"/>
+    <path d="M24 19L22 10L29 16M40 19L42 10L35 16" fill="var(--monster, #ffffff)"/>
+    <circle cx="32" cy="32" r="14" fill="var(--monster, #ffffff)"/>
+    <path d="M24 29Q27 26 30 29M34 29Q37 26 40 29"/>
+    <circle cx="27" cy="31" r="2.2" fill="#1d2b5c"/>
+    <circle cx="37" cy="31" r="2.2" fill="#1d2b5c"/>
+    <path d="M27 38Q32 41 37 38"/>
+    <path d="M29 39L30 43L31 39.5M33 39.5L34 43L35 39" fill="#ffffff" stroke-width="1.6"/>
+    <path d="M29 47L28 52M35 47L36 52"/>
+  </g>
+</svg>

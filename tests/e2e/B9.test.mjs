@@ -44,45 +44,52 @@ async function withDemo(fn, { url = '/?fixture=demo', width = 1440, height = 900
   }
 }
 
-test('§36.1 ノートの1ページ: 端のある紙・綴じのリング・余白の赤線・紙のむら。方眼はページの中だけ、外は机', { timeout: 120000 }, async () => {
+// 第11章（§50.1・§50.13）で直した: ノートは1枚のページではなく、縦の B5 のページが見開きで並ぶ。
+// §36.1 の綴じのリング（.page-binding .ring）と「.page-sheet が1枚」の前提をやめ、ページごとの紙・余白の線・紙のむら、
+// 方眼はどれかのページの紙の中だけ、外は机、「全体」で今の見開き全体が見えること、を確かめる。
+test('§36.1→§50.1 ノートのページ: 端のある紙・余白の線・紙のむら。方眼はページの中だけ、外は机。「全体」で見開き全体', { timeout: 120000 }, async () => {
   await withDemo(async (page) => {
     const r = JSON.parse(await page.eval(inPage(`
       const q = (s) => [...document.querySelectorAll(s)];
-      const sheet = q('#paper .page-sheet');
+      const sheets = q('#paper .page-sheet');
       const grids = q('#paper [fill="url(#grid-5mm)"], #paper [fill="url(\\'#grid-5mm\\')"]');
       const text = q('#paper text').map((t) => t.textContent).join(' ');
       return JSON.stringify({
-        sheets: sheet.length,
-        rings: q('#paper .page-binding .ring').length,
+        pages: q('#paper .page[data-page]').length,
+        sheets: sheets.length,
         margin: q('#paper .page-margin').length,
         grain: q('#paper .page-grain').length,
         grids: grids.length,
-        gridsInside: sheet.length === 1 && grids.every((g) => inside(bbox(g), bbox(sheet[0]))),
+        gridsInside: grids.every((g) => sheets.some((s) => inside(bbox(g), bbox(s)))),
         stageBg: rgb(getComputedStyle(document.querySelector('#stage')).backgroundColor).slice(0, 3).join(','),
         paper: paper().slice(0, 3).join(','),
         text,
         title: document.querySelector('.quest-title').textContent,
       });
     `)));
-    assert.equal(r.sheets, 1, 'ページの紙 .page-sheet が1枚');
-    assert.ok(r.rings >= 3, `綴じのリング .page-binding .ring が3つ以上（${r.rings}）`);
-    assert.ok(r.margin >= 1, '余白の赤い縦線 .page-margin');
+    assert.ok(r.pages >= 2, `ページが2枚以上（${r.pages}）`);
+    assert.equal(r.sheets, r.pages, 'ページごとに紙 .page-sheet が1枚');
+    assert.ok(r.margin >= 1, '余白の線 .page-margin');
     assert.ok(r.grain >= 1, '紙の色むら .page-grain');
     assert.ok(r.grids >= 1, '5mm方眼で塗った紙がある');
-    assert.equal(r.gridsInside, true, '方眼はページの紙の中だけ');
+    assert.equal(r.gridsInside, true, '方眼はどれかのページの紙の中だけ');
     assert.notEqual(r.stageBg, r.paper, `ページの外は机（#stage の背景が紙の色 ${r.paper} ではない）`);
     assert.match(r.text, /No\./, '印刷の No.');
     assert.match(r.text, /Date/, '印刷の Date');
     assert.equal(r.title, fixture.quest.title, '.quest-title は題名だけ');
 
-    // 「全体」で、綴じを含むページ全体が見える
+    // 「全体」で、今の見開き（見えている2ページ）全体が見える
+    await page.eval(`document.querySelector('[data-zoom="in"]').click()`);
     await page.eval(`document.querySelector('[data-zoom="fit"]').click()`);
     await sleep(300);
     const fit = JSON.parse(await page.eval(inPage(`
-      const page = union([document.querySelector('#paper .page-sheet'), document.querySelector('#paper .page-binding')]);
-      return JSON.stringify({ page, vb: vb(), ok: inside(page, vb(), 2) });
+      const left = window.__masume.spread;
+      const sheets = [left, left + 1].map((n) => document.querySelector('#paper .page[data-page="' + n + '"] .page-sheet')).filter(Boolean);
+      const spread = union(sheets);
+      return JSON.stringify({ spread, vb: vb(), n: sheets.length, ok: inside(spread, vb(), 2) });
     `)));
-    assert.equal(fit.ok, true, `「全体」でページ全体（綴じを含む）が見える: ${JSON.stringify(fit)}`);
+    assert.equal(fit.n, 2, '見開きは2ページ');
+    assert.equal(fit.ok, true, `「全体」で今の見開き全体が見える: ${JSON.stringify(fit)}`);
   });
 });
 
@@ -246,31 +253,30 @@ test('§36.6 読みやすさ: マスの題と冒険の書は 4.5 以上、霧の
   });
 });
 
-test('§36.7 書き出し: ノートの1ページ（紙と綴じ）が viewBox に収まり、1目 = 5mm の実寸', { timeout: 120000 }, async () => {
+// 第11章（§50.13）で直した: 書き出しは1ページではなく、すべてのページを含むノート全体。綴じのリングは見開きのノートでは要らない。
+test('§36.7→§50.13 書き出し: すべてのページの紙が viewBox に収まり、1目 = 5mm の実寸', { timeout: 120000 }, async () => {
   await withDemo(async (page) => {
     const r = JSON.parse(await page.eval(inPage(`
       const text = window.__masume.exportSvg();
       const doc = new DOMParser().parseFromString(text, 'image/svg+xml');
       const root = doc.documentElement;
       const [x, y, w, h] = root.getAttribute('viewBox').split(/\\s+/).map(Number);
-      const parts = [document.querySelector('#paper .page-sheet'), document.querySelector('#paper .page-binding')];
-      const page = parts.every(Boolean) ? union(parts) : null;
+      const sheets = [...document.querySelectorAll('#paper .page-sheet')];
       return JSON.stringify({
         xml: !doc.querySelector('parsererror') && root.nodeName === 'svg',
-        sheet: !!doc.querySelector('[class~="page-sheet"]'),
-        rings: doc.querySelectorAll('[class~="ring"]').length,
+        sheets: doc.querySelectorAll('[class~="page-sheet"]').length,
+        pages: sheets.length,
         vb: { x, y, w, h },
         width: root.getAttribute('width'),
         height: root.getAttribute('height'),
         unit: Number(document.querySelector('#grid-5mm').getAttribute('width')),
-        page,
-        inside: !!page && inside(page, { x, y, w, h }, 1),
+        inside: sheets.every((s) => inside(bbox(s), { x, y, w, h }, 1)),
       });
     `)));
     assert.equal(r.xml, true, 'XML として正しい');
-    assert.equal(r.sheet, true, '書き出しにページの紙 .page-sheet');
-    assert.ok(r.rings >= 3, '書き出しに綴じのリング');
-    assert.equal(r.inside, true, `ページ全体と綴じが viewBox の中: ${JSON.stringify(r)}`);
+    assert.ok(r.pages >= 2, 'ページが2枚以上');
+    assert.equal(r.sheets, r.pages, '書き出しに、すべてのページの紙 .page-sheet');
+    assert.equal(r.inside, true, `すべてのページが viewBox の中: ${JSON.stringify(r)}`);
     assert.ok(r.unit > 0, '1目の大きさ');
     const mm = (s) => Number(String(s).replace(/mm$/, ''));
     assert.match(String(r.width), /^[\d.]+mm$/);
