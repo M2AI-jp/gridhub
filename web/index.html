@@ -3,21 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>マスメ — 方眼すごろく</title>
-  <meta name="description" content="5mm方眼ノートのすごろくで、開発の進み具合を遊ぶ。">
+  <title>GridHub — テストが通ったぶんだけ進む開発すごろく</title>
+  <meta name="description" content="GridHub: 5mm方眼ノートの世界地図で、テスト1件が1マスの開発すごろく。">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23fdfaf0'/%3E%3Cpath d='M8 0V32M16 0V32M24 0V32M0 8H32M0 16H32M0 24H32' stroke='%239fd0e6' stroke-width='1'/%3E%3Crect x='9' y='9' width='14' height='14' fill='%23ffe45c' stroke='%231d2b5c' stroke-width='2'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <!-- 外の字は描画を止めないよう print で読み、届いたら board/app.js が全部の画面に効かせる（§37） -->
-  <link id="hand-fonts" href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Yomogi&family=Yusei+Magic&display=swap" rel="stylesheet" media="print">
+  <!-- 外の字は描画を止めないよう、最初は読まない（disabled・print）。盤面を描いたあとで board/app.js が読みはじめ、届いたら全部の画面に効かせる（§37） -->
+  <link id="hand-fonts" disabled href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Yomogi&family=Yusei+Magic&display=swap" rel="stylesheet" media="print">
   <link rel="stylesheet" href="board/board.css">
 </head>
 <body data-view="board">
+  <!-- 手元の書体の予熱: 日本語の代わりの書体を、大きな盤面を描く前に読み込ませる（書体が届くたびの描き直しを小さく済ませる） -->
+  <div class="font-warm" aria-hidden="true"><span class="fw-hand">あ漢テ字ー。、？ GridHub 1/2 ✓✔✖・◎…—↓↑</span><span class="fw-marker">あ漢テ字ー。？</span><span class="fw-pencil">あ漢テ字ー。？</span><span class="fw-ui">あ漢テ字 ✓◎</span><span class="fw-mono">a1b2 ✔</span></div>
   <header class="cover">
     <div class="brand">
-      <span class="logo" aria-label="マスメ">マ<span>ス</span>メ</span>
-      <span class="chip">方眼 5mm</span>
-      <span class="tagline">すごろく式 開発進行ノート</span>
+      <span class="logo" aria-label="GridHub"><span class="lg-cell">G</span><span class="lg-cell">r</span><span class="lg-cell">i</span><span class="lg-cell">d</span><span class="lg-hub">Hub</span></span>
+      <span class="tagline">テスト1件 = 1マス。通ったぶんだけ進む開発すごろく</span>
     </div>
     <nav class="tabs" role="tablist" aria-label="表示">
       <button role="tab" data-view="board" aria-selected="true">盤面</button>
@@ -37,20 +38,15 @@
   </header>
 
   <main class="desk">
-    <aside id="party" class="slip" aria-label="なかま">
-      <div id="party-list-wrap"></div>
-      <div id="party-controls">
-        <button id="sortie-open" class="act sortie">出撃させる</button>
-        <div id="party-status" data-running="false" aria-live="polite">
-          <span id="party-status-text">出撃していません</span>
-          <button id="party-stop" class="mini-btn dark" hidden>止める</button>
-        </div>
-      </div>
-    </aside>
 
     <section id="stage">
       <div id="view-board" class="view active">
-        <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="すごろくの盤面"></svg>
+        <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GridHub の世界地図（縦の5mm方眼ノートの見開き）"></svg>
+        <nav class="pager" aria-label="ページをめくる">
+          <button id="page-prev" type="button" aria-label="前の見開き">◀ まえ</button>
+          <span id="page-no" aria-live="polite">— / —</span>
+          <button id="page-next" type="button" aria-label="次の見開き">つぎ ▶</button>
+        </nav>
         <div class="zoom" role="group" aria-label="拡大縮小">
           <button data-zoom="in" aria-label="拡大">＋</button>
           <button data-zoom="out" aria-label="縮小">－</button>
@@ -58,11 +54,12 @@
           <button id="export-notebook" title="盤面全体を1枚の5mm方眼ノート（SVG）にして保存する">ノートに書き出す</button>
         </div>
         <div class="legend" aria-label="凡例">
-          <span><i class="lg-hanamaru"></i>突破</span>
-          <span><i class="lg-current"></i>作業中</span>
-          <span title="巻き戻されて消しゴムで消されたマス。もう一度判定に通れば戻る"><i class="lg-stale"></i>要再検証</span>
+          <span title="道の上のマス1つが、テスト1件。通ると倒せる"><i class="lg-monster"></i>モンスター = テスト1件</span>
+          <span title="通ったテスト"><i class="lg-slain"></i>倒した</span>
+          <span title="一度通ったテストが、あとの変更で落ちた（リグレッション）"><i class="lg-revived"></i>復活</span>
+          <span title="ダンジョンの出口で宣言判定に通った"><i class="lg-hanamaru"></i>はなまる</span>
+          <span title="町に着くと、縄張りの変更を git commit する"><i class="lg-town">⌂</i>町 = commit</span>
           <span title="視界の外。エージェントの指令書には出ない"><i class="lg-fog"></i>霧</span>
-          <span title="判定（E2E）のファイルはGMが封印済み"><i class="lg-seal">封</i>封印済み</span>
         </div>
       </div>
 
@@ -71,31 +68,32 @@
       <div id="view-rules" class="view">
         <article id="rules" class="rules">
           <h2>あそびかた</h2>
-          <p class="lead">マスメは、5mm方眼ノートに描いたすごろくで開発を進めるゲームです。<br>キャラクターはモジュールを1つずつ担当するエージェント（と人間）。<b>判定（E2Eテスト）に通ったときだけ</b>駒が進みます。</p>
+          <p class="lead">GridHub は、開発をそのまま JRPG すごろくにしたゲームです。<b>道の上のマス1つ = テスト1件 = モンスター1体</b>。テストが通るとモンスターを倒して1マス進みます。キャラクターはモジュールを1つずつ担当するエージェント（と人間）。</p>
           <div class="rule-grid">
-            <section><h3>1. 指令書を読む</h3><p><code>masume brief &lt;ID&gt;</code> に、いまのマス・判定コマンド・見えている先・仲間の位置・前の自分の日誌が出ます。</p></section>
-            <section><h3>2. いまのマスだけやる</h3><p>先のマスは霧の中（視界はレベルで広がる）。触ってよいのは自分の縄張りだけ。</p></section>
-            <section><h3>3. 宣言判定</h3><p><code>masume check &lt;ID&gt;</code>。セーブポイントから今のマスまでの判定を<b>まとめて</b>走らせます。素振りは自由、宣言は一発勝負。</p></section>
-            <section><h3>4. 成功</h3><p>はなまる。1マス進んで経験値。レベルが上がると視界が広がります。</p></section>
-            <section><h3>5. 失敗</h3><p>レベル−1。所定の位置まで戻され、その間のマスは<b>消しゴムで消されます</b>（もう一度判定に通れば戻る。経験値はなし）。</p></section>
-            <section><h3>6. 結合ゲート</h3><p>道が合流するボス戦。仲間が全員そろうと結合E2Eが始まります。負けると全滅（<code>MASUME_BLAME</code> があれば責任者だけ差し戻し）。勝てば解散して次へ。</p></section>
-            <section><h3>7. ハンコ</h3><p>人間にしかできないマスは、人間のハンコで進みます。</p></section>
-            <section><h3>8. 冒険の書</h3><p>進み具合は追記専用のセーブデータに残ります。ハッシュの鎖なので改ざんは「呪い」として見つかり、<b>ふっかつのじゅもん</b>でどの時点の盤面でも指せます。</p></section>
+            <section><h3>1. 指令書を読む</h3><p><code>gridhub brief &lt;ID&gt;</code> に、いまのダンジョン・いま戦うテスト・受け継いだ技・前の自分の日誌が出ます。</p></section>
+            <section><h3>2. 1マスずつ歩く</h3><p>いちばん手前の落ちているテストだけを通して <code>gridhub step &lt;ID&gt;</code>。何度でも、罰なし。倒したモンスターには赤い斜線。</p></section>
+            <section><h3>3. 出口で宣言</h3><p>全部倒したら <code>gridhub check &lt;ID&gt;</code>。町から今までをまとめて走らせる一発勝負。通れば赤ペンのはなまる。</p></section>
+            <section><h3>4. 負けたら町から</h3><p>宣言に落ちると Lv−1、最後の町からやり直し。間のはなまるは<b>消しゴム</b>で消され、町の commit に戻ります（変更は stash の墓に残る）。</p></section>
+            <section><h3>5. 町 = セーブ</h3><p>町に着くと、縄張りの変更を git commit します。看板に <code>commit a1b2c3d</code>。こまめにセーブするほど、負けても失うものが小さい。</p></section>
+            <section><h3>6. 中ボス = 結合ゲート</h3><p>道が合流する城壁。仲間がそろうと結合テスト（連携）。HP はテストの数。負けると責任のある仲間だけ町へ。</p></section>
+            <section><h3>7. 王様の城 = ハンコ</h3><p>人間が決めるべき所は、人間のハンコで進みます。</p></section>
+            <section><h3>8. 冒険の書</h3><p>起きたことは追記専用のセーブデータ（ハッシュの鎖）に残ります。判定ファイルは GM が<b>封印</b>。改ざんは「呪い」として見つかり、<b>ふっかつのじゅもん</b>でどの時点の盤面でも指せます。</p></section>
           </div>
-          <h3>役割の分離</h3>
+          <h3>積み上げ</h3>
           <ul>
-            <li><b>GM</b> は地図を描き、判定を書いて封印する（実装しない）。</li>
-            <li><b>キャラクター</b> は実装する（判定を書かない・変えない）。</li>
-            <li><b>人間</b> は人間にしかできないマスと、最後のハンコ。</li>
+            <li><b>復活</b>: 前に倒したテストが落ちると、赤い丸で復活して見える（リグレッション）。</li>
+            <li><b>強敵と技</b>: 2回以上負けたテストを倒すと「強敵を倒した」。その直後の日誌が<b>技</b>になり、次の代（出撃）に受け継がれる。</li>
+            <li><b>ちいさなメダル</b> ◎: ダンジョンの出口を一発で抜けた数。<b>モンスター図鑑</b>: 計画したテストのうち、いま通っている数。</li>
+            <li><b>作戦</b>: いのちだいじに / バッチリがんばれ / ガンガンいこうぜ。エージェントの動き方が変わる（ルールは変わらない）。</li>
           </ul>
-          <p class="foot">くわしくは <code>docs/RULEBOOK.md</code>。「xxxのようなアプリを作りたい」から地図を作る手順は <code>docs/GM_GUIDE.md</code>。</p>
+          <p class="foot">くわしくは <code>docs/GAME_DESIGN.md</code> と <code>docs/RULEBOOK.md</code>。CLI は <code>gridhub</code>（<code>masume</code> も同じ）。</p>
         </article>
       </div>
       <section id="lobby" class="lobby" hidden aria-label="新しい冒険の入口">
         <div class="lobby-card">
           <p class="lobby-kicker">新しい冒険</p>
           <h2>どんなアプリを作りたい？</h2>
-          <p class="lobby-lead">「○○のようなアプリを作りたい」と書くと、GM の LLM が開発のロードマップ全体を5mm方眼のすごろくにします。モジュールごとにキャラクター（エージェント）が並び、要所の結合ゲートで合流します。</p>
+          <p class="lobby-lead">「○○のようなアプリを作りたい」と書くと、GM の LLM が、開発のロードマップ全体を5mm方眼ノートの世界地図にします。テスト1件が1マス。モジュールごとのキャラクター（エージェント）の道が、中ボス（結合テスト）で合流します。</p>
           <form id="lobby-form">
             <label class="field"><span>願い</span>
               <textarea id="wish" rows="4" maxlength="2000" placeholder="例: ことづけのような、電話の用件をAIが聞いてメールで届けるアプリを作りたい"></textarea>
@@ -129,17 +127,30 @@
       <div id="toast" aria-live="polite"></div>
     </section>
 
+    <div id="rail">
+      <aside id="party" class="slip" aria-label="なかま">
+        <div id="party-list-wrap"></div>
+        <section id="bestiary" aria-label="モンスター図鑑"></section>
+        <div id="party-controls">
+          <button id="sortie-open" class="act sortie">出撃させる</button>
+          <div id="party-status" data-running="false" aria-live="polite">
+            <span id="party-status-text">出撃していません</span>
+            <button id="party-stop" class="mini-btn dark" hidden>止める</button>
+          </div>
+        </div>
+      </aside>
     <aside id="side" class="slip">
       <div class="punch-holes" aria-hidden="true"><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i></div>
       <div id="drawer" hidden></div>
       <section id="log" aria-label="冒険の書"></section>
     </aside>
+    </div>
   </main>
 
   <dialog id="sortie-modal" aria-labelledby="sortie-title">
     <form id="sortie-form" method="dialog">
       <h2 id="sortie-title">出撃させる</h2>
-      <p class="hint">選んだキャラクターごとにエージェントを1人ずつ出撃させます。エージェントは指令書を読んで、いまのマスだけを実装し、宣言判定します。ゲートのボス戦はパーティがします。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b></p>
+      <p class="hint">選んだキャラクターごとにエージェントを1人ずつ出撃させます。エージェントは指令書を読み、いちばん手前の落ちているテストから1件ずつ倒して進みます（作戦で、どこまで進むかが変わります）。中ボス（結合テスト）はパーティがします。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b></p>
       <div class="field-row">
         <label class="field"><span>エージェント</span>
           <select id="sortie-agent"><option value="claude">Claude</option><option value="codex">Codex</option></select>
@@ -150,6 +161,18 @@
         <label class="field narrow"><span>同時に</span>
           <input id="sortie-parallel" type="number" min="1" max="8" value="3">
         </label>
+      </div>
+      <div class="tactic">
+        <label class="field"><span>作戦</span>
+          <select id="sortie-tactic">
+            <option value="careful">いのちだいじに（careful）</option>
+            <option value="balanced" selected>バッチリがんばれ（balanced）</option>
+            <option value="bold">ガンガンいこうぜ（bold）</option>
+          </select>
+        </label>
+        <p class="hint tactic-hint" data-tactic-hint="careful">1マスずつ <code>gridhub step</code> で確かめ、全部のテストが通るまで宣言しない。1つのダンジョンを抜けたら（宣言に2回失敗したら）止まる。</p>
+        <p class="hint tactic-hint" data-tactic-hint="balanced">小さく変えて <code>step</code> を回し、全部通ったら宣言。1つのダンジョンを抜けたら（宣言に2回失敗したら）止まる。</p>
+        <p class="hint tactic-hint" data-tactic-hint="bold">次の町まで、ダンジョンを続けて進んでよい。町でセーブしたら・ゲートで待機になったら（宣言に2回失敗したら）止まる。</p>
       </div>
       <div class="listen">
         <label class="check-field"><input id="sortie-allow-listen" type="checkbox"> <span>Codex の箱のソケットを開ける</span> <small id="sortie-allow-listen-note" class="listen-note" hidden>codex にだけ効きます</small></label>
@@ -162,6 +185,17 @@
       </div>
     </form>
   </dialog>
+
+  <div id="ending" role="dialog" aria-modal="true" aria-labelledby="ending-kicker" hidden>
+    <div class="ending-card">
+      <p id="ending-kicker" class="ending-kicker">エンディング</p>
+      <div class="ending-stamp" aria-hidden="true">あがり</div>
+      <h2 id="ending-title"></h2>
+      <div id="ending-text"></div>
+      <div id="ending-stats"></div>
+      <button id="ending-close" type="button" class="act">盤面にもどる</button>
+    </div>
+  </div>
 
   <script type="module" src="board/app.js"></script>
 </body>

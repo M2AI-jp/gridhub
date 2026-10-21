@@ -68,7 +68,8 @@ test('マスの詳細（issue）とキャラクターシート', async () => {
     const d = await page.eval(`(() => { const d = document.querySelector('#drawer'); return { kind: d.dataset.kind, id: d.dataset.id, text: d.innerText, steps: d.querySelectorAll('.step').length }; })()`);
     assert.equal(d.kind, 'char');
     assert.equal(d.id, 'engine');
-    for (const w of ['書記', 'masume brief engine', 'ふたつ星亭', '縄張り']) assert.match(d.text, new RegExp(w), `キャラクターシートに「${w}」`);
+    // 第11章（§38）で直した: CLI の名前は gridhub（masume は別名）。キャラクターシートの案内はどちらでもよい
+    for (const w of ['書記', '(gridhub|masume) brief engine', 'ふたつ星亭', '縄張り']) assert.match(d.text, new RegExp(w), `キャラクターシートに「${w}」`);
     const engine = JSON.parse(readFileSync(join(ROOT, 'web', 'fixtures', 'demo-state.json'), 'utf8')).characters.find((c) => c.id === 'engine');
     assert.equal(d.steps, engine.path.length, '道のりが全部並ぶ');
   });

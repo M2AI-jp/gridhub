@@ -1,6 +1,6 @@
-// 盤面のまわり: なかま一覧・冒険の書（ログ）・マスの詳細（issue）・キャラクターシート・台帳（Linear風）。
+// 盤面のまわり: なかま一覧・モンスター図鑑・冒険の書（ログ）・マスの詳細（issue）・キャラクターシート・台帳（Linear風）。
 import { esc, hl, own, byId } from './sketch.js';
-import { spriteMarkup, jobJa, STATUS_JA } from './render.js';
+import { spriteMarkup, jobJa, STATUS_JA, monsterMarkup, speciesOf } from './draw.js';
 
 export const LINEAR = { cleared: 'Done', current: 'In Progress', waiting: 'In Review', ready: 'In Review', stale: 'Todo', open: 'Todo', fog: 'Backlog' };
 const LINEAR_JA = { 'In Progress': '進行中', 'In Review': '結合待ち', Todo: 'これから', Backlog: '霧の中', Done: '完了' };
@@ -17,34 +17,54 @@ function agentLabel(c) {
   return c.agent ? c.agent[0].toUpperCase() + c.agent.slice(1) : 'エージェント';
 }
 
+/** いまのマスのテスト（task の上にいて、テストがあれば） */
+function testsHere(view, c) {
+  const n = c.at ? own(view.nodes, c.at) : null;
+  if (!n || !n.tests || !(n.tests.total > 0)) return null;
+  return n.tests;
+}
+
 export function renderParty(view, sprites, selectedChar) {
   const cards = view.characters
     .map((c) => {
       const node = c.at ? own(view.nodes, c.at) : null;
-      const pct = Math.round(Math.max(0, Math.min(1, c.xp / (c.xp_next || 1))) * 100);
       const progress = c.path.length ? Math.round((c.pos / c.path.length) * 100) : 0;
+      const t = testsHere(view, c);
+      const gen = Number.isInteger(c.generation) ? c.generation : 1;
+      const medals = Number.isInteger(c.medals) ? c.medals : 0;
+      const cases = node && Array.isArray(node.cases) ? node.cases : [];
+      const fight = c.status === 'working' && node?.check?.kind === 'cmd' ? (!cases.length ? '？ まだ走らせていない' : c.square != null && c.square < cases.length ? cases[c.square].name : '全部倒した → gridhub check') : '';
+      const where = c.status !== 'done' && node ? `${c.at} ${node.title}` : '';
       return `<button class="party-card${selectedChar === c.id ? ' selected' : ''}" data-char="${esc(c.id)}" style="--hl:${hl(c.color)}" aria-label="${esc(c.name)}のキャラクターシートを開く">
-        ${mini(sprites, c, 44)}
+        ${mini(sprites, c, 40)}
         <span class="pc-body">
-          <span class="pc-name">${esc(c.name)}</span>
-          <span class="pc-meta">${esc(agentLabel(c))}・${esc(jobJa(c.job))}・<b>Lv${c.level}</b></span>
-          <span class="pc-xp" title="経験値 ${c.xp}/${c.xp_next}"><i style="width:${pct}%"></i></span>
-          <span class="pc-where" data-status="${esc(c.status)}">${esc(own(CHAR_STATUS, c.status) || c.status)}${node ? ` @ ${esc(c.at)} ${esc(node.title)}` : ''}</span>
+          <span class="pc-top"><span class="pc-name">${esc(c.name)}</span><span class="pc-gen">${gen}代目</span></span>
+          <span class="pc-meta">${esc(agentLabel(c))}・${esc(jobJa(c.job))}・<b>Lv${c.level}</b>${medals ? ` <span class="pc-medal" title="ちいさなメダル（一発で出口を抜けた）">◎${medals}</span>` : ''}${c.strong ? ` <span class="pc-strong" title="強敵を倒した">強${c.strong}</span>` : ''}${c.skills?.length ? ` <span class="pc-skill" title="技（先代から受け継いだもの）">技${c.skills.length}</span>` : ''}</span>
+          <span class="pc-where" data-status="${esc(c.status)}">${t ? `<b class="pc-tests${t.pass === t.total ? ' all' : ''}">テスト ${t.pass}/${t.total}</b> ` : ''}${esc(own(CHAR_STATUS, c.status) || c.status)}${where ? ` @ ${esc(where)}` : ''}</span>
+          ${fight ? `<span class="pc-fight" title="いま戦うテスト">⚔ ${esc(fight)}</span>` : ''}
           ${c.sortie ? `<span class="pc-sortie">⏳ 出撃中（${esc(c.sortie.agent)}${c.sortie.model ? ' ' + esc(c.sortie.model) : ''}）</span>` : ''}
           <span class="pc-progress" aria-label="道のり ${progress}%"><i style="width:${progress}%"></i></span>
         </span>
       </button>`;
     })
     .join('');
-  const total = view.characters.reduce((s, c) => s + c.path.length, 0);
-  const done = view.characters.reduce((s, c) => s + c.pos, 0);
   return `<h2 class="side-title">なかま <small>${view.characters.length}人</small></h2>
-    <div class="party-list">${cards}</div>
-    <div class="party-foot">
-      <div class="trip"><span>全体の道のり</span><b>${total ? Math.round((done / total) * 100) : 0}%</b></div>
-      <div class="trip-bar"><i style="width:${total ? (done / total) * 100 : 0}%"></i></div>
-      ${view.finished ? '<div class="agari">🏁 あがり！</div>' : ''}
-    </div>`;
+    <div class="party-list">${cards}</div>`;
+}
+
+/** モンスター図鑑（§42 の bestiary。無ければ cases から数える） */
+export function renderBestiary(view, monsters) {
+  let b = view.bestiary;
+  if (!b || !Number.isInteger(b.total)) {
+    const all = Object.values(view.nodes).flatMap((n) => (Array.isArray(n.cases) ? n.cases : []));
+    b = { total: all.length, defeated: all.filter((x) => x.ok === true).length, revived: all.reduce((s, x) => s + (x.revived || 0), 0), strong: all.filter((x) => x.strong).length };
+  }
+  const pct = b.total ? Math.round((b.defeated / b.total) * 100) : 0;
+  const shown = ['slime', 'bat', 'mushroom', 'ghost', 'snake', 'golem'].map((sp, i) => monsterMarkup(monsters, sp, 4 + i * 26, 2, 24, i < Math.round((pct / 100) * 6) ? '#ffffff' : '#e8ecf3', '')).join('');
+  return `<div class="bestiary-head"><span class="bt-title">モンスター図鑑</span><span class="bt-count"><b>${b.defeated}</b> / ${b.total}</span></div>
+    <div class="bt-bar" aria-label="倒したテスト ${b.defeated}/${b.total}"><i style="width:${pct}%"></i></div>
+    <div class="bt-meta">倒したテスト ${b.defeated}/${b.total}（${pct}%）${b.revived ? `・<span class="bt-rev">復活 ${b.revived}</span>` : ''}${b.strong ? `・<span class="bt-strong">強敵 ${b.strong}</span>` : ''}</div>
+    <svg class="bt-art" viewBox="0 0 160 28" aria-hidden="true">${shown}</svg>`;
 }
 
 function fmtTime(ts) {
@@ -53,7 +73,7 @@ function fmtTime(ts) {
   return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-const MARK = { check_passed: '◎', gate_cleared: '★', stamped: '印', check_failed: '✗', gate_failed: '✗', seal_broken: '!', sealed: '封', note: '✎', genesis: '✦', amended: '✐', loaded: '↺' };
+const MARK = { check_passed: '◎', gate_cleared: '★', stamped: '印', check_failed: '✗', gate_failed: '✗', seal_broken: '!', sealed: '封', note: '✎', genesis: '✦', amended: '✐', loaded: '↺', stepped: '⚔', saved: '⌂', restored: '↩', sortie: '📯', returned: '↵' };
 
 export function renderLog(view, freshSeq = -1) {
   const items = [...(view.log || [])]
@@ -91,6 +111,17 @@ function checkText(view, n) {
   return n.check.run;
 }
 
+/** テスト1件ずつ（モンスター）の一覧 */
+function testList(n) {
+  if (!Array.isArray(n.cases) || (n.type !== 'gate' && n.check?.kind !== 'cmd')) return '';
+  if (!n.cases.length) return `<h4>テスト（モンスター）</h4><p class="hint">まだ一度も判定を走らせていません。中の分からないダンジョン（？のマス）です。</p>`;
+  const pass = n.cases.filter((c) => c.ok === true).length;
+  const items = n.cases
+    .map((c, i) => `<li class="case ${c.ok === true ? 'ok' : c.ok === false ? 'ng' : 'none'}"><span class="case-mark">${c.ok === true ? '✔' : c.ok === false ? '✖' : '・'}</span><span class="case-name">${esc(c.name)}</span>${c.revived ? `<span class="case-tag rev" title="一度通ったあとで落ちた（リグレッション）">復活${c.revived}</span>` : ''}${c.strong ? '<span class="case-tag strong" title="2回以上負けてから倒した">強敵</span>' : ''}${c.losses ? `<small>負け ${c.losses}</small>` : ''}</li>`)
+    .join('');
+  return `<h4>テスト ${pass}/${n.cases.length} <small>1件 = 1マス = 1体のモンスター</small></h4><ol class="case-list">${items}</ol>`;
+}
+
 function relatedLog(view, id) {
   return (view.log || []).filter((e) => e.node === id).slice(-8).reverse();
 }
@@ -100,7 +131,7 @@ export function renderNodeDrawer(view, id, { live }) {
   if (!n) return '';
   const chars = byId(view.characters);
   const people = (n.members || []).map((m) => chars[m]).filter(Boolean);
-  const kind = n.type === 'gate' ? (view.quest?.goal === id ? 'あがり（最後の結合ゲート）' : '結合ゲート（ボス戦）') : n.type === 'camp' ? '宿屋（セーブポイント）' : 'マス（タスク）';
+  const kind = n.type === 'gate' ? (view.quest?.goal === id ? '魔王の城（章のあがり・結合テスト）' : '中ボスの砦（結合テスト）') : n.type === 'camp' ? '町（セーブ = git commit）' : n.check?.kind === 'stamp' ? '王様の城（人間のハンコ）' : 'ダンジョン（タスク）。出口で宣言判定';
   const status = own(LINEAR, n.state) || 'Backlog';
   const sealTxt = n.type === 'camp' || n.check?.kind === 'stamp' ? '—' : n.seal_broken ? '封印が破れています（GMが再封印するか、元に戻す）' : n.sealed ? '封印済み' : '未封印（GMの封印待ち）';
   const owner = n.owner ? chars[n.owner] : null;
@@ -133,8 +164,10 @@ export function renderNodeDrawer(view, id, { live }) {
       <dt>マイルストーン</dt><dd>${esc(milestone(view, id) || '—')}</dd>
       ${n.estimate != null ? `<dt>見積もり</dt><dd>${esc(n.estimate)}</dd>` : ''}
       ${n.labels?.length ? `<dt>ラベル</dt><dd>${n.labels.map((l) => `<span class="label">${esc(l)}</span>`).join(' ')}</dd>` : ''}
-      <dt>記録</dt><dd>突破 ${n.clears ?? 0} 回・失敗 ${n.fails ?? 0} 回</dd>
+      <dt>記録</dt><dd>突破 ${n.clears ?? 0} 回・失敗 ${n.fails ?? 0} 回${n.first_try === true ? '・一発で抜けた ◎' : n.first_try === false ? '・最初の宣言は失敗' : ''}</dd>
+      ${n.save?.commit ? `<dt>セーブ</dt><dd><code>commit ${esc(String(n.save.commit).slice(0, 7))}</code>（seq ${esc(n.save.seq)}）</dd>` : ''}
     </dl>
+    ${testList(n)}
     ${log ? `<h4>このマスの記録</h4><ol class="mini-log">${log}</ol>` : ''}`;
 }
 
@@ -158,6 +191,11 @@ function sortieRows(view, c) {
     )
     .join('');
   return `<h4>出撃の記録 <small>${c.sorties ?? rows.length}回</small></h4><ol class="sortie-list">${items}</ol>`;
+}
+
+function skillList(c) {
+  if (!Array.isArray(c.skills) || !c.skills.length) return '';
+  return `<h4>技（閃き） <small>先代から受け継いだもの</small></h4><ol class="skill-list">${c.skills.map((k) => `<li><span class="skill-text">「${esc(k.text)}」</span><small>${esc(k.node || '')}${k.case ? ` ・ ${esc(k.case)}` : ''}</small></li>`).join('')}</ol>`;
 }
 
 export function renderCharDrawer(view, id, sprites) {
@@ -190,11 +228,15 @@ export function renderCharDrawer(view, id, sprites) {
       <dt>視界</dt><dd>${visionTxt}</dd>
       <dt>セーブポイント</dt><dd>${esc(c.checkpoint ? `${c.checkpoint} ${own(view.nodes, c.checkpoint)?.title || ''}` : 'ふりだし')}</dd>
       <dt>縄張り</dt><dd>${(c.territory || []).map((t) => `<code>${esc(t)}</code>`).join(' ') || '—'}</dd>
-      <dt>戦績</dt><dd>突破 ${c.clears} ・ 失敗 ${c.fails}</dd>
+      <dt>戦績</dt><dd>突破 ${c.clears} ・ 失敗 ${c.fails}${c.medals ? ` ・ メダル ◎${c.medals}` : ''}${c.strong ? ` ・ 強敵 ${c.strong}` : ''}${c.revived ? ` ・ 復活 ${c.revived}` : ''}${c.treasures ? ` ・ 宝箱 ${c.treasures}` : ''}${c.traps ? ` ・ 罠 ${c.traps}` : ''}</dd>
+      <dt>代</dt><dd>${esc(c.generation ?? 1)}代目（出撃1回が1代。技と日誌を受け継ぐ）</dd>
+      ${c.save?.commit ? `<dt>最後のセーブ</dt><dd><code>commit ${esc(String(c.save.commit).slice(0, 7))}</code>（${esc(c.save.node ?? 'ふりだし')}）</dd>` : ''}
+      ${c.grave?.stash ? `<dt>墓</dt><dd><code>git stash apply ${esc(c.grave.stash)}</code></dd>` : ''}
       ${c.last_note ? `<dt>日誌</dt><dd class="note">「${esc(c.last_note)}」</dd>` : ''}
     </dl>
     ${sortieRows(view, c)}
-    <p class="hint">このキャラクターを動かすエージェントへの最初の指示: <code>masume brief ${esc(c.id)}</code> を読んで、現在のマスだけを実装し、<code>masume check ${esc(c.id)}</code> で宣言判定。</p>
+    ${skillList(c)}
+    <p class="hint">このキャラクターを動かすエージェントへの最初の指示: <code>gridhub brief ${esc(c.id)}</code> を読んで、いちばん手前の落ちているテストだけを通し、<code>gridhub step ${esc(c.id)}</code> で歩く（何度でも）。全部倒したら <code>gridhub check ${esc(c.id)}</code> で宣言（一発勝負）。</p>
     <h4>道のり</h4>
     <ol class="steps">${steps}</ol>`;
 }
