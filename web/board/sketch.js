@@ -200,6 +200,92 @@ export function inn(cx, cy, s, seed) {
   return `${roof} ${body} ${door} ${chimney}`;
 }
 
+/** 色を紙の色に寄せる（k = 0 で元の色、1 で紙の色）。付箋やシールの淡い色に使う */
+export function tint(hex, k, paper = '#fffbea') {
+  const p = (h) => {
+    const v = String(h).replace('#', '');
+    return [0, 2, 4].map((i) => parseInt(v.slice(i, i + 2), 16));
+  };
+  const a = p(hex);
+  const b = p(paper);
+  if (a.some(Number.isNaN)) return paper;
+  return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * k).toString(16).padStart(2, '0')).join('');
+}
+
+/** マスキングテープの切れ端（手でちぎった端はギザギザ）。中心 (cx, cy)、傾き deg */
+export function tape(cx, cy, w, h, seed, deg = 0) {
+  const r = rng(seed);
+  const t = (deg * Math.PI) / 180;
+  const at = (x, y) => [cx + x * Math.cos(t) - y * Math.sin(t), cy + x * Math.sin(t) + y * Math.cos(t)];
+  const pts = [];
+  const teeth = 5;
+  pts.push(at(-w / 2, -h / 2), at(w / 2, -h / 2));
+  for (let i = 1; i < teeth; i++) pts.push(at(w / 2 + (i % 2 ? -1.6 : 0.4) * (0.6 + r()), -h / 2 + (h * i) / teeth));
+  pts.push(at(w / 2, h / 2), at(-w / 2, h / 2));
+  for (let i = teeth - 1; i > 0; i--) pts.push(at(-w / 2 + (i % 2 ? 1.6 : -0.4) * (0.6 + r()), -h / 2 + (h * i) / teeth));
+  return 'M' + pts.map(([x, y]) => `${f(x)} ${f(y)}`).join(' L') + ' Z';
+}
+
+/** お城の壁の凸凹（結合ゲートの上の縁）。x..x+w の上に高さ h の歯を n 本 */
+export function crenel(x, y, w, h, n, seed) {
+  const r = rng(seed);
+  const o = () => (r() - 0.5) * 1.2;
+  const step = w / (n * 2 - 1);
+  let d = `M${f(x + o())} ${f(y + o())}`;
+  for (let i = 0; i < n * 2 - 1; i++) {
+    const x0 = x + i * step;
+    const x1 = x0 + step;
+    if (i % 2 === 0) d += ` L${f(x0 + o())} ${f(y - h + o())} L${f(x1 + o())} ${f(y - h + o())} L${f(x1 + o())} ${f(y + o())}`;
+    else d += ` L${f(x1 + o())} ${f(y + o())}`;
+  }
+  return d;
+}
+
+/** あがりの旗（竿と、市松もようの旗）。竿の根もと (x, y)、高さ s */
+export function goalFlag(x, y, s, seed) {
+  const r = rng(seed);
+  const top = y - s;
+  const fw = s * 0.62;
+  const fh = s * 0.4;
+  const wave = (k) => (Math.sin(k * Math.PI) * s * 0.05);
+  const pole = line(x, y, x + (r() - 0.5) * 2, top, `${seed}:p`, 0.6);
+  const cloth = `M${f(x)} ${f(top)} Q${f(x + fw / 2)} ${f(top - s * 0.08)} ${f(x + fw)} ${f(top + wave(1))} L${f(x + fw)} ${f(top + fh)} Q${f(x + fw / 2)} ${f(top + fh - s * 0.08)} ${f(x)} ${f(top + fh)} Z`;
+  let checks = '';
+  const cols = 3;
+  const rows = 2;
+  for (let i = 0; i < cols; i++)
+    for (let j = 0; j < rows; j++) {
+      if ((i + j) % 2) continue;
+      const cx = x + (i * fw) / cols;
+      const cy = top + (j * fh) / rows - Math.sin(((i + 0.5) / cols) * Math.PI) * s * 0.05;
+      checks += `M${f(cx + 0.6)} ${f(cy + 0.8)} h${f(fw / cols - 1.2)} v${f(fh / rows - 1.2)} h${f(-(fw / cols - 1.2))} Z `;
+    }
+  return { pole, cloth, checks };
+}
+
+/** 手描きの矢印（ゆるく曲がった線と、くの字の矢じり） */
+export function arrow(x1, y1, x2, y2, seed, bend = 0.25) {
+  const r = rng(seed);
+  const mx = (x1 + x2) / 2 - (y2 - y1) * bend + (r() - 0.5) * 2;
+  const my = (y1 + y2) / 2 + (x2 - x1) * bend + (r() - 0.5) * 2;
+  const a = Math.atan2(y2 - my, x2 - mx);
+  const k = 7;
+  const h1 = [x2 - Math.cos(a - 0.5) * k, y2 - Math.sin(a - 0.5) * k];
+  const h2 = [x2 - Math.cos(a + 0.5) * k, y2 - Math.sin(a + 0.5) * k];
+  return `M${f(x1)} ${f(y1)} Q${f(mx)} ${f(my)} ${f(x2)} ${f(y2)} M${f(h1[0])} ${f(h1[1])} L${f(x2)} ${f(y2)} L${f(h2[0])} ${f(h2[1])}`;
+}
+
+/** 落書きの星（一筆書き） */
+export function star(cx, cy, rad, seed) {
+  const r = rng(seed);
+  const pts = [];
+  for (let i = 0; i <= 5; i++) {
+    const t = -Math.PI / 2 + (i * 4 * Math.PI) / 5;
+    pts.push([cx + Math.cos(t) * rad + (r() - 0.5) * 1.5, cy + Math.sin(t) * rad + (r() - 0.5) * 1.5]);
+  }
+  return 'M' + pts.map(([x, y]) => `${f(x)} ${f(y)}`).join(' L');
+}
+
 /** 文字を n 文字ずつ折り返す（日本語向け。英数字の連なりはなるべく割らない） */
 export function wrap(text, n, maxLines = 2) {
   const chars = [...String(text || '')];

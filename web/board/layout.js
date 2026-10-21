@@ -117,6 +117,21 @@ export function layout(view) {
   return { order, lanes, nodes: pos, width, height, cols };
 }
 
+/**
+ * ノートの1ページ（紙の端）。盤面より少し大きく、B5 の横置き（約 51×36 目）より小さくはしない。
+ * sheet … 紙、grid … 方眼が刷ってあるところ（1目の倍数にそろえる）、outer … 綴じのリングまで含めた外側
+ */
+export function pageBox(lay) {
+  const x = -1.5 * U;
+  const y = 0;
+  const w = Math.max(lay.width + U - x, 52 * U);
+  const h = Math.max(lay.height + U, 36 * U);
+  const gx = 0;
+  const gy = TOP - U;
+  const grid = { x: gx, y: gy, w: Math.floor((x + w - 0.6 * U) / U) * U - gx, h: Math.floor((y + h - 0.8 * U) / U) * U - gy };
+  return { sheet: { x, y, w, h }, grid, outer: { x: x - 1.7 * U, y, w: w + 1.7 * U, h } };
+}
+
 /** キャラクターがいる場所の座標（task はマスの上、gate は自分の道の高さ、あがりは goal の中） */
 export function pawnPoint(view, lay, c) {
   const lane = lay.lanes[c.id];

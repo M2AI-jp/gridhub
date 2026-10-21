@@ -151,6 +151,7 @@ masume party --agent codex --allow-listen --only engine,server  # その出撃�
 - [ ] 判定の中で `node --test` を入れ子に呼ぶなら、環境変数 `NODE_TEST_CONTEXT` を外している（受け継ぐと何も走らずに通ってしまう）
 - [ ] 章を足して新しいあがりを置いたら、`package.json` の `test:goal` を新しいあがりの判定に向け直した。あがりの判定（前の章までを全部まとめて走らせるもの）は `npm test` に入れない（何重にも同時に走って重くなり、ブラウザの判定が時間切れになる）
 - [ ] 判定は、エージェントの箱（サンドボックス）の中でも走る。`ps` などは箱で禁止されることがある（Codex の `-s workspace-write` では `spawnSync ps EPERM`）。サーバーが残っていないかは、プロセスの一覧ではなく、ポートにつながるかで確かめる。マスメ自身の第8章で、GM の判定が `ps` を使っていて地図職人が素振りできず、GM が直して封印し直した
+- [ ] 盤面の動き（アニメーション）を判定するなら、ページの用意ができた直後に一度だけ数えない。演出は待ち時間のあとで始まることがあるので、数秒のうちに始まるのを待つ。「動きを減らす」設定は `tests/helpers4.mjs` の `openBrowserWith({ media })` で真似できる。マスメ自身の第9章で、GM の B9 がすぐに数えていて、正しい盤面でも0件になった
 - [ ] ゲートの素振りは**ボス戦と同じ環境**で走らせた。エンジンは判定に `MASUME_ROOT` `MASUME_CHARACTER` `MASUME_NODE` を渡す（例: `MASUME_ROOT=$PWD node --test tests/e2e/GOAL.test.mjs`）。判定の中で別の冒険の判定を走らせるなら、`MASUME_*` を外してその冒険のルートを渡す
 
 ## GM も間違える

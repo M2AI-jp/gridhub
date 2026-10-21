@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>マスメ — 方眼すごろく</title>
   <meta name="description" content="5mm方眼ノートのすごろくで、開発の進み具合を遊ぶ。">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23fbfaf3'/%3E%3Cpath d='M8 0V32M16 0V32M24 0V32M0 8H32M0 16H32M0 24H32' stroke='%239fd0e6' stroke-width='1'/%3E%3Crect x='9' y='9' width='14' height='14' fill='%23ffe45c' stroke='%231d2b5c' stroke-width='2'/%3E%3C/svg%3E">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23fdfaf0'/%3E%3Cpath d='M8 0V32M16 0V32M24 0V32M0 8H32M0 16H32M0 24H32' stroke='%239fd0e6' stroke-width='1'/%3E%3Crect x='9' y='9' width='14' height='14' fill='%23ffe45c' stroke='%231d2b5c' stroke-width='2'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Yomogi&family=Yusei+Magic&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="board/board.css">
 </head>
 <body data-view="board">
@@ -49,7 +49,6 @@
 
     <section id="stage">
       <div id="view-board" class="view active">
-        <div class="binding" aria-hidden="true"></div>
         <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="すごろくの盤面"></svg>
         <div class="zoom" role="group" aria-label="拡大縮小">
           <button data-zoom="in" aria-label="拡大">＋</button>
@@ -130,6 +129,7 @@
     </section>
 
     <aside id="side" class="slip">
+      <div class="punch-holes" aria-hidden="true"><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i></div>
       <div id="drawer" hidden></div>
       <section id="log" aria-label="冒険の書"></section>
     </aside>

@@ -1,0 +1,14 @@
+=== GOAL9: node --test tests/e2e/GOAL9.test.mjs ===
+✔ 第1章〜第9章のすべての判定が、まとめて本当に通る (203694.810375ms)
+✔ マスメ自身と、残っているすべての冒険の書が正常 (283.184667ms)
+✔ 遊び方に第9章（手書きの方眼ノート）が書いてあり、盤面の絵が新しい (90.176292ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 204122.054
+
+(exit 0, 204166ms)

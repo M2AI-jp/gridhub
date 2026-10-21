@@ -1,13 +1,18 @@
 // 駒。状態が変わったら、道に沿ってマスごとに跳ねて進む（戻されるときは引きずられて戻る）。
 import { pawnPoint, walkPoints, U } from './layout.js';
 import { spriteMarkup } from './render.js';
-import { esc, hl, own } from './sketch.js';
+import { esc, hl, own, box, rect } from './sketch.js';
 
 const SIZE = 3.3 * U; // 駒の大きさ（約53px）
 
 function badge(c) {
   const st = c.status === 'waiting' ? '<tspan class="pawn-wait"> 待</tspan>' : c.status === 'done' ? '<tspan class="pawn-done"> ♛</tspan>' : '';
-  return `<g class="pawn-badge"><rect x="${-1.3 * U}" y="${-SIZE - 0.95 * U}" width="${2.6 * U}" height="${0.9 * U}" rx="${0.45 * U}" class="badge-bg" stroke="${hl(c.color)}"/><text class="hand badge-text" x="0" y="${-SIZE - 0.27 * U}" text-anchor="middle">Lv${c.level}${st}</text></g>`;
+  // 駒の頭の上の小さな紙の札（色は担当の蛍光ペンでふちどり）
+  const x = -1.3 * U;
+  const y = -SIZE - 0.95 * U;
+  const w = 2.6 * U;
+  const h = 0.9 * U;
+  return `<g class="pawn-badge"><path d="${box(x, y, w, h, `badge:${c.id}`, 0.5)}" class="badge-bg"/><path d="${rect(x, y, w, h, `badge2:${c.id}`, 0.5)}" class="badge-line" stroke="${hl(c.color)}"/><text class="hand badge-text" x="0" y="${-SIZE - 0.27 * U}" text-anchor="middle">Lv${c.level}${st}</text></g>`;
 }
 
 /** 出撃中のふきだし（エージェント名と砂時計） */

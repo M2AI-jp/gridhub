@@ -1,5 +1,5 @@
 // マスメの盤面。ビュー（CONTRACTS §5）を受け取り、5mm方眼ノートのすごろくとして描く。
-import { layout, U } from './layout.js';
+import { layout, pageBox, U } from './layout.js';
 import { defs, paper, roads, laneHeads, nodesLayer } from './render.js';
 import { Pawns } from './pawns.js';
 import { renderParty, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
@@ -58,6 +58,16 @@ function ensureSvg() {
   svg.dataset.init = '1';
 }
 
+// 最初の1回だけ、ペンで描いていくように線を出す（動きを減らす設定では、最初から描き終わった姿。§36.5）
+let drewOnce = false;
+function penIn(view) {
+  if (drewOnce || !Object.keys(view.nodes).length) return;
+  drewOnce = true;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  svg.classList.add('drawing');
+  setTimeout(() => svg.classList.remove('drawing'), 3800); // いちばん右の列（1.4 秒）＋はなまる（0.75 秒）＋描く時間
+}
+
 function freshMap(prev, view) {
   const fresh = Object.create(null);
   if (!prev) return fresh;
@@ -99,6 +109,7 @@ function render(input) {
   $('#road-layer').innerHTML = roads(view, lay);
   $('#head-layer').innerHTML = laneHeads(view, lay, state.sprites);
   $('#node-layer').innerHTML = nodesLayer(view, lay, { fresh, selected: sel });
+  penIn(view);
   pawns.update(view, lay, state.sprites, prev, prevLay);
   // 盤面の大きさが変わったら（呪われた空の盤面から戻ったときなど）、自分で動かしていなければ合わせ直す
   if (!state.cam) fitCamera({ whole: false });
@@ -238,9 +249,11 @@ function fitCamera({ whole = true } = {}) {
   const { w, h } = stageSize();
   const lay = state.lay;
   if (!lay) return;
-  const fit = Math.min(w / (lay.width + 2 * U), h / (lay.height + 2 * U), 1.4);
+  // ノートの1ページ（綴じのリングまで）を映す
+  const pb = pageBox(lay).outer;
+  const fit = Math.min(w / (pb.w + 2 * U), h / (pb.h + 2 * U), 1.4);
   if (whole || fit >= 0.5) {
-    state.cam = { scale: fit, x: (lay.width - w / fit) / 2, y: (lay.height - h / fit) / 2 - U, auto: whole ? 'whole' : 'frontier' };
+    state.cam = { scale: fit, x: pb.x + (pb.w - w / fit) / 2, y: pb.y + (pb.h - h / fit) / 2, auto: whole ? 'whole' : 'frontier' };
   } else {
     // 小さい画面では読める大きさを保ち、いちばん遅れている駒（まだ仕事が残っている所）から映す
     const scale = 0.72;
@@ -252,8 +265,8 @@ function fitCamera({ whole = true } = {}) {
     const maxY = pts.length ? Math.max(...pts.map((p) => p.y)) : 0;
     state.cam = {
       scale,
-      x: Math.max(-U, Math.min(lay.width - vw + U, minX - 8 * U)),
-      y: Math.max(-2 * U, Math.min(lay.height - vh + U, maxY + 3 * U - vh, minY - 4 * U)),
+      x: Math.max(pb.x - U, Math.min(pb.x + pb.w - vw + U, minX - 8 * U)),
+      y: Math.max(pb.y - U, Math.min(pb.y + pb.h - vh + U, maxY + 3 * U - vh, minY - 4 * U)),
       auto: 'frontier',
     };
   }
@@ -368,8 +381,17 @@ function select(kind, id, { focus = false } = {}) {
   }
 }
 
-function setView(name) {
+function setView(name, { flip = true } = {}) {
+  const before = document.body.dataset.view;
   document.querySelectorAll('.view').forEach((v) => v.classList.toggle('active', v.id === `view-${name}`));
+  // ノートのページをめくる（インデックスタブで別のページへ）
+  const page = document.getElementById(`view-${name}`);
+  if (flip && page && before && before !== name) {
+    page.classList.remove('flip-in');
+    void page.offsetWidth;
+    page.classList.add('flip-in');
+    setTimeout(() => page.classList.remove('flip-in'), 700);
+  }
   document.querySelectorAll('button[data-view]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.view === name)));
   document.body.dataset.view = name;
   const url = new URL(location.href);
@@ -528,8 +550,9 @@ function enterLobby() {
   setLive('lobby', '入口');
   window.__masume.ready = true;
   window.__masume.lobby = true;
-  // 次に来る冒険は別の冒険（seq が小さくても描く）
+  // 次に来る冒険は別の冒険（seq が小さくても描く）。そのノートも、ペンで描くところから
   state.view = null;
+  drewOnce = false;
   seenHeads.clear();
   lastText = null;
 }
@@ -649,7 +672,7 @@ function boardCss() {
     }
   }
   const root = getComputedStyle(document.documentElement);
-  const vars = ['--paper', '--grid', '--grid-strong', '--ink', '--ink-soft', '--red', '--pencil', '--hand', '--mono']
+  const vars = ['--paper', '--paper-2', '--grid', '--grid-strong', '--ink', '--ink-soft', '--red', '--pencil', '--pencil-ink', '--hand', '--marker', '--pencil-hand', '--ui', '--mono']
     .map((v) => `${v}: ${root.getPropertyValue(v).trim()};`)
     .join(' ');
   return `svg { ${vars} } ${css}`;
@@ -662,13 +685,16 @@ const xmlText = (s) => String(s).replace(XML_BAD, '').replace(/[&<>"]/g, (c) => 
 /** 盤面全体を1枚の SVG の文字列にする。1目 = 5mm の実寸。XML として正しい（§29.6） */
 function exportSvg() {
   if (!state.view || !state.lay) return '';
-  const lay = state.lay;
-  const x = -U;
-  const y = 0;
-  const w = lay.width + 2 * U;
-  const h = lay.height + U;
+  // ノートの1ページ（綴じのリングと、ページの下の影まで）を1目 = 5mm で
+  const pb = pageBox(state.lay).outer;
+  const x = pb.x - 0.5 * U;
+  const y = pb.y - 0.5 * U;
+  const w = pb.w + 1.2 * U;
+  const h = pb.h + 1.6 * U;
   const world = $('#world').cloneNode(true);
   world.querySelectorAll('.float-text').forEach((el) => el.remove());
+  // 描いている途中で書き出しても、描き終わった姿で
+  world.querySelectorAll('[pathLength]').forEach((el) => el.removeAttribute('pathLength'));
   // outerHTML は HTML の書き方（&nbsp; など）になるので、XML の書き方で書き出す
   const ser = new XMLSerializer();
   const defsEl = svg.querySelector('defs');
@@ -711,7 +737,7 @@ window.__masume = { ready: false, view: null, frame: 0, done: false, render: (v)
   initCommand({ live: LIVE, post, refresh: liveRefresh, toast, getView: () => state.view });
   $('#export-notebook').addEventListener('click', downloadNotebook);
   state.sprites = await loadSprites();
-  if (params.get('view')) setView(params.get('view'));
+  if (params.get('view')) setView(params.get('view'), { flip: false });
   try {
     if (LIVE) await startLive();
     else await startFixture();
