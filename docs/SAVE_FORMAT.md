@@ -1,4 +1,6 @@
-# セーブデータ仕様（冒険の書 / masume 1）
+# セーブデータ仕様（冒険の書 / masume 1）— GridHub
+
+> 第11章で名前を GridHub に改めたが、セーブデータの形（`.masume/`、`masume: 1`、`rules: 1`）は変えない。増えたのはイベントの種類（`stepped` `saved` `restored`）と、判定の結果を持つイベントの `cases` だけ。今までの冒険の書は、そのまま `verify` が通る。
 
 この仕様は**実装と判定（E2E）の両方の正本**。ここに書いていない挙動に依存しないこと。
 
@@ -68,10 +70,15 @@ canonical(v):
 | `wish` | `{text, gm, model}` | 冒険の始まりの願い（第2章） |
 | `sortie` | `{character, node, agent, model}` | エージェントの出撃（第2章。盤面の状態は変えない） |
 | `returned` | `{sortie, character, node_before, node_after, advanced, code, output, output_hash}` | エージェントの帰還（第2章。`output` は `outputs/sortie-<出撃のseq>.log`） |
+| `stepped` | `{character, node, cases, code, output, output_hash, duration_ms, git}` | 歩いた（第11章。今のマスの判定だけを走らせた。盤面の位置・レベルは変えない） |
+| `saved` | `{characters:[…], node, commit, changed, files:[…]}`（失敗は `{characters, node, commit:null, error}`） | 町のセーブ = Git のコミット（第11章。`quest.save: "git"` の冒険だけ。`node` は町かゲート、ふりだしは null） |
+| `restored` | `{character, node, commit, stash}`（失敗は `error` も） | 負けて町に戻されたとき、縄張りのファイルを町のコミットに戻した（第11章。`stash` は墓 = 戻す前の変更を残した git stash の sha か null） |
+
+第11章から、判定の結果を持つイベント（`check_passed` `check_failed` `gate_cleared` `gate_failed` `stepped`）の `data` に `cases: {"<nodeId>": [{"name", "ok": true|false|null}]}` が入る（テスト1件ずつの成否。読み方は CONTRACTS §40）。無いイベント（第10章まで）は、出力ファイルから同じ規則で読む。
 
 - `output` は `.masume` からの相対パス（例 `"outputs/000042.log"`）。`output_hash` はその中身の sha256。
 - `git` は `{head:"<sha>"|null, dirty:true|false}`。ルートが git 管理外なら `null`。
-- 知らない `type` は再生時に無視する（前方互換）。
+- 知らない `type` は再生時に無視する（前方互換）。`stepped` `saved` `restored` も盤面の位置・レベルを変えない（ビューにだけ使う）。
 
 ## 4. 再生（状態の導出）
 

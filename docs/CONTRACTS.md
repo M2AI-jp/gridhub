@@ -1,4 +1,6 @@
-# 契約書（CONTRACTS） — モジュール間の約束
+# 契約書（CONTRACTS） — モジュール間の約束（GridHub）
+
+> 第11章で名前を **GridHub** に改めた（旧名マスメ）。CLI は `gridhub`、`masume` は別名。冒険の書のフォルダ `.masume/`、環境変数 `MASUME_*`、MCP の道具名 `masume_*`、セーブデータの `masume: 1` は互換のため変えない。第10章までの節に出てくる `masume <command>` は、`gridhub <command>` と同じ意味。
 
 各キャラクター（モジュール担当）は、この契約だけを頼りに並行して作る。結合ゲートでこの契約が守られているかが判定される。
 契約を変えたいときは GM に依頼する（自分で変えない）。
@@ -21,13 +23,13 @@
 
 ### サブコマンドの形
 
-`bin/masume.js` が `src/commands/<name>.js` を読み込み、次を呼ぶ:
+`bin/gridhub.js`（第10章までは `bin/masume.js`。いまはその別名）が `src/commands/<name>.js` を読み込み、次を呼ぶ:
 
 ```js
 export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) { return 0; /* 終了コード */ }
 ```
 
-- `ctx.bin` = `bin/masume.js` の絶対パス、`ctx.root` = リポジトリの絶対パス（ゲームのルートではない）。
+- `ctx.bin` = 実際に起動した受付係（`bin/gridhub.js` か `bin/masume.js`）の絶対パス、`ctx.root` = リポジトリの絶対パス（ゲームのルートではない）。
 - 例外に `code`（例 `'E_UNSEALED'`）と `exitCode` を付けて投げると、受付係が `[E_UNSEALED] メッセージ` を stderr に出して終了する。
 - 終了コード: `0` 成功 / `1` 判定失敗・地図が不正 / `2` 使い方の誤り・前提不足（未封印・待機中など） / `3` 冒険の書が呪われている。
 - 共通オプション: `--dir <root>`、`--as <actor>`、`--json`（機械向け出力。stdout に JSON だけを出す）。
@@ -908,3 +910,208 @@ npm test の揺れを調べたところ、盤面が外の字（Google Fonts）�
 1. 盤面は、外の字（Google Fonts）の CSS や字のファイルが返ってこなくても描かれる。`?fixture=demo` は、fonts.googleapis.com と fonts.gstatic.com への読み込みが止まったままでも、`window.__masume.ready` になり、駒が出る（字は手元の書体で先に描き、届いたら差し替わる）。
 2. §36.3 はそのまま: Google Fonts は1つの `<link rel="stylesheet">` に3つの family。やり方は盤面が決める。ただし、要素に `onload` などのイベントの属性を書かない（§29.1 の判定が、URL の文字列が要素になっていないかを `[onload]` で見ているため）。
 3. 外の字が届かないことを、未処理の例外やエラーの知らせにしない。
+
+---
+
+# 第11章: GridHub — テスト1件が1マス
+
+第10章までのマスメは「タスク1つ = 1マス」で、マスとマスのあいだに意味のない道があった。遊んだ人の評価は「盤面がただのマス目の表で、ゲームとして楽しくない。言葉も分からない」。
+第11章では、ゲームデザイン（[GAME_DESIGN.md](GAME_DESIGN.md)。ユーザーが承認したもの）に合わせて、ルールと盤面を作り直す。柱は2つ:
+
+- **意味のないマスはない。** 普通のマス = テスト1件（雑魚モンスター）。タスク = ダンジョン、その出口 = 宣言判定。町 = セーブ（Git のコミット）。中ボス = 結合テスト、魔王 = あがり、王様の城 = 人間のハンコ。
+- **エンジニアが一目で読める。** 字は技術の言葉が先（`POST /api/memos`、`テスト 3/5`、`commit a1b2c3d`）。ゲームの言葉は添え書き。
+
+ここに書く挙動は、第1章〜第10章の契約に足すもの（矛盾するところはこちらが優先）。
+
+| 縄張り（第11章で触るもの） | 持ち主 |
+| --- | --- |
+| `bin/**`（`bin/gridhub.js` と別名の `bin/masume.js`）、`package.json`、`README.md`、`docs/**`、`tests/**` | GM |
+| `src/engine/**`、`src/commands/{…,step}.js`（既存の書記のコマンドに `step` を足す） | 書記 `engine` |
+| `web/index.html`、`web/board/**`、`web/fixtures/**` | 盤面 `board`（賢者クロード） |
+| `web/assets/monsters/**` | 絵師 `assets` |
+| `src/quest/**`、`src/commands/{quest,init}.js` | 語り部 `teller` |
+| `src/party/**`、`src/commands/party.js` | 軍師 `party` |
+| `src/server/**`、`src/mcp/**`、`src/commands/{serve,mcp}.js` | 伝令 `server` |
+| `src/linear/**`、`src/jira/**` ほか | 地図職人 `gmkit` |
+
+### 分担（エンジンが決め、盤面が見せる）
+
+- **書記（エンジン）が決める**: テスト1件ずつの成否、駒が立つマス（最初に落ちているテスト）、復活・強敵・技・メダル・宝・罠・図鑑・代・エンディング、町のセーブ（コミット）と巻き戻し。すべて冒険の書（と、ハッシュで守られた判定の出力）から導き、ビュー（§5）に入れる。
+- **盤面（賢者クロード）が見せる**: ビューにあるものだけを、縦の5mm方眼ノートの世界地図として描く。盤面はルールを数え直さない（テストの出力を自分で読まない）。
+- **軍師が決める**: 作戦（エージェントの動き方と、1回の出撃の長さ）。作戦はルールを変えない。
+
+## 38. 名前と受付係（GM）
+
+1. 受付係は `bin/gridhub.js`。`bin/masume.js` は別名で、同じコマンドを同じように受け付ける。`ctx.bin` は実際に起動したファイル（エージェントに渡す `MASUME_BIN` もそれ）。
+2. `package.json` の `name` は `gridhub`、`bin` は `gridhub` と `masume` の2つ。
+3. `gridhub --help` の1行目に `GridHub`。`gridhub --version` は `gridhub <版> (rules 1)`。
+4. 変えないもの: `.masume/`、`MASUME_*`、MCP の `masume_*`、`masume: 1`、`rules: 1`。
+
+## 39. 地図: `check.cases` と `quest.save`
+
+```jsonc
+"quest": { "id": "MEMO", "title": "メモアプリ", "goal": "GOAL", "save": "git" },   // save は任意
+"S1": { "type": "task", "title": "POST /api/memos でメモを保存する",
+  "check": { "kind": "cmd", "run": "node --test checks/S1.test.mjs", "seal": ["checks/S1.test.mjs"],
+             "cases": ["title が空なら 400", "保存すると 201 と id", "保存したメモが一覧に出る"] } }
+```
+
+1. `check.cases`（任意）… `kind: "cmd"` の task と gate に書ける。テストの名前の配列（1〜50件。各1〜120文字の空でない文字列。重複なし）。1件が1マス（ゲートでは HP）。形が違えば `E_CHECK`。stamp・camp には書けない（`E_CHECK`）。
+2. `quest.save`（任意）… `"git"` だけ。ほかの値は `E_FORMAT`。§43 の Git のセーブを使う冒険。
+3. 改訂（§4.8）で、通過済みのマスの `check.cases` は変えられない（`check` の一部なので）。
+
+## 40. テスト1件ずつの成否（書記）
+
+判定の出力（`=== <nodeId>: <run> ===` の区切りごと）から、テスト1件ずつの結果を読む。
+
+1. 読む行（行頭の空白は字下げとして数える。末尾の ` (12.3ms)` と ` # …` の指示は名前に含めない）:
+   - `node --test` の spec: `✔ 名前` 成功 / `✖ 名前` 失敗 / `﹣ 名前 # SKIP`（`# TODO` も）結果なし。`✖ failing tests:` の行より後は読まない（まとめの繰り返し）。`▶ 名前`（スイートの見出し）は結果ではない。
+   - TAP: `ok <n> - 名前` 成功 / `not ok <n> - 名前` 失敗（`# SKIP`・`# TODO` が付けば結果なし）。
+   - そのほか: `✓ 名前` `PASS 名前` `ok 名前` 成功 / `✗ 名前` `FAIL 名前` `NG 名前` `ng 名前` 失敗。
+2. 地図に `cases` があるマス: 各 case について、名前が同じ（前後の空白を除いて完全一致）結果のうち**最後のもの**。どの case も名前で見つからなければ、いちばん浅い字下げの結果を出てきた順に case へ割り当てる。名前で見つかった case があるときは、見つからない case は「結果なし」。
+3. `cases` が無いマス: いちばん浅い字下げの結果が、出てきた順にそのマスのテスト（同じ名前は最後のもの）。結果が1つも読めなければ、名前 `判定` のテスト1件（成否は終了コードどおり）。
+4. 判定を走らせなかったマス（累積判定が前のマスで止まった）は、何も変わらない。
+5. 記録: 判定の結果を持つイベント（`check_passed` `check_failed` `gate_cleared` `gate_failed` と §41 の `stepped`）の `data` に `cases: {"<nodeId>": [{"name", "ok": true|false|null}]}`（走らせたマスごと）を入れる。第10章までのイベントで `cases` が無いものは、ビューを作るときにその出力ファイルから同じ規則で読む。
+
+### ビュー（§5 に足す）
+
+- `nodes[id].cases` … `[{name, ok, losses, revived, strong}]`。地図に `cases` があればその順、無ければ最後に走らせたときに読めたテストの順。まだ一度も走らせていなければ `[]`。
+  - `ok` … いちばん新しい結果（`true` / `false` / まだ結果が無ければ `null`。「結果なし」の回は前の値を保つ）
+  - `losses` … 失敗した回数、`revived` … 一度でも通ったあとで失敗した回数（**復活**。リグレッション）、`strong` … 2回以上失敗してから通った（**強敵を倒した**）なら `true`
+- `nodes[id].tests` … `{pass, total}`（`ok === true` の数 / `cases` の数）。
+- `characters[].square` … いま task の上にいれば、その `cases` の中で最初に `ok !== true` の添字（0始まり）。全部 `true` なら `cases.length`（出口の前）。`cases` が `[]` なら `0`（中の分からないダンジョンの「？」）。task の上にいなければ `null`。**駒はこのマスに立つ。**
+- 戦いの記録は、ロード（§4.9）しても巻き戻らない（起きた戦いは起きた）。
+
+## 41. 歩く（`gridhub step <characterId>`）
+
+1. キャラクターが `kind: "cmd"` の task の上にいるときだけ。知らないキャラ `E_UNKNOWN`/2、あがり済み `E_DONE`/2、ゲートで待機中 `E_USAGE`/2、stamp のマス `E_NEEDS_STAMP`/2。
+2. 封印は宣言（§4.3・§23）と同じく確かめる（今のマスだけ）。未封印 `E_UNSEALED`/2（記録しない）、封印破り `seal_broken` を記録して `E_SEAL_BROKEN`/2。
+3. **今のマスの判定だけ**を、宣言と同じやり方（環境変数・タイムアウト・出力の形・シグナル）で走らせる。
+4. `stepped {character, node, cases, code, output, output_hash, duration_ms, git}` を記録する（`code` は判定の終了コード、`output` は `outputs/<seq 6桁>.log`）。楽観ロック（§4.7）は宣言と同じ（`E_CONFLICT`/2）。
+5. **位置・レベル・経験値・epoch は変わらない**（普通の戦い。負けても罰はない）。
+6. 終了コード: 判定が通れば 0、落ちれば 1。stdout:
+   - `歩いた: <キャラID> <マスID> テスト <通った数>/<全部の数>`
+   - テスト1件ずつ `  ✔ <名前>` / `  ✖ <名前>` / `  ・ <名前>`（結果なし）
+   - 落ちたテストがあれば `いちばん手前のモンスター: <名前>`、全部通れば `全部倒した。出口で宣言する: gridhub check <キャラID>`
+   - 判定が落ちたら、出力の末尾（最大40行）も出す
+   - `--json` は `{exitCode, events}`
+7. モジュール API: `export async function step(root, characterId, { actor })` → `{exitCode, events}`。
+
+## 42. 積み上げ（書記・ビュー）
+
+ビューに足す（§5）。すべて冒険の書から導く。
+
+| 項目 | 意味 |
+| --- | --- |
+| `characters[].generation` | 代。そのキャラクターの `sortie` の数（0なら1）。出撃1回が1代（伝承） |
+| `characters[].revived` / `strong` | そのキャラクター（`stepped`・`check_*` の `character`）の戦いで、テストが復活した回数 / 強敵を倒した回数 |
+| `characters[].skills` | 技。`[{seq, ts, text, node, case}]`（新しい順）。強敵を倒したあと、そのキャラクターの次の `note` が技になる（次の `sortie` が始まると、その機会は閉じる）。`node`・`case` は倒した強敵 |
+| `characters[].medals` | ちいさなメダル。そのキャラクターの task（`cmd`）のうち、そのマスを `data.node` に持つ最初の宣言（`check_passed` / `check_failed`）が成功だった数（一発で出口を抜けた） |
+| `characters[].treasures` | 宝。そのキャラクターが task の上にいる（ゲートなら待機している）マスを、GM がファイルの中身を変えて封印し直した（`sealed` が2回目以降で、ファイルのハッシュが前と違う）回数（判定のバグを見つけた） |
+| `characters[].traps` | 罠。`seal_broken` の `character` がそのキャラクターである数（封印破り） |
+| `nodes[id].first_try` | task（`cmd`）で、最初の宣言が成功なら `true`、失敗なら `false`、まだなら `null`。ほかのマスは `null` |
+| `bestiary` | モンスター図鑑 `{total, defeated, revived, strong}`。`total` = 全マスの `cases` の数の合計、`defeated` = そのうち `ok === true` の数、`revived`・`strong` = 全マスの合計 |
+| `ending` | 章のエンディング。`finished` のとき `{seq, text, stats}`、そうでなければ `null`（§42.1） |
+
+### 42.1 エンディング
+
+- 章 = 今の `quest.goal` がその地図の goal になった時点（genesis、または goal が変わった `amended`）から、goal の `gate_cleared` まで。`seq` はその `gate_cleared` の seq。
+- `stats` = その章の間の `{tests, defeated, medals, strong, revived, treasures, traps, skills, sorties, fails}`（`tests`・`defeated` はあがった時点の図鑑。`fails` は `check_failed` と `gate_failed` の数。ほかは章の間に起きた数）。
+- `text` は `stats` と仲間の名前から作る、日本語の数行。**記録が違えば文も違う**（少なくとも、強敵・復活・宝・一発合格・出撃の回数のどれかが違えば、文が違う）。技術の言葉を先に（例「テスト 42/42 が通った。」）。
+
+## 43. 町 = セーブ（Git のコミット）
+
+`quest.save` が `"git"` の冒険だけ。それ以外の冒険では Git に触らず、`saved`・`restored` は記録しない（第10章まで、このリポジトリ自身の冒険もこれ）。
+
+1. **縄張りのファイル** = ゲームのルートの中で、キャラクターの `territory` の glob（`**`・`*`・`{a,b}`）に合い、Git で変更・追加・削除されているファイル。`.masume/` は含めない。`territory` の無いキャラクターは、縄張りのファイルが無い。
+2. **セーブ**（コミット）: 縄張りのファイルだけを、ユーザーのほかの変更やステージ（index）に触れずにコミットする（一時的な index で木を作ってコミットし、HEAD のブランチを進め、本物の index はそのファイルだけ HEAD に合わせる）。push はしない。フックは走らせない。名前とメールが設定されていなければ `GridHub <gridhub@localhost>`。
+   - 変更が無ければコミットしない（`commit` は今の HEAD、`changed: false`）。
+   - コミットのメッセージの1行目は `gridhub save: <マスID> <マスの題>`（ふりだしは `gridhub save: ふりだし`）。
+3. セーブする時と記録（`saved {characters:[…], node, commit, changed, files:[…]}` か、失敗したら `{characters, node, commit: null, error}`）:
+   - `new`（冒険の書が生まれたとき）: 全員の縄張りのファイルをセーブ（ふりだし。`node: null`）。HEAD がまだ無い（`git init` 直後）なら、ふりだしのコミットが最初のコミットになる。
+   - キャラクターが町（camp）に着いたとき（`check_passed`・`stamped` のあとの到着処理で camp を通ったとき）: そのキャラクターの縄張りをセーブ（`node` は camp）。
+   - 結合ゲートを突破したとき（`gate_cleared`）: メンバー全員の縄張りを1つのコミットでセーブ（`node` はゲート）。
+   - ゲームのルートが Git の作業ツリーの中でなければ、`commit: null`・`error` を記録する（判定の結果は変えない）。
+4. **巻き戻し**: 宣言に負けた（`check_failed`）キャラクター、ボス戦に負けた（`gate_failed`）責任のあるキャラクターごとに、その判定の記録のすぐ後で:
+   - そのキャラクターを含む最新の `saved`（`commit` が null でないもの）のコミットを戻り先にする。
+   - 縄張りのファイルを `git stash push --include-untracked -m "gridhub grave: <キャラID> <マスID> seq <判定のseq>"` で**墓**に残す（無くならない）。
+   - 戻り先のコミットと縄張りのファイルが違えば、戻り先から取り出す。
+   - `restored {character, node, commit, stash}` を記録する（`node` = 落ちたマスかゲート、`stash` = 墓のコミットの sha。変更が無ければ `null`）。失敗したら `{character, node, commit, stash: null, error}`。
+   - 縄張りの無いキャラクターは記録しない。
+5. ビュー: `characters[].save` = そのキャラクターを含む最新の `saved` の `{seq, node, commit}` か `null`。`characters[].grave` = そのキャラクターの最新の `restored` で `stash` があるものの `{seq, node, commit, stash}` か `null`。`nodes[id].save` = その町・ゲートの最新の `saved` の `{seq, commit}` か `null`。
+6. `log[].text`: `saved` →「<名前（複数なら、でつなぐ）> が <マスID かふりだし> でセーブした（commit <7桁>）」（失敗は「セーブできなかった: <error>」）、`restored` →「<名前> の縄張りを commit <7桁> に戻した（墓: stash <7桁>）」、`stepped` →「<名前> が <マスID> を歩いた（テスト p/t）」（`ok` は `code === 0`）。
+
+## 44. 指令書（`brief`）
+
+`brief --json` に足す: `generation`、`cases`（今のマスの `nodes[id].cases`）、`next_case`（駒が立つマスのテストの名前か `null`）、`square`、`skills`（§42。新しい順に全部）、`medals`、`grave`（§43.5 に `command: "git stash apply <stash>"` を足したものか `null`）、`save`（`quest.save` か `null`）。
+`notes` は今までどおり（新しい順に最大5件）。
+
+テキスト版に必ず出すこと:
+- `<名前>（<id>）… <N>代目`
+- 今のマスのテスト `テスト <p>/<t>` と、1件ずつの `✔` / `✖` / `・`、`いま戦うテスト: <名前>`（全部通っていれば「全部倒した。出口で宣言する」）
+- `技（受け継いだもの）:` と技の一覧（無ければ「まだない」）
+- 墓があれば `墓: git stash apply <stash>`
+- 歩き方: `歩く（何度でも・記録される・罰なし）: gridhub step <id>`、`宣言（一発勝負）: gridhub check <id>`、`日誌: gridhub note <id> "…"`
+- `rules` に「1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる」を足す。
+
+## 45. 軍師: 作戦（`--tactic`）
+
+`gridhub party [...] [--tactic careful|balanced|bold]`
+
+| id | 名前 | プロンプトでの動き方 | 止まる条件 |
+| --- | --- | --- | --- |
+| `careful` | いのちだいじに | 1マスずつ `step` で確かめる。全部のテストが通るまで宣言しない | 1つのダンジョンを抜けたら、または宣言に2回失敗したら |
+| `balanced`（既定） | バッチリがんばれ | 小さく変えて `step` を回す。全部通ったら宣言 | 同上 |
+| `bold` | ガンガンいこうぜ | 次の町まで、ダンジョンを続けて進んでよい | 町に着いたら（セーブしたら）・ゲートで待機になったら・宣言に2回失敗したら |
+
+1. 決め方: `--tactic` > `.masume/party.json` の `tactic` > `balanced`。日本語の名前（`いのちだいじに` ほか）も `--tactic` に書ける（id に直す）。ほかの値は `E_USAGE`/2（`party.json` の不正な値も）。
+2. プロンプトに必ず入れること（§13 に足す）: `作戦: <名前>（<id>）` の行と、上の表の動き方・止まる条件 / 歩くコマンド `node '<MASUME_BIN>' step <id> --as <id> --dir '<root>'` / 「いちばん手前の落ちているテスト（いま戦うテスト）だけを通す」/ 伝承「あなたは <名前> の <N>代目。指令書の技と日誌は先代から受け継いだもの。苦労して分かったことは、次の代のために日誌に書く」（`N` = この出撃が何回目か）。
+3. 巡回の見出し（`出撃準備: `）と `--dry-run` に `作戦: <名前>` を出す。`--help` に `--tactic` と3つの作戦。
+4. 作戦はルール（宣言の重さ・セーブ）を変えない。
+
+## 46. 語り部: Git でセーブする新しい冒険
+
+1. `gridhub quest` の GM のプロンプトに足す: 「各 task の `check` に `cases`（テストの名前。1件 = 1マス = 1つの変数に対する小さな作業。ダンジョン1つに2〜6件）を書き、判定ファイルの中のテストの名前をそれと同じにする」「`quest.save: "git"` を書く」「各キャラクターに重ならない `territory` を書く」。
+2. 生まれた地図に `quest.save` が無ければ、`"git"` を足してから冒険の書をつくる（`quest.map.json` も書き直す）。
+3. ルートが Git の作業ツリーの中でなければ、冒険の書をつくる前に `git init` する（`git` が無ければ、その旨を出して続ける）。`git init` した冒険では、支度（§21）のあとで、ルートの全部（`.gitignore` に従う）を `gridhub: 冒険のはじまり` としてコミットする。もとから Git の中だったら、語り部はコミットしない。
+4. 支度（§21）の `AGENTS.md`・`CLAUDE.md` は GridHub の名前で書く（`GridHub（旧名マスメ）`）。`AGENTS.md` には、歩くコマンド（`node '<bin>' step <あなたのID> --as <あなたのID>`）と、1マスずつの進め方（いちばん手前の落ちているテストだけを通して step で確かめる。全部通ったら check）を足す。
+
+## 47. 伝令: 歩く道具と作戦の窓口
+
+1. MCP の道具に `masume_step {character, as?}`（`step <character>`。`as` 既定は character）を足す。
+2. `POST /api/sortie` の本文に `tactic`（省略可）。`careful` / `balanced` / `bold` なら `gridhub party … --tactic <id>`、省略（`undefined`・`null`）なら何も足さない、ほかの値は 400 `E_USAGE`（何も起動しない）。
+3. `GET /api/party` の応答に `tactic`（`party.json` の `tactic` が3つの id のどれかならその id、それ以外は `null`）。
+
+## 48. 地図職人: テストのチェックリスト
+
+`export linear` の `Description`（§9。Linear・Jira の push も同じ文を使う）で、地図に `check.cases` があるマスは、判定の行のあとに空行と `テスト:` の行、そのあと1件ずつ `- [x] <名前>`（ビューの `ok === true`）/ `- [ ] <名前>` を足す。`cases` が無いマスの文は第10章どおり。
+
+## 49. 絵師: モンスター
+
+`web/assets/monsters/<id>.svg` と `web/assets/monsters/index.json`（`{"monsters":[{"id","name"}]}`、次の順で8件）:
+`slime` スライム / `bat` こうもり / `mushroom` おばけきのこ / `ghost` ゴースト / `snake` へび / `golem` ゴーレム / `dragon` ドラゴン（中ボス） / `maou` 魔王。
+
+制約は §10 の駒の絵と同じ（`viewBox="0 0 64 64"`、6000バイト以下、使える要素、`<title>` に日本語の名前、`stroke-width` 3 以下、描画要素4つ以上、8枚すべて違う絵）。ただし色は `none` `#1d2b5c` `#ffffff` `#d94a3a` `#ffe45c` `var(--monster, #ffffff)` のどれかで、体の塗りに `fill="var(--monster, #ffffff)"` を必ず使う（盤面が、生きている・倒した・復活したで塗り替える）。
+
+## 50. 盤面: 縦の5mm方眼ノートの世界地図
+
+ノート全体を1つの `svg#board` に描く（`#world` の中）。座標の単位 1目 = 5mm = `#grid-5mm` の `width`。
+
+1. **ページ**: B5 の縦（1ページ 36×51 目）。`#paper` の中に `.page[data-page="<n>"]`（1始まり）がページの数だけあり、各ページに `.page-sheet` が1つ。方眼（`url(#grid-5mm)` で塗るもの）は、どれかの `.page-sheet` の中だけ。ページ 2k−1 と 2k が見開きで左右に並ぶ（綴じ目 `.page-gutter`）。ページの外は机。上の余白に印刷の `No.` `Date`。
+2. **すべてを方眼に合わせる**: `#node-layer .node` と `#monster-layer .sq` は `data-page` と `data-box="x y w h"`（そのページの左上からの目の整数）を持ち、その紙（task・camp は `.cell-paper`、gate は `.gate-paper`、モンスターは `.sq-paper`）の `x y width height` は、ページの左上 + 目 × 1目 にちょうど一致する。題名（`.quest-title`）は1字1マス: `.quest-title .title-cell` が題名の字数だけあり、それぞれ1字で、`data-box` は目の整数で同じ大きさの正方形。`.quest-title` の字は題名。
+3. **道はキャラクターごと**: `.road[data-char]` がキャラクターに1つ（ページごとに `[data-tool="marker"]` の線）。ページの上から下へ、まっすぐではなく曲がりながら下りる（どれかの道は横にも曲がる）。結合テストで合流し、また分かれる（今の規則どおり）。名札 `.lane-head[data-char]`（ふりだしの付箋。キャラに1つ、`.tape` つき）と、2ページ目からは道の上の小さな名札 `.lane-tag[data-char]`（そのキャラの駒が別のページにいれば `↓p.<n>`・`↑p.<n>`）。
+4. **景色**: ページの空きに `.scenery[data-kind]`（`mountain` `forest` `lake` `sea` `town` `tree` `grass` ほか）。景色はマスではない（`.cell-paper`・`.gate-paper`・`.sq-paper` と重ならない）。各ページに1つ以上。
+5. **マス = テスト1件 = モンスター**: `cmd` の task ごとに、ビューの `nodes[id].cases` の数だけ `#monster-layer .sq[data-node="<id>"][data-case="<添字>"]` を、そのダンジョンの出口（task の札）の手前の道に並べる（`data-ok` は `true` / `false` / `null`、`<title>` にテストの名前）。`cases` が `[]` なら `.sq[data-case="?"]` を1つ。倒したテスト（`ok === true`）は赤い斜線 `.slain`、復活したまま（`revived > 0` で `ok !== true`）は赤い丸 `.revived`。stamp の task・camp・gate の前にはモンスターを置かない。
+6. **ダンジョンの出口・町・城**: task の札 `.node.task` に ID・持ち主・題（`.cell-title`）と、`cmd` なら `.cell-tests` に `テスト <p>/<t>`。抜けたら赤ペンのはなまる。町 `.node.camp` は宿屋の看板で、セーブしていれば `.save-commit` に `commit <7桁>`。ゲート `.node.gate` は、メンバーの道をまたぐ城壁の帯 `.gate-paper`（中ボス）。あがり `.node.goal` は魔王の城。ゲートの HP `.gate-hp` に `テスト <p>/<t>`（`cases` があれば）。人間のハンコの task は王様の城。
+7. **駒**: `.pawn[data-char]` に `data-at`・`data-level`・`data-square`（ビューの `square`。task の上でなければ空）・`data-page`。task の上の駒は `.sq[data-node=<at>][data-case=<square>]` の上に立つ（`square` が `cases.length` なら出口の札の前）。
+8. **見開きとページめくり**: 盤面は見開き（2ページ）を見せる。`#page-prev`・`#page-next` と `#page-no`（`<左>–<右> / <全部>`）。`window.__masume.spread`（見えている左のページ番号）・`window.__masume.pages`（ページの数）・`window.__masume.turnTo(<ページ番号>)`。めくっているあいだは `.page-flip` の葉（中身は `<use href="#world">`。DOM の数え方を変えない）が回る。駒が今の見開きの外のページへ進んだら、そのページの見開きへめくる。`prefers-reduced-motion: reduce` では、めくる動きなしで切り替わる。狭い画面（860px 以下）では1ページずつ。「全体」（`[data-zoom="fit"]`）は今の見開き全体。
+9. **1マスずつ歩く**: 駒の (マス, `square`) が前に進んだら、間のマスを1つずつ踏んで進む。`window.__masume.walks` に `{char, from, to, steps}`（`steps` = 踏んだマスの数）を足す。
+10. **エンディング**: ビューの `ending` があれば、`#ending`（`role="dialog"`）にその `text` を出す（新しい `ending.seq` のときに開く。`#ending-close` で閉じる）。
+11. **名前と言葉**: `document.title` と見出しの `.logo` に `GridHub`。右の欄のなかま `.party-card[data-char]` に `<N>代目`・今のマスの `テスト <p>/<t>`・メダル。図鑑 `#bestiary` に `<defeated>/<total>`。
+12. **作戦の窓**: 出撃の窓に `#sortie-tactic`（`careful` いのちだいじに / `balanced` バッチリがんばれ / `bold` ガンガンいこうぜ）。開くたびに `GET /api/party` の `tactic` を既定にし（`null` なら `balanced`）、`POST /api/sortie` の本文に `tactic` を必ず入れる。
+13. 保つもの: §22（書き出しは、すべてのページを含むノート全体。viewBox にすべての `.page-sheet`、1目 = 5mm の実寸）、§29、§36.2〜§36.6（筆記具・字・物・動き・読みやすさ）、§37、`#drawer` `#live` `#integrity` `#jumon`、ロビー・出撃の窓、`#node-layer [data-node][data-state]` がすべてのマス、`.cell-hit`。§36.1 の綴じのリング（`.page-binding .ring`）は見開きのノートでは要らない。
+
+## 51. あがり（第11章）
+
+- `GOAL11`: 第1章〜第11章のすべての判定がまとめて通り、すべての冒険の書が正常で、README が GridHub として書かれている（ゲームの対応表・`gridhub step`・Git のセーブ・作戦・前後の盤面の絵）。
+- `package.json` の `test:goal` は `GOAL11` に向ける。
