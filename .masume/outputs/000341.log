@@ -1,0 +1,14 @@
+=== GOAL10: node --test tests/e2e/GOAL10.test.mjs ===
+✔ 第1章〜第10章のすべての判定が、まとめて本当に通る (195967.950667ms)
+✔ マスメ自身と、残っているすべての冒険の書が正常 (297.369709ms)
+✔ 遊び方に第10章（外の字を待たない）が書いてある (0.96425ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 196320.457875
+
+(exit 0, 196361ms)

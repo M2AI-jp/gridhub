@@ -1,7 +1,6 @@
 // 第9章の判定の共通道具（ヘッドレス Chrome に、読み込み前のスクリプトと「動きを減らす」設定を渡せるもの）。GM の縄張り・封印対象。
-import { spawn } from 'node:child_process';
-import { writeFileSync, rmSync, existsSync } from 'node:fs';
-import { CHROME, tmp, waitUntil } from './helpers.mjs';
+import { writeFileSync, rmSync } from 'node:fs';
+import { startChrome, waitUntil } from './helpers.mjs';
 
 export * from './helpers3.mjs';
 
@@ -11,38 +10,7 @@ export * from './helpers3.mjs';
  *  preload … どのページでも、ページのスクリプトより先に走らせる JavaScript（文字列）
  */
 export async function openBrowserWith({ width = 1440, height = 900, media = [], preload = '' } = {}) {
-  if (!existsSync(CHROME)) throw new Error(`Chrome が見つからない: ${CHROME}（MASUME_CHROME で指定）`);
-  const profile = tmp('masume-chrome-');
-  const proc = spawn(
-    CHROME,
-    [
-      '--headless=new',
-      '--disable-gpu',
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--disable-extensions',
-      '--remote-allow-origins=*',
-      '--remote-debugging-port=0',
-      `--user-data-dir=${profile}`,
-      `--window-size=${width},${height}`,
-      'about:blank',
-    ],
-    { stdio: ['ignore', 'ignore', 'pipe'] },
-  );
-  const wsUrl = await new Promise((res, rej) => {
-    let buf = '';
-    const t = setTimeout(() => rej(new Error(`Chrome が起動しない:\n${buf}`)), 20000);
-    proc.stderr.on('data', (d) => {
-      buf += d;
-      const m = buf.match(/DevTools listening on (ws:\/\/\S+)/);
-      if (m) {
-        clearTimeout(t);
-        res(m[1]);
-      }
-    });
-    proc.on('exit', (c) => rej(new Error(`Chrome が終了した (${c}):\n${buf}`)));
-  });
-  const port = new URL(wsUrl).port;
+  const { proc, profile, port } = await startChrome({ width, height });
   const target = await waitUntil(async () => {
     const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
     return list.find((t) => t.type === 'page');
@@ -68,8 +36,16 @@ export async function openBrowserWith({ width = 1440, height = 900, media = [], 
       consoleLines.push(`[${msg.params.type}] ` + msg.params.args.map((a) => a.value ?? a.description ?? '').join(' '));
     }
   };
+  let closed = null;
+  ws.onclose = () => {
+    // Chrome が途中で死んだら、待っている呼び出しを失敗させる（返事の来ない呼び出しで判定が止まらない）
+    closed = new Error('Chrome との接続が切れた');
+    for (const { rej } of pending.values()) rej(closed);
+    pending.clear();
+  };
   const send = (method, params = {}) =>
     new Promise((res, rej) => {
+      if (closed) return rej(closed);
       const i = ++id;
       pending.set(i, { res, rej });
       ws.send(JSON.stringify({ id: i, method, params }));

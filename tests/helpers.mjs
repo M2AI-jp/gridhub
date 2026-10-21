@@ -309,40 +309,64 @@ export async function waitUntil(fn, { timeout = 10000, interval = 100, message =
 
 export const CHROME = process.env.MASUME_CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
+/**
+ * ヘッドレス Chrome を起動して { proc, profile, port } を返す。
+ * 起動が固まったり、すぐ終わったりしたら、殺して片付け、1回だけ起動し直す
+ * （macOS では、起動の途中の fork が固まることがある。判定の中身ではなく道具の不調なので）
+ */
+export async function startChrome({ width = 1440, height = 900 } = {}) {
+  if (!existsSync(CHROME)) throw new Error(`Chrome が見つからない: ${CHROME}（MASUME_CHROME で指定）`);
+  for (let attempt = 1; ; attempt++) {
+    const profile = tmp('masume-chrome-');
+    const proc = spawn(
+      CHROME,
+      [
+        '--headless=new',
+        '--disable-gpu',
+        '--no-first-run',
+        '--no-default-browser-check',
+        '--disable-extensions',
+        '--remote-allow-origins=*',
+        '--remote-debugging-port=0',
+        `--user-data-dir=${profile}`,
+        `--window-size=${width},${height}`,
+        // 外のホストは引けなくする（盤面が読む Google Fonts などを待たない。判定は手元だけで決まる）
+        '--host-resolver-rules=MAP * ~NOTFOUND, EXCLUDE 127.0.0.1, EXCLUDE localhost',
+        'about:blank',
+      ],
+      { stdio: ['ignore', 'ignore', 'pipe'] },
+    );
+    try {
+      const wsUrl = await new Promise((res, rej) => {
+        let buf = '';
+        const t = setTimeout(() => rej(new Error(`Chrome が起動しない:\n${buf}`)), 20000);
+        proc.stderr.on('data', (d) => {
+          buf += d;
+          const m = buf.match(/DevTools listening on (ws:\/\/\S+)/);
+          if (m) {
+            clearTimeout(t);
+            res(m[1]);
+          }
+        });
+        proc.on('exit', (c) => {
+          clearTimeout(t);
+          rej(new Error(`Chrome が終了した (${c}):\n${buf}`));
+        });
+      });
+      return { proc, profile, port: new URL(wsUrl).port };
+    } catch (e) {
+      // 固まった子が stderr を握ったままだと、判定のプロセスが終わらない。殺して、こちらの管も閉じる
+      proc.kill('SIGKILL');
+      proc.stderr.destroy();
+      rmSync(profile, { recursive: true, force: true });
+      if (attempt >= 2) throw e;
+    }
+  }
+}
+
 /** ヘッドレス Chrome を開き、goto / eval / waitFor / screenshot / close を返す */
 export async function openBrowser({ width = 1440, height = 900 } = {}) {
-  if (!existsSync(CHROME)) throw new Error(`Chrome が見つからない: ${CHROME}（MASUME_CHROME で指定）`);
-  const profile = tmp('masume-chrome-');
-  const proc = spawn(
-    CHROME,
-    [
-      '--headless=new',
-      '--disable-gpu',
-      '--no-first-run',
-      '--no-default-browser-check',
-      '--disable-extensions',
-      '--remote-allow-origins=*',
-      '--remote-debugging-port=0',
-      `--user-data-dir=${profile}`,
-      `--window-size=${width},${height}`,
-      'about:blank',
-    ],
-    { stdio: ['ignore', 'ignore', 'pipe'] },
-  );
-  const wsUrl = await new Promise((res, rej) => {
-    let buf = '';
-    const t = setTimeout(() => rej(new Error(`Chrome が起動しない:\n${buf}`)), 20000);
-    proc.stderr.on('data', (d) => {
-      buf += d;
-      const m = buf.match(/DevTools listening on (ws:\/\/\S+)/);
-      if (m) {
-        clearTimeout(t);
-        res(m[1]);
-      }
-    });
-    proc.on('exit', (c) => rej(new Error(`Chrome が終了した (${c}):\n${buf}`)));
-  });
-  const port = new URL(wsUrl).port;
+  const { proc, profile, port } = await startChrome({ width, height });
   const targets = await waitUntil(async () => {
     const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
     return list.find((t) => t.type === 'page');
@@ -368,8 +392,16 @@ export async function openBrowser({ width = 1440, height = 900 } = {}) {
       consoleLines.push(`[${msg.params.type}] ` + msg.params.args.map((a) => a.value ?? a.description ?? '').join(' '));
     }
   };
+  let closed = null;
+  ws.onclose = () => {
+    // Chrome が途中で死んだら、待っている呼び出しを失敗させる（返事の来ない呼び出しで判定が止まらない）
+    closed = new Error('Chrome との接続が切れた');
+    for (const { rej } of pending.values()) rej(closed);
+    pending.clear();
+  };
   const send = (method, params = {}) =>
     new Promise((res, rej) => {
+      if (closed) return rej(closed);
       const i = ++id;
       pending.set(i, { res, rej });
       ws.send(JSON.stringify({ id: i, method, params }));
@@ -426,6 +458,7 @@ export async function serveStatic(root = join(ROOT, 'web'), routes = {}) {
     res.end(readFileSync(file));
   });
   const url = await listen(server);
+  server.unref(); // 判定が途中で落ちて閉じ忘れても、このサーバーが判定のプロセスを生かし続けない
   return { url, close: () => new Promise((r) => (server.closeAllConnections?.(), server.close(() => r()))) };
 }
 

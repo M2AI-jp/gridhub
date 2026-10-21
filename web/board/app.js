@@ -7,6 +7,14 @@ import { Sound } from './sound.js';
 import { initCommand, showLobby, hideLobby, pollParty, noteSorties } from './command.js';
 import { own } from './sketch.js';
 
+// 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、届いたら全部の画面に効かせて差し替える
+const handFonts = document.querySelector('#hand-fonts');
+if (handFonts) {
+  const useHandFonts = () => (handFonts.media = 'all');
+  if (handFonts.sheet) useHandFonts();
+  else handFonts.addEventListener('load', useHandFonts, { once: true });
+}
+
 const params = new URLSearchParams(location.search);
 // 見本と台本の名前は、この形のときだけ使う（URL の文字列をそのまま取りに行かない・描かない。§29.1）
 const SAFE_NAME = /^[A-Za-z0-9_-]+$/;

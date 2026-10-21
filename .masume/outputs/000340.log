@@ -1,0 +1,12 @@
+=== B10: node --test tests/e2e/B10.test.mjs ===
+✔ §37 Google Fonts が返ってこなくても盤面が描かれ、§36.3 の <link>（1つに3つの family）はそのまま (1141.927709ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1200.397375
+
+(exit 0, 1246ms)
