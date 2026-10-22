@@ -1,0 +1,53 @@
+=== B11: node --test --test-reporter=spec tests/e2e/B11.test.mjs ===
+✔ 見本の条件（盤面がつくる見本） (0.872785ms)
+✔ §50.1 ページ: B5 の縦（36×51 目）が見開きで並び、方眼はページの中だけ。上の余白に No. と Date (1541.491915ms)
+✔ §50.2 すべてを方眼に合わせる: マス・モンスター・札・題名の字は目の整数 (1289.969933ms)
+✔ §50.3 道はキャラクターごとに1本、ページの上から下へ曲がりながら下りる。名札 (1235.482242ms)
+✔ §50.4 景色はマスではない（どのマス・札・城とも重ならない）。各ページに1つ以上 (1485.635231ms)
+✔ §50.6 ダンジョンの出口の札・町・中ボス・魔王の城。技術の言葉が先 (1229.663549ms)
+✔ 狭い画面（390px）でも横にはみ出さない (1172.979501ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8047.286432
+
+(exit 0, 8095ms)
+=== B12: node --test --test-reporter=spec tests/e2e/B12.test.mjs ===
+✔ 見本の条件 (1.034616ms)
+✔ §50.5 モンスターはテスト1件に1体。倒したら赤い斜線、復活したら赤い丸、？のマス (1286.13401ms)
+✔ §50.5 モンスターは、そのダンジョンの札の手前（同じ道の上、札より上か同じ高さのページ）に並ぶ (1412.282954ms)
+✔ §50.7 駒は、最初に落ちているテストのマスに立つ（全部倒していれば札の前） (1463.023395ms)
+✔ §50.11 右の欄: 代・今のマスのテスト・メダル・図鑑。名前は GridHub (1263.59425ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5503.572304
+
+(exit 0, 5546ms)
+=== B13: node --test --test-reporter=spec tests/e2e/B13.test.mjs ===
+✔ 見本の条件 (0.910227ms)
+✔ §50.8 見開き（#page-prev・#page-next・#page-no、__masume.spread・pages）。めくるあいだは .page-flip の葉が <use href="#world"> で回る (4851.885407ms)
+✔ §50.8 動きを減らす設定では、めくる動きなしで切り替わる (1593.609142ms)
+✔ §50.8 狭い画面（860px 以下）では1ページずつ (2315.931659ms)
+✔ §50.8 駒が今の見開きの外のページへ進んだら、そのページの見開きへめくる (4841.19357ms)
+✔ §50.9 1マスずつ歩く: __masume.walks に {char, from, to, steps} (6525.374613ms)
+✔ §50.10 エンディング: ending があれば、#ending（role="dialog"）に text。#ending-close で閉じ、新しい seq でまた開く (3568.517349ms)
+✔ §50.12 作戦の窓（#sortie-tactic）の既定は GET /api/party の tactic（null なら balanced）。POST /api/sortie の本文に tactic を必ず入れる (1755.727076ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25533.941227
+
+(exit 0, 25590ms)
