@@ -260,7 +260,8 @@
         "web/assets/sprites/**",
         "web/assets/icons/**",
         "web/assets/sheet.html",
-        "web/assets/marks/**"
+        "web/assets/marks/**",
+        "web/assets/monsters/**"
       ],
       "path": [
         "A1",
