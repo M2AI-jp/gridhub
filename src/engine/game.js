@@ -188,7 +188,7 @@ export function load(root, seqOrJumon, { actor = defaultActor() } = {}) {
         : /^\d+$/u.test(seqOrJumon) ? Number(seqOrJumon)
           : findJumon(snapshot.events, seqOrJumon)?.seq;
     if (!Number.isSafeInteger(seq) || seq < 0 || seq >= previous.seq) {
-      throw new MasumeError('E_LOAD', 'ロード先は現在より前の seq、または存在する過去のじゅもんを指定してください');
+      throw new MasumeError('E_LOAD', 'ロード先は現在より前の seq を指定してください');
     }
     const events = appendEventsLocked(root, [{ type: 'loaded', data: { to_seq: seq } }],
       { actor, previous });

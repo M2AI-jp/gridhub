@@ -5,7 +5,7 @@ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx, { jumon: 'string' });
   const { args, options } = command;
-  if (args.length !== 0) usage('つかいかた: verify [--jumon "…"] [--json]');
+  if (args.length !== 0) usage('つかいかた: verify [--json]');
   const snapshot = inspectLog(gameRoot(command));
   const { ok, errors, warnings, head } = snapshot;
   const result = { ok, errors, warnings, head };

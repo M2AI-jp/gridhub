@@ -62,7 +62,8 @@ test('new: 冒険の書が生まれ、存在する判定ファイルは自動で
   setupToy(dir);
   const r = masume(['new', 'toy.map.json'], { cwd: dir });
   assert.equal(r.code, 0, r.all);
-  assert.match(r.out, /ふっかつのじゅもん/);
+  // 第11章 §52（GM）: ふっかつのじゅもんは人に見せない。いまの記録の目印は「記録: seq N」（と Git のコミット）。
+  assert.match(r.out, /記録: seq \d+/);
   assert.ok(existsSync(join(dir, '.masume', 'log.jsonl')));
   assert.ok(existsSync(join(dir, '.masume', 'maps', '0001.json')));
 

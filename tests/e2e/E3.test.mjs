@@ -17,7 +17,8 @@ test('霧: Lv1 の指令書には現在のマスしか出ない', () => {
   assert.equal(b.code, 0, b.all);
   assert.match(b.out, /剣をとぐ/);
   assert.match(b.out, /node checks\/flag\.mjs A1/);
-  assert.match(b.out, /ふっかつのじゅもん/);
+  // 第11章 §52（GM）: ふっかつのじゅもんは人に見せない。いまの記録の目印は「記録: seq N」（と Git のコミット）。
+  assert.match(b.out, /記録: seq \d+/);
   assert.doesNotMatch(b.out, /盾をみがく/, '霧の先（A2）のタイトルは出ない');
   assert.doesNotMatch(b.out, /洞窟の番人/, '霧の先（G1）のタイトルは出ない');
   const j = masumeJson(['brief', 'a', '--dir', dir]);

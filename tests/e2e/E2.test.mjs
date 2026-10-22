@@ -214,5 +214,6 @@ test('知らない相手・あがり済み・人間向けの表示', () => {
   assert.match(u.all, /E_UNKNOWN/);
   const s = masume(['status', '--dir', dir]);
   assert.equal(s.code, 0, s.all);
-  for (const word of ['戦士アリス', '魔法使いボブ', '勇者ひとみ', 'A1', 'ふっかつのじゅもん']) assert.match(s.out, new RegExp(word));
+  // 第11章 §52（GM）: ふっかつのじゅもんは人に見せない。いまの記録の目印は「記録: seq N」（と Git のコミット）。
+  for (const word of ['戦士アリス', '魔法使いボブ', '勇者ひとみ', 'A1', '記録: seq \\d+']) assert.match(s.out, new RegExp(word));
 });

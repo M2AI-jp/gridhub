@@ -1,12 +1,14 @@
 import { buildView } from '../engine/index.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { requireHealthy } from '../engine/store.js';
+import { recordLine } from '../engine/record.js';
 
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx);
   const { args, options } = command;
   if (args.length !== 0) usage('つかいかた: status [--json]');
-  const view = buildView(gameRoot(command));
+  const root = gameRoot(command);
+  const view = buildView(root);
   requireHealthy(view.integrity);
   if (options.json) console.log(JSON.stringify(view));
   else {
@@ -17,7 +19,7 @@ export async function run(argv, ctx) {
       console.log(`${character.name}: ${location} / ${statuses[character.status]} / Lv${character.level}`
         + ` 経験値 ${character.xp}/${character.xp_next} / 成功 ${character.clears}・失敗 ${character.fails}`);
     }
-    console.log(`ふっかつのじゅもん: ${view.head.jumon}`);
+    console.log(recordLine(root, view.head));
   }
   return 0;
 }

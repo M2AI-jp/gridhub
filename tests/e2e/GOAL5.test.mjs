@@ -39,7 +39,8 @@ test('遊び方に第5章（箱のソケット）が書いてある', () => {
   const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
   const guide = readFileSync(join(ROOT, 'docs', 'GM_GUIDE.md'), 'utf8');
   assert.match(readme, /第5章/);
-  assert.match(readme, /masume party[^\n]*--allow-listen/, 'README に party --allow-listen（第6章で --network から改名）');
-  assert.match(guide, /masume party[^\n]*--allow-listen/, 'GM_GUIDE の「エージェントの箱を確かめる」に party --allow-listen');
+  // 第11章（GM）: 名前は GridHub になり、README・GM_GUIDE は `gridhub …` で書く（`masume` は別名）。どちらの名前でも受ける。
+  assert.match(readme, /(gridhub|masume) party[^\n]*--allow-listen/, 'README に party --allow-listen（第6章で --network から改名）');
+  assert.match(guide, /(gridhub|masume) party[^\n]*--allow-listen/, 'GM_GUIDE の「エージェントの箱を確かめる」に party --allow-listen');
   assert.match(guide, /"allow_listen": true/, 'GM_GUIDE に party.json の allow_listen');
 });

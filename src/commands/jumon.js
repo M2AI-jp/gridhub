@@ -1,3 +1,4 @@
+// 旧版との互換（CONTRACTS §52）: 第10章までの `jumon` コマンド。人に見せる目印は seq と Git のコミット。
 import { MasumeError, verify } from '../engine/index.js';
 import { gameRoot, parseArgs, printCorruption, usage } from '../engine/cli.js';
 

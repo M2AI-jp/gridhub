@@ -41,5 +41,7 @@ test('この冒険の書（マスメ自身のセーブデータ）が正常で�
 
 test('遊び方が書いてある', () => {
   const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
-  for (const w of ['遊び方', 'masume serve', 'masume brief', 'masume check', 'ふっかつのじゅもん', 'GM_GUIDE']) assert.match(readme, new RegExp(w), `README に「${w}」`);
+  // 第11章（GM）: 名前は GridHub になり、README・GM_GUIDE は `gridhub …` で書く（`masume` は別名）。どちらの名前でも受ける。
+  // 第11章 §52（GM）: ふっかつのじゅもんはやめた（ユーザーの指示）。代わりに、過去に戻る load <seq> と改ざんを見つける verify。
+  for (const w of ['遊び方', '(gridhub|masume) serve', '(gridhub|masume) brief', '(gridhub|masume) check', '(gridhub|masume) load', '(gridhub|masume) verify', 'GM_GUIDE']) assert.match(readme, new RegExp(w), `README に「${w}」`);
 });
