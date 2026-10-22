@@ -5,7 +5,7 @@ import { Pawns } from './pawns.js';
 import { Book } from './book.js';
 import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
-import { initCommand, showLobby, hideLobby, pollParty, noteSorties } from './command.js';
+import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing } from './command.js';
 import { own } from './sketch.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
@@ -190,14 +190,7 @@ function render(input) {
   setLayer('#bestiary', renderBestiary(view, state.monsters));
   setLayer('#log', renderLog(view, prev ? seqOf(prev) : -1));
   setLayer('#ledger', renderLedger(view, state.sprites));
-  // 見出しには記録の番号（seq）と最新のセーブのコミットを見せる。ふっかつのじゅもんは見せない（ユーザーの判断）。
-  // #jumon は既存の判定（G1 など）と §50.13 の互換のため、見えないまま残す
-  $('#jumon').textContent = view.head?.jumon || '—';
-  $('#jumon').dataset.seq = view.head?.seq ?? '';
-  $('#head-seq').textContent = view.head ? `seq ${view.head.seq}` : 'seq —';
-  const save = latestSave(view);
-  $('#head-commit').hidden = !save;
-  $('#head-commit').textContent = save ? `commit ${String(save.commit).slice(0, 7)}` : '';
+  renderRecord(view.head);
   const ok = view.integrity?.ok !== false && !!view.head && !!view.quest;
   const integ = $('#integrity');
   integ.dataset.ok = String(ok);
@@ -217,14 +210,29 @@ function render(input) {
   window.__masume.spread = book.left + 1;
 }
 
-/** 最新のセーブ（キャラクターと町・ゲートの save のうち seq がいちばん大きいもの） */
-function latestSave(view) {
-  let best = null;
-  for (const x of [...view.characters, ...Object.values(view.nodes)]) {
-    const s = x?.save;
-    if (s && s.commit && (!best || (s.seq ?? -1) > (best.seq ?? -1))) best = s;
-  }
-  return best;
+/** その記録が見ていた Git のコミット（ビューの head.commit。16進でなければ無いものとする） */
+const commitOf = (head) => (typeof head?.commit === 'string' && /^[0-9a-f]{7,40}$/i.test(head.commit) ? head.commit : '');
+
+/** 人に見せる「いまの記録」の目印: `記録: seq 42 / Git: commit a1b2c3d`（§52.4） */
+function recordLine(head) {
+  const commit = commitOf(head);
+  return head ? `記録: seq ${head.seq}${commit ? ` / Git: commit ${commit.slice(0, 7)}` : ''}` : '';
+}
+
+/** 見出しの #record: 字は `seq <N>`（commit があれば ` / commit <7桁>`）。data-seq・data-commit はビューの head のまま（§52.4） */
+function renderRecord(head) {
+  const rec = $('#record');
+  const commit = commitOf(head);
+  rec.dataset.seq = head ? String(head.seq) : '';
+  rec.dataset.commit = commit;
+  const seq = document.createElement('span');
+  seq.className = 'rec-seq';
+  seq.textContent = head ? `seq ${head.seq}` : 'seq —';
+  if (!commit) return rec.replaceChildren(seq);
+  const code = document.createElement('code');
+  code.className = 'rec-commit';
+  code.textContent = `commit ${commit.slice(0, 7)}`;
+  rec.replaceChildren(seq, ' / ', code);
 }
 
 /** 駒が今の見開きの外のページへ進んだら、歩き終わったあとで、そのページの見開きへめくる（§50.8） */
@@ -509,7 +517,7 @@ async function post(path, body) {
 
 function setupInteractions() {
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-close],[data-stamp],[data-battle],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-jumon,#sound,#ending-close');
+    const t = e.target.closest('[data-close],[data-stamp],[data-battle],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-record,#sound,#ending-close');
     const inBoard = e.target.closest('#board');
     if (inBoard && svg.dataset.justDragged) return;
     if (!t && inBoard) {
@@ -547,15 +555,15 @@ function setupInteractions() {
       else t.disabled = false;
       return;
     }
-    if (t.matches('#copy-jumon')) {
+    if (t.matches('#copy-record')) {
       const h = state.view?.head;
-      const save = state.view ? latestSave(state.view) : null;
-      const text = h ? `seq ${h.seq}${save ? ` commit ${String(save.commit).slice(0, 7)}` : ''}（gridhub load ${h.seq}）` : '';
+      const text = recordLine(h);
+      const back = h ? `（この時点に戻る: gridhub load ${h.seq}）` : '';
       try {
         await navigator.clipboard.writeText(text);
-        toast({ text: `記録の番号を写しました: ${text}`, ok: null });
+        toast({ text: `写しました: ${text}${back}`, ok: null });
       } catch {
-        toast({ text: `記録の番号: ${text}`, ok: null });
+        toast({ text: `${text}${back}`, ok: null });
       }
       return;
     }
@@ -686,6 +694,8 @@ async function liveRefresh() {
     return;
   }
   appliedNo = no;
+  // 入口から頼んだ冒険は、語り部が仕上げ終わる（GET /api/quest が running でなくなる）まで入口で待つ（command.js）
+  if (window.__masume.lobby && questBrewing()) return;
   setLive('live', 'ライブ');
   if (text === lastText || isOlder(body)) return;
   lastText = text;

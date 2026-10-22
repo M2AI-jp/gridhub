@@ -4,6 +4,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 
 let ctx = null;
 let questTimer = null;
+let questRunning = false;
 let partyTimer = null;
 let party = { running: false, code: null, log: '' };
 let openSorties = 0;
@@ -38,6 +39,7 @@ export function initCommand(c) {
       return;
     }
     $('#lobby').dataset.phase = 'brewing';
+    questRunning = true;
     pollQuest();
   });
 
@@ -92,6 +94,15 @@ export function initCommand(c) {
 
 // ---- 入口（ロビー） ----
 
+/**
+ * 冒険づくり（GM と語り部。GET /api/quest の running）がまだ終わっていない。
+ * 冒険の書は、語り部が仕上げる（願いの記録・Git のふりだしのセーブ・party.json）より先に生まれるので、
+ * そのあいだは入口のまま待つ（生まれかけの冒険の書で盤面にすると、願いも出撃の既定もまだ無い）
+ */
+export function questBrewing() {
+  return questRunning;
+}
+
 export function showLobby() {
   const lobby = $('#lobby');
   if (!lobby.hidden) return;
@@ -115,6 +126,8 @@ async function pollQuest() {
   if ($('#lobby').hidden) return;
   try {
     const q = await (await fetch('api/quest', { cache: 'no-store' })).json();
+    const wasRunning = questRunning;
+    questRunning = q.running === true;
     const box = $('#quest-progress');
     if (q.running || q.log) {
       box.hidden = false;
@@ -123,7 +136,8 @@ async function pollQuest() {
       box.dataset.state = q.running ? 'running' : q.code === 0 ? 'done' : 'failed';
       if (!q.running && q.code !== 0 && q.code !== null) $('#start-quest').disabled = !$('#wish').value.trim();
     }
-    if (!q.running && q.code === 0) ctx.refresh();
+    // 終わったら読み直す（失敗で終わっても、冒険の書が生まれていれば盤面にする）
+    if (!q.running && (q.code === 0 || wasRunning)) ctx.refresh();
   } catch {}
   questTimer = setTimeout(pollQuest, 1000);
 }
