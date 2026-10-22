@@ -1,0 +1,13 @@
+=== M8: node --test --test-reporter=spec tests/e2e/M8.test.mjs ===
+✔ §48 export linear: cases のあるマスは、判定の行のあとに空行と「テスト:」、1件ずつ - [x] / - [ ] (273.165982ms)
+✔ §48 Linear と Jira の push も同じ文を使う (698.868569ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1067.028865
+
+(exit 0, 1110ms)

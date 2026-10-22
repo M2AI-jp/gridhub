@@ -1,0 +1,16 @@
+=== Q6: node --test --test-reporter=spec tests/e2e/Q6.test.mjs ===
+✔ §46.2・§46.3 Git の外なら git init し、quest.save を補い、ふりだしをセーブし、支度のあとで最初のコミット (262.432838ms)
+✔ §46.3 もとから Git の中なら git init もコミットもしない（ふりだしのセーブは記録する） (201.472926ms)
+✔ §46.3 --dry-run は git init しない (70.39148ms)
+✔ §46.3 git が無ければ、その旨を出して続ける (152.981091ms)
+✔ §46.1・§46.4 GM のプロンプトに cases・quest.save・territory。AGENTS.md は GridHub の名前で、歩くコマンドと1マスずつの進め方 (243.606919ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1004.197461
+
+(exit 0, 1046ms)

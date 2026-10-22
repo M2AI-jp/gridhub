@@ -1,0 +1,14 @@
+=== S8: node --test --test-reporter=spec tests/e2e/S8.test.mjs ===
+✔ §47.1 MCP の masume_step: 今のダンジョンの判定だけを走らせ、テスト1件ずつ記録する（as の既定は character） (460.978114ms)
+✔ §47.3 GET /api/party の tactic: party.json の tactic が3つの id のどれかならその id、それ以外は null (259.656309ms)
+✔ §47.2 POST /api/sortie の tactic: id なら --tactic を渡す。省略なら何も足さない。ほかの値は 400 E_USAGE（何も起動しない） (1068.858499ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4857.024768
+
+(exit 0, 4905ms)

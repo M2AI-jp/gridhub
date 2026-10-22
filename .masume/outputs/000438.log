@@ -1,0 +1,30 @@
+=== E11: node --test --test-reporter=spec tests/e2e/E11.test.mjs ===
+✔ §43.2 ルートが Git のサブディレクトリ。フックは走らせず、commit.gpgsign があっても署名しない (782.32368ms)
+✔ §43 Git が merge の途中なら、セーブも巻き戻しもしない（ユーザーの作業を壊さない） (704.823905ms)
+✔ §43.4 巻き戻し: .gitignore されたファイルも墓に残し、実行ビットとシンボリックリンクを戻し、リンクの先には書かない (761.938056ms)
+✔ §43・§52.5 load は町のセーブのコミットでも指せる（そのセーブを記録した時点に戻る）。じゅもんは受け付けない (819.404368ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3151.195994
+
+(exit 0, 3196ms)
+=== E12: node --test --test-reporter=spec tests/e2e/E12.test.mjs ===
+✔ じゅもんのコマンド・オプション・欄は、どこにも無い (805.555115ms)
+✔ head は {seq, hash, commit}: commit は、その記録が見ていた Git のコミット（ビューは Git を呼ばない） (610.195319ms)
+✔ 記録の目印 `記録: seq N / Git: commit abc1234` を status・brief・amend・load が出す (730.436611ms)
+✔ load <commit>: 町の看板の commit で、その町でセーブした時点に戻る。知らない・短すぎるコミットは E_LOAD (1346.045508ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3568.565373
+
+(exit 0, 3610ms)
