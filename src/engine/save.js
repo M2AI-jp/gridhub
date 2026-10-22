@@ -70,27 +70,35 @@ function gitRunner(cwd, extraEnv = {}) {
 /** Git の作業ツリーの情報（ルートの中でなければ null） */
 function repository(root) {
   const git = gitRunner(root);
-  let inside;
+  let info;
   try {
-    inside = git(['rev-parse', '--is-inside-work-tree'], { allowFail: true });
+    // 1回で聞く（git を起こす回数を減らす）。作業ツリーの外（.git の中を含む）なら失敗するか、1行目が true でない
+    info = git(['rev-parse', '--is-inside-work-tree', '--show-toplevel', '--show-prefix', '--absolute-git-dir'], { allowFail: true });
   } catch (error) {
     return { error: error.message };
   }
-  if (inside.code !== 0 || inside.out.trim() !== 'true') {
+  const [inside, topLine, prefixLine, gitDirLine] = info.out.split('\n');
+  if (info.code !== 0 || inside?.trim() !== 'true' || !topLine || !gitDirLine) {
     return { error: 'ゲームのルートが Git の作業ツリーの中ではありません' };
   }
-  const top = git(['rev-parse', '--show-toplevel']).out.trim();
-  const prefix = git(['rev-parse', '--show-prefix']).out.trim();
+  const top = topLine.trim();
+  const prefix = prefixLine.trim();
   const run = gitRunner(top);
   const head = run(['rev-parse', '--verify', '-q', 'HEAD'], { allowFail: true });
-  const name = run(['config', 'user.name'], { allowFail: true }).out.trim();
-  const email = run(['config', 'user.email'], { allowFail: true }).out.trim();
+  // 「キー 値」の行（値の無い設定は「キー」だけ）。同じキーが何度もあれば、git config と同じく最後のもの
+  const config = new Map(run(['config', '--get-regexp', '^user\\.(name|email)$'], { allowFail: true }).out
+    .split('\n').filter(Boolean).map((line) => {
+      const space = line.indexOf(' ');
+      return space === -1 ? [line, ''] : [line.slice(0, space), line.slice(space + 1).trim()];
+    }));
+  const name = config.get('user.name') ?? '';
+  const email = config.get('user.email') ?? '';
   const identity = {
     GIT_AUTHOR_NAME: name || FALLBACK.name, GIT_COMMITTER_NAME: name || FALLBACK.name,
     GIT_AUTHOR_EMAIL: email || FALLBACK.email, GIT_COMMITTER_EMAIL: email || FALLBACK.email,
   };
   // merge・rebase・cherry-pick・revert・bisect の途中は、ユーザーの作業の最中なので触らない。
-  const gitDir = run(['rev-parse', '--absolute-git-dir']).out.trim();
+  const gitDir = gitDirLine.trim();
   const busy = ['MERGE_HEAD', 'rebase-merge', 'rebase-apply', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'BISECT_LOG']
     .find((entry) => existsSync(join(gitDir, entry)));
   if (busy) return { error: `Git が ${busy} の途中なので、触りません（終わってから続けてください）` };

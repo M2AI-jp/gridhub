@@ -460,6 +460,23 @@ export function createServer({
   return server;
 }
 
+const QUEST_SETTLE_MS = 10_000; // 冒険の書が生まれてから、語り部の支度が済むのを待つ上限
+
+/** promise が片づくか ms たつか、早いほうで解決する（拒否はしない） */
+function settled(promise, ms) {
+  return new Promise((resolveSettled) => {
+    const timer = setTimeout(resolveSettled, ms);
+    timer.unref();
+    promise.then(() => {
+      clearTimeout(timer);
+      resolveSettled();
+    }, () => {
+      clearTimeout(timer);
+      resolveSettled();
+    });
+  });
+}
+
 /**
  * engine の公開 API を使って、指定した冒険の盤面を公開する。
  * 冒険の書がまだ無い場所でも開く（ロビー）。願いを受けて語り部（masume quest）を、出撃の合図を受けて軍師（masume party）を、
@@ -517,8 +534,11 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
 
   const server = createServer({
     webRoot: webRoot ?? fileURLToPath(new URL('../../web/', import.meta.url)),
-    getView: () => {
+    getView: async () => {
       requireGame();
+      // 冒険の書は語り部の終わりぎわに生まれる。支度（AGENTS.md・party.json・最初のコミット）が済むまで盤面を出さない。
+      // 先に出すと、生まれた冒険の出撃の窓が party.json を読めない（ふりだしの Git のセーブの分だけ間が空く）
+      if (quest.running) await settled(quest.exited, QUEST_SETTLE_MS);
       return engine.buildView(gameRoot);
     },
     watchFile: engine.logFile(gameRoot),

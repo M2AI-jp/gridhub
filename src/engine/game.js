@@ -7,7 +7,7 @@ import { containedFile, logFile } from './paths.js';
 import { saveTerritory } from './save.js';
 import { gateMembers, isSealed, replay, sealFiles } from './state.js';
 import {
-  appendEventsLocked, defaultActor, headOf, inspectLog, requireHealthy, withLock, writeDurable,
+  appendEventsLocked, commitOfEvent, defaultActor, headOf, inspectLog, requireHealthy, withLock, writeDurable,
 } from './store.js';
 
 function collectSeals(root, map, nodeIds, { skipMissing = () => false } = {}) {
@@ -174,26 +174,36 @@ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
       { type: 'amended', data: { version, map_file: mapFile, map_hash: sha256(canonical(map)) } },
       ...seals,
     ], { actor, previous: snapshot.events.at(-1) });
-    return { version, events, head: headOf(events) };
+    return { version, events, head: headOf([...snapshot.events, ...events]) };
   });
 }
 
+/** コミット（4〜40桁の16進。前方一致）が冒険の書に初めて記録された時点の seq（§52.5）。知らない・曖昧なら E_LOAD */
+function seqOfCommit(events, text) {
+  const prefix = text.toLowerCase();
+  const first = new Map(); // コミット → 初めて記録された seq
+  for (const event of events) {
+    const commit = commitOfEvent(event);
+    if (commit !== null && commit.startsWith(prefix) && !first.has(commit)) first.set(commit, event.seq);
+  }
+  if (first.size === 0) throw new MasumeError('E_LOAD', `そのコミットは冒険の書に記録されていません: ${text}`);
+  if (first.size > 1) {
+    throw new MasumeError('E_LOAD', `コミット ${text} は ${first.size} 個に当たります。もっと長く書いてください: ${[...first.keys()].map((c) => c.slice(0, 12)).join('、')}`);
+  }
+  return [...first.values()][0];
+}
+
 /**
- * ロード先を seq に直す。seq（数字）か、Git のセーブのコミット（7〜40桁の16進。saved の commit の先頭）で指す。
- * コミットで指したときは、そのセーブを記録した時点（いちばん新しい saved）に戻る。
+ * ロード先を seq に直す（§52.5）。数字だけなら seq、4〜40桁の16進なら Git のコミット
+ * （セーブのコミットか、判定のときに見ていた HEAD。初めて記録された時点に戻る。町の看板の commit なら、その町でセーブした時点）。
+ * どちらでもなければ null。
  */
 export function resolveLoadTarget(events, target) {
   if (typeof target === 'number') return target;
   if (typeof target !== 'string') return null;
   const text = target.trim();
   if (/^\d+$/u.test(text)) return Number(text);
-  if (/^[0-9a-f]{7,40}$/iu.test(text)) {
-    const prefix = text.toLowerCase();
-    for (let i = events.length - 1; i >= 0; i--) {
-      const { type, data, seq } = events[i];
-      if (type === 'saved' && typeof data?.commit === 'string' && data.commit.startsWith(prefix)) return seq;
-    }
-  }
+  if (/^[0-9a-f]{4,40}$/iu.test(text)) return seqOfCommit(events, text);
   return null;
 }
 
@@ -203,10 +213,10 @@ export function load(root, target, { actor = defaultActor() } = {}) {
     const previous = snapshot.events.at(-1);
     const seq = resolveLoadTarget(snapshot.events, target);
     if (!Number.isSafeInteger(seq) || seq < 0 || seq >= previous.seq) {
-      throw new MasumeError('E_LOAD', 'ロード先は、いまより前の記録の番号（seq）か、Git のセーブのコミットで指定してください');
+      throw new MasumeError('E_LOAD', 'ロード先は、いまより前の記録の番号（seq）か、冒険の書に記録された Git のコミットで指定してください');
     }
     const events = appendEventsLocked(root, [{ type: 'loaded', data: { to_seq: seq } }],
       { actor, previous });
-    return { to_seq: seq, events, head: headOf(events) };
+    return { to_seq: seq, events, head: headOf([...snapshot.events, ...events]) };
   });
 }

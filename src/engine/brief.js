@@ -15,6 +15,7 @@ export function brief(root, characterId) {
     .slice(-5).reverse().map(({ seq, ts, data }) => ({ seq, ts, text: data.text }));
   return {
     seq: view.head.seq,
+    commit: view.head.commit,
     character: {
       id: character.id, name: character.name, kind: character.kind,
       module: character.module ?? null, territory: character.territory ?? [],

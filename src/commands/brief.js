@@ -1,5 +1,6 @@
 import { brief } from '../engine/brief.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+import { recordLine } from '../engine/record.js';
 
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx);
@@ -61,6 +62,6 @@ export async function run(argv, ctx) {
   console.log(`  日誌: gridhub note ${c.id} "…"`);
   console.log('守ること:');
   for (const rule of report.rules) console.log(`  ${rule}`);
-  console.log(`記録: seq ${report.seq}`);
+  console.log(recordLine(report));
   return 0;
 }
