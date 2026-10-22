@@ -5,7 +5,7 @@ import { Pawns } from './pawns.js';
 import { Book } from './book.js';
 import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
-import { initCommand, showLobby, hideLobby, pollParty, noteSorties } from './command.js';
+import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing } from './command.js';
 import { own } from './sketch.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
@@ -686,6 +686,8 @@ async function liveRefresh() {
     return;
   }
   appliedNo = no;
+  // 入口から頼んだ冒険は、語り部が仕上げ終わる（GET /api/quest が running でなくなる）まで入口で待つ（command.js）
+  if (window.__masume.lobby && questBrewing()) return;
   setLive('live', 'ライブ');
   if (text === lastText || isOlder(body)) return;
   lastText = text;
