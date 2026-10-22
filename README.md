@@ -345,6 +345,12 @@ npm run test:goal     # いまのあがり（GOAL11）: 第1章〜第11章の全
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
+Linux のコンテナで root として走らせるときは、Chrome の箱（サンドボックス）が起動しないので、`--no-sandbox` を足す小さな包みを渡します。
+
+```sh
+printf '#!/bin/sh\nexec /path/to/chrome --no-sandbox --disable-dev-shm-usage "$@"\n' > /tmp/chrome && chmod +x /tmp/chrome
+MASUME_CHROME=/tmp/chrome npm test
+```
 
 ## ファイル
 
