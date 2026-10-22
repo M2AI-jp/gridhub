@@ -27,6 +27,9 @@ const fonts = opt('fonts', null);
 const width = Number(opt('width', 1600));
 const height = Number(opt('height', 1000));
 const name = opt('name', 'board');
+const only = opt('only', null); // 例: --only spread,zoom（撮るものを絞る）
+const want = (kind) => !only || only.split(',').includes(kind);
+const spreadAt = opt('spread', null); // 見開きを指定して撮る（ページ番号）
 const [viewFile, outDir] = args;
 if (!viewFile || !outDir) {
   console.error('使い方: node docs/shots/shot.mjs <view.json> <出力のフォルダ> [--fonts <dir>] [--width 1600] [--height 1000] [--name board]');
@@ -84,10 +87,10 @@ const hasEnding = (() => {
 })();
 const closeEnding = `document.querySelector('#ending-close')?.click();`;
 try {
-  if (hasEnding) await shoot(`${name}-ending.png`, { after: 600 });
-  await shoot(`${name}-spread.png`, { prep: `(() => { ${closeEnding} return true; })()`, after: 200 });
+  if (hasEnding && want('ending')) await shoot(`${name}-ending.png`, { after: 600 });
+  if (want('spread')) await shoot(`${name}-spread.png`, { prep: `(() => { ${closeEnding} ${spreadAt ? `window.__masume.turnTo(${Number(spreadAt)}, { animate: false });` : ''} return true; })()`, after: 300 });
   // めくっている途中: 葉の回転を途中で止める
-  await shoot(`${name}-flip.png`, {
+  if (want('flip')) await shoot(`${name}-flip.png`, {
     prep: `(async () => {
       ${closeEnding}
       const m = window.__masume;
@@ -101,13 +104,13 @@ try {
     after: 150,
   });
   // 拡大: 作業中の駒のまわり
-  await shoot(`${name}-zoom.png`, {
+  if (want('zoom')) await shoot(`${name}-zoom.png`, {
     w: 1200,
     h: 900,
     prep: `(() => { ${closeEnding} const p = [...document.querySelectorAll('.pawn[data-status="working"]')].find((g) => { const r = g.getBoundingClientRect(); return r.width && r.left > 0 && r.left < innerWidth; }) || document.querySelector('.pawn'); if (!p) return false; const b = p.getBoundingClientRect(); for (let i = 0; i < 4; i++) document.querySelector('[data-zoom="in"]').click(); const svg = document.querySelector('#board'); const r = svg.getBoundingClientRect(); const b2 = p.getBoundingClientRect(); svg.dispatchEvent(new WheelEvent('wheel', { deltaX: b2.left + b2.width / 2 - (r.left + r.width / 2), deltaY: b2.top - (r.top + r.height / 2) + 40, bubbles: true, cancelable: true })); void b; return true; })()`,
     after: 300,
   });
-  await shoot(`${name}-narrow.png`, { w: 390, h: 844, prep: `(() => { document.querySelector('#stage').scrollIntoView(); return true; })()` });
+  if (want('narrow')) await shoot(`${name}-narrow.png`, { w: 390, h: 844, prep: `(() => { document.querySelector('#stage').scrollIntoView(); return true; })()` });
 } finally {
   server.close();
 }
