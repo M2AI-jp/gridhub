@@ -25,7 +25,7 @@ export const TOOLS = [
   {
     name: 'masume_brief',
     title: '指令書を読む',
-    description: 'キャラクターの指令書を読む。いまのマス・やること・判定コマンド・縄張り・見えている先のマスが書いてある。作業の前にまず読む。',
+    description: 'キャラクターの指令書を読む。いまのマス・やること・判定コマンド・縄張り・見えている先のマスと、道の余白（別の担当との会話・町の住人・瓦版）のいちばん新しい出来事が書いてある。作業の前にまず読む。',
     readOnly: true,
     properties: {
       character: str('キャラクターのID（例: engine）'),

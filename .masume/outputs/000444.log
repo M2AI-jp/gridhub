@@ -1,0 +1,15 @@
+=== E13: node --test --test-reporter=spec tests/e2e/E13.test.mjs ===
+✔ §53.1 地図の quest.news: 文字列の配列（0〜20件・各1〜200字）でなければ E_FORMAT (485.552096ms)
+✔ §53.2・§53.4 余白のマスは task と camp のすぐ後に1つ。町の後は npc、合流の前は talk、ほかは news。まだ起きていなければ lines は空 (168.657929ms)
+✔ §53.3・§53.4 駒が通ると起きる: 号外と製品の話題・町の住人がテストの数とセーブの commit を・2人の最新の日誌で会話 (1427.201073ms)
+✔ §53.4 会話: 日誌が無ければ「顔を合わせた」、長い日誌は80字まで。ハンコで通っても起きる。話題が無ければ号外だけ (653.03612ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2808.330787
+
+(exit 0, 2855ms)

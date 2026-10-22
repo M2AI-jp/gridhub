@@ -1,5 +1,6 @@
 import { brief } from '../engine/brief.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+import { marginText } from '../engine/margins.js';
 import { recordLine } from '../engine/record.js';
 
 export async function run(argv, ctx) {
@@ -42,6 +43,16 @@ export async function run(argv, ctx) {
   }
   if (report.grave) console.log(`墓: ${report.grave.command}（${report.grave.node} で負けたときの変更）`);
   if (report.save === 'git') console.log('セーブ: 町に着くと、縄張りの変更が Git にコミットされる');
+  if (report.margin) {
+    const nameOf = (id) => (id === c.id ? c.name : report.party.find((p) => p.id === id)?.name ?? id);
+    const [heading, ...lines] = marginText(report.margin, nameOf);
+    // 瓦版の1行目は本人がマスを抜けた号外（本人はもう知っている）。指令書には製品の分野の話題だけを見せる
+    const shown = report.margin.kind === 'news' ? lines.slice(1) : lines;
+    if (shown.length > 0) {
+      console.log(`道の余白（いちばん新しい出来事）: ${heading}`);
+      for (const line of shown) console.log(`  ${line}`);
+    }
+  }
   console.log('視界に入っている先のマス:');
   for (const node of report.visible) console.log(`  ${node.id}「${node.title}」（${node.type}）`);
   console.log(`霧の中: ${report.fog}マス`);
