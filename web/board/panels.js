@@ -118,7 +118,7 @@ export function renderLog(view, freshSeq = -1) {
       return `<li class="log-entry ${cls}${e.seq > freshSeq && freshSeq >= 0 ? ' fresh' : ''}" data-seq="${e.seq}" data-type="${esc(e.type)}"${e.node ? ` data-node="${esc(e.node)}"` : ''}>
         <span class="le-mark">${own(MARK, e.type) || '・'}</span>
         <span class="le-text">${esc(e.text)}</span>
-        <span class="le-meta">#${e.seq}・${esc(fmtTime(e.ts))}${e.actor ? `・${esc(e.actor)}` : ''}</span>
+        <span class="le-meta">seq ${e.seq}・${esc(fmtTime(e.ts))}${e.actor ? `・${esc(e.actor)}` : ''}</span>
       </li>`;
     })
     .join('');
@@ -178,7 +178,7 @@ export function renderNodeDrawer(view, id, { live }) {
   if (n.type === 'gate' && n.state === 'ready')
     action = `<button class="act battle" data-battle="${esc(id)}">ボス戦を始める</button><p class="hint">結合E2E <code>${esc(n.check?.run || '')}</code> を走らせます。</p>`;
   const log = relatedLog(view, id)
-    .map((e) => `<li class="${e.ok === true ? 'ok' : e.ok === false ? 'ng' : 'info'}"><span>${esc(e.text)}</span>${live && /check_|gate_/.test(e.type) ? ` <a href="api/output/${e.seq}" target="_blank" rel="noopener">出力</a>` : ''}<small>#${e.seq}</small></li>`)
+    .map((e) => `<li class="${e.ok === true ? 'ok' : e.ok === false ? 'ng' : 'info'}"><span>${esc(e.text)}</span>${live && /check_|gate_/.test(e.type) ? ` <a href="api/output/${e.seq}" target="_blank" rel="noopener">出力</a>` : ''}<small>seq ${e.seq}</small></li>`)
     .join('');
   return `<div class="drawer-head">
       <span class="issue-id">${esc(id)}</span>
@@ -219,7 +219,7 @@ function sortieRows(view, c) {
     .map(
       ({ sortie, ret }) => `<li class="sortie-row ${ret ? (ret.ok ? 'ok' : 'ng') : 'open'}">
         <span class="sr-text">${esc(sortie.text)}${ret ? ` → ${esc(ret.text.replace(/^.*が帰還した/, '帰還'))}` : ' → 出撃中…'}</span>
-        <small>#${sortie.seq}・${esc(fmtTime(sortie.ts))}</small>
+        <small>seq ${sortie.seq}・${esc(fmtTime(sortie.ts))}</small>
         ${ret ? `<a href="api/output/${ret.seq}" target="_blank" rel="noopener">出力</a>` : ''}
       </li>`,
     )

@@ -1110,7 +1110,7 @@ npm test の揺れを調べたところ、盤面が外の字（Google Fonts）�
 
 ## 51. あがり（第11章）
 
-- `GOAL11`: 第1章〜第11章のすべての判定がまとめて通り、すべての冒険の書が正常で、README が GridHub として書かれている（ゲームの対応表・`gridhub step`・Git のセーブ・作戦・前後の盤面の絵）。盤面・CLI・MCP・docs に「じゅもん」が出てこない（§52.2）。
+- `GOAL11`: 第1章〜第11章のすべての判定がまとめて通り、すべての冒険の書が正常で、README が GridHub として書かれている（ゲームの対応表・`gridhub step`・Git のセーブ・作戦・前後の盤面の絵）。盤面・CLI・MCP・docs に、§52.2 で外したものが出てこない。
 - `package.json` の `test:goal` は `GOAL11` に向ける。
 
 ## 52. ふっかつのじゅもんをやめる（第11章・ユーザーの指示）
@@ -1127,7 +1127,7 @@ npm test の揺れを調べたところ、盤面が外の字（Google Fonts）�
    - エンジンの `jumonOf`（`src/engine/index.js` から出さない）。`src/engine/jumon.js` と `src/commands/jumon.js` は消す。
    - MCP の道具 `masume_jumon` と、`masume_verify` の `jumon` 引数（`inputSchema.properties` は `{}`）。
    - 盤面の `#jumon` と `#copy-jumon`。
-   - `src/**`・`bin/**`・`web/**`（見本の `web/fixtures/**` も作り直す）、`README.md`・`AGENTS.md`、`docs/` の RULEBOOK・SAVE_FORMAT・GM_GUIDE・GAME_DESIGN に「じゅもん」「jumon」と書かない。このファイル（CONTRACTS）では §52 だけが、外したことを書く。過去の記録（`.masume/` と見本の冒険の書・出力）は歴史なので書き換えない。
+   - `src/**`・`bin/**`・`web/**`（見本の `web/fixtures/**` も作り直す）、`README.md`・`AGENTS.md`、`docs/` の RULEBOOK・SAVE_FORMAT・GM_GUIDE・GAME_DESIGN に「じゅもん」「jumon」と書かない。このファイル（CONTRACTS）では §52 だけが、このリポジトリ自身の地図（`quests/masume.map.json`）では第11章のマスの題・説明・`cases` だけが、外したことを書く。過去の記録（`.masume/` と見本の冒険の書・出力）は歴史なので書き換えない。
 3. **ビューの `head`**（§5）は `{seq, hash, commit}`。
    - `seq`・`hash` は最後のイベント（今までどおり）。
    - `commit` は**その記録が見ていた Git のコミット**: 冒険の書を新しいほうから見て最初に見つかる、`saved` の `data.commit`（null でないもの）か、判定の記録（`check_passed` `check_failed` `gate_cleared` `gate_failed` `stepped`）の `data.git.head`（null でないもの）。40桁の16進。見つからなければ `null`。冒険の書だけから決まる（ビューを作るときに Git を呼ばない）。

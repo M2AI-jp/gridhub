@@ -45,7 +45,7 @@ test('見本の条件', () => {
   assert.ok(end.finished === true && end.ending && typeof end.ending.text === 'string' && Number.isInteger(end.ending.seq), 'end に ending');
 });
 
-test('§50.8 見開き: #page-prev・#page-next・#page-no、__masume.spread・pages。めくるあいだは .page-flip の葉が <use href="#world"> で回る', { timeout: 120000 }, async () => {
+test('§50.8 見開き（#page-prev・#page-next・#page-no、__masume.spread・pages）。めくるあいだは .page-flip の葉が <use href="#world"> で回る', { timeout: 120000 }, async () => {
   await withPage(async (page) => {
     const a = JSON.parse(await page.eval(NAV));
     assert.ok(a.prev && a.next, '#page-prev と #page-next');
@@ -155,7 +155,7 @@ test('§50.9 1マスずつ歩く: __masume.walks に {char, from, to, steps}', {
   );
 });
 
-test('§50.10 エンディング: ending があれば #ending（role="dialog"）に text、#ending-close で閉じ、新しい seq でまた開く', { timeout: 120000 }, async () => {
+test('§50.10 エンディング: ending があれば、#ending（role="dialog"）に text。#ending-close で閉じ、新しい seq でまた開く', { timeout: 120000 }, async () => {
   await withPage(
     async (page) => {
       await page.waitFor(`!document.querySelector('#ending').hidden`, { timeout: 5000, message: 'エンディングが開く' });
@@ -180,7 +180,7 @@ test('§50.10 エンディング: ending があれば #ending（role="dialog"）
   });
 });
 
-test('§50.12 作戦の窓: #sortie-tactic の既定は GET /api/party の tactic（null なら balanced）。POST /api/sortie の本文に tactic を必ず入れる', { timeout: 120000 }, async () => {
+test('§50.12 作戦の窓（#sortie-tactic）の既定は GET /api/party の tactic（null なら balanced）。POST /api/sortie の本文に tactic を必ず入れる', { timeout: 120000 }, async () => {
   let tactic = 'bold';
   const posts = [];
   const json = (res, status, body) => {

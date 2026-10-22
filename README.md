@@ -133,7 +133,10 @@ gridhub note engine "TTL は秒ではなくミリ秒。テストの名前に単�
 
 ### Git と GitHub を初めて使う人へ
 
-GridHub が `git init` とコミットをしてくれるので、最初に要るのは名前の設定だけです。
+- **Git** は、ファイルの変更の歴史を手元に残す道具です。1回分の保存を**コミット**と呼び、`a1b2c3d` のような短い名前で指せます。GridHub では、町に着くたびに GridHub がコミットします。
+- **GitHub** は、Git の歴史を置いておき、ほかの人にレビューしてもらう Web サービスです。変更を見てもらう申し出を **PR（pull request）** と呼びます。GitHub は使わなくても遊べます（手元の Git だけで、セーブも墓も働きます）。
+
+GridHub が `git init` とコミットをしてくれるので、最初に要るのは名前の設定だけです（Git が無ければ、先に https://git-scm.com/ から入れます）。
 
 ```sh
 git config --global user.name "あなたの名前"          # 1回だけ。無ければ GridHub <gridhub@localhost> でコミットされる
@@ -159,7 +162,9 @@ GitHub に置いて、変更をレビューしてもらう（PR を出す）に�
    git push -u origin memo-search
    ```
 
-4. GitHub のリポジトリのページに出る「Compare & pull request」を押して、PR を作る（`gh` コマンドがあれば `gh pr create`）。
+4. GitHub のリポジトリのページに出る「Compare & pull request」を押して、PR を作る（`gh` コマンドがあれば `gh pr create`）。PR の説明には `gridhub status` の最後の行（`記録: seq 42 / Git: commit a1b2c3d`）を貼っておくと、レビューする人が同じ時点の盤面を `gridhub load 42` で開けます。
+
+迷ったら: `git status`（いま何が変わっているか）・`git log --oneline`（セーブの一覧）・`git stash list`（墓の一覧）。消してしまったように見えても、GridHub は変更を墓に残してから戻すので、`git stash apply <stash>` で取り出せます。
 
 ---
 
@@ -180,9 +185,9 @@ GitHub に置いて、変更をレビューしてもらう（PR を出す）に�
 ## 記録（冒険の書）と、過去に戻る
 
 - 進み具合は `.masume/log.jsonl`（冒険の書）に追記だけされます。各行は前の行のハッシュを含みます（ハッシュの鎖）。
-- いまの記録は、記録の番号（seq）と Git のコミットで言います: `記録: seq 42 / Git: commit a1b2c3d`（`gridhub status`・`gridhub brief` の最後の行）。
+- いまの記録は、記録の番号（seq）と Git のコミットで言います: `記録: seq 42 / Git: commit a1b2c3d`（`gridhub status` の最後の行。`gridhub brief` と盤面の見出しにも出ます）。seq は盤面の時点、commit はそのとき判定が見ていたコードの時点です。日誌・コミットメッセージ・PR・Linear のコメントには、この1行を貼れば「その時点」を指せます。
 - `gridhub verify` は、鎖・地図・判定の出力の改ざんを見つけます。`gridhub repair` は、壊れた所から後ろを退避して鎖を直します。
-- `gridhub load <seq>` で、その時点の盤面に戻れます（戻したことも記録されます。コードは Git で戻します）。
+- `gridhub load <seq>` か `gridhub load <commit>` で、その時点の盤面に戻れます。commit で指すと、そのコミットが冒険の書に初めて記録された時点（町の看板の `commit a1b2c3d` なら、その町でセーブした時点）に戻ります。戻したことも記録されます。コードは Git で戻します（`git checkout a1b2c3d`、墓は `git stash apply <stash>`）。
 - `gridhub log` で、何が起きたかを最初から読めます。
 
 ---
@@ -231,7 +236,7 @@ claude mcp add gridhub -- node /path/to/gridhub/bin/gridhub.js mcp --dir /path/t
 
 | ページをめくる | エンディング |
 | --- | --- |
-| ![ページをめくる](docs/shots/demo-flip.png) | ![エンディング](docs/shots/end-ending.png) |
+| ![ページをめくる](docs/board-flip.png) | ![エンディング](docs/board-ending.png) |
 
 スクリーンショットの撮り方は [docs/shots/README.md](docs/shots/README.md) にあります。
 
@@ -279,7 +284,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | `gridhub stamp <node> --as <human>` | ハンコ |
 | `gridhub status` / `gridhub log` | 盤面の要約 / 冒険の書 |
 | `gridhub verify` / `gridhub repair` | 改ざんの検証 / 修復 |
-| `gridhub load <seq>` | 過去の時点に戻る |
+| `gridhub load <seq\|commit>` | 過去の時点の盤面に戻る（記録の番号か Git のコミットで指す） |
 | `gridhub new <map>` / `gridhub validate <map>` / `gridhub amend <map>` | 地図から冒険の書をつくる / 検査 / 改訂（歴史は書き換えられない） |
 | `gridhub seal <node…\|--all>` | 判定ファイルを封印する（GM） |
 | `gridhub init` | よそのプロジェクトに支度をする |
@@ -340,6 +345,12 @@ npm run test:goal     # いまのあがり（GOAL11）: 第1章〜第11章の全
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
+Linux のコンテナで root として走らせるときは、Chrome の箱（サンドボックス）が起動しないので、`--no-sandbox` を足す小さな包みを渡します。
+
+```sh
+printf '#!/bin/sh\nexec /path/to/chrome --no-sandbox --disable-dev-shm-usage "$@"\n' > /tmp/chrome && chmod +x /tmp/chrome
+MASUME_CHROME=/tmp/chrome npm test
+```
 
 ## ファイル
 
