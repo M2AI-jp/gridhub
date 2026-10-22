@@ -51,7 +51,7 @@
       "save": {
         "seq": 38,
         "node": "G1",
-        "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
+        "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
       },
       "grave": null,
       "square": null
@@ -107,12 +107,12 @@
       "save": {
         "seq": 38,
         "node": "G1",
-        "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
+        "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
       },
       "grave": {
         "seq": 16,
         "node": "E2",
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
         "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
       },
       "square": null
@@ -158,7 +158,7 @@
       "save": {
         "seq": 38,
         "node": "G1",
-        "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
+        "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
       },
       "grave": null,
       "square": null
@@ -202,12 +202,12 @@
       "save": {
         "seq": 1,
         "node": null,
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
       },
       "grave": {
         "seq": 26,
         "node": "M2",
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
         "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
       },
       "square": null
@@ -251,7 +251,7 @@
       "save": {
         "seq": 1,
         "node": null,
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
       },
       "grave": null,
       "square": null
@@ -536,7 +536,7 @@
         "cases": [
           "genesis が1行",
           "hash が sha256",
-          "じゅもんは12字"
+          "prev は前の行の hash"
         ]
       },
       "xp": 1,
@@ -568,7 +568,7 @@
           "strong": false
         },
         {
-          "name": "じゅもんは12字",
+          "name": "prev は前の行の hash",
           "ok": true,
           "losses": 0,
           "revived": 0,
@@ -672,7 +672,7 @@
       "save": {
         "seq": 22,
         "node": "C1",
-        "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
+        "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
       },
       "first_try": null
     },
@@ -1535,7 +1535,7 @@
       "save": {
         "seq": 38,
         "node": "G1",
-        "commit": "677a95194e602bdfde9cdc6bb149236d4c7f9554"
+        "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
       },
       "first_try": null
     },
@@ -1671,7 +1671,7 @@
       "node": null,
       "ok": null,
       "type": "saved",
-      "text": "賢者クロード、書記、伝令、地図職人、絵師 が ふりだし でセーブした（commit 3f9a2c1）"
+      "text": "賢者クロード、書記、伝令、地図職人、絵師 が ふりだし でセーブした（commit 2e7d9fc）"
     },
     {
       "seq": 2,
@@ -1821,7 +1821,7 @@
       "node": "E2",
       "ok": null,
       "type": "restored",
-      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
+      "text": "書記 の縄張りを commit 2e7d9fc に戻した（墓: stash bb731c6）"
     },
     {
       "seq": 17,
@@ -1881,7 +1881,7 @@
       "node": "C1",
       "ok": null,
       "type": "saved",
-      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
+      "text": "書記 が C1 でセーブした（commit d7ac733）"
     },
     {
       "seq": 23,
@@ -1921,7 +1921,7 @@
       "node": "M2",
       "ok": null,
       "type": "restored",
-      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
+      "text": "地図職人 の縄張りを commit 2e7d9fc に戻した（墓: stash 7af12b6）"
     },
     {
       "seq": 27,
@@ -2041,7 +2041,7 @@
       "node": "G1",
       "ok": null,
       "type": "saved",
-      "text": "賢者クロード、書記、伝令 が G1 でセーブした（commit 7c4e9a0）"
+      "text": "賢者クロード、書記、伝令 が G1 でセーブした（commit e6a08b5）"
     },
     {
       "seq": 39,
@@ -2086,8 +2086,8 @@
   ],
   "head": {
     "seq": 42,
-    "hash": "9bb40d95e979b2e8481e2b5c2f28d307bdd76d220286dd552c9bea9a69ecb375",
-    "jumon": "らばち せよま よでが ぐめけ"
+    "hash": "077535d91db5ea2500c3ae66acddcf6f6b95285c0286dd552c9bea9a69ecb375",
+    "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
   },
   "integrity": {
     "ok": true,

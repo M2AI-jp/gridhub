@@ -998,5 +998,7 @@ body.in-lobby #stage { min-height: 70vh; }
   #export-notebook { display: none; }
 }
 
-.head-seq { font-family: var(--marker); font-size: 17px; color: var(--ink); }
-.head-commit { font-size: 11px; color: #6a3fb0; }
+.rec-label { font-family: var(--ui); font-size: 10px; color: #4f6b80; letter-spacing: 0.5px; }
+.record { display: inline-flex; align-items: baseline; gap: 5px; color: #4f6b80; }
+.rec-seq { font-family: var(--marker); font-size: 17px; color: var(--ink); }
+.rec-commit { font-size: 11px; color: #6a3fb0; }

@@ -38,7 +38,7 @@ export const MAP = {
     B2: { type: 'task', title: '駒が1マスずつ歩く', check: cmd('B2', ['square のマスに立つ', '間のマスを1つずつ踏む', 'walks に steps を足す', '動きを減らす設定では跳ぶ']) },
     B3: { type: 'task', title: '見開きをめくる #page-next', check: cmd('B3', ['見開きは2ページ', '#page-no は 1–2 / N', '.page-flip が <use> で回る']) },
     B4: { type: 'task', title: 'エンディング #ending を出す', check: cmd('B4', ['ending.text を出す', '#ending-close で閉じる']) },
-    E1: { type: 'task', title: 'log.jsonl に genesis を書く', check: cmd('E1', ['genesis が1行', 'hash が sha256', 'じゅもんは12字']) },
+    E1: { type: 'task', title: 'log.jsonl に genesis を書く', check: cmd('E1', ['genesis が1行', 'hash が sha256', 'prev は前の行の hash']) },
     E2: { type: 'task', title: 'gridhub check で判定をくだす', detail: '宣言判定: 封印を確かめ、町から今のマスまでを累積で走らせる。通れば前進、落ちれば Lv−1 で町から。', check: cmd('E2', ['封印が無ければ E_UNSEALED', '通れば pos+1 と xp', '落ちれば Lv−1 で町へ', 'outputs/ に出力を残す']) },
     C1: { type: 'camp', title: '宿屋「ふたつ星亭」' },
     E3: { type: 'task', title: 'gridhub step で1件ずつ歩く', check: cmd('E3', ['✔ と ✖ を読む', 'TAP の ok / not ok', 'cases と名前で結ぶ', 'stepped を記録する', '位置もレベルも変えない']) },
@@ -64,12 +64,6 @@ export const MAP = {
 };
 
 // ---- ビューを組み立てる ----
-const KANA = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわがぎぐげござじずぜぞだぢづでどばびぶべぼ';
-const jumonOf = (hex) => {
-  const n = BigInt('0x' + hex.slice(0, 18));
-  const s = Array.from({ length: 12 }, (_, i) => KANA[Number((n >> BigInt(66 - 6 * i)) & 63n)]).join('');
-  return `${s.slice(0, 3)} ${s.slice(3, 6)} ${s.slice(6, 9)} ${s.slice(9)}`;
-};
 const sha = (s) => createHash('sha1').update(String(s)).digest('hex');
 const XP_DEFAULT = { task: 1, gate: 3, camp: 0 };
 const T0 = Date.UTC(2026, 9, 19, 0, 30);
@@ -181,6 +175,8 @@ function build(scene, log) {
   const all = Object.values(nodes).flatMap((n) => n.cases);
   const bestiary = { total: all.length, defeated: all.filter((x) => x.ok === true).length, revived: all.reduce((s, x) => s + x.revived, 0), strong: all.filter((x) => x.strong).length };
   const hash = sha(JSON.stringify([scene, log.length])) + sha(log.length);
+  // §52.3: その記録が見ていた Git のコミット（新しいほうから見て最初のセーブ）
+  const commit = [...log].reverse().find((e) => e.commit)?.commit ?? null;
   const entries = log.map((e, i) => ({ seq: i, ts: new Date(T0 + i * 6 * 60000).toISOString(), actor: e.actor || e.character || 'gm', character: e.character || null, node: e.node || null, ok: e.ok ?? null, type: e.type, text: e.text }));
   const finished = !!scene.finished;
   return {
@@ -190,7 +186,7 @@ function build(scene, log) {
     characters: chars,
     nodes,
     log: entries,
-    head: { seq: entries.length - 1, hash: hash.slice(0, 64), jumon: jumonOf(hash) },
+    head: { seq: entries.length - 1, hash: hash.slice(0, 64), commit },
     integrity: { ok: true, errors: [] },
     finished,
     bestiary,
@@ -198,13 +194,18 @@ function build(scene, log) {
   };
 }
 
-const commit = (s) => sha(`commit:${s}`);
-const save = (seq, node) => ({ seq, node, commit: commit(`${node}:${seq}`) });
+// セーブのコミット（町ごとに1つ。冒険の書の文・看板・キャラクターの save・墓の戻り先は、ここから導く）
+const COMMIT = { start: sha('commit:ふりだし'), C1: sha('commit:C1'), G1: sha('commit:G1') };
+const short = (h) => h.slice(0, 7);
+const save = (seq, node) => ({ seq, node, commit: COMMIT[node ?? 'start'] });
+const STASH = { engine: sha('grave:engine'), gmkit: sha('grave:gmkit') };
+const saved = (names, node) => ({ type: 'saved', node: node ?? null, commit: COMMIT[node ?? 'start'], text: `${names} が ${node ?? 'ふりだし'} でセーブした（commit ${short(COMMIT[node ?? 'start'])}）` });
+const restored = (id, name, node) => ({ type: 'restored', character: id, node, text: `${name} の縄張りを commit ${short(COMMIT.start)} に戻した（墓: stash ${short(STASH[id])}）` });
 
 // ---- 冒険の書（ここまでに起きたこと） ----
 const log = [
   { type: 'genesis', text: '冒険の書がひらかれた: GridHubをつくる' },
-  { type: 'saved', text: '賢者クロード、書記、伝令、地図職人、絵師 が ふりだし でセーブした（commit 3f9a2c1）' },
+  saved('賢者クロード、書記、伝令、地図職人、絵師', null),
   { type: 'sealed', node: 'E1', text: 'E1 の判定を封印した' },
   { type: 'sortie', character: 'engine', node: 'E1', text: '書記 が出撃した（codex gpt-5）' },
   { type: 'sortie', character: 'board', node: 'B1', text: '賢者クロード が出撃した（claude）' },
@@ -219,17 +220,17 @@ const log = [
   { type: 'check_passed', character: 'board', node: 'B1', ok: true, text: '賢者クロード が B1「svg#board に方眼ノートを描く」の判定に成功！ テスト 3/3' },
   { type: 'check_passed', character: 'gmkit', node: 'M1', ok: true, text: '地図職人 が M1「quest.map.json を検証する」の判定に成功！ テスト 3/3' },
   { type: 'check_failed', character: 'engine', node: 'E2', ok: false, text: '書記 が E2「gridhub check で判定をくだす」の判定に失敗… テスト 2/4、Lv2→1、町から' },
-  { type: 'restored', character: 'engine', node: 'E2', text: '書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）' },
+  restored('engine', '書記', 'E2'),
   { type: 'sortie', character: 'engine', node: 'E2', text: '書記 が出撃した（2代目・codex gpt-5）' },
   { type: 'stepped', character: 'engine', node: 'E2', ok: false, text: '書記 が E2 を歩いた（テスト 3/4）' },
   { type: 'stepped', character: 'engine', node: 'E2', ok: true, text: '書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！' },
   { type: 'note', character: 'engine', text: '技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる' },
   { type: 'check_passed', character: 'engine', node: 'E2', ok: true, text: '書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4' },
-  { type: 'saved', character: 'engine', node: 'C1', text: '書記 が C1 でセーブした（commit a1b2c3d）' },
+  { ...saved('書記', 'C1'), character: 'engine' },
   { type: 'check_passed', character: 'server', node: 'S2', ok: true, text: '伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機' },
   { type: 'stepped', character: 'gmkit', node: 'M2', ok: false, text: '地図職人 が M2 を歩いた（テスト 2/3）' },
   { type: 'check_failed', character: 'gmkit', node: 'M2', ok: false, text: '地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから' },
-  { type: 'restored', character: 'gmkit', node: 'M2', text: '地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）' },
+  restored('gmkit', '地図職人', 'M2'),
   { type: 'sortie', character: 'gmkit', node: 'M1', text: '地図職人 が出撃した（2代目・claude）' },
   { type: 'sortie', character: 'board', node: 'B2', text: '賢者クロード が出撃した（2代目・claude）' },
   { type: 'sortie', character: 'engine', node: 'E3', text: '書記 が出撃した（3代目・codex gpt-5）' },
@@ -248,9 +249,9 @@ const GRAVE_M = seqOf(log, (e) => e.type === 'restored' && e.character === 'gmki
 const base = {
   chars: {
     board: { pos: 1, level: 2, xp: 0, clears: 1, gen: 2, medals: 1, save: save(1, null) },
-    engine: { pos: 3, level: 2, xp: 0, checkpoint: 'C1', clears: 3, fails: 1, gen: 3, medals: 1, strong: 1, note: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', skills: [{ seq: NOTE, ts: new Date(T0 + NOTE * 360000).toISOString(), text: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', node: 'E2', case: '落ちれば Lv−1 で町へ' }], save: save(SAVE_C1, 'C1'), grave: { seq: GRAVE_E, node: 'E2', commit: commit('null:1'), stash: sha('grave:engine') } },
+    engine: { pos: 3, level: 2, xp: 0, checkpoint: 'C1', clears: 3, fails: 1, gen: 3, medals: 1, strong: 1, note: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', skills: [{ seq: NOTE, ts: new Date(T0 + NOTE * 360000).toISOString(), text: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', node: 'E2', case: '落ちれば Lv−1 で町へ' }], save: save(SAVE_C1, 'C1'), grave: { seq: GRAVE_E, node: 'E2', commit: COMMIT.start, stash: STASH.engine } },
     server: { pos: 2, level: 2, xp: 1, clears: 2, gen: 1, medals: 2, save: save(1, null) },
-    gmkit: { pos: 0, level: 1, xp: 0, clears: 1, fails: 1, gen: 2, revived: 1, medals: 1, save: save(1, null), grave: { seq: GRAVE_M, node: 'M2', commit: commit('null:1'), stash: sha('grave:gmkit') } },
+    gmkit: { pos: 0, level: 1, xp: 0, clears: 1, fails: 1, gen: 2, revived: 1, medals: 1, save: save(1, null), grave: { seq: GRAVE_M, node: 'M2', commit: COMMIT.start, stash: STASH.gmkit } },
     assets: { pos: 1, level: 2, xp: 0, clears: 1, gen: 1, medals: 1, traps: 1, save: save(1, null) },
     player: { pos: 0, level: 1, xp: 0, clears: 0 },
   },
@@ -308,7 +309,7 @@ L = [
   ...L,
   { type: 'check_passed', character: 'board', node: 'B2', ok: true, text: '賢者クロード が B2「駒が1マスずつ歩く」の判定に成功！ G1 で待機' },
   { type: 'gate_cleared', node: 'G1', ok: true, text: '中ボス G1「結合: 冒険が盤面に映る」を撃破！ テスト 3/3 — 賢者クロード・書記・伝令 が解散' },
-  { type: 'saved', node: 'G1', text: '賢者クロード、書記、伝令 が G1 でセーブした（commit 7c4e9a0）' },
+  saved('賢者クロード、書記、伝令', 'G1'),
 ];
 frames.push(build(scene, L));
 

@@ -51,7 +51,7 @@
       "save": {
         "seq": 1,
         "node": null,
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
       },
       "grave": null,
       "square": 1
@@ -107,12 +107,12 @@
       "save": {
         "seq": 22,
         "node": "C1",
-        "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
+        "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
       },
       "grave": {
         "seq": 16,
         "node": "E2",
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
         "stash": "bb731c68ee6f13b926101da40206e4679e1bb3fe"
       },
       "square": 2
@@ -158,7 +158,7 @@
       "save": {
         "seq": 1,
         "node": null,
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
       },
       "grave": null,
       "square": null
@@ -202,12 +202,12 @@
       "save": {
         "seq": 1,
         "node": null,
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
       },
       "grave": {
         "seq": 26,
         "node": "M2",
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b",
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
         "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
       },
       "square": 1
@@ -251,7 +251,7 @@
       "save": {
         "seq": 1,
         "node": null,
-        "commit": "77bf5b5db9d5fd31ca3b3091177d2db38d4a3e7b"
+        "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
       },
       "grave": null,
       "square": 2
@@ -536,7 +536,7 @@
         "cases": [
           "genesis が1行",
           "hash が sha256",
-          "じゅもんは12字"
+          "prev は前の行の hash"
         ]
       },
       "xp": 1,
@@ -568,7 +568,7 @@
           "strong": false
         },
         {
-          "name": "じゅもんは12字",
+          "name": "prev は前の行の hash",
           "ok": true,
           "losses": 0,
           "revived": 0,
@@ -672,7 +672,7 @@
       "save": {
         "seq": 22,
         "node": "C1",
-        "commit": "4eb627d4d38d4cf50028e4e11b35907f1f4dbb67"
+        "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
       },
       "first_try": null
     },
@@ -1652,7 +1652,7 @@
       "node": null,
       "ok": null,
       "type": "saved",
-      "text": "賢者クロード、書記、伝令、地図職人、絵師 が ふりだし でセーブした（commit 3f9a2c1）"
+      "text": "賢者クロード、書記、伝令、地図職人、絵師 が ふりだし でセーブした（commit 2e7d9fc）"
     },
     {
       "seq": 2,
@@ -1802,7 +1802,7 @@
       "node": "E2",
       "ok": null,
       "type": "restored",
-      "text": "書記 の縄張りを commit 3f9a2c1 に戻した（墓: stash 8d1e0b4）"
+      "text": "書記 の縄張りを commit 2e7d9fc に戻した（墓: stash bb731c6）"
     },
     {
       "seq": 17,
@@ -1862,7 +1862,7 @@
       "node": "C1",
       "ok": null,
       "type": "saved",
-      "text": "書記 が C1 でセーブした（commit a1b2c3d）"
+      "text": "書記 が C1 でセーブした（commit d7ac733）"
     },
     {
       "seq": 23,
@@ -1902,7 +1902,7 @@
       "node": "M2",
       "ok": null,
       "type": "restored",
-      "text": "地図職人 の縄張りを commit 3f9a2c1 に戻した（墓: stash 52c0f9e）"
+      "text": "地図職人 の縄張りを commit 2e7d9fc に戻した（墓: stash 7af12b6）"
     },
     {
       "seq": 27,
@@ -1967,8 +1967,8 @@
   ],
   "head": {
     "seq": 32,
-    "hash": "5c4e54aa01ff0982f940dcea5d548bd595ad2ad5b6692ea5df920cad691c2031",
-    "jumon": "ねおで なろむ くぼう のしで"
+    "hash": "d3f7e6774963467ab8b4c53888be8896c042df66b6692ea5df920cad691c2031",
+    "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
   },
   "integrity": {
     "ok": true,
