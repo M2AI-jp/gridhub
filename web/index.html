@@ -26,10 +26,12 @@
       <button role="tab" data-view="rules" aria-selected="false">ルール</button>
     </nav>
     <div class="save">
-      <div class="jumon-box">
-        <span class="jumon-label">ふっかつのじゅもん</span>
-        <span id="jumon" class="jumon">—</span>
-        <button id="copy-jumon" class="mini-btn" title="じゅもんを写す">写す</button>
+      <div class="jumon-box" title="冒険の書のいまの記録の番号（seq）とハッシュ。gridhub load &lt;seq&gt; でこの時点に戻せる">
+        <span class="jumon-label">冒険の書</span>
+        <span id="head-seq" class="head-seq">#—</span>
+        <code id="head-hash" class="head-hash"></code>
+        <span id="jumon" hidden>—</span>
+        <button id="copy-jumon" class="mini-btn" title="記録の番号とハッシュを写す">写す</button>
       </div>
       <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
       <span id="live" class="pill live" data-mode="off">…</span>
@@ -77,7 +79,7 @@
             <section><h3>5. 町 = セーブ</h3><p>町に着くと、縄張りの変更を git commit します。看板に <code>commit a1b2c3d</code>。こまめにセーブするほど、負けても失うものが小さい。</p></section>
             <section><h3>6. 中ボス = 結合ゲート</h3><p>道が合流する城壁。仲間がそろうと結合テスト（連携）。HP はテストの数。負けると責任のある仲間だけ町へ。</p></section>
             <section><h3>7. 王様の城 = ハンコ</h3><p>人間が決めるべき所は、人間のハンコで進みます。</p></section>
-            <section><h3>8. 冒険の書</h3><p>起きたことは追記専用のセーブデータ（ハッシュの鎖）に残ります。判定ファイルは GM が<b>封印</b>。改ざんは「呪い」として見つかり、<b>ふっかつのじゅもん</b>でどの時点の盤面でも指せます。</p></section>
+            <section><h3>8. 冒険の書</h3><p>起きたことは追記専用のセーブデータ（ハッシュの鎖）に残ります。判定ファイルは GM が<b>封印</b>。改ざんは「呪い」として見つかり、記録の番号（<code>#seq</code>）で <code>gridhub load &lt;seq&gt;</code> と、どの時点の盤面にも戻せます。</p></section>
           </div>
           <h3>積み上げ</h3>
           <ul>

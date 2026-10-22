@@ -28,7 +28,8 @@ test('台帳: マスがそのまま Linear のステータスで並ぶ', async (
     await page.waitFor('window.__masume && window.__masume.ready');
     const rules = await page.eval(`({ active: document.querySelector('#view-rules').classList.contains('active'), text: document.querySelector('#rules').innerText })`);
     assert.equal(rules.active, true);
-    for (const w of ['ふっかつのじゅもん', '消しゴム', '結合ゲート', 'ハンコ', '封印']) assert.match(rules.text, new RegExp(w));
+    // 第11章で直した: ユーザーの判断で、盤面からふっかつのじゅもんを外し、記録の番号（gridhub load <seq>）で見せる
+    for (const w of ['gridhub load', '消しゴム', '結合ゲート', 'ハンコ', '封印']) assert.match(rules.text, new RegExp(w));
   } finally {
     await page.close();
     await srv.close();

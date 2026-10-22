@@ -186,12 +186,15 @@ function render(input) {
   updatePageNav();
   effects(prev, view, lay, sameQuest);
 
-  $('#party-list-wrap').innerHTML = renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null);
-  $('#bestiary').innerHTML = renderBestiary(view, state.monsters);
-  $('#log').innerHTML = renderLog(view, prev ? seqOf(prev) : -1);
-  $('#ledger').innerHTML = renderLedger(view, state.sprites);
+  setLayer('#party-list-wrap', renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null));
+  setLayer('#bestiary', renderBestiary(view, state.monsters));
+  setLayer('#log', renderLog(view, prev ? seqOf(prev) : -1));
+  setLayer('#ledger', renderLedger(view, state.sprites));
+  // 盤面には記録の番号とハッシュを見せる（#jumon は互換のために隠して残す。§50.13）
   $('#jumon').textContent = view.head?.jumon || '—';
   $('#jumon').dataset.seq = view.head?.seq ?? '';
+  $('#head-seq').textContent = view.head ? `#${view.head.seq}` : '#—';
+  $('#head-hash').textContent = view.head?.hash ? String(view.head.hash).slice(0, 7) : '';
   const ok = view.integrity?.ok !== false && !!view.head && !!view.quest;
   const integ = $('#integrity');
   integ.dataset.ok = String(ok);
@@ -445,7 +448,7 @@ function select(kind, id, { focus = false } = {}) {
   history.replaceState(null, '', url);
   if (state.view) {
     patchLayer('#node-layer', nodeItems(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null }));
-    $('#party-list-wrap').innerHTML = renderParty(state.view, state.sprites, kind === 'char' ? id : null);
+    setLayer('#party-list-wrap', renderParty(state.view, state.sprites, kind === 'char' ? id : null));
   }
   renderDrawer();
   if (focus && state.lay) {
@@ -532,12 +535,13 @@ function setupInteractions() {
       return;
     }
     if (t.matches('#copy-jumon')) {
-      const text = $('#jumon').textContent;
+      const h = state.view?.head;
+      const text = h ? `seq ${h.seq} ${String(h.hash || '').slice(0, 12)}（gridhub load ${h.seq}）` : '';
       try {
         await navigator.clipboard.writeText(text);
-        toast({ text: `ふっかつのじゅもんを写しました: ${text}`, ok: null });
+        toast({ text: `記録の番号を写しました: ${text}`, ok: null });
       } catch {
-        toast({ text: `ふっかつのじゅもん: ${text}`, ok: null });
+        toast({ text: `記録の番号: ${text}`, ok: null });
       }
       return;
     }

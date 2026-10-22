@@ -447,7 +447,9 @@ body.drawer-open #rail > #party { display: none; }
 /* 1ページ目の右上: あがりの予告 */
 .preview-frame { stroke-dasharray: 3 3; fill: rgba(233, 222, 249, 0.35); }
 .castle-mini { fill: #f2ecfb; stroke-width: 1.2; }
-.preview-head { font-size: 15px; fill: #6a2bb0; }
+.preview-head { font-size: 17px; fill: #6a2bb0; }
+.preview-title { font-size: 10.5px; font-weight: 600; fill: var(--ink); }
+.preview-ridge { fill: none; stroke: #9b7653; stroke-width: 1.2; stroke-linejoin: round; }
 .preview-sub { font-size: 10px; fill: var(--ink-soft); }
 
 /* 最後のページ: 読み方とエンディング */
@@ -988,3 +990,17 @@ body.in-lobby #stage { min-height: 70vh; }
 .tr-gate.done { fill: var(--red); stroke: var(--red); }
 .tr-gate.goal { stroke: #6a2bb0; stroke-width: 1.5; }
 .tr-me { stroke: var(--ink); stroke-width: 1.4; }
+
+/* 狭い画面: 下の机の帯は、めくる（左）と拡大（右）だけ */
+@media (max-width: 860px) {
+  #board { --dock: 50px; }
+  .pager { left: 8px; transform: none; gap: 4px; }
+  .pager button { padding: 3px 8px; font-size: 13px; white-space: nowrap; }
+  #page-no { min-width: 4.5em; font-size: 12px; padding: 3px 6px; }
+  .zoom { right: 8px; gap: 4px; }
+  .zoom button { min-width: 30px; height: 30px; padding: 0 6px; font-size: 12px; }
+  #export-notebook { display: none; }
+}
+
+.head-seq { font-family: var(--marker); font-size: 18px; color: var(--ink); }
+.head-hash { font-size: 11px; color: var(--ink-soft); }
