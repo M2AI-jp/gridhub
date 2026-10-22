@@ -32,6 +32,7 @@ function recordWish(root, { actor, text, gm, model }) {
 }
 
 function summarize(root, view, jumon, seq) {
+  // jumon は旧版との互換（JSON の項目）。人に見せるのは seq と Git のコミット（CONTRACTS §52）。
   const nodes = Object.values(view.nodes);
   const sealable = nodes.filter((n) => (n.check?.seal ?? []).length > 0);
   return {
@@ -74,7 +75,7 @@ function printSummary(say, { root, cwd, bin }, s) {
   if (s.setup.error) say(`※ 支度（AGENTS.md ほか）に失敗しました: ${s.setup.error}\n  あとで masume init${root === cwd ? '' : ` --dir ${quote(root)}`} を打ってください`);
   else printSetup(say, s.setup);
   if (s.beginning?.commit) say(`  最初のコミット: ${s.beginning.commit.slice(0, 7)} gridhub: 冒険のはじまり`);
-  say(`ふっかつのじゅもん: ${s.jumon}`);
+  say(engine.recordLine(root, { seq: s.seq }));
   say('');
   say('次の一手:');
   say(`  盤面を開く      masume serve${dir}`);

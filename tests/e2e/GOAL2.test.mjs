@@ -54,5 +54,6 @@ test('examples/ に、本物の願いから本物のエージェントであが�
 test('マスメ自身の冒険の書が正常で、遊び方に第2章が書いてある', () => {
   assert.equal(masume(['verify', '--dir', ROOT]).code, 0);
   const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
-  for (const w of ['masume quest', 'masume party', 'masume linear', '出撃', '願い']) assert.match(readme, new RegExp(w), `README に「${w}」`);
+  // 第11章（GM）: 名前は GridHub になり、README・GM_GUIDE は `gridhub …` で書く（`masume` は別名）。どちらの名前でも受ける。
+  for (const w of ['(gridhub|masume) quest', '(gridhub|masume) party', '(gridhub|masume) linear', '出撃', '願い']) assert.match(readme, new RegExp(w), `README に「${w}」`);
 });

@@ -29,5 +29,6 @@ test('マスメ自身とおみくじの冒険の書が正常で、遊び方に�
   assert.equal(masume(['verify', '--dir', ROOT]).code, 0);
   assert.equal(masume(['verify', '--dir', join(ROOT, 'examples', 'omikuji')]).code, 0);
   const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
-  for (const w of ['masume mcp', 'masume jira', 'masume init', 'MCP', 'Jira', 'ノートに書き出す']) assert.match(readme, new RegExp(w), `README に「${w}」`);
+  // 第11章（GM）: 名前は GridHub になり、README・GM_GUIDE は `gridhub …` で書く（`masume` は別名）。どちらの名前でも受ける。
+  for (const w of ['(gridhub|masume) mcp', '(gridhub|masume) jira', '(gridhub|masume) init', 'MCP', 'Jira', 'ノートに書き出す']) assert.match(readme, new RegExp(w), `README に「${w}」`);
 });

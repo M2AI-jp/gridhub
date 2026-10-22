@@ -15,7 +15,7 @@ export const TOOLS = [
   {
     name: 'masume_status',
     title: '盤面の状態',
-    description: '盤面（マスメの冒険）の状態を見る。キャラクターごとの現在地・レベル・ふっかつのじゅもんが分かる。json を true にすると機械向けの JSON を返す。',
+    description: '盤面（GridHub の冒険）の状態を見る。キャラクターごとの現在地・レベルと、いまの記録（冒険の書の seq・Git のコミット）が分かる。json を true にすると機械向けの JSON を返す。',
     readOnly: true,
     properties: { json: { type: 'boolean', description: 'true なら盤面の JSON を返す' } },
     required: [],
@@ -92,8 +92,8 @@ export const TOOLS = [
   },
   {
     name: 'masume_jumon',
-    title: 'ふっかつのじゅもん',
-    description: 'いまのふっかつのじゅもん（セーブの合言葉）を教える。',
+    title: '旧版との互換',
+    description: '旧版との互換のための道具。いまの記録の目印を返す（新しく使うなら masume_status か masume_verify）。',
     readOnly: true,
     properties: {},
     required: [],
@@ -102,9 +102,9 @@ export const TOOLS = [
   {
     name: 'masume_verify',
     title: '冒険の書の検証',
-    description: '冒険の書（セーブデータ）が壊れていないか検証する。jumon を渡すと、そのじゅもんの記録があるかも調べる。',
+    description: '冒険の書（追記専用の記録）のハッシュの鎖を検証して、改ざんや破損がないかを確かめる。jumon は旧版との互換。',
     readOnly: true,
-    properties: { jumon: str('調べたいふっかつのじゅもん') },
+    properties: { jumon: str('旧版との互換（省略してよい）') },
     required: [],
     argv: (a) => ['verify', ...(a.jumon !== undefined ? [`--jumon=${a.jumon}`] : [])],
   },

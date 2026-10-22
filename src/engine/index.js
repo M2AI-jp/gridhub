@@ -5,6 +5,7 @@ export { validateMap } from './map.js';
 export { newGame, seal, amend, load } from './game.js';
 export { appendEvent, outputFile, readEvents, readMap, repair, verify } from './store.js';
 export { jumonOf } from './jumon.js';
+export { gitCommitOf, recordLine } from './record.js';
 export { check, stamp, step } from './checks.js';
 export { buildView } from './view.js';
 export { brief } from './brief.js';

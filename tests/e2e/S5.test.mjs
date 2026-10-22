@@ -52,7 +52,8 @@ test('道具で遊ぶ: 指令書を読み、宣言判定し、日誌を書く', 
     const brief = await c.call('masume_brief', { character: 'a' });
     assert.equal(brief.isError, false);
     assert.match(brief.text, /剣をとぐ/);
-    assert.match(brief.text, /ふっかつのじゅもん/);
+    // 第11章 §52（GM）: ふっかつのじゅもんは人に見せない。いまの記録の目印は「記録: seq N」（と Git のコミット）。
+    assert.match(brief.text, /記録: seq \d+/);
     const bj = await c.call('masume_brief', { character: 'a', json: true });
     assert.equal(JSON.parse(bj.text).current.id, 'A1');
 
@@ -102,7 +103,8 @@ test('冒険の書が無くても起動し、願いから冒険を始められ�
     assert.equal(bad.isError, true);
     const q = await c.call('masume_quest', { wish: 'メモアプリのようなアプリを作りたい', gm: 'claude' }, { timeout: 60000 });
     assert.equal(q.isError, false, q.text);
-    assert.match(q.text, /ふっかつのじゅもん/);
+    // 第11章 §52（GM）: ふっかつのじゅもんは人に見せない。いまの記録の目印は「記録: seq N」（と Git のコミット）。
+    assert.match(q.text, /記録: seq \d+/);
     assert.equal(view(root).quest.id, 'MEMO');
   } finally {
     await c.close();

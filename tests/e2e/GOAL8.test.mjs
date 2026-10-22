@@ -41,5 +41,6 @@ test('遊び方に第8章（最終確認: チュートリアルは書いてあ�
   assert.match(readme, /最終確認/);
   assert.match(readme, /チュートリアル/);
   // 遊び方の表から、盤面のサーバーを別のターミナルで動かすことが分かる
-  assert.match(readme, /masume serve[^\n]*(別の|もう1つの)ターミナル|(別の|もう1つの)ターミナル[^\n]*masume serve/, 'README の5分のチュートリアルに、serve は別のターミナルで');
+  // 第11章（GM）: 名前は GridHub になり、README・GM_GUIDE は `gridhub …` で書く（`masume` は別名）。どちらの名前でも受ける。
+  assert.match(readme, /(gridhub|masume) serve[^\n]*(別の|もう1つの)ターミナル|(別の|もう1つの)ターミナル[^\n]*(gridhub|masume) serve/, 'README の5分のチュートリアルに、serve は別のターミナルで');
 });
