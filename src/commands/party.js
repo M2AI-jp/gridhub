@@ -5,20 +5,21 @@ import { MasumeError, buildView, findRoot, logFile } from '../engine/index.js';
 import { resolveAgent } from '../party/agents.js';
 import { Party, needsSeal } from '../party/patrol.js';
 import { buildPrompt } from '../party/prompt.js';
+import { TACTICS, chooseTactic } from '../party/tactics.js';
 
 const DEFAULTS = { agent: 'claude', parallel: 3, rounds: 40 };
 const OPTIONS = {
   dir: 'string', agent: 'string', model: 'string', parallel: 'string',
-  rounds: 'string', only: 'string', 'dry-run': 'boolean', 'allow-listen': 'boolean', 'no-allow-listen': 'boolean',
+  rounds: 'string', only: 'string', tactic: 'string', 'dry-run': 'boolean', 'allow-listen': 'boolean', 'no-allow-listen': 'boolean',
 };
 
 // party --help / -h（CONTRACTS §32.2）。何も記録・起動せず、冒険の書が無くても出せる
-const HELP = `masume party — キャラクターごとにエージェントを出撃させ、ボス戦を指揮します（軍師）
+const HELP = `gridhub party — キャラクターごとにエージェントを出撃させ、ボス戦を指揮します（軍師。masume party も同じ）
 
 つかいかた:
-  masume party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R]
-               [--only id,id] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]
-  masume party --help | -h
+  gridhub party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R]
+                [--only id,id] [--tactic careful|balanced|bold] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]
+  gridhub party --help | -h
 
 オプション:
   --agent A            出撃させるエージェント。claude（既定）/ codex / cmd:<command>（/bin/sh -c で起動）
@@ -26,6 +27,9 @@ const HELP = `masume party — キャラクターごとにエージェントを�
   --parallel N         同時に出撃させる人数（既定 3）
   --rounds R           巡回の上限。帰還1回で1巡と数えます（既定 40）
   --only id,id         出撃させるキャラクターIDを、カンマ区切りで絞ります
+  --tactic T           作戦（エージェントの動き方と、1回の出撃の長さ。ルールは変わりません）:
+${Object.values(TACTICS).map((t) => `                         ${t.id.padEnd(9)}${t.name}${t.id === 'balanced' ? '（既定）' : ''} … ${t.moves}`).join('\n')}
+                       日本語の名前（いのちだいじに など）でも書けます
   --allow-listen       判定（E2E）がテストの中で 127.0.0.1 にサーバーを立てられるよう、
                        Codex の箱（サンドボックス）のソケットを開けます。
                        ゲームはローカルのままで、インターネットは要りません。
@@ -39,7 +43,8 @@ const HELP = `masume party — キャラクターごとにエージェントを�
   -h, --help           この説明を出します
 
 .masume/party.json に既定を書けます（オプションがあればそちらが優先）:
-  { "agent": "codex", "model": "M", "parallel": 3, "allow_listen": true }
+  { "agent": "codex", "model": "M", "parallel": 3, "tactic": "balanced", "allow_listen": true }
+  作戦は --tactic > party.json の "tactic" > balanced（バッチリがんばれ）の順で決まります。
   箱のソケットを開けるかは、--allow-listen / --no-allow-listen > party.json の "allow_listen": true | false > 閉じたまま、の順で決まります。
 
 環境変数 MASUME_AGENT_OVERRIDE があれば、--agent に関係なくそれを使います。
@@ -53,7 +58,7 @@ function parseOptions(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]（余計な引数: ${arg}。くわしくは party --help）`);
+    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--tactic careful|balanced|bold] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]（余計な引数: ${arg}。くわしくは party --help）`);
     const eq = arg.indexOf('=');
     const key = arg.slice(2, eq === -1 ? undefined : eq);
     if (!Object.hasOwn(OPTIONS, key)) usage(`知らないオプションです: --${key}`);
@@ -133,6 +138,7 @@ export async function run(argv, ctx) {
   const model = options.model ?? config.model ?? null;
   const parallel = options.parallel !== undefined ? positive('--parallel', options.parallel)
     : config.parallel !== undefined ? positive('party.json の parallel', config.parallel) : DEFAULTS.parallel;
+  const tactic = chooseTactic(options.tactic, config); // §45.1
   const rounds = options.rounds !== undefined ? positive('--rounds', options.rounds) : DEFAULTS.rounds;
   if (options['allow-listen'] && options['no-allow-listen']) usage('--allow-listen と --no-allow-listen は一緒に指定できません');
   const allowListen = options['allow-listen'] ? true : options['no-allow-listen'] ? false : (config.allow_listen ?? false); // §30.1
@@ -155,9 +161,9 @@ export async function run(argv, ctx) {
   // 箱のソケットを頼まれたら、巡回の見出し（出撃準備:）より前に知らせる（§32.3）
   if (allowListen) console.log(listenNotice(agent));
 
-  if (options['dry-run']) return dryRun({ root, bin: ctx.bin, view, agent, only });
+  if (options['dry-run']) return dryRun({ root, bin: ctx.bin, view, agent, only, tactic });
 
-  const party = new Party({ root, bin: ctx.bin, env, agent, parallel, rounds, only, timeoutMs });
+  const party = new Party({ root, bin: ctx.bin, env, agent, parallel, rounds, only, timeoutMs, tactic });
   const onSignal = () => party.interrupt();
   for (const signal of ['SIGINT', 'SIGTERM', 'SIGHUP']) process.on(signal, onSignal);
   let code;
@@ -179,7 +185,8 @@ function listenNotice(agent) {
   return '箱のソケット: 判定が 127.0.0.1 にサーバーを立てられるよう、codex の箱を開けて出撃します（ゲームはローカルのままですが、この出撃中のエージェントはインターネットにも出られます）';
 }
 
-function dryRun({ root, bin, view, agent, only }) {
+function dryRun({ root, bin, view, agent, only, tactic }) {
+  console.log(`作戦: ${tactic.name}（${tactic.id}）`);
   if (view.finished) {
     console.log('あがり！ もう出撃するキャラクターはいません');
     return 0;
@@ -195,8 +202,8 @@ function dryRun({ root, bin, view, agent, only }) {
     }
     planned++;
     console.log(`出撃予定: ${c.id} ${agent.display}`);
-    const prompt = buildPrompt({ root, bin, view, characterId: c.id });
-    for (const line of prompt.split('\n').slice(0, 8)) console.log(`    ${line}`);
+    const prompt = buildPrompt({ root, bin, view, characterId: c.id, tactic });
+    for (const line of prompt.split('\n').slice(0, 12)) console.log(`    ${line}`);
     console.log('    …');
   }
   if (planned === 0) console.log('出撃予定のキャラクターはいません');

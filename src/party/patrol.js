@@ -8,6 +8,7 @@ import {
 import { launch } from './agents.js';
 import { startBoss } from './boss.js';
 import { buildPrompt, sq } from './prompt.js';
+import { DEFAULT_TACTIC, TACTICS } from './tactics.js';
 
 const ACTOR = 'party';
 const LOST_AFTER = 2; // 進めずに帰還したことが続いたら迷子
@@ -34,7 +35,8 @@ export class Party {
    * @param {number} o.timeoutMs 1回の出撃のタイムアウト
    * @param {(line:string)=>void} [o.out]
    */
-  constructor({ root, bin, env, agent, parallel, rounds, only = null, timeoutMs, out = console.log }) {
+  constructor({ root, bin, env, agent, parallel, rounds, only = null, timeoutMs, tactic = TACTICS[DEFAULT_TACTIC], out = console.log }) {
+    this.tactic = tactic;
     Object.assign(this, { root, bin, env, agent, parallel, rounds, only, timeoutMs });
     this.out = out;
     this.active = new Map(); // characterId → { seq, handle, promise, node, name }
@@ -90,7 +92,7 @@ export class Party {
 
   /** @returns {boolean} 出撃させたら true。ほかの指揮役がすでに出撃させていた（E_BUSY）ときは false */
   startSortie(view, c) {
-    const prompt = buildPrompt({ root: this.root, bin: this.bin, view, characterId: c.id });
+    const prompt = buildPrompt({ root: this.root, bin: this.bin, view, characterId: c.id, tactic: this.tactic });
     // プロンプトのファイルは、sortie を記録する前に書く（書けなくて、帰還のない出撃が残らないように。§26.5）
     const promptFile = join(this.promptDir, `${c.id.replace(/[^A-Za-z0-9_.-]/gu, '_')}-${++this.promptCount}.md`);
     try {
@@ -230,7 +232,7 @@ export class Party {
 
   async loop() {
     const first = await this.view();
-    this.out(`出撃準備: ${first.quest.title}（エージェント ${this.agent.display}／同時 ${this.parallel}人／上限 ${this.rounds}回${this.only ? `／対象 ${[...this.only].join(',')}` : ''}）`);
+    this.out(`出撃準備: ${first.quest.title}（エージェント ${this.agent.display}／同時 ${this.parallel}人／上限 ${this.rounds}回${this.only ? `／対象 ${[...this.only].join(',')}` : ''}／作戦: ${this.tactic.name}）`);
     for (;;) {
       if (this.fatal) throw this.fatal;
       if (this.interrupted) return this.finishInterrupted();

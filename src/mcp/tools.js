@@ -48,6 +48,17 @@ export const TOOLS = [
     argv: (a) => ['check', `--as=${a.as ?? a.target}`, ...(a.no_boss ? ['--no-boss'] : []), '--', a.target],
   },
   {
+    name: 'masume_step',
+    title: '歩く',
+    description: '歩く（GridHub の step）。いまのダンジョンの判定だけを走らせ、テスト1件ずつの成否を記録する。何度でもよく、位置もレベルも変わらない（罰なし）。いちばん手前の落ちているテストだけを通してから歩き、全部通ったら masume_check で宣言する。',
+    properties: {
+      character: str('歩くキャラクターのID'),
+      as: str('歩く者のID（既定は character）'),
+    },
+    required: ['character'],
+    argv: (a) => ['step', `--as=${a.as ?? a.character}`, '--', a.character],
+  },
+  {
     name: 'masume_stamp',
     title: 'ハンコを押す',
     description: '人間のマスにハンコを押す。人間のキャラクターだけが押せる。',

@@ -40,8 +40,17 @@ export function brief(root, characterId) {
         return member.at !== current.id || member.status !== 'waiting';
       }) : [],
     sortie: character.sortie,
+    generation: character.generation,
+    cases: current?.cases ?? [],
+    next_case: character.square === null ? null : current.cases[character.square]?.name ?? null,
+    square: character.square,
+    skills: character.skills,
+    medals: character.medals,
+    grave: character.grave && { ...character.grave, command: `git stash apply ${character.grave.stash}` },
+    save: view.quest.save ?? null,
     notes,
     rules: [
+      '1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる',
       '現在のマスだけをやる',
       '自分の縄張りの中だけを編集する',
       '判定ファイルと地図を変更しない',

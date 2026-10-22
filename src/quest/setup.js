@@ -1,4 +1,4 @@
-// 語り部の支度（CONTRACTS §21）: よそのプロジェクトでも、エージェントがマスメのルールを守れるように
+// 語り部の支度（CONTRACTS §21・§46.4）: よそのプロジェクトでも、エージェントが GridHub（旧名マスメ）のルールを守れるように
 // AGENTS.md・CLAUDE.md・.gitignore・.masume/party.json を置く。init と quest のあとの両方から呼ばれる。
 import { lstatSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, sep } from 'node:path';
@@ -7,9 +7,9 @@ import { MasumeError } from '../engine/index.js';
 export const AGENT_KINDS = ['claude', 'codex'];
 const PARALLEL = 3;
 const IGNORE_LINES = ['.masume/lock', '.masume/state.json', '.masume/party.log'];
-const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）';
+const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 名前を変えると、前に書いた .gitignore に見出しが2つ並ぶので変えない
 
-const CLAUDE_MD = `このプロジェクトはマスメで進めています。AGENTS.md を読んでください。
+const CLAUDE_MD = `このプロジェクトは GridHub（旧名マスメ）で進めています。AGENTS.md を読んでください。
 
 @AGENTS.md
 `;
@@ -22,8 +22,9 @@ export function agentsMd({ bin, rulebook }) {
   const masume = `node ${shellQuote(bin)}`;
   return `# AGENTS.md — このプロジェクトで働くエージェントへ
 
-このプロジェクトは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）で進めています。
+このプロジェクトは「GridHub（旧名マスメ）」（テスト1件が1マスの、5mm方眼すごろく式の開発進行ゲーム）で進めています。
 あなたは盤上のキャラクターの1人です。進捗は冒険の書（\`.masume/\`）にだけ記録され、進めるのは**判定（E2E）に通ったときだけ**です。
+タスクはダンジョンで、その中のマスはテスト1件ずつ（モンスター）です。町に着くと、縄張りの変更が Git にコミットされます（セーブ）。
 ルールブック: ${rulebook}（迷ったら読む）
 
 以降の \`<ID>\` は、あなたのキャラクターID（依頼文か \`MASUME_CHARACTER\` で渡される）。
@@ -37,9 +38,15 @@ export function agentsMd({ bin, rulebook }) {
    ${masume} brief <ID>
    \`\`\`
 
-2. 指令書の「現在のマス」だけを、縄張りの中で実装する。
-3. 素振り: 指令書の「判定:」のコマンドを、通るまで何度走らせてもよい（記録されない）。
-4. 宣言判定（公式。冒険の書に記録される一発勝負）。素振りが通ってから打つ。GM から「まだ打つな」と言われているときは打たない:
+2. 1マスずつ進める: 指令書の「いま戦うテスト」（いちばん手前の落ちているテスト）だけを通すように、縄張りの中で小さく実装する。
+3. 歩く: 今のダンジョンの判定だけを走らせ、テスト1件ずつの成否を記録する（何度でも・罰なし）。倒したら次の落ちているテストへ。2と3をくり返す:
+
+   \`\`\`sh
+   ${masume} step <ID> --as <ID>
+   \`\`\`
+
+   指令書の「判定:」のコマンドを素振りで走らせてもよい（記録されない）。
+4. 宣言判定（公式。冒険の書に記録される一発勝負）。歩いて全部のテストが通ってから打つ。GM から「まだ打つな」と言われているときは打たない:
 
    \`\`\`sh
    ${masume} check <ID> --as <ID>
@@ -57,14 +64,14 @@ export function agentsMd({ bin, rulebook }) {
    ${masume} note <ID> "申し送り" --as <ID>
    \`\`\`
 
-宣言判定に落ちるとレベルが下がって戻される。2回落ちたら、そこで止まって報告する。
+宣言判定に落ちるとレベルが下がって町まで戻される（Git でセーブする冒険では、縄張りのファイルも町のコミットに戻り、戻す前の変更は墓 = git stash に残る。指令書に \`git stash apply\` の取り出し方が出る）。2回落ちたら、そこで止まって報告する。
 
 ## 守ること
 
 - **現在のマスだけ**を実装する。指令書に出ていない先のマス（霧の向こう）には手を出さない。
 - **縄張り**（指令書の「縄張り」＝地図の \`territory\`）の外のファイルを作らない・編集しない。必要なら報告の「GMへの依頼」に書く。
 - **封印**された判定ファイルと地図（\`quest.map.json\`、\`.masume/\` の中）は編集しない。改変は「封印が破れています」と記録され、判定できなくなる。
-- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。GM がやる。
+- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。セーブ（コミット）は町に着いたときに GridHub がやる。
 - 判定を通すために、テストの意図を回避する実装（テスト環境の検出、出力の決め打ち）をしない。通らないなら通らないと正直に書く。
 - 指令書が足りない・矛盾しているときは、解釈を広げず、自然な最小の解釈で実装して報告に書く。
 

@@ -16,7 +16,8 @@ test('初期化・道具の一覧・資料', async () => {
     assert.deepEqual(ping.result, {});
     const list = await c.request('tools/list');
     const names = list.result.tools.map((t) => t.name).sort();
-    assert.deepEqual(names, ['masume_brief', 'masume_check', 'masume_jumon', 'masume_log', 'masume_note', 'masume_quest', 'masume_stamp', 'masume_status', 'masume_verify']);
+    // 第11章（CONTRACTS §47.1）で masume_step（歩く）が増えた。道具の名前は masume_* のまま。
+    assert.deepEqual(names, ['masume_brief', 'masume_check', 'masume_jumon', 'masume_log', 'masume_note', 'masume_quest', 'masume_stamp', 'masume_status', 'masume_step', 'masume_verify']);
     for (const t of list.result.tools) {
       assert.ok(t.description && /[ぁ-んァ-ン一-龥]/.test(t.description), `${t.name} に日本語の説明`);
       assert.equal(t.inputSchema.type, 'object');
@@ -27,7 +28,8 @@ test('初期化・道具の一覧・資料', async () => {
     for (const u of ['masume://docs/RULEBOOK.md', 'masume://docs/GM_GUIDE.md', 'masume://docs/CONTRACTS.md']) assert.ok(uris.includes(u), u);
     const read = await c.request('resources/read', { uri: 'masume://docs/RULEBOOK.md' });
     assert.equal(read.result.contents[0].mimeType, 'text/markdown');
-    assert.match(read.result.contents[0].text, /マスメ ルールブック/);
+    // 第11章で RULEBOOK の見出しが「GridHub ルールブック」になった（§38）。旧名の見出しも受ける。
+    assert.match(read.result.contents[0].text, /(GridHub|マスメ) ルールブック/);
     const bad = await c.request('resources/read', { uri: 'masume://docs/NOPE.md' });
     assert.equal(bad.error.code, -32602);
     const unknown = await c.request('no/such/method');
