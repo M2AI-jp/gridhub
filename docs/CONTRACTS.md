@@ -1143,3 +1143,31 @@ npm test の揺れを調べたところ、盤面が外の字（Google Fonts）�
    - どちらでもなければ `E_LOAD`/2。戻り先が `0 <= S < 現在の seq` でなければ `E_LOAD`/2。
    - 記録は今までどおり `loaded {to_seq: S}`。**コードは戻さない**（コードは Git で戻す。`git checkout <commit>`、墓は `git stash apply <stash>`）。
 6. **指し方のまとめ**（README・RULEBOOK に書くこと）: 盤面の時点は `seq`、コードの時点は Git のコミット。戻るのは `gridhub load <seq>` か `gridhub load <commit>`、改ざんを見つけるのは `gridhub verify`。
+
+## 53. 余白のマス（第11章・ユーザーの指示）
+
+ユーザーの言葉（10/22）:「遊びのマスのセンスが悪い、例えば、別担当と会話イベントが起きるとか、NPCとのなんでもない会話がおこるとか、作ってる製品に関連ニュースが流れるとか」「あくまでも開発と関連のある、良い余白という意味」。「1回休み」「3マス進む」は置かない。
+余白のマスは**進みを止めない**（判定も罰もない。位置・レベル・経験値に関わらない）。駒が通ると出来事が起きる。出来事は**冒険の書と地図に本当にあることからだけ**作る（GAME_DESIGN の柱2）。
+
+1. **地図**: `quest.news`（任意）… 作っている製品の分野の話題。文字列の配列（0〜20件、各1〜200字の空でない文字列）。形が違えば `E_FORMAT`。改訂（§4.8）で変えてよい。
+2. **置き方**（ビューが地図から決める。地図に書かない）: 各キャラクターの道で、`task` か `camp` のマス X のすぐ後に、余白のマスを1つ置く（X が道の最後なら置かない。`gate` の後には置かない）。種類は:
+   - X が `camp` → `npc`（町の住人との雑談）
+   - X の次が `gate` → `talk`（合流の前の、別の担当との会話）
+   - それ以外 → `news`（瓦版）
+3. **起きる**: キャラクターの今の位置が X より先（道の添字が X より大きい、またはあがり）のとき、その余白は起きている。**出典のイベント** S = 再生で、そのキャラクターの位置が X 以下から X より先へ移った最後のイベント（ロード §4.9 で戻れば、また起きていない）。
+4. **ビュー**（§5 に足す）: `margins` = `[{id, road, after, kind, title, lines, seq, commit}]`（キャラクターの順、その道の順）。
+   - `id` = `"m-" + X`、`road` = キャラクターID、`after` = X、`kind` = 上の3つ。
+   - 起きていなければ `lines: []`、`seq: null`、`commit: null`。`title` は起きていなくても出す。
+   - 起きていれば `seq` = S の seq、`commit` = S までの冒険の書で §52.3 の規則で決まるコミット（無ければ `null`）。`lines` = `[{who, text}]`（`who` はキャラクターID、NPC の名前、または `null`）:
+     - `news`: `title` は `瓦版`。1行目 `{who: null, text: "号外: <名前> が <X>「<X の題>」を抜けた（テスト <p>/<t>）"}`（`p/t` は S の `data.cases[X]` の `ok === true` の数 / 件数。S に X の cases が無ければ「（テスト p/t）」を付けない）。`quest.news` があれば2行目 `{who: null, text: quest.news[k % 件数]}`（`k` は、この余白が `margins` の `news` の中で何番目か。0始まり）。
+     - `npc`: `title` は `<X の題> の住人`。1行目 `{who: "宿屋の主人", text: "<名前>さん、おつかれさま。テスト <n> 件、通ってきたね"}`（`n` は S の `data.cases` のすべての `ok === true` の数。S が `cases` を持たなければ、S の `data.ran` の数）。S のあとに、そのキャラクターを含み `node` が X の `saved`（`commit` が null でない）があれば2行目 `{who: "宿屋の主人", text: "セーブは commit <7桁>。変えたファイルは <files の数> 件"}`、`commit` はその `saved.commit`。
+     - `talk`: 相手 = 次の `gate` のメンバーのうち、そのキャラクターでない最初の1人。`title` は `<名前> と <相手の名前>`。`lines` = そのキャラクター、相手の順に、seq が S 以下の最新の `note`（その人の日誌）の1行目（80字を超えたら79字と `…`）を `{who: <キャラクターID>, text}`。どちらにも日誌が無ければ `[{who: null, text: "<名前> と <相手の名前> が <gate の題> の前で顔を合わせた"}]`。
+   - `news` = `[{text, kind, seq}]`: `quest.news` を地図の順に `{text, kind: "domain", seq: null}`、そのあとに号外を新しい順に最大20件 `{text, kind: "extra", seq}`（`check_passed` は「号外: <名前> が <マスID>「<題>」を抜けた（テスト p/t）」、`gate_cleared` は「号外: <メンバーの名前を、でつなぐ> が <ゲートID>「<題>」を突破した」）。`quest.news` も号外も無ければ `[]`。
+5. **語り部**（§14・§46 に足す）: `gridhub quest` の GM のプロンプトに「`quest.news` に、作っている製品の分野の話題を3〜8件（各120字以内）書く。本当にあったこととして作り話を書かない（『〜という考え方がある』『〜がよく使われる』のような、一般的な話題にする）」を入れる。
+6. **盤面**（§50 に足す。賢者クロード）:
+   - 余白のマスを `#margin-layer .margin-sq[data-margin=<id>][data-kind][data-road][data-after]` として、`road` の道の上、`after` のマスのすぐ後に描く（`#node-layer` には入れない）。方眼に合わせる: `data-page`・`data-box="x y w h"`（目の整数）と、その紙 `.margin-paper` の `x y width height` がちょうど一致する（§50.2 と同じ）。`.margin-paper` は `.cell-paper`・`.gate-paper`・`.sq-paper` と重ならない。
+   - 起きている余白（`lines` が空でない）は `data-happened="true"`、まだなら `"false"`。起きている余白の `<title>` に、すべての行の字（`who` があれば名前と「: 」を前に）を入れる。ふきだし `.margin-bubble` に、短くしてよい字を見せる。種類で絵を変える（`talk` 2人の顔・`npc` 町の住人・`news` 瓦版）。
+   - 右の欄に瓦版 `#news`: `view.news` を出てきた順に `.news-item[data-kind]`（字は `text`）。
+   - ビューに `margins`・`news` が無い（古いエンジン）ときは、何も描かず、エラーも出さない。
+7. **判定**: 書記 E13（地図の `quest.news` とビューの `margins`・`news`）、盤面 B14（余白のマス・ふきだし・瓦版）。
+
