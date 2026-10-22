@@ -1,6 +1,6 @@
 // GridHub の盤面。ビュー（CONTRACTS §5・§40〜§43）を受け取り、縦の5mm方眼ノートの世界地図として描く（§50）。
 import { layoutWorld, stopOf, U, PAGE, pageOrigin } from './world.js';
-import { defs, paperLayer, headLayer, sceneryLayer, roadLayer, monsterLayer, nodeLayer, wx, wy } from './draw.js';
+import { defs, paperLayer, headLayer, sceneryLayer, roadLayer, monsterItems, nodeItems, wx, wy } from './draw.js';
 import { Pawns } from './pawns.js';
 import { Book } from './book.js';
 import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
@@ -73,7 +73,7 @@ let pawns;
 let book;
 function ensureSvg() {
   if (svg.dataset.init) return;
-  svg.innerHTML = `${defs()}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
+  svg.innerHTML = `${defs(state.monsters)}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
   pawns = new Pawns($('#pawns'), { walks: window.__masume.walks });
   svg.dataset.init = '1';
 }
@@ -133,6 +133,32 @@ function firstPage(view, lay) {
   return counts.indexOf(Math.max(...counts, 0));
 }
 
+/** 層の中身が変わったときだけ書きかえる（同じなら DOM に触らない。大きなノートでも組み直しを小さく） */
+const layerText = new Map();
+function setLayer(sel, html) {
+  if (layerText.get(sel) === html) return;
+  layerText.set(sel, html);
+  $(sel).innerHTML = html;
+}
+
+/** 1つずつの文字列の配列で書く層: 並びが同じなら、変わったものだけを差しかえる */
+const layerItems = new Map();
+function patchLayer(sel, items) {
+  const el = $(sel);
+  const before = layerItems.get(sel);
+  layerItems.set(sel, items);
+  if (!before || before.length !== items.length || el.children.length !== items.length) {
+    el.innerHTML = items.join('');
+    return;
+  }
+  const tpl = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  for (let i = 0; i < items.length; i++) {
+    if (before[i] === items[i]) continue;
+    tpl.innerHTML = items[i];
+    if (tpl.firstElementChild) el.children[i].replaceWith(tpl.firstElementChild);
+  }
+}
+
 function render(input) {
   ensureSvg();
   const view = normalizeView(input);
@@ -145,12 +171,12 @@ function render(input) {
   if (view.head) seenHeads.set(view.head.seq, view.head.hash);
   const { fresh, slain } = freshMap(prev, view);
   const sel = state.selected?.kind === 'node' ? state.selected.id : null;
-  $('#paper-layer').innerHTML = paperLayer(view, lay);
-  $('#scenery-layer').innerHTML = sceneryLayer(lay);
-  $('#road-layer').innerHTML = roadLayer(view, lay);
-  $('#monster-layer').innerHTML = monsterLayer(view, lay, state.monsters, { fresh: slain });
-  $('#node-layer').innerHTML = nodeLayer(view, lay, state.monsters, { fresh, selected: sel });
-  $('#head-layer').innerHTML = headLayer(view, lay, state.sprites, state.monsters);
+  setLayer('#paper-layer', paperLayer(view, lay));
+  setLayer('#scenery-layer', sceneryLayer(lay));
+  setLayer('#road-layer', roadLayer(view, lay));
+  patchLayer('#monster-layer', monsterItems(view, lay, state.monsters, { fresh: slain }));
+  patchLayer('#node-layer', nodeItems(view, lay, state.monsters, { fresh, selected: sel }));
+  setLayer('#head-layer', headLayer(view, lay, state.sprites, state.monsters));
   penIn(view);
   const moved = pawns.update(view, lay, state.sprites, sameQuest ? prev : null);
   book.setPages(lay.pages.length, firstPage(view, lay));
@@ -418,7 +444,7 @@ function select(kind, id, { focus = false } = {}) {
   if (kind === 'char') url.searchParams.set('char', id);
   history.replaceState(null, '', url);
   if (state.view) {
-    $('#node-layer').innerHTML = nodeLayer(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null });
+    patchLayer('#node-layer', nodeItems(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null }));
     $('#party-list-wrap').innerHTML = renderParty(state.view, state.sprites, kind === 'char' ? id : null);
   }
   renderDrawer();

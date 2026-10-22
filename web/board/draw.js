@@ -13,8 +13,9 @@ const f1 = (n) => Math.round(n * 10) / 10;
 export const wx = (p, x) => (pageOrigin(p).x + x) * U;
 export const wy = (y) => y * U;
 
-export function defs() {
+export function defs(monsters = {}) {
   return `<defs>
+    ${monsterSymbols(monsters)}
     <pattern id="grid-5mm" width="${U}" height="${U}" patternUnits="userSpaceOnUse"><path d="M${U} 0V${U}M0 ${U}H${U}" fill="none" stroke="var(--grid)" stroke-width="0.6"/></pattern>
     <pattern id="grid-10mm" width="${U * 2}" height="${U * 2}" patternUnits="userSpaceOnUse"><path d="M${U * 2} 0V${U * 2}M0 ${U * 2}H${U * 2}" fill="none" stroke="var(--grid-strong)" stroke-width="0.75"/></pattern>
     <pattern id="paper-grain" width="173" height="173" patternUnits="userSpaceOnUse">${grainTile()}</pattern>
@@ -421,13 +422,21 @@ export function speciesOf(name, i) {
 
 /** モンスターの絵（monsters[id] があれば色を差し替えて埋め込む。無ければ手描きのスライム） */
 export function monsterMarkup(monsters, species, x, y, size, fill, cls = '') {
-  const src = own(monsters, species);
-  const inner = typeof src === 'string' ? src.replace(/var\(--monster,\s*#ffffff\)/g, fill) : `<path d="M32 12Q52 30 52 46Q50 56 32 56Q14 56 12 46Q12 30 32 12Z" fill="${fill}" stroke="${INK}" stroke-width="2.4"/><circle cx="25" cy="38" r="3" fill="${INK}"/><circle cx="39" cy="38" r="3" fill="${INK}"/>`;
-  return `<svg class="monster ${species}${cls ? ' ' + cls : ''}" x="${f1(x)}" y="${f1(y)}" width="${f1(size)}" height="${f1(size)}" viewBox="0 0 64 64" aria-hidden="true">${inner}</svg>`;
+  void monsters;
+  return `<use class="monster ${species}${cls ? ' ' + cls : ''}" href="#mon-${species}" x="${f1(x)}" y="${f1(y)}" width="${f1(size)}" height="${f1(size)}" style="--monster:${fill}" aria-hidden="true"/>`;
 }
 
-export function monsterLayer(view, lay, monsters, { fresh = null } = {}) {
-  let out = '<g id="squares">';
+/** モンスターの絵を1枚ずつ <symbol> にしておく（マスは <use> で指す。数百体でも DOM が増えない） */
+export function monsterSymbols(monsters) {
+  const fallback = `<path d="M32 12Q52 30 52 46Q50 56 32 56Q14 56 12 46Q12 30 32 12Z" fill="var(--monster, #ffffff)" stroke="${INK}" stroke-width="2.4"/><circle cx="25" cy="38" r="3" fill="${INK}"/><circle cx="39" cy="38" r="3" fill="${INK}"/>`;
+  return ['slime', 'bat', 'mushroom', 'ghost', 'snake', 'golem', 'dragon', 'maou']
+    .map((id) => `<symbol id="mon-${id}" viewBox="0 0 64 64" overflow="visible">${typeof own(monsters, id) === 'string' ? own(monsters, id) : fallback}</symbol>`)
+    .join('');
+}
+
+/** モンスターのマス（1件ずつの文字列の配列。盤面は変わったものだけを書きかえる） */
+export function monsterItems(view, lay, monsters, { fresh = null } = {}) {
+  const out = [];
   for (const id of lay.order) {
     const pl = lay.place[id];
     if (pl.kind !== 'cmd') continue;
@@ -460,10 +469,10 @@ export function monsterLayer(view, lay, monsters, { fresh = null } = {}) {
       if (slain) inner += `<path class="slain" data-tool="redpen" d="${line(X + 5, Y + 2 * U - 5, X + 2 * U - 5, Y + 5, `sl:${id}:${s.i}`, 0.6)}"/>`;
       if (revived) inner += `<path class="revived" data-tool="redpen" d="${circle(X + U, Y + U, U * 0.98, `rv:${id}:${s.i}`, 0.7)}"/>`;
       if (c?.strong) inner += `<text class="sq-strong" x="${X + 2 * U - 2}" y="${Y + 8}" text-anchor="end">強</text>`;
-      out += `<g class="sq ${state}${fr}" data-node="${esc(id)}" data-case="${unknown ? '?' : s.i}" data-ok="${String(ok)}" data-page="${s.page + 1}" data-box="${s.x} ${s.y} 2 2">${inner}</g>`;
+      out.push(`<g class="sq ${state}${fr}" data-node="${esc(id)}" data-case="${unknown ? '?' : s.i}" data-ok="${String(ok)}" data-page="${s.page + 1}" data-box="${s.x} ${s.y} 2 2">${inner}</g>`);
     }
   }
-  return out + '</g>';
+  return out;
 }
 
 // ---------- 札・町・城 ----------
@@ -497,8 +506,9 @@ function outline(X, Y, W, Hh, seed, pencil, cls) {
   return `<path d="${ruled(X, Y, W, Hh, seed, 0.6)}" class="${ink} ${cls}" data-tool="${tool}" pathLength="1"/><path d="${ruled(X + 0.5, Y - 0.4, W, Hh, `${seed}:2`, 0.9)}" class="${ink} ${cls} pass2" data-tool="${tool}" pathLength="1"/>`;
 }
 
-export function nodeLayer(view, lay, monsters, { fresh = null, selected = null } = {}) {
-  let out = '<g id="nodes">';
+/** 札・町・城（1つずつの文字列の配列） */
+export function nodeItems(view, lay, monsters, { fresh = null, selected = null } = {}) {
+  const out = [];
   const chars = byId(view.characters);
   for (const id of lay.order) {
     const pl = lay.place[id];
@@ -508,11 +518,11 @@ export function nodeLayer(view, lay, monsters, { fresh = null, selected = null }
     const fr = typeof f === 'string' ? ` fresh-${f}` : '';
     const style = ` style="--d:${(0.15 + Math.min(1.3, (pl.page * 47 + pl.y) / 160)).toFixed(2)}s"`;
     const attrs = `data-node="${esc(id)}" data-state="${esc(n.state)}" data-page="${pl.page + 1}" data-box="${pl.x} ${pl.y} ${pl.w} ${pl.h}"${style} tabindex="0" role="button"`;
-    if (pl.kind === 'gate' || pl.kind === 'goal') out += gateMarkup(view, pl, n, chars, monsters, attrs, sel + fr);
-    else if (pl.kind === 'camp') out += campMarkup(pl, n, chars, attrs, sel + fr);
-    else out += taskMarkup(pl, n, chars, attrs, sel + fr);
+    if (pl.kind === 'gate' || pl.kind === 'goal') out.push(gateMarkup(view, pl, n, chars, monsters, attrs, sel + fr));
+    else if (pl.kind === 'camp') out.push(campMarkup(pl, n, chars, attrs, sel + fr));
+    else out.push(taskMarkup(pl, n, chars, attrs, sel + fr));
   }
-  return out + '</g>';
+  return out;
 }
 
 const TASK_STATE = { cleared: '突破', current: '戦闘中', open: 'つぎ', fog: '霧', stale: '要再検証' };
