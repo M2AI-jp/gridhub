@@ -643,10 +643,11 @@ export function bubbleRows(view, m, w, perSpeaker = 1) {
   const max = Math.max(4, (w * U - 12) / BUBBLE_PX);
   const rows = [];
   if (m.kind === 'news') {
-    const body = m.lines.find((l) => l.text)?.text;
-    // 細い切り抜きは見出しだけを2行で
-    for (const t of wrapJa(m.title || body || '', max, w <= 8 || !body ? 2 : 1)) rows.push({ text: t, head: true });
-    if (body && w > 8 && m.title) for (const t of wrapJa(body, max, 1)) rows.push({ text: t });
+    // 瓦版の切り抜き: 題（いつも「瓦版」）は絵でわかるので書かず、中身（号外の見出しと、分野の話題）を。細ければ見出しだけを2行で
+    const said = m.lines.filter((l) => l.text).map((l) => l.text);
+    const head = said[0] ?? m.title ?? '';
+    for (const t of wrapJa(head, max, w <= 8 || said.length < 2 ? 2 : 1)) rows.push({ text: t, head: true });
+    if (said[1] && w > 8) for (const t of wrapJa(said[1], max, 1)) rows.push({ text: t });
     return rows;
   }
   const said = m.lines.filter((l) => l.text).slice(0, 2);
