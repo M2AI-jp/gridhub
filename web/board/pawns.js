@@ -98,7 +98,8 @@ export class Pawns {
       g.dataset.page = String(target.page + 1);
       g.dataset.sortie = c.sortie ? c.sortie.agent : '';
       g.setAttribute('aria-label', `${c.name} Lv${c.level} ${c.at ?? 'あがり'}`);
-      g.innerHTML = pawnMarkup(c, sprites, view);
+      const markup = pawnMarkup(c, sprites, view);
+      if (g.__markup !== markup) (g.innerHTML = markup), (g.__markup = markup);
       const before = prev?.characters?.find((p) => p.id === c.id);
       const from = this.pos.get(c.id);
       const changed = before && (before.at !== c.at || (before.square ?? null) !== (c.square ?? null) || before.pos !== c.pos);

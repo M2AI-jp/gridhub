@@ -186,12 +186,18 @@ function render(input) {
   updatePageNav();
   effects(prev, view, lay, sameQuest);
 
-  $('#party-list-wrap').innerHTML = renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null);
-  $('#bestiary').innerHTML = renderBestiary(view, state.monsters);
-  $('#log').innerHTML = renderLog(view, prev ? seqOf(prev) : -1);
-  $('#ledger').innerHTML = renderLedger(view, state.sprites);
+  setLayer('#party-list-wrap', renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null));
+  setLayer('#bestiary', renderBestiary(view, state.monsters));
+  setLayer('#log', renderLog(view, prev ? seqOf(prev) : -1));
+  setLayer('#ledger', renderLedger(view, state.sprites));
+  // 見出しには記録の番号（seq）と最新のセーブのコミットを見せる。ふっかつのじゅもんは見せない（ユーザーの判断）。
+  // #jumon は既存の判定（G1 など）と §50.13 の互換のため、見えないまま残す
   $('#jumon').textContent = view.head?.jumon || '—';
   $('#jumon').dataset.seq = view.head?.seq ?? '';
+  $('#head-seq').textContent = view.head ? `seq ${view.head.seq}` : 'seq —';
+  const save = latestSave(view);
+  $('#head-commit').hidden = !save;
+  $('#head-commit').textContent = save ? `commit ${String(save.commit).slice(0, 7)}` : '';
   const ok = view.integrity?.ok !== false && !!view.head && !!view.quest;
   const integ = $('#integrity');
   integ.dataset.ok = String(ok);
@@ -209,6 +215,16 @@ function render(input) {
   window.__masume.view = view;
   window.__masume.pages = lay.pages.length;
   window.__masume.spread = book.left + 1;
+}
+
+/** 最新のセーブ（キャラクターと町・ゲートの save のうち seq がいちばん大きいもの） */
+function latestSave(view) {
+  let best = null;
+  for (const x of [...view.characters, ...Object.values(view.nodes)]) {
+    const s = x?.save;
+    if (s && s.commit && (!best || (s.seq ?? -1) > (best.seq ?? -1))) best = s;
+  }
+  return best;
 }
 
 /** 駒が今の見開きの外のページへ進んだら、歩き終わったあとで、そのページの見開きへめくる（§50.8） */
@@ -445,7 +461,7 @@ function select(kind, id, { focus = false } = {}) {
   history.replaceState(null, '', url);
   if (state.view) {
     patchLayer('#node-layer', nodeItems(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null }));
-    $('#party-list-wrap').innerHTML = renderParty(state.view, state.sprites, kind === 'char' ? id : null);
+    setLayer('#party-list-wrap', renderParty(state.view, state.sprites, kind === 'char' ? id : null));
   }
   renderDrawer();
   if (focus && state.lay) {
@@ -532,12 +548,14 @@ function setupInteractions() {
       return;
     }
     if (t.matches('#copy-jumon')) {
-      const text = $('#jumon').textContent;
+      const h = state.view?.head;
+      const save = state.view ? latestSave(state.view) : null;
+      const text = h ? `seq ${h.seq}${save ? ` commit ${String(save.commit).slice(0, 7)}` : ''}（gridhub load ${h.seq}）` : '';
       try {
         await navigator.clipboard.writeText(text);
-        toast({ text: `ふっかつのじゅもんを写しました: ${text}`, ok: null });
+        toast({ text: `記録の番号を写しました: ${text}`, ok: null });
       } catch {
-        toast({ text: `ふっかつのじゅもん: ${text}`, ok: null });
+        toast({ text: `記録の番号: ${text}`, ok: null });
       }
       return;
     }
