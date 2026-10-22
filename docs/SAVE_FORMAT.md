@@ -116,24 +116,12 @@ canonical(v):
 `repair` は、最初に壊れていたイベントより前だけを残して `log.jsonl` を書き直し（一時ファイル→rename）、
 後ろ（壊れた行を含む）を `.masume/log.corrupt-<タイムスタンプ>.jsonl` に退避する。seq 0 が壊れていたら修復できない（終了コード3）。
 
-`verify`/`repair`/`jumon`/`log` 以外のコマンドは、呪われた冒険の書では動かない（`E_CURSED`、終了コード3）。
+`verify`/`repair`/`log` 以外のコマンドは、呪われた冒険の書では動かない（`E_CURSED`、終了コード3）。
 
-## 7. 旧版との互換（jumon）
+## 7. いまの記録の目印（seq と Git のコミット）
 
-第11章で、人に見せる目印は「記録の番号（seq）と Git のコミット」になった（CONTRACTS §52）。
-次のものは旧版との互換のためだけに残す（形は第10章までと同じ）: `view.head.jumon`・`brief --json` の `jumon`・`jumon` コマンド・`load <じゅもん>`・`verify --jumon`。
+人に見せる「その時点」の目印は、記録の番号（seq）と Git のコミット（CONTRACTS §52）。
 
-64文字のかな表（この順番が仕様）:
-
-```
-あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわがぎぐげござじずぜぞだぢづでどばびぶべぼ
-```
-
-```
-jumon(hashHex):
-  n = BigInt("0x" + hashHex.slice(0, 18))      // 先頭72ビット
-  i = 0..11 について  k = (n >> BigInt(66 - 6*i)) & 63n → 表[k]
-  12文字を3文字ずつ半角スペースで区切る
-```
-
-- 入力の正規化: 空白（半角・全角）を除き、カタカナはひらがなに直してから12文字で比較する。一致するイベントのうち最も新しいものを使う。
+- `head` = `{seq, hash, commit}`。`seq`・`hash` は最後のイベント。`commit` は、新しいほうから見て最初に見つかる `saved` の `data.commit` か、判定の記録（`check_passed` `check_failed` `gate_cleared` `gate_failed` `stepped`）の `data.git.head`（どちらも null でないもの。無ければ `null`）。
+- 字は `記録: seq 42 / Git: commit a1b2c3d`（commit が無ければ `記録: seq 42`）。
+- 過去に戻るのは `load <seq>` か `load <commit>`（そのコミットが初めて記録された時点）。改ざんを見つけるのはハッシュの鎖（§6）。

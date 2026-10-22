@@ -7,7 +7,7 @@ import { ROOT, serveStatic, openBrowser } from '../helpers.mjs';
 
 const fixture = JSON.parse(readFileSync(join(ROOT, 'web', 'fixtures', 'demo-state.json'), 'utf8'));
 
-test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅもん', async () => {
+test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・いまの記録', async () => {
   const srv = await serveStatic();
   const page = await openBrowser({ width: 1440, height: 900 });
   try {
@@ -26,7 +26,11 @@ test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅも
         roads: qa('.road[data-char]').map((p) => p.dataset.char),
         pawns: Object.fromEntries(qa('.pawn[data-char]').map((g) => [g.dataset.char, g.dataset.at])),
         heads: qa('.lane-head[data-char]').length,
-        jumon: q('#jumon').textContent.trim(),
+        record: q('#record')?.textContent.trim() ?? null,
+        recordSeq: q('#record')?.dataset.seq ?? null,
+        recordCommit: q('#record')?.dataset.commit ?? null,
+        copyRecord: !!q('#copy-record'),
+        html: document.documentElement.outerHTML,
         party: qa('.party-card[data-char]').length,
         log: qa('#log .log-entry').length,
         integrity: q('#integrity').dataset.ok,
@@ -42,7 +46,15 @@ test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅも
     assert.deepEqual([...r.roads].sort(), fixture.characters.map((c) => c.id).sort(), 'キャラクターごとに道');
     assert.deepEqual(r.pawns, Object.fromEntries(fixture.characters.map((c) => [c.id, c.at ?? ''])), '駒は今いるマスに立つ');
     assert.equal(r.heads, fixture.characters.length, 'ふりだしの名札');
-    assert.equal(r.jumon, fixture.head.jumon);
+    // 第11章 §52（GM）: じゅもんはやめた。見出しには記録の番号（seq）と、記録が見ていた Git のコミット
+    assert.equal(r.recordSeq, String(fixture.head.seq), '#record の data-seq');
+    assert.match(r.record, new RegExp(`seq ${fixture.head.seq}(?!\\d)`), '#record の字に seq');
+    if (fixture.head.commit) {
+      assert.equal(r.recordCommit, fixture.head.commit);
+      assert.match(r.record, new RegExp(`commit ${fixture.head.commit.slice(0, 7)}`), '#record の字に commit');
+    } else assert.equal(r.recordCommit, '');
+    assert.ok(r.copyRecord, '#copy-record');
+    assert.doesNotMatch(r.html, /じゅもん|jumon/i, '盤面のどこにも、じゅもんが無い');
     assert.equal(r.party, fixture.characters.length);
     assert.equal(r.log, Math.min(80, fixture.log.length));
     assert.equal(r.integrity, 'true');

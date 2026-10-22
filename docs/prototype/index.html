@@ -31,7 +31,7 @@
   .bar{height:7px;background:#eef3f6;border-radius:4px;margin-top:3px;position:relative}
   .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px}
   .stars{color:#b58500}
-  .jumon{font-size:11px;color:#45517a;margin-top:6px}.jumon b{font-size:13px;color:var(--ink);letter-spacing:1px;display:block}
+  .record{font-size:11px;color:#45517a;margin-top:6px}.record b{font-size:13px;color:var(--ink);letter-spacing:1px;display:block}
   /* ページ */
   .page-sheet{fill:var(--paper)}
   .printed{font-size:9px;fill:#7aa9bf}.printed-line{stroke:#7aa9bf;stroke-width:.8}
@@ -168,7 +168,7 @@ const rows = view.characters.map((c) => {
   const pl = lay.place[c.at ?? view.quest.goal];
   return `<div class="who"><b>${c.name}</b> <small>${className(c)} · Lv${c.level} · <span class="stars">◎${medals(c)}</span></small><br><small>${c.status === 'done' ? 'あがり' : c.status === 'waiting' ? '待機' : '作業中'} @ ${c.at ?? 'GOAL'}（p.${(pl?.page ?? 0) + 1}）</small><div class="bar"><i style="width:${pct}%;background:${hl(c.color)}"></i></div></div>`;
 }).join('');
-side.innerHTML = `<div class="logo">${params.get('name') || '（名前）'}<small>テストに通ったぶんだけ進む、開発すごろく</small></div><div class="jumon">ふっかつのじゅもん<b>${view.head.jumon}</b></div><h2>なかま（道のり）</h2>${rows}<h2>モンスター図鑑</h2><div class="who">倒したテスト <b>${view.bestiary?.defeated ?? 0}</b> 種</div>`;
+side.innerHTML = `<div class="logo">${params.get('name') || '（名前）'}<small>テストに通ったぶんだけ進む、開発すごろく</small></div><div class="record">冒険の書<b>seq ${view.head.seq}${view.head.commit ? ` / commit ${view.head.commit.slice(0, 7)}` : ''}</b></div><h2>なかま（道のり）</h2>${rows}<h2>モンスター図鑑</h2><div class="who">倒したテスト <b>${view.bestiary?.defeated ?? 0}</b> 種</div>`;
 window.__ready = true;
 </script>
 </body>

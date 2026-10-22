@@ -65,7 +65,7 @@ export function readLog(dir) {
     .map((l) => JSON.parse(l));
 }
 
-// ---- 正規化JSON・ハッシュ・じゅもん（SAVE_FORMAT.md を独立に実装） ----
+// ---- 正規化JSON・ハッシュ（SAVE_FORMAT.md を独立に実装） ----
 
 export function canonical(v) {
   if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -84,14 +84,25 @@ export function eventHash(e) {
   return sha256(canonical({ seq: e.seq, ts: e.ts, type: e.type, actor: e.actor, data: e.data, prev: e.prev }));
 }
 
-export const KANA = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわがぎぐげござじずぜぞだぢづでどばびぶべぼ';
+/**
+ * 判定の中で使う Git（CONTRACTS §52）。dir で git を走らせ、stdout を返す（失敗したら例外）。
+ * 名前とメールは一時的に与え、フックと署名は使わない。
+ */
+export function gitRun(dir, ...args) {
+  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0' };
+  for (const k of ['GIT_DIR', 'GIT_WORK_TREE', 'GIT_INDEX_FILE', 'GIT_PREFIX']) delete env[k];
+  const r = spawnSync('git', ['-c', 'user.name=GridHub Test', '-c', 'user.email=test@localhost', '-c', 'commit.gpgsign=false',
+    '-c', 'core.hooksPath=/dev/null', '-c', 'init.defaultBranch=main', ...args], { cwd: dir, env, encoding: 'utf8' });
+  assert.equal(r.status, 0, `git ${args.join(' ')}: ${r.stderr}`);
+  return r.stdout.trim();
+}
 
-export function jumonOf(hex) {
-  const n = BigInt('0x' + hex.slice(0, 18));
-  const chars = [];
-  for (let i = 0; i < 12; i++) chars.push(KANA[Number((n >> BigInt(66 - 6 * i)) & 63n)]);
-  const s = chars.join('');
-  return `${s.slice(0, 3)} ${s.slice(3, 6)} ${s.slice(6, 9)} ${s.slice(9, 12)}`;
+/** dir を Git の作業ツリーにして、いまのファイル全部を1つのコミットにする。コミットの sha（40桁）を返す */
+export function gitCommitAll(dir, message = 'commit') {
+  if (!existsSync(join(dir, '.git'))) gitRun(dir, 'init', '-q');
+  gitRun(dir, 'add', '-A');
+  gitRun(dir, 'commit', '-q', '--allow-empty', '-m', message);
+  return gitRun(dir, 'rev-parse', 'HEAD');
 }
 
 // ---- おもちゃの冒険（エンジンの判定用） ----

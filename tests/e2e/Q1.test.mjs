@@ -12,7 +12,7 @@ test('願いから地図が生まれ、冒険が始まる', async () => {
   const root = join(tmp('masume-quest-'), 'memo'); // まだ無いフォルダ
   const r = await quest([WISH, '--dir', root, '--gm', fakeGm('good')]);
   assert.equal(r.code, 0, r.all);
-  // 第11章 §52（GM）: ふっかつのじゅもんは人に見せない。いまの記録の目印は「記録: seq N」（と Git のコミット）。
+  // 第11章 §52（GM）: いまの記録の目印は「記録: seq N」（と Git のコミット）。じゅもんはやめた。
   assert.match(r.all, /記録: seq \d+/);
   assert.match(r.all, /masume party/);
   assert.match(r.all, /masume serve/);
