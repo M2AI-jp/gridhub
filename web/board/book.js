@@ -55,12 +55,20 @@ export class Book {
   }
 
   /** 今の見開き全体を映す（「全体」） */
+  /** 下の机の帯（めくる・拡大・凡例を置くところ。ノートと重ねない）の高さ px */
+  dock() {
+    const v = parseFloat(getComputedStyle(this.svg).getPropertyValue('--dock')) || 0;
+    return Number.isFinite(v) ? v : 0;
+  }
+
   fit() {
     const { w, h } = this.stageSize();
     const r = this.rectOf();
-    const pad = this.single ? 0.4 * U : 1.2 * U;
-    const scale = Math.min(w / (r.w + 2 * pad), h / (r.h + 2 * pad));
-    this.cam = { scale, x: r.x + (r.w - w / scale) / 2, y: r.y + (r.h - h / scale) / 2, auto: true };
+    const pad = this.single ? 0.3 * U : 0.8 * U;
+    const dock = this.dock();
+    const avail = Math.max(120, h - dock);
+    const scale = Math.min(w / (r.w + 2 * pad), avail / (r.h + 2 * pad));
+    this.cam = { scale, x: r.x + (r.w - w / scale) / 2, y: r.y - pad - Math.max(0, (avail / scale - r.h - 2 * pad) / 2), auto: true };
     this.apply();
   }
 

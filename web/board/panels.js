@@ -49,7 +49,41 @@ export function renderParty(view, sprites, selectedChar) {
     })
     .join('');
   return `<h2 class="side-title">なかま <small>${view.characters.length}人</small></h2>
+    ${renderTrack(view)}
     <div class="party-list">${cards}</div>`;
+}
+
+/** すごろくの帯: キャラごとの道のり（マス1つ = 点1つ）。進み具合のばらつきがひと目で分かる */
+function renderTrack(view) {
+  const W = 268;
+  const L = 58;
+  const rowH = 19;
+  const goal = view.quest?.goal;
+  let rows = '';
+  view.characters.forEach((c, i) => {
+    const n = c.path.length;
+    if (!n) return;
+    const y = 12 + i * rowH;
+    const step = (W - L - 14) / Math.max(1, n - 1);
+    const xOf = (k) => L + k * step;
+    const pos = Math.min(c.pos, n);
+    const color = hl(c.color);
+    let dots = `<path d="M${L} ${y} H${xOf(n - 1)}" class="tr-line"/>`;
+    dots += `<path d="M${L} ${y} H${xOf(Math.min(pos, n - 1))}" class="tr-done" stroke="${color}"/>`;
+    c.path.forEach((id, k) => {
+      const node = own(view.nodes, id);
+      const x = xOf(k);
+      const cls = k < pos ? 'done' : 'todo';
+      if (node?.type === 'gate') dots += `<rect x="${(x - 3.5).toFixed(1)}" y="${y - 3.5}" width="7" height="7" class="tr-gate ${id === goal ? 'goal' : ''} ${cls}"><title>${esc(id)} ${esc(node.title)}</title></rect>`;
+      else dots += `<circle cx="${x.toFixed(1)}" cy="${y}" r="${node?.type === 'camp' ? 2.2 : 2.8}" class="tr-dot ${cls}${node?.type === 'camp' ? ' camp' : ''}"><title>${esc(id)} ${esc(node?.title || '')}</title></circle>`;
+    });
+    const px = pos >= n ? xOf(n - 1) : xOf(pos);
+    dots += `<circle cx="${px.toFixed(1)}" cy="${y}" r="6" fill="${color}" class="tr-me"/>`;
+    const name = [...c.name].slice(0, 4).join('');
+    rows += `<g class="tr-row" data-char="${esc(c.id)}"><text x="4" y="${y + 4}" class="tr-name">${esc(name)}</text>${dots}</g>`;
+  });
+  const h = 12 + view.characters.length * rowH;
+  return `<div class="track" aria-label="道のり（すごろくの帯）"><svg viewBox="0 0 ${W} ${h}" width="100%" role="img">${rows}</svg></div>`;
 }
 
 /** モンスター図鑑（§42 の bestiary。無ければ cases から数える） */

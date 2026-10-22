@@ -11,9 +11,9 @@ export const X1 = 35; // 道を置ける右の端（この目は含まない）
 export const P1_TOP = 14; // 1ページ目: 題名・ふりだし・名札の下から道が始まる
 export const PN_TOP = 6; // 2ページ目から: 道の上の名札の下から
 export const BOTTOM = 49; // マスや札の下の端の限り
-export const SPREAD_GAP = 6; // 見開きと見開きのあいだの机
+export const SPREAD_GAP = 40; // 見開きと見開きのあいだの机
 const SQ = 2;
-const H = { camp: 4, gate: 4, goal: 10, stamp: 5 };
+const H = { camp: 4, gate: 5, goal: 10, stamp: 4 };
 
 /** ページ（0始まり）の左上の世界座標（目） */
 export function pageOrigin(p) {
@@ -86,9 +86,10 @@ export function casesOf(n) {
 
 const topOf = (p) => (p === 0 ? P1_TOP : PN_TOP);
 
-/** 札の題が何行になるか（幅 w 目の札に 10.5px の字で書く） */
+export const TITLE_PX = 12.5; // 札の題の字の大きさ（見開き全体でも読める大きさ）
+/** 札の題が何行になるか（幅 w 目の札に TITLE_PX の字で書く） */
 export function titleLines(title, w, max = 3) {
-  return wrapJa(title, Math.max(3, (w * U - 7) / 10.5), max);
+  return wrapJa(title, Math.max(3, (w * U - 8) / TITLE_PX), max);
 }
 
 const isA = (c) => /[\x21-\x7e]/.test(c);
@@ -205,8 +206,9 @@ export function layoutWorld(view) {
         rows.push(len);
         left -= len;
       }
+      // 札: 1行目に ID と テスト p/t、その下に題（2行まで。入らなければ3行）
       const lines = titleLines(n.title, cardEstW).length;
-      const cardH = 2 + Math.max(2, lines);
+      const cardH = 1 + Math.max(2, Math.min(3, lines));
       const need = 1 + rows.length * SQ + 1 + cardH;
       if (y + need > BOTTOM && topOf(page + 1) + need <= BOTTOM) (page += 1), (y = topOf(page));
       // 行ごとに置く（1ページに入らない長いダンジョンは、次のページへ続ける）
@@ -263,12 +265,24 @@ export function layoutWorld(view) {
       const i = Math.floor(r() * (lanes.length + 1));
       slack.set(i, (slack.get(i) || 0) + 1);
     }
+    // 余りは、通るだけの道の幅（蛇行できる場所）と、道と道のあいだ（景色の場所）に分ける
+    const thinExtra = new Map();
+    if (!all && nT > 0 && spare > 0) {
+      const give = Math.floor((spare * 0.6) / nT);
+      for (const id of lanes) if (!active.has(id)) thinExtra.set(id, give);
+      spare -= give * nT;
+      slack.clear();
+      for (let k = 0; k < Math.max(0, spare); k++) {
+        const i = Math.floor(r() * (lanes.length + 1));
+        slack.set(i, (slack.get(i) || 0) + 1);
+      }
+    }
     const geo = Object.create(null);
     let x = X0;
     lanes.forEach((id, i) => {
       x += slack.get(i) || 0;
-      const w = all ? eq : active.has(id) ? wide : thin;
-      geo[id] = { x, w, active: active.has(id), mid: x + w / 2 };
+      const w = all ? eq : active.has(id) ? wide : thin + (thinExtra.get(id) || 0);
+      geo[id] = { x, w, active: active.has(id), mid: x + Math.floor(w / 2) };
       x += w;
     });
     page.lanes = geo;
@@ -327,9 +341,49 @@ export function layoutWorld(view) {
     }
   }
 
+  // ---- C2. 札を広げる: 左右が空いていれば、真ん中を変えずに広げる（字を大きく、行を少なく） ----
+  const solidsOn = (p, except) => {
+    const out = [];
+    for (const id of pages[p].units) {
+      const q = place[id];
+      if (q === except) continue;
+      if (q.page === p) out.push({ x: q.x, y: q.y - (q.kind === 'gate' || q.kind === 'goal' ? 2 : 0), w: q.w, h: q.h + (q.kind === 'gate' || q.kind === 'goal' ? 2 : 0) });
+      if (q.squares) for (const sq of q.squares) if (sq.page === p) out.push({ x: sq.x, y: sq.y, w: SQ, h: SQ });
+    }
+    // ほかのキャラの道の帯（札のある道は帯ごと、通るだけの道は真ん中の2目）
+    return out;
+  };
+  const hits = (a, list) => list.some((b) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h);
+  for (const id of order) {
+    const pl = place[id];
+    if (pl.kind === 'gate' || pl.kind === 'goal') continue;
+    const target = pl.kind === 'camp' ? 7 : 8;
+    const owner = pl.members[0];
+    const geo = pages[pl.page].lanes;
+    const others = solidsOn(pl.page, pl);
+    for (const m of lanes) {
+      if (m === owner) continue;
+      const g = geo[m];
+      if (g.active) others.push({ x: g.x, y: 0, w: g.w, h: PAGE.h });
+      else others.push({ x: g.mid - 1, y: 0, w: 2, h: PAGE.h });
+    }
+    while (pl.w + 2 <= target) {
+      const wider = { x: pl.x - 1, y: pl.y - 1, w: pl.w + 2, h: pl.h + 2 };
+      if (wider.x < X0 || wider.x + wider.w > X1 || hits(wider, others)) break;
+      pl.x -= 1;
+      pl.w += 2;
+    }
+    if (pl.kind === 'cmd') pl.lines = titleLines(own(nodes, id).title, pl.w).length;
+  }
+
   // ---- D. 道（キャラごと・ページごとの点の列）と、駒の立つ場所（stops） ----
   const roads = Object.create(null);
   const stops = Object.create(null);
+  const solidCache = new Map();
+  const solidsAll = (p) => {
+    if (!solidCache.has(p)) solidCache.set(p, solidsOn(p, null));
+    return solidCache.get(p);
+  };
   for (const c of chars) {
     if (!laneOf.has(c.id)) continue;
     const segs = new Map(); // page -> [[x, y], ...]（ページの左上からの目）
@@ -402,12 +456,55 @@ export function layoutWorld(view) {
       }
     }
     roads[c.id] = { pieces: [...segs].flatMap(([page, arr]) => arr.filter((a) => a.length > 1).map((a) => ({ page, pts: dedupe(a) }))), cont };
+    for (const piece of roads[c.id].pieces) piece.pts = meander(piece.pts, pages[piece.page].lanes[c.id], solidsAll(piece.page), `${quest}:${c.id}:${piece.page}`);
     stops[c.id] = list;
   }
 
   const lay = { pages, place, roads, stops, lanes, order, quest };
   for (let p = 0; p < pages.length; p++) pages[p].scenery = scenery(view, lay, p);
   return lay;
+}
+
+/**
+ * 長くまっすぐ下りる所を、自分の道の帯の中で大きく蛇行させる（目の単位。端の点は動かさない）。
+ * 札・マス・城（solids）にはぶつからない。帯の外（ほかのキャラの道）にも出ない
+ */
+function meander(pts, g, solids, seed) {
+  if (!g) return pts;
+  const r = rng(`meander:${seed}`);
+  const out = [pts[0]];
+  const lo = g.x + 0.9;
+  const hi = g.x + g.w - 0.9;
+  const free = (x, y) => x >= lo && x <= hi && !solids.some((b) => x > b.x - 0.9 && x < b.x + b.w + 0.9 && y > b.y - 0.4 && y < b.y + b.h + 0.4);
+  for (let i = 1; i < pts.length; i++) {
+    const [ax, ay] = pts[i - 1];
+    const [bx, by] = pts[i];
+    const len = by - ay;
+    if (Math.abs(bx - ax) < 0.01 && len > 4) {
+      const amp = Math.min(3.2, Math.max(0.35, (g.w - 2) / 2));
+      const period = 7 + r() * 5;
+      const phase = r() < 0.5 ? 1 : -1;
+      const n = Math.ceil(len / 0.5);
+      let prev = ax;
+      for (let k = 1; k < n; k++) {
+        const t = k / n;
+        const y = ay + len * t;
+        const env = Math.min(1, Math.sin(Math.PI * t) * 2.2);
+        let want = ax + phase * amp * env * Math.sin((2 * Math.PI * (y - ay)) / period);
+        // ぶつかるなら、元の線のほうへ寄せる
+        for (let tries = 0; tries < 8 && !free(want, y); tries++) want = ax + (want - ax) * 0.6;
+        if (!free(want, y)) want = ax;
+        // 急に跳ばない
+        want = prev + Math.max(-0.45, Math.min(0.45, want - prev));
+        out.push([want, y]);
+        prev = want;
+      }
+      // 終わりは元の x にもどる
+      if (Math.abs(prev - bx) > 0.45) out.push([bx + (prev - bx) * 0.5, by - 0.25]);
+    }
+    out.push(pts[i]);
+  }
+  return out;
 }
 
 function dedupe(pts) {

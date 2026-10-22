@@ -251,9 +251,9 @@ body.drawer-open #rail > #party { display: none; }
 #stage { position: relative; min-width: 0; min-height: 0; overflow: hidden; background-color: var(--desk); background-image: var(--wood); background-attachment: fixed; }
 .view { position: absolute; inset: 0; display: none; }
 .view.active { display: block; }
-#board { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; user-select: none; }
+#board { --dock: 54px; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; user-select: none; }
 #board.dragging { cursor: grabbing; }
-.zoom { position: absolute; right: 14px; bottom: 14px; display: flex; gap: 6px; z-index: 3; }
+.zoom { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 6px; z-index: 3; align-items: center; }
 .zoom button {
   background: var(--card);
   border: 1.5px solid var(--ink);
@@ -265,8 +265,8 @@ body.drawer-open #rail > #party { display: none; }
 .zoom button:nth-child(even) { border-radius: var(--wobbly-2); }
 .zoom button:hover { background: #fff8cf; }
 .legend {
-  position: absolute; left: 18px; bottom: 14px; display: flex; gap: 12px; padding: 7px 12px 6px;
-  font-family: var(--hand); font-size: 11.5px; z-index: 3; flex-wrap: wrap; max-width: calc(100% - 300px);
+  position: absolute; left: 12px; bottom: 10px; display: flex; gap: 10px; padding: 6px 12px 5px;
+  font-family: var(--hand); font-size: 11px; z-index: 3; flex-wrap: nowrap; overflow: hidden; max-width: calc(50% - 150px);
   background: var(--sticky);
   border-radius: 2px;
   box-shadow: 0 1px 1px rgba(60, 40, 10, 0.15), 0 8px 12px -8px rgba(60, 40, 10, 0.55);
@@ -306,7 +306,7 @@ body.drawer-open #rail > #party { display: none; }
 .pencil-line { fill: none; stroke: var(--pencil); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; filter: url(#graphite); }
 .pencil-line.pass2 { stroke-width: 1; opacity: 0.5; }
 .pencil-text { fill: var(--pencil-ink); font-family: var(--pencil-hand); }
-.road-ink { fill: none; stroke-width: 22px; stroke-linecap: round; stroke-linejoin: round; opacity: 0.62; mix-blend-mode: multiply; }
+.road-ink { fill: none; stroke-width: 17px; stroke-linecap: round; stroke-linejoin: round; opacity: 0.62; mix-blend-mode: multiply; }
 .cont-arrow { fill: none; stroke: var(--ink); stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
 
 /* 景色（マスではない） */
@@ -370,13 +370,15 @@ body.drawer-open #rail > #party { display: none; }
 .node:hover .cell-line:not(.pass2), .node:focus-visible .cell-line:not(.pass2) { stroke-width: 2.3; }
 .node.selected .cell-line, .node.selected .gate-line { stroke: var(--red); stroke-width: 2.4; filter: none; }
 .cell-line { stroke-width: 1.6; }
-.cell-id { font-size: 10.5px; font-weight: 700; }
+.cell-id { font-size: 11.5px; font-weight: 700; }
+.cell-id.narrow { font-size: 10.5px; }
 .cell-owner { font-weight: 400; font-size: 9px; }
 .cell-state { font-size: 9px; font-weight: 600; fill: var(--ink-soft); }
 .cell-state.s-cleared { fill: var(--red); }
 .cell-state.s-current { fill: #8a4f00; }
-.cell-title { font-size: 10.5px; }
-.cell-tests { font-size: 10px; font-weight: 700; }
+.cell-title { font-size: 12.5px; font-weight: 600; }
+.cell-tests { font-size: 10.5px; font-weight: 700; }
+.cell-tests.narrow { font-size: 9.5px; }
 .cell-tests.all { fill: var(--red); }
 .medal-mark { font-size: 12px; fill: #c49000; font-weight: 700; }
 .save-commit { font-family: var(--mono); font-size: 9.5px; font-weight: 600; fill: #6a3fb0; }
@@ -410,10 +412,10 @@ body.drawer-open #rail > #party { display: none; }
 .gate-line.pass2 { stroke-width: 0.9; }
 .door { fill: none; stroke-width: 2.6; stroke-linecap: round; opacity: 0.9; }
 .door-who { font-size: 10px; font-weight: 700; fill: var(--ink-soft); }
-.gate-title { font-family: var(--marker); font-size: 13px; fill: var(--ink); }
+.gate-title { font-family: var(--marker); font-size: 14px; fill: var(--ink); }
 .goal .gate-title { fill: #6a2bb0; }
 .gate-kind { font-size: 9.5px; fill: var(--ink-soft); }
-.gate-hp { font-size: 11px; font-weight: 700; }
+.gate-hp { font-size: 11.5px; font-weight: 700; }
 .hp-pip { fill: #fff; stroke: var(--red); stroke-width: 1.1; }
 .hp-pip.done { fill: var(--red); }
 .gate-count { font-size: 10.5px; font-weight: 700; fill: #8a4f00; }
@@ -432,8 +434,8 @@ body.drawer-open #rail > #party { display: none; }
 .pawn .badge-bg { fill: #fffdf6; stroke-width: 1.4; }
 .badge-text { font-size: 9px; font-weight: 700; }
 .pawn:hover .pawn-body, .pawn:focus-visible .pawn-body { transform: translateY(-1.5px); }
-.pawn[data-status='waiting'] .pawn-body { animation: bob 2.4s ease-in-out infinite; }
-.pawn.walking .fight-tag, .pawn.walking .pawn-badge { opacity: 0; }
+.pawn[data-status='waiting'] .pawn-body { animation: bob 2.4s ease-in-out 3; }
+.pawn.walking .pawn-badge { opacity: 0; }
 .pawn.dragged .pawn-body { opacity: 0.75; }
 .fight-bg { fill: #fffdf6; stroke: var(--ink); stroke-width: 1; opacity: 0.94; }
 .fight-text { font-size: 9px; font-weight: 600; }
@@ -483,7 +485,7 @@ body.drawer-open #rail > #party { display: none; }
 @keyframes blink { 50% { opacity: 0.3; } }
 
 /* 見開きをめくる（§50.8）。葉は <use href="#world"> */
-.pager { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; z-index: 3; font-family: var(--marker); }
+.pager { position: absolute; left: 50%; bottom: 9px; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; z-index: 3; font-family: var(--marker); }
 .pager button { font: inherit; font-size: 14px; background: var(--card); color: var(--ink); border: 1.5px solid var(--ink); border-radius: var(--wobbly); padding: 3px 12px; cursor: pointer; box-shadow: 1px 2px 0 rgba(29, 43, 92, 0.35); }
 .pager button:disabled { opacity: 0.35; cursor: default; }
 .pager button:not(:disabled):hover { background: #fff8cf; }
@@ -846,7 +848,7 @@ body.in-lobby #curse { display: none; }
 .dialog-actions .act { width: auto; }
 .sortie-bubble .bubble-bg { fill: #fffdf6; stroke: #6a3fb0; stroke-width: 1.5; }
 .sortie-bubble .bubble-text { font-size: 10.5px; font-weight: 600; fill: #4b2a85; }
-.sortie-bubble { animation: bubble 1.8s ease-in-out infinite; }
+
 @keyframes bubble { 50% { transform: translateY(-2px); } }
 .sortie-list { list-style: none; margin: 0; padding: 0; font-size: 12px; font-family: var(--hand); }
 .sortie-row { display: flex; gap: 6px; align-items: baseline; padding: 4px 0; border-bottom: 1px dotted rgba(29, 43, 92, 0.2); }
@@ -947,3 +949,42 @@ body.in-lobby #stage { min-height: 70vh; }
 .fw-pencil { font-family: var(--pencil-hand); }
 .fw-ui { font-family: var(--ui); }
 .fw-mono { font-family: var(--mono); }
+
+/* 下の机の帯: めくる・拡大・凡例は文房具として、ノートの外に置く */
+.zoom button { border-radius: 3px; border-width: 0; background: #fff6c9; box-shadow: 0 1px 1px rgba(60, 40, 10, 0.2), 0 6px 8px -6px rgba(60, 40, 10, 0.55); transform: rotate(-1.5deg); }
+.zoom button:nth-child(even) { transform: rotate(1.2deg); background: #e4f3d8; }
+#export-notebook { background: #ffe0ec !important; }
+.pager button { border-radius: 3px; border: none; background: #fffdf6; box-shadow: 0 1px 1px rgba(60, 40, 10, 0.2), 0 6px 8px -6px rgba(60, 40, 10, 0.55); }
+#page-no { background: rgba(236, 224, 192, 0.92); box-shadow: none; transform: rotate(-1deg); clip-path: polygon(0 8%, 4% 0, 96% 6%, 100% 0, 98% 50%, 100% 100%, 95% 92%, 4% 100%, 0 90%, 2% 50%); }
+@media (max-width: 1280px) { .legend { display: none; } }
+
+/* 作業中の駒: 足もとの光と、いま戦うテストのふきだし */
+.pawn-glow { opacity: 0.5; mix-blend-mode: multiply; }
+.pawn-say .bubble-bg { fill: #fffdf6; stroke: var(--ink); stroke-width: 1.3; stroke-linejoin: round; filter: url(#lift); }
+.fight-text { font-size: 13px; font-weight: 700; font-family: var(--hand); }
+.pawn-say .bubble-text { font-size: 10.5px; font-weight: 600; fill: #4b2a85; }
+.pawn.walking .pawn-say { opacity: 0; }
+
+/* 砦の塔 */
+.tower-wall { fill: #f3ead2; stroke-width: 1.4; }
+.tower-win { fill: #3d4a73; stroke-width: 1; }
+.tower-brick { fill: none; stroke: #b9a988; stroke-width: 1; stroke-linecap: round; }
+.tower-flag { fill: #ff8f8f; stroke: var(--ink); stroke-width: 1.1; stroke-linejoin: round; }
+
+.camp-band { fill: #e9dcf7; opacity: 0.75; }
+.camp-kind { font-size: 9.5px; font-weight: 600; fill: #6a3fb0; }
+.camp-done { font-family: var(--marker); font-size: 11px; fill: var(--red); }
+
+/* すごろくの帯（なかまの上） */
+.track { padding: 6px 10px 2px; border-bottom: 1.5px dashed rgba(29, 43, 92, 0.3); }
+.track svg { display: block; }
+.tr-name { font-family: var(--hand); font-size: 11px; font-weight: 600; fill: var(--ink); }
+.tr-line { stroke: rgba(29, 43, 92, 0.35); stroke-width: 1.2; stroke-dasharray: 2 2; }
+.tr-done { stroke-width: 6; stroke-linecap: round; opacity: 0.7; }
+.tr-dot { fill: #fff; stroke: var(--ink); stroke-width: 1; }
+.tr-dot.done { fill: var(--red); stroke: var(--red); }
+.tr-dot.camp { fill: #e9dcf7; }
+.tr-gate { fill: #fbf6e8; stroke: var(--ink); stroke-width: 1.1; }
+.tr-gate.done { fill: var(--red); stroke: var(--red); }
+.tr-gate.goal { stroke: #6a2bb0; stroke-width: 1.5; }
+.tr-me { stroke: var(--ink); stroke-width: 1.4; }

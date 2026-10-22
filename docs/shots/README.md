@@ -28,7 +28,7 @@ node bin/gridhub.js status --json --dir examples/memo > /tmp/memo-view.json
 node docs/shots/shot.mjs /tmp/memo-view.json /tmp/shots --name memo --width 1600 --height 1000
 ```
 
-オプション: `--width`・`--height`（見開きの画面の大きさ。既定 1600×1000）、`--name`（ファイル名の頭。既定 `board`）、`--fonts <フォルダ>`（下の手書きの字）。
+オプション: `--only spread,flip,zoom,narrow,ending`（撮るものを絞る）、`--spread <ページ番号>`（見開きを指定して撮る）、`--width`・`--height`（見開きの画面の大きさ。既定 1600×1000）、`--name`（ファイル名の頭。既定 `board`）、`--fonts <フォルダ>`（下の手書きの字）。
 
 ## 手書きの字（Google Fonts）
 
