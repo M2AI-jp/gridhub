@@ -1,0 +1,15 @@
+=== GOAL11: node --test --test-reporter=spec tests/e2e/GOAL11.test.mjs ===
+✔ 第1章〜第11章のすべての判定が、まとめて本当に通る (256789.201922ms)
+✔ GridHub 自身と、残っているすべての冒険の書が正常 (346.981641ms)
+✔ README が GridHub として書かれている（対応表・step・Git のセーブ・作戦・前後の盤面・オプションの Linear と Jira・GitHub の手引き） (5.695687ms)
+✔ ふっかつのじゅもんは、盤面・CLI・MCP・docs のどこにも出てこない（§52） (304.191757ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 257519.93305
+
+(exit 0, 257563ms)
