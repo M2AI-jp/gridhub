@@ -46,7 +46,7 @@ body {
 button { font: inherit; color: inherit; }
 code { font-family: var(--mono); font-size: 0.92em; background: rgba(29, 43, 92, 0.07); padding: 1px 4px; border-radius: 4px; word-break: break-all; }
 
-/* ---------- 机の奥（ヘッダー）: ラベルのシール・インデックスタブ・じゅもんの紙片 ---------- */
+/* ---------- 机の奥（ヘッダー）: ラベルのシール・インデックスタブ・記録の紙片 ---------- */
 .cover {
   height: var(--head-h);
   display: flex;
@@ -95,7 +95,7 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(29, 43, 92,
 .tabs button:hover { transform: translateY(1px); }
 .tabs button:focus-visible, .mini-btn:focus-visible, .zoom button:focus-visible, .party-card:focus-visible, .act:focus-visible { outline: 2.5px solid var(--ink); outline-offset: 2px; }
 .save { display: flex; align-items: center; gap: 8px; margin-left: 12px; white-space: nowrap; }
-.jumon-box {
+.record-box {
   display: flex; align-items: center; gap: 8px;
   background: var(--card);
   border-left: 2px dashed rgba(29, 43, 92, 0.35);
@@ -105,8 +105,6 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(29, 43, 92,
   box-shadow: 0 1px 0 rgba(60, 40, 10, 0.18), 0 6px 10px -6px rgba(50, 30, 5, 0.55);
   transform: rotate(0.8deg);
 }
-.jumon-label { font-family: var(--ui); font-size: 9.5px; color: #5f86a0; letter-spacing: 1px; }
-.jumon { font-size: 15px; letter-spacing: 1.5px; color: var(--ink); font-weight: 600; min-width: 13em; }
 .mini-btn {
   background: var(--card);
   border: 1.4px solid var(--ink);
@@ -740,14 +738,12 @@ body.in-lobby #curse { display: none; }
 @media (max-width: 1100px) {
   :root { --side-w: 270px; }
   .tagline { display: none; }
-  .jumon { min-width: 0; }
 }
 @media (max-width: 860px) {
   body { overflow: auto; }
   .cover { height: auto; flex-wrap: wrap; padding: 10px 16px 0; gap: 8px; }
   .tabs { margin-left: 0; order: 3; width: 100%; }
   .save { margin-left: auto; flex-wrap: wrap; }
-  .jumon-label { display: none; }
   .desk { display: flex; flex-direction: column; height: auto; padding: 0 16px 16px; }
   #rail { display: contents; }
   #party { order: 1; max-height: none; }
@@ -861,7 +857,7 @@ body.in-lobby #curse { display: none; }
 .sortie-row small { color: var(--pencil-ink); }
 /* 入口にいる間は、冒険の書にまつわる飾りを隠し、入口だけを大きく見せる */
 body.in-lobby .desk { grid-template-columns: minmax(0, 1fr); }
-body.in-lobby #party, body.in-lobby #side, body.in-lobby #integrity, body.in-lobby .jumon-box, body.in-lobby .legend, body.in-lobby .zoom { display: none; }
+body.in-lobby #party, body.in-lobby #side, body.in-lobby #integrity, body.in-lobby .record-box, body.in-lobby .legend, body.in-lobby .zoom { display: none; }
 body.in-lobby #stage { min-height: 70vh; }
 
 #export-notebook { font-size: 12px; }
@@ -1002,5 +998,5 @@ body.in-lobby #stage { min-height: 70vh; }
   #export-notebook { display: none; }
 }
 
-.head-seq { font-family: var(--marker); font-size: 18px; color: var(--ink); }
-.head-hash { font-size: 11px; color: var(--ink-soft); }
+.head-seq { font-family: var(--marker); font-size: 17px; color: var(--ink); }
+.head-commit { font-size: 11px; color: #6a3fb0; }

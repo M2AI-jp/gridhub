@@ -26,12 +26,11 @@
       <button role="tab" data-view="rules" aria-selected="false">ルール</button>
     </nav>
     <div class="save">
-      <div class="jumon-box" title="冒険の書のいまの記録の番号（seq）とハッシュ。gridhub load &lt;seq&gt; でこの時点に戻せる">
-        <span class="jumon-label">冒険の書</span>
-        <span id="head-seq" class="head-seq">#—</span>
-        <code id="head-hash" class="head-hash"></code>
+      <div class="record-box" title="冒険の書のいまの記録の番号（seq）と、最新のセーブのコミット。gridhub load &lt;seq&gt; でこの時点に戻せる">
+        <span id="head-seq" class="head-seq">seq —</span>
+        <code id="head-commit" class="head-commit" hidden></code>
         <span id="jumon" hidden>—</span>
-        <button id="copy-jumon" class="mini-btn" title="記録の番号とハッシュを写す">写す</button>
+        <button id="copy-jumon" class="mini-btn" title="記録の番号とコミットを写す">写す</button>
       </div>
       <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
       <span id="live" class="pill live" data-mode="off">…</span>

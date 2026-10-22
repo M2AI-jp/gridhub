@@ -190,11 +190,14 @@ function render(input) {
   setLayer('#bestiary', renderBestiary(view, state.monsters));
   setLayer('#log', renderLog(view, prev ? seqOf(prev) : -1));
   setLayer('#ledger', renderLedger(view, state.sprites));
-  // 盤面には記録の番号とハッシュを見せる（#jumon は互換のために隠して残す。§50.13）
+  // 見出しには記録の番号（seq）と最新のセーブのコミットを見せる。ふっかつのじゅもんは見せない（ユーザーの判断）。
+  // #jumon は既存の判定（G1 など）と §50.13 の互換のため、見えないまま残す
   $('#jumon').textContent = view.head?.jumon || '—';
   $('#jumon').dataset.seq = view.head?.seq ?? '';
-  $('#head-seq').textContent = view.head ? `#${view.head.seq}` : '#—';
-  $('#head-hash').textContent = view.head?.hash ? String(view.head.hash).slice(0, 7) : '';
+  $('#head-seq').textContent = view.head ? `seq ${view.head.seq}` : 'seq —';
+  const save = latestSave(view);
+  $('#head-commit').hidden = !save;
+  $('#head-commit').textContent = save ? `commit ${String(save.commit).slice(0, 7)}` : '';
   const ok = view.integrity?.ok !== false && !!view.head && !!view.quest;
   const integ = $('#integrity');
   integ.dataset.ok = String(ok);
@@ -212,6 +215,16 @@ function render(input) {
   window.__masume.view = view;
   window.__masume.pages = lay.pages.length;
   window.__masume.spread = book.left + 1;
+}
+
+/** 最新のセーブ（キャラクターと町・ゲートの save のうち seq がいちばん大きいもの） */
+function latestSave(view) {
+  let best = null;
+  for (const x of [...view.characters, ...Object.values(view.nodes)]) {
+    const s = x?.save;
+    if (s && s.commit && (!best || (s.seq ?? -1) > (best.seq ?? -1))) best = s;
+  }
+  return best;
 }
 
 /** 駒が今の見開きの外のページへ進んだら、歩き終わったあとで、そのページの見開きへめくる（§50.8） */
@@ -536,7 +549,8 @@ function setupInteractions() {
     }
     if (t.matches('#copy-jumon')) {
       const h = state.view?.head;
-      const text = h ? `seq ${h.seq} ${String(h.hash || '').slice(0, 12)}（gridhub load ${h.seq}）` : '';
+      const save = state.view ? latestSave(state.view) : null;
+      const text = h ? `seq ${h.seq}${save ? ` commit ${String(save.commit).slice(0, 7)}` : ''}（gridhub load ${h.seq}）` : '';
       try {
         await navigator.clipboard.writeText(text);
         toast({ text: `記録の番号を写しました: ${text}`, ok: null });
