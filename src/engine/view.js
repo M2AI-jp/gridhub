@@ -1,6 +1,7 @@
 import { inspectLog } from './store.js';
 import { sortieStatus } from './sortie.js';
 import { chronicle, endingText } from './chronicle.js';
+import { buildMargins } from './margins.js';
 import { isSealed, nodeXp } from './state.js';
 
 function nodeState(node, progress, members, characters) {
@@ -190,6 +191,9 @@ export function buildView(root) {
   const ending = finished && chronicled.ending && chronicled.ending.gate === map.quest.goal
     ? { seq: chronicled.ending.seq, text: endingText(map, chronicled.ending.stats), stats: chronicled.ending.stats }
     : null;
+  const { margins, news } = map
+    ? buildMargins({ map, state, events, tracker: chronicled.margins })
+    : { margins: [], news: [] };
   return {
     masume: 1,
     quest: map?.quest ?? null,
@@ -202,5 +206,7 @@ export function buildView(root) {
     finished,
     bestiary: map ? chronicled.bestiary(map) : { total: 0, defeated: 0, revived: 0, strong: 0 },
     ending,
+    margins,
+    news,
   };
 }

@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { canonical } from './canonical.js';
 import { casesOf } from './cases.js';
+import { marginTracker } from './margins.js';
 import { containedFile } from './paths.js';
 import { replay } from './state.js';
 
@@ -47,6 +48,7 @@ export function chronicle(root, events) {
   let goal = null;
   let chapterStart = 0;
   let ending = null;
+  const margins = marginTracker(); // 余白のマス（§53）の出典
 
   const person = (id) => {
     if (!people.has(id)) {
@@ -118,6 +120,7 @@ export function chronicle(root, events) {
   const before = (state, event) => {
     const { type, seq } = event;
     const data = event.data ?? {};
+    margins.before(state);
     if (seq === 0) goal = state.map.quest.goal;
     if (JUDGED.has(type)) fought(state, event);
     switch (type) {
@@ -179,6 +182,7 @@ export function chronicle(root, events) {
   const after = (state, event) => {
     const { type, seq } = event;
     const data = event.data ?? {};
+    margins.after(state, event);
     if ((type === 'amended' || type === 'loaded') && state.map.quest.goal !== goal) {
       goal = state.map.quest.goal;
       chapterStart = seq;
@@ -200,7 +204,7 @@ export function chronicle(root, events) {
   };
 
   const state = replay(root, events, { before, after });
-  return { state, fights, people, firstTry, saves, restores, incidents, ending, nodeCases, bestiary };
+  return { state, fights, people, firstTry, saves, restores, incidents, ending, nodeCases, bestiary, margins };
 }
 
 /** 章のエンディングの文（§42.1）。記録が違えば、文も違う。技術の言葉を先に */

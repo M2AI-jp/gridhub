@@ -48,6 +48,13 @@ export function validateMap(map) {
     if (!isTitle(map.quest.title)) format('quest.title', 'タイトルは1〜80文字です');
     optional(map.quest, 'pitch', (v) => typeof v === 'string', 'quest');
     if (Object.hasOwn(map.quest, 'save') && map.quest.save !== 'git') format('quest.save', 'save は "git" だけです');
+    // 作っている製品の分野の話題（§53.1）。瓦版に流す
+    if (Object.hasOwn(map.quest, 'news')) {
+      const news = map.quest.news;
+      if (!Array.isArray(news) || news.length > 20 || news.some((text) => !isText(text) || Array.from(text).length > 200)) {
+        format('quest.news', 'news は0〜20件の話題の配列です（各1〜200文字の空でない文字列）');
+      }
+    }
   }
   if (!Array.isArray(map.characters) || map.characters.length === 0) {
     format('characters', 'キャラクターを1人以上、配列で指定してください');

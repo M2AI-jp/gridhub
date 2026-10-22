@@ -1,4 +1,5 @@
 import { MasumeError } from './errors.js';
+import { latestMargin } from './margins.js';
 import { inspectLog, requireHealthy } from './store.js';
 import { buildView } from './view.js';
 
@@ -48,6 +49,7 @@ export function brief(root, characterId) {
     medals: character.medals,
     grave: character.grave && { ...character.grave, command: `git stash apply ${character.grave.stash}` },
     save: view.quest.save ?? null,
+    margin: latestMargin(view.margins, characterId),
     notes,
     rules: [
       '1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる',
