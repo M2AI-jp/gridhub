@@ -1,6 +1,7 @@
 // 盤面のまわり: なかま一覧・モンスター図鑑・冒険の書（ログ）・マスの詳細（issue）・キャラクターシート・台帳（Linear風）。
 import { esc, hl, own, byId } from './sketch.js';
-import { spriteMarkup, jobJa, STATUS_JA, monsterMarkup, speciesOf } from './draw.js';
+import { spriteMarkup, jobJa, STATUS_JA, monsterMarkup, speciesOf, MARGIN_JA } from './draw.js';
+import { marginsOf, marginHappened, marginSource, whoName, newsOf } from './world.js';
 
 export const LINEAR = { cleared: 'Done', current: 'In Progress', waiting: 'In Review', ready: 'In Review', stale: 'Todo', open: 'Todo', fog: 'Backlog' };
 const LINEAR_JA = { 'In Progress': '進行中', 'In Review': '結合待ち', Todo: 'これから', Backlog: '霧の中', Done: '完了' };
@@ -318,4 +319,45 @@ export function renderLedger(view, sprites) {
       <p>マスの状態は、そのまま Linear のステータスになります（<code>masume export linear</code> で書き出せます）。行をクリックすると盤面のマスを開きます。</p>
     </div>
     <table class="ledger"><thead><tr><th></th><th>ID</th><th>タイトル</th><th>マイルストーン（次のゲート）</th><th>担当</th><th>見積</th></tr></thead>${sections}</table>`;
+}
+
+/** 余白のマスの詳細（§53）: 会話の全文と、出典の seq・commit */
+export function renderMarginDrawer(view, id) {
+  const m = marginsOf(view).find((x) => x.id === id);
+  if (!m) return '';
+  const chars = byId(view.characters);
+  const road = chars[m.road];
+  const after = own(view.nodes, m.after);
+  const seen = marginHappened(m);
+  const kind = own(MARGIN_JA, m.kind) || m.kind;
+  const lines = m.lines
+    .filter((l) => l.text)
+    .map((l) => {
+      const c = l.who != null ? chars[l.who] : null;
+      const name = whoName(view, l.who);
+      return `<li class="mg-line-row">${name ? `<span class="who" style="--hl:${hl(c ? c.color : 'gray')}">${esc(name)}</span>` : ''}<span class="mg-say-text">${esc(m.kind === 'news' ? l.text : `「${l.text}」`)}</span></li>`;
+    })
+    .join('');
+  const src = marginSource(m);
+  return `<div class="drawer-head">
+      <span class="issue-id">${esc(kind)}</span>
+      <span class="status-pill" data-status="${seen ? 'Done' : 'Backlog'}">${seen ? '起きた' : 'まだ起きていない'}</span>
+      <button class="close" data-close aria-label="閉じる">✕</button>
+    </div>
+    <h3 class="issue-title">${esc(m.title || kind)}</h3>
+    <p class="issue-kind">余白のマス（${esc(road?.name || m.road)} の道、${esc(m.after)}${after?.title ? `「${esc(after.title)}」` : ''} のあと）。判定も罰もなく、進みは止めない</p>
+    ${seen ? (lines ? `<ol class="mg-lines">${lines}</ol>` : '') : '<p class="hint">この道の駒が通ると、ここで起きたことが読めます。</p>'}
+    <dl class="props">
+      <dt>出典</dt><dd>${src ? `<code>${esc(src)}</code>` : '—'}</dd>
+    </dl>`;
+}
+
+/** 瓦版（§53.6）: view.news を出てきた順に。domain は作っている製品の分野の話題、extra は冒険の書から来た号外 */
+export function renderNews(view) {
+  const list = newsOf(view);
+  if (!list.length) return '';
+  const rows = list
+    .map((n) => `<li class="news-item${n.kind === 'extra' ? ' extra' : ''}" data-kind="${esc(n.kind)}">${esc(n.text)}${n.seq != null ? `<small class="news-seq">seq ${esc(n.seq)}</small>` : ''}</li>`)
+    .join('');
+  return `<h2 class="news-head"><span class="news-mast">瓦版</span><small>製品のまわりの話と、冒険の号外</small></h2><ol class="news-list">${rows}</ol>`;
 }

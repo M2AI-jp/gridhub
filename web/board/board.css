@@ -1002,3 +1002,50 @@ body.in-lobby #stage { min-height: 70vh; }
 .record { display: inline-flex; align-items: baseline; gap: 5px; color: #4f6b80; }
 .rec-seq { font-family: var(--marker); font-size: 17px; color: var(--ink); }
 .rec-commit { font-size: 11px; color: #6a3fb0; }
+
+/* ---------- 余白のマス（§53）: 別の担当との会話・町の住人との雑談・瓦版。モンスターのマスと見分ける（点線の枠に、人とことばの絵） ---------- */
+.margin-sq { cursor: pointer; }
+.margin-paper { fill: #fffdf6; fill-opacity: 0.94; }
+.mg-line { stroke-width: 1.2; stroke-dasharray: 3.2 2.4; }
+.margin-sq.selected .mg-line { stroke: var(--red); stroke-width: 2.2; stroke-dasharray: none; filter: none; }
+.margin-sq:focus-visible { outline: none; }
+.margin-sq:focus-visible .mg-line { stroke: var(--red); stroke-width: 2.2; }
+.mg-glyph.faint { opacity: 0.42; filter: grayscale(1); }
+.mg-face { fill: #fff; stroke: var(--ink); stroke-width: 1.2; }
+.mg-news-paper { fill: #f3ead2; stroke: var(--ink); stroke-width: 1.1; }
+.mg-news-mark { fill: var(--red); opacity: 0.85; }
+.mg-news-line { fill: none; stroke: var(--ink); stroke-width: 1; opacity: 0.7; }
+.margin-sq .sprite { overflow: visible; }
+
+/* ふきだし（会話・町の住人）と、瓦版の切り抜き。駒のふきだしと同じ紙とインク */
+.mg-bubble-bg { fill: #fffdf6; stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; filter: url(#lift); }
+.mg-bubble-tail { fill: #fffdf6; stroke: var(--ink); stroke-width: 1.2; stroke-linejoin: round; }
+.mg-clip { fill: #f6eed8; stroke: rgba(29, 43, 92, 0.55); stroke-width: 1; stroke-dasharray: 4 2.2; filter: url(#lift); }
+.mg-lead { fill: none; stroke: var(--pencil); stroke-width: 1.1; stroke-dasharray: 2 2.4; stroke-linecap: round; }
+.mg-text { font-size: 9.5px; fill: var(--ink); }
+.mg-text.head { font-weight: 600; }
+.mg-who { font-weight: 700; }
+.mg-who-hl { opacity: 0.75; mix-blend-mode: multiply; }
+.mg-src { font-family: var(--mono); font-size: 7.5px; fill: #5b6475; }
+
+/* 余白のマスの詳細 */
+.mg-lines { list-style: none; margin: 8px 0 10px; padding: 0; font-family: var(--hand); font-size: 13px; }
+.mg-lines li { padding: 5px 0; border-bottom: 1px dotted rgba(29, 43, 92, 0.2); display: flex; gap: 6px; align-items: baseline; flex-wrap: wrap; }
+
+/* 瓦版（§53.6）: 冒険の書のルーズリーフの上に貼った、新聞の切り抜き */
+#news {
+  margin: 10px 12px 2px 54px; padding: 6px 10px 6px; flex: 0 0 auto; max-height: 32%; overflow: auto;
+  background: #f6eed8; border: 1px dashed rgba(29, 43, 92, 0.45); border-radius: 2px;
+  box-shadow: 0 1px 1px rgba(60, 40, 10, 0.15), 0 6px 10px -7px rgba(60, 40, 10, 0.5);
+  transform: rotate(-0.6deg); font-family: var(--hand);
+}
+#news[hidden] { display: none; }
+.news-head { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.news-head small { font-size: 10.5px; font-weight: 400; color: #4f5a6e; }
+.news-mast { font-family: var(--marker); font-size: 14px; color: #fffdf6; background: var(--red); padding: 0 6px 1px; border-radius: 2px; letter-spacing: 2px; }
+.news-list { list-style: none; margin: 0; padding: 0; font-size: 12px; line-height: 1.45; color: var(--ink); }
+.news-item { padding: 3px 0; border-bottom: 1px dotted rgba(29, 43, 92, 0.25); }
+.news-item:last-child { border-bottom: 0; }
+.news-item::before { content: '◆ '; color: #8a6d3b; }
+.news-item.extra::before { color: var(--red); }
+.news-seq { margin-left: 6px; font-family: var(--mono); font-size: 10px; color: #5b6475; }

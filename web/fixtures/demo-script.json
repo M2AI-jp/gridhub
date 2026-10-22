@@ -8,7 +8,13 @@
     "title": "GridHubをつくる",
     "pitch": "テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。",
     "goal": "GOAL",
-    "save": "git"
+    "save": "git",
+    "news": [
+     "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+    ]
    },
    "map_version": 1,
    "characters": [
@@ -208,7 +214,7 @@
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
      },
      "grave": {
-      "seq": 26,
+      "seq": 28,
       "node": "M2",
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -1845,7 +1851,7 @@
      "node": null,
      "ok": null,
      "type": "note",
-     "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+     "text": "書記 の日誌: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる（技）"
     },
     {
      "seq": 21,
@@ -1870,16 +1876,36 @@
     {
      "seq": 23,
      "ts": "2026-10-19T02:48:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "賢者クロード の日誌: 駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+    },
+    {
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "伝令 の日誌: SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+    },
+    {
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
      "ok": true,
      "type": "check_passed",
-     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
+     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ テスト 3/3、G1 で待機"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -1888,8 +1914,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -1898,8 +1924,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -1908,8 +1934,8 @@
      "text": "地図職人 の縄張りを commit 2e7d9fc に戻した（墓: stash 7af12b6）"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -1918,8 +1944,8 @@
      "text": "地図職人 が出撃した（2代目・claude）"
     },
     {
-     "seq": 28,
-     "ts": "2026-10-19T03:18:00.000Z",
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -1928,8 +1954,8 @@
      "text": "賢者クロード が出撃した（2代目・claude）"
     },
     {
-     "seq": 29,
-     "ts": "2026-10-19T03:24:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -1938,8 +1964,8 @@
      "text": "書記 が出撃した（3代目・codex gpt-5）"
     },
     {
-     "seq": 30,
-     "ts": "2026-10-19T03:30:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -1948,8 +1974,8 @@
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
     },
     {
-     "seq": 31,
-     "ts": "2026-10-19T03:36:00.000Z",
+     "seq": 33,
+     "ts": "2026-10-19T03:48:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -1958,8 +1984,8 @@
      "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
-     "seq": 32,
-     "ts": "2026-10-19T03:42:00.000Z",
+     "seq": 34,
+     "ts": "2026-10-19T03:54:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -1969,8 +1995,8 @@
     }
    ],
    "head": {
-    "seq": 32,
-    "hash": "d3f7e6774963467ab8b4c53888be8896c042df66b6692ea5df920cad691c2031",
+    "seq": 34,
+    "hash": "6f566e905e5cc0399ee213f00457e28556cb0136972a67c48192728a34979d9a",
     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
    },
    "integrity": {
@@ -1984,7 +2010,359 @@
     "revived": 2,
     "strong": 1
    },
-   "ending": null
+   "ending": null,
+   "margins": [
+    {
+     "id": "m-B1",
+     "road": "board",
+     "after": "B1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 13,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-B2",
+     "road": "board",
+     "after": "B2",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B3",
+     "road": "board",
+     "after": "B3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B4",
+     "road": "board",
+     "after": "B4",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E1",
+     "road": "engine",
+     "after": "E1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 11,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-E2",
+     "road": "engine",
+     "after": "E2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 21,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-C1",
+     "road": "engine",
+     "after": "C1",
+     "kind": "npc",
+     "title": "宿屋「ふたつ星亭」 の住人",
+     "lines": [
+      {
+       "who": "宿屋の主人",
+       "text": "書記さん、おつかれさま。テスト 4 件、通ってきたね"
+      },
+      {
+       "who": "宿屋の主人",
+       "text": "セーブは commit d7ac733。変えたファイルは 3 件"
+      }
+     ],
+     "seq": 21,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E3",
+     "road": "engine",
+     "after": "E3",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E4",
+     "road": "engine",
+     "after": "E4",
+     "kind": "talk",
+     "title": "書記 と 地図職人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E5",
+     "road": "engine",
+     "after": "E5",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S1",
+     "road": "server",
+     "after": "S1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 10,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-S2",
+     "road": "server",
+     "after": "S2",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [
+      {
+       "who": "server",
+       "text": "SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 25,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-C2",
+     "road": "server",
+     "after": "C2",
+     "kind": "npc",
+     "title": "港町の宿「しおかぜ」 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S3",
+     "road": "server",
+     "after": "S3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S4",
+     "road": "server",
+     "after": "S4",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M1",
+     "road": "gmkit",
+     "after": "M1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M2",
+     "road": "gmkit",
+     "after": "M2",
+     "kind": "talk",
+     "title": "地図職人 と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M3",
+     "road": "gmkit",
+     "after": "M3",
+     "kind": "talk",
+     "title": "地図職人 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A1",
+     "road": "assets",
+     "after": "A1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 12,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-A2",
+     "road": "assets",
+     "after": "A2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-C3",
+     "road": "assets",
+     "after": "C3",
+     "kind": "npc",
+     "title": "アトリエの村 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A3",
+     "road": "assets",
+     "after": "A3",
+     "kind": "talk",
+     "title": "絵師 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-H1",
+     "road": "player",
+     "after": "H1",
+     "kind": "talk",
+     "title": "勇者（あなた） と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    }
+   ],
+   "news": [
+    {
+     "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "号外: 伝令 が S2「GET /api/stream で change を送る」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 25
+    },
+    {
+     "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）",
+     "kind": "extra",
+     "seq": 21
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 14
+    },
+    {
+     "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 13
+    },
+    {
+     "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 12
+    },
+    {
+     "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 11
+    },
+    {
+     "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 10
+    }
+   ]
   },
   {
    "masume": 1,
@@ -1993,7 +2371,13 @@
     "title": "GridHubをつくる",
     "pitch": "テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。",
     "goal": "GOAL",
-    "save": "git"
+    "save": "git",
+    "news": [
+     "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+    ]
    },
    "map_version": 1,
    "characters": [
@@ -2193,7 +2577,7 @@
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
      },
      "grave": {
-      "seq": 26,
+      "seq": 28,
       "node": "M2",
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -3830,7 +4214,7 @@
      "node": null,
      "ok": null,
      "type": "note",
-     "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+     "text": "書記 の日誌: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる（技）"
     },
     {
      "seq": 21,
@@ -3855,16 +4239,36 @@
     {
      "seq": 23,
      "ts": "2026-10-19T02:48:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "賢者クロード の日誌: 駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+    },
+    {
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "伝令 の日誌: SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+    },
+    {
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
      "ok": true,
      "type": "check_passed",
-     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
+     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ テスト 3/3、G1 で待機"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -3873,8 +4277,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -3883,8 +4287,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -3893,8 +4297,8 @@
      "text": "地図職人 の縄張りを commit 2e7d9fc に戻した（墓: stash 7af12b6）"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -3903,8 +4307,8 @@
      "text": "地図職人 が出撃した（2代目・claude）"
     },
     {
-     "seq": 28,
-     "ts": "2026-10-19T03:18:00.000Z",
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -3913,8 +4317,8 @@
      "text": "賢者クロード が出撃した（2代目・claude）"
     },
     {
-     "seq": 29,
-     "ts": "2026-10-19T03:24:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -3923,34 +4327,14 @@
      "text": "書記 が出撃した（3代目・codex gpt-5）"
     },
     {
-     "seq": 30,
-     "ts": "2026-10-19T03:30:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
      "ok": false,
      "type": "stepped",
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
-    },
-    {
-     "seq": 31,
-     "ts": "2026-10-19T03:36:00.000Z",
-     "actor": "engine",
-     "character": "engine",
-     "node": "E3",
-     "ok": false,
-     "type": "stepped",
-     "text": "書記 が E3 を歩いた（テスト 2/5）"
-    },
-    {
-     "seq": 32,
-     "ts": "2026-10-19T03:42:00.000Z",
-     "actor": "assets",
-     "character": "assets",
-     "node": "A2",
-     "ok": false,
-     "type": "seal_broken",
-     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
      "seq": 33,
@@ -3960,12 +4344,32 @@
      "node": "E3",
      "ok": false,
      "type": "stepped",
+     "text": "書記 が E3 を歩いた（テスト 2/5）"
+    },
+    {
+     "seq": 34,
+     "ts": "2026-10-19T03:54:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A2",
+     "ok": false,
+     "type": "seal_broken",
+     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
+    },
+    {
+     "seq": 35,
+     "ts": "2026-10-19T04:00:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": false,
+     "type": "stepped",
      "text": "書記 が E3 を歩いた（テスト 4/5）"
     }
    ],
    "head": {
-    "seq": 33,
-    "hash": "a09d684c775320dc4d25f08dd094f58ffdbb0faff1f836cb4ea6efb2a0b1b99f",
+    "seq": 35,
+    "hash": "53028091c203d30253b29312dd501efe9422d63ffc074d501302eb2b93e25547",
     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
    },
    "integrity": {
@@ -3979,7 +4383,359 @@
     "revived": 2,
     "strong": 1
    },
-   "ending": null
+   "ending": null,
+   "margins": [
+    {
+     "id": "m-B1",
+     "road": "board",
+     "after": "B1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 13,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-B2",
+     "road": "board",
+     "after": "B2",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B3",
+     "road": "board",
+     "after": "B3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B4",
+     "road": "board",
+     "after": "B4",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E1",
+     "road": "engine",
+     "after": "E1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 11,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-E2",
+     "road": "engine",
+     "after": "E2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 21,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-C1",
+     "road": "engine",
+     "after": "C1",
+     "kind": "npc",
+     "title": "宿屋「ふたつ星亭」 の住人",
+     "lines": [
+      {
+       "who": "宿屋の主人",
+       "text": "書記さん、おつかれさま。テスト 4 件、通ってきたね"
+      },
+      {
+       "who": "宿屋の主人",
+       "text": "セーブは commit d7ac733。変えたファイルは 3 件"
+      }
+     ],
+     "seq": 21,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E3",
+     "road": "engine",
+     "after": "E3",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E4",
+     "road": "engine",
+     "after": "E4",
+     "kind": "talk",
+     "title": "書記 と 地図職人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E5",
+     "road": "engine",
+     "after": "E5",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S1",
+     "road": "server",
+     "after": "S1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 10,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-S2",
+     "road": "server",
+     "after": "S2",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [
+      {
+       "who": "server",
+       "text": "SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 25,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-C2",
+     "road": "server",
+     "after": "C2",
+     "kind": "npc",
+     "title": "港町の宿「しおかぜ」 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S3",
+     "road": "server",
+     "after": "S3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S4",
+     "road": "server",
+     "after": "S4",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M1",
+     "road": "gmkit",
+     "after": "M1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M2",
+     "road": "gmkit",
+     "after": "M2",
+     "kind": "talk",
+     "title": "地図職人 と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M3",
+     "road": "gmkit",
+     "after": "M3",
+     "kind": "talk",
+     "title": "地図職人 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A1",
+     "road": "assets",
+     "after": "A1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 12,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-A2",
+     "road": "assets",
+     "after": "A2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-C3",
+     "road": "assets",
+     "after": "C3",
+     "kind": "npc",
+     "title": "アトリエの村 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A3",
+     "road": "assets",
+     "after": "A3",
+     "kind": "talk",
+     "title": "絵師 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-H1",
+     "road": "player",
+     "after": "H1",
+     "kind": "talk",
+     "title": "勇者（あなた） と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    }
+   ],
+   "news": [
+    {
+     "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "号外: 伝令 が S2「GET /api/stream で change を送る」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 25
+    },
+    {
+     "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）",
+     "kind": "extra",
+     "seq": 21
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 14
+    },
+    {
+     "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 13
+    },
+    {
+     "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 12
+    },
+    {
+     "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 11
+    },
+    {
+     "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 10
+    }
+   ]
   },
   {
    "masume": 1,
@@ -3988,7 +4744,13 @@
     "title": "GridHubをつくる",
     "pitch": "テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。",
     "goal": "GOAL",
-    "save": "git"
+    "save": "git",
+    "news": [
+     "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+    ]
    },
    "map_version": 1,
    "characters": [
@@ -4188,7 +4950,7 @@
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
      },
      "grave": {
-      "seq": 26,
+      "seq": 28,
       "node": "M2",
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -5825,7 +6587,7 @@
      "node": null,
      "ok": null,
      "type": "note",
-     "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+     "text": "書記 の日誌: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる（技）"
     },
     {
      "seq": 21,
@@ -5850,16 +6612,36 @@
     {
      "seq": 23,
      "ts": "2026-10-19T02:48:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "賢者クロード の日誌: 駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+    },
+    {
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "伝令 の日誌: SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+    },
+    {
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
      "ok": true,
      "type": "check_passed",
-     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
+     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ テスト 3/3、G1 で待機"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -5868,8 +6650,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -5878,8 +6660,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -5888,8 +6670,8 @@
      "text": "地図職人 の縄張りを commit 2e7d9fc に戻した（墓: stash 7af12b6）"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -5898,8 +6680,8 @@
      "text": "地図職人 が出撃した（2代目・claude）"
     },
     {
-     "seq": 28,
-     "ts": "2026-10-19T03:18:00.000Z",
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -5908,8 +6690,8 @@
      "text": "賢者クロード が出撃した（2代目・claude）"
     },
     {
-     "seq": 29,
-     "ts": "2026-10-19T03:24:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -5918,34 +6700,14 @@
      "text": "書記 が出撃した（3代目・codex gpt-5）"
     },
     {
-     "seq": 30,
-     "ts": "2026-10-19T03:30:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
      "ok": false,
      "type": "stepped",
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
-    },
-    {
-     "seq": 31,
-     "ts": "2026-10-19T03:36:00.000Z",
-     "actor": "engine",
-     "character": "engine",
-     "node": "E3",
-     "ok": false,
-     "type": "stepped",
-     "text": "書記 が E3 を歩いた（テスト 2/5）"
-    },
-    {
-     "seq": 32,
-     "ts": "2026-10-19T03:42:00.000Z",
-     "actor": "assets",
-     "character": "assets",
-     "node": "A2",
-     "ok": false,
-     "type": "seal_broken",
-     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
      "seq": 33,
@@ -5955,11 +6717,31 @@
      "node": "E3",
      "ok": false,
      "type": "stepped",
-     "text": "書記 が E3 を歩いた（テスト 4/5）"
+     "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
      "seq": 34,
      "ts": "2026-10-19T03:54:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A2",
+     "ok": false,
+     "type": "seal_broken",
+     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
+    },
+    {
+     "seq": 35,
+     "ts": "2026-10-19T04:00:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": false,
+     "type": "stepped",
+     "text": "書記 が E3 を歩いた（テスト 4/5）"
+    },
+    {
+     "seq": 36,
+     "ts": "2026-10-19T04:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -5968,8 +6750,8 @@
      "text": "書記 が E3「gridhub step で1件ずつ歩く」の判定に成功！ テスト 5/5、G1 で待機"
     },
     {
-     "seq": 35,
-     "ts": "2026-10-19T04:00:00.000Z",
+     "seq": 37,
+     "ts": "2026-10-19T04:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -5979,8 +6761,8 @@
     }
    ],
    "head": {
-    "seq": 35,
-    "hash": "1b3dc47659b9863bc6bfe5591baef8ed53fd17c4fc074d501302eb2b93e25547",
+    "seq": 37,
+    "hash": "f3d58b5d8a8495935f9ea8948b73c6bcbcabe9a75b384ce32d8cdef02bc3a139",
     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
    },
    "integrity": {
@@ -5994,7 +6776,387 @@
     "revived": 2,
     "strong": 1
    },
-   "ending": null
+   "ending": null,
+   "margins": [
+    {
+     "id": "m-B1",
+     "road": "board",
+     "after": "B1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 13,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-B2",
+     "road": "board",
+     "after": "B2",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B3",
+     "road": "board",
+     "after": "B3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B4",
+     "road": "board",
+     "after": "B4",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E1",
+     "road": "engine",
+     "after": "E1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 11,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-E2",
+     "road": "engine",
+     "after": "E2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 21,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-C1",
+     "road": "engine",
+     "after": "C1",
+     "kind": "npc",
+     "title": "宿屋「ふたつ星亭」 の住人",
+     "lines": [
+      {
+       "who": "宿屋の主人",
+       "text": "書記さん、おつかれさま。テスト 4 件、通ってきたね"
+      },
+      {
+       "who": "宿屋の主人",
+       "text": "セーブは commit d7ac733。変えたファイルは 3 件"
+      }
+     ],
+     "seq": 21,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E3",
+     "road": "engine",
+     "after": "E3",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [
+      {
+       "who": "engine",
+       "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 36,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E4",
+     "road": "engine",
+     "after": "E4",
+     "kind": "talk",
+     "title": "書記 と 地図職人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E5",
+     "road": "engine",
+     "after": "E5",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S1",
+     "road": "server",
+     "after": "S1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 10,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-S2",
+     "road": "server",
+     "after": "S2",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [
+      {
+       "who": "server",
+       "text": "SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 25,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-C2",
+     "road": "server",
+     "after": "C2",
+     "kind": "npc",
+     "title": "港町の宿「しおかぜ」 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S3",
+     "road": "server",
+     "after": "S3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S4",
+     "road": "server",
+     "after": "S4",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M1",
+     "road": "gmkit",
+     "after": "M1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 37,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-M2",
+     "road": "gmkit",
+     "after": "M2",
+     "kind": "talk",
+     "title": "地図職人 と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M3",
+     "road": "gmkit",
+     "after": "M3",
+     "kind": "talk",
+     "title": "地図職人 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A1",
+     "road": "assets",
+     "after": "A1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 12,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-A2",
+     "road": "assets",
+     "after": "A2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-C3",
+     "road": "assets",
+     "after": "C3",
+     "kind": "npc",
+     "title": "アトリエの村 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A3",
+     "road": "assets",
+     "after": "A3",
+     "kind": "talk",
+     "title": "絵師 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-H1",
+     "road": "player",
+     "after": "H1",
+     "kind": "talk",
+     "title": "勇者（あなた） と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    }
+   ],
+   "news": [
+    {
+     "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 37
+    },
+    {
+     "text": "号外: 書記 が E3「gridhub step で1件ずつ歩く」を抜けた（テスト 5/5）",
+     "kind": "extra",
+     "seq": 36
+    },
+    {
+     "text": "号外: 伝令 が S2「GET /api/stream で change を送る」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 25
+    },
+    {
+     "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）",
+     "kind": "extra",
+     "seq": 21
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 14
+    },
+    {
+     "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 13
+    },
+    {
+     "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 12
+    },
+    {
+     "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 11
+    },
+    {
+     "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 10
+    }
+   ]
   },
   {
    "masume": 1,
@@ -6003,7 +7165,13 @@
     "title": "GridHubをつくる",
     "pitch": "テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。",
     "goal": "GOAL",
-    "save": "git"
+    "save": "git",
+    "news": [
+     "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+    ]
    },
    "map_version": 1,
    "characters": [
@@ -6047,7 +7215,7 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -6103,7 +7271,7 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -6154,7 +7322,7 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -6203,7 +7371,7 @@
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
      },
      "grave": {
-      "seq": 26,
+      "seq": 28,
       "node": "M2",
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -7516,7 +8684,7 @@
       "total": 3
      },
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -7844,7 +9012,7 @@
      "node": null,
      "ok": null,
      "type": "note",
-     "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+     "text": "書記 の日誌: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる（技）"
     },
     {
      "seq": 21,
@@ -7869,16 +9037,36 @@
     {
      "seq": 23,
      "ts": "2026-10-19T02:48:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "賢者クロード の日誌: 駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+    },
+    {
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "伝令 の日誌: SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+    },
+    {
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
      "ok": true,
      "type": "check_passed",
-     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
+     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ テスト 3/3、G1 で待機"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -7887,8 +9075,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -7897,8 +9085,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -7907,8 +9095,8 @@
      "text": "地図職人 の縄張りを commit 2e7d9fc に戻した（墓: stash 7af12b6）"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -7917,8 +9105,8 @@
      "text": "地図職人 が出撃した（2代目・claude）"
     },
     {
-     "seq": 28,
-     "ts": "2026-10-19T03:18:00.000Z",
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -7927,8 +9115,8 @@
      "text": "賢者クロード が出撃した（2代目・claude）"
     },
     {
-     "seq": 29,
-     "ts": "2026-10-19T03:24:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -7937,34 +9125,14 @@
      "text": "書記 が出撃した（3代目・codex gpt-5）"
     },
     {
-     "seq": 30,
-     "ts": "2026-10-19T03:30:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
      "ok": false,
      "type": "stepped",
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
-    },
-    {
-     "seq": 31,
-     "ts": "2026-10-19T03:36:00.000Z",
-     "actor": "engine",
-     "character": "engine",
-     "node": "E3",
-     "ok": false,
-     "type": "stepped",
-     "text": "書記 が E3 を歩いた（テスト 2/5）"
-    },
-    {
-     "seq": 32,
-     "ts": "2026-10-19T03:42:00.000Z",
-     "actor": "assets",
-     "character": "assets",
-     "node": "A2",
-     "ok": false,
-     "type": "seal_broken",
-     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
      "seq": 33,
@@ -7974,11 +9142,31 @@
      "node": "E3",
      "ok": false,
      "type": "stepped",
-     "text": "書記 が E3 を歩いた（テスト 4/5）"
+     "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
      "seq": 34,
      "ts": "2026-10-19T03:54:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A2",
+     "ok": false,
+     "type": "seal_broken",
+     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
+    },
+    {
+     "seq": 35,
+     "ts": "2026-10-19T04:00:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": false,
+     "type": "stepped",
+     "text": "書記 が E3 を歩いた（テスト 4/5）"
+    },
+    {
+     "seq": 36,
+     "ts": "2026-10-19T04:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -7987,8 +9175,8 @@
      "text": "書記 が E3「gridhub step で1件ずつ歩く」の判定に成功！ テスト 5/5、G1 で待機"
     },
     {
-     "seq": 35,
-     "ts": "2026-10-19T04:00:00.000Z",
+     "seq": 37,
+     "ts": "2026-10-19T04:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -7997,8 +9185,8 @@
      "text": "地図職人 が M1 の復活したテストを倒し直した（テスト 3/3）"
     },
     {
-     "seq": 36,
-     "ts": "2026-10-19T04:06:00.000Z",
+     "seq": 38,
+     "ts": "2026-10-19T04:18:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -8007,8 +9195,8 @@
      "text": "賢者クロード が B2「駒が1マスずつ歩く」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 37,
-     "ts": "2026-10-19T04:12:00.000Z",
+     "seq": 39,
+     "ts": "2026-10-19T04:24:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -8017,8 +9205,8 @@
      "text": "中ボス G1「結合: 冒険が盤面に映る」を撃破！ テスト 3/3 — 賢者クロード・書記・伝令 が解散"
     },
     {
-     "seq": 38,
-     "ts": "2026-10-19T04:18:00.000Z",
+     "seq": 40,
+     "ts": "2026-10-19T04:30:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -8028,8 +9216,8 @@
     }
    ],
    "head": {
-    "seq": 38,
-    "hash": "8b0f3d9104982ae262c51682b98717ce77779c62ca3512f4dfa95a03169c5a67",
+    "seq": 40,
+    "hash": "fc8c77b1ed5e1c5e0949ebf4f9f2a6fec5b09013761f22b2c1593d0bb87e0b60",
     "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
    },
    "integrity": {
@@ -8043,7 +9231,406 @@
     "revived": 2,
     "strong": 1
    },
-   "ending": null
+   "ending": null,
+   "margins": [
+    {
+     "id": "m-B1",
+     "road": "board",
+     "after": "B1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 13,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-B2",
+     "road": "board",
+     "after": "B2",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      },
+      {
+       "who": "engine",
+       "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+      }
+     ],
+     "seq": 38,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-B3",
+     "road": "board",
+     "after": "B3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B4",
+     "road": "board",
+     "after": "B4",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E1",
+     "road": "engine",
+     "after": "E1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 11,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-E2",
+     "road": "engine",
+     "after": "E2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 21,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-C1",
+     "road": "engine",
+     "after": "C1",
+     "kind": "npc",
+     "title": "宿屋「ふたつ星亭」 の住人",
+     "lines": [
+      {
+       "who": "宿屋の主人",
+       "text": "書記さん、おつかれさま。テスト 4 件、通ってきたね"
+      },
+      {
+       "who": "宿屋の主人",
+       "text": "セーブは commit d7ac733。変えたファイルは 3 件"
+      }
+     ],
+     "seq": 21,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E3",
+     "road": "engine",
+     "after": "E3",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [
+      {
+       "who": "engine",
+       "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 36,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E4",
+     "road": "engine",
+     "after": "E4",
+     "kind": "talk",
+     "title": "書記 と 地図職人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E5",
+     "road": "engine",
+     "after": "E5",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S1",
+     "road": "server",
+     "after": "S1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 10,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-S2",
+     "road": "server",
+     "after": "S2",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [
+      {
+       "who": "server",
+       "text": "SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 25,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-C2",
+     "road": "server",
+     "after": "C2",
+     "kind": "npc",
+     "title": "港町の宿「しおかぜ」 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S3",
+     "road": "server",
+     "after": "S3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S4",
+     "road": "server",
+     "after": "S4",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M1",
+     "road": "gmkit",
+     "after": "M1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 37,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-M2",
+     "road": "gmkit",
+     "after": "M2",
+     "kind": "talk",
+     "title": "地図職人 と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M3",
+     "road": "gmkit",
+     "after": "M3",
+     "kind": "talk",
+     "title": "地図職人 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A1",
+     "road": "assets",
+     "after": "A1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 12,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-A2",
+     "road": "assets",
+     "after": "A2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-C3",
+     "road": "assets",
+     "after": "C3",
+     "kind": "npc",
+     "title": "アトリエの村 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A3",
+     "road": "assets",
+     "after": "A3",
+     "kind": "talk",
+     "title": "絵師 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-H1",
+     "road": "player",
+     "after": "H1",
+     "kind": "talk",
+     "title": "勇者（あなた） と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    }
+   ],
+   "news": [
+    {
+     "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "号外: 賢者クロード、書記、伝令 が G1「結合: 冒険が盤面に映る」を突破した",
+     "kind": "extra",
+     "seq": 39
+    },
+    {
+     "text": "号外: 賢者クロード が B2「駒が1マスずつ歩く」を抜けた",
+     "kind": "extra",
+     "seq": 38
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 37
+    },
+    {
+     "text": "号外: 書記 が E3「gridhub step で1件ずつ歩く」を抜けた（テスト 5/5）",
+     "kind": "extra",
+     "seq": 36
+    },
+    {
+     "text": "号外: 伝令 が S2「GET /api/stream で change を送る」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 25
+    },
+    {
+     "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）",
+     "kind": "extra",
+     "seq": 21
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 14
+    },
+    {
+     "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 13
+    },
+    {
+     "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 12
+    },
+    {
+     "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 11
+    },
+    {
+     "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 10
+    }
+   ]
   },
   {
    "masume": 1,
@@ -8052,7 +9639,13 @@
     "title": "GridHubをつくる",
     "pitch": "テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。",
     "goal": "GOAL",
-    "save": "git"
+    "save": "git",
+    "news": [
+     "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+    ]
    },
    "map_version": 1,
    "characters": [
@@ -8096,7 +9689,7 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -8152,7 +9745,7 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -8203,7 +9796,7 @@
      "treasures": 0,
      "traps": 0,
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -8252,7 +9845,7 @@
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
      },
      "grave": {
-      "seq": 26,
+      "seq": 28,
       "node": "M2",
       "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca",
       "stash": "7af12b600bbbf0566b6e87ff2c56cb0711ee5a05"
@@ -9565,7 +11158,7 @@
       "total": 3
      },
      "save": {
-      "seq": 38,
+      "seq": 40,
       "node": "G1",
       "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
      },
@@ -9893,7 +11486,7 @@
      "node": null,
      "ok": null,
      "type": "note",
-     "text": "技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+     "text": "書記 の日誌: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる（技）"
     },
     {
      "seq": 21,
@@ -9918,16 +11511,36 @@
     {
      "seq": 23,
      "ts": "2026-10-19T02:48:00.000Z",
+     "actor": "board",
+     "character": "board",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "賢者クロード の日誌: 駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+    },
+    {
+     "seq": 24,
+     "ts": "2026-10-19T02:54:00.000Z",
+     "actor": "server",
+     "character": "server",
+     "node": null,
+     "ok": null,
+     "type": "note",
+     "text": "伝令 の日誌: SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+    },
+    {
+     "seq": 25,
+     "ts": "2026-10-19T03:00:00.000Z",
      "actor": "server",
      "character": "server",
      "node": "S2",
      "ok": true,
      "type": "check_passed",
-     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機"
+     "text": "伝令 が S2「GET /api/stream で change を送る」の判定に成功！ テスト 3/3、G1 で待機"
     },
     {
-     "seq": 24,
-     "ts": "2026-10-19T02:54:00.000Z",
+     "seq": 26,
+     "ts": "2026-10-19T03:06:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -9936,8 +11549,8 @@
      "text": "地図職人 が M2 を歩いた（テスト 2/3）"
     },
     {
-     "seq": 25,
-     "ts": "2026-10-19T03:00:00.000Z",
+     "seq": 27,
+     "ts": "2026-10-19T03:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -9946,8 +11559,8 @@
      "text": "地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから"
     },
     {
-     "seq": 26,
-     "ts": "2026-10-19T03:06:00.000Z",
+     "seq": 28,
+     "ts": "2026-10-19T03:18:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M2",
@@ -9956,8 +11569,8 @@
      "text": "地図職人 の縄張りを commit 2e7d9fc に戻した（墓: stash 7af12b6）"
     },
     {
-     "seq": 27,
-     "ts": "2026-10-19T03:12:00.000Z",
+     "seq": 29,
+     "ts": "2026-10-19T03:24:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -9966,8 +11579,8 @@
      "text": "地図職人 が出撃した（2代目・claude）"
     },
     {
-     "seq": 28,
-     "ts": "2026-10-19T03:18:00.000Z",
+     "seq": 30,
+     "ts": "2026-10-19T03:30:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -9976,8 +11589,8 @@
      "text": "賢者クロード が出撃した（2代目・claude）"
     },
     {
-     "seq": 29,
-     "ts": "2026-10-19T03:24:00.000Z",
+     "seq": 31,
+     "ts": "2026-10-19T03:36:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -9986,34 +11599,14 @@
      "text": "書記 が出撃した（3代目・codex gpt-5）"
     },
     {
-     "seq": 30,
-     "ts": "2026-10-19T03:30:00.000Z",
+     "seq": 32,
+     "ts": "2026-10-19T03:42:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
      "ok": false,
      "type": "stepped",
      "text": "賢者クロード が B2 を歩いた（テスト 1/4）"
-    },
-    {
-     "seq": 31,
-     "ts": "2026-10-19T03:36:00.000Z",
-     "actor": "engine",
-     "character": "engine",
-     "node": "E3",
-     "ok": false,
-     "type": "stepped",
-     "text": "書記 が E3 を歩いた（テスト 2/5）"
-    },
-    {
-     "seq": 32,
-     "ts": "2026-10-19T03:42:00.000Z",
-     "actor": "assets",
-     "character": "assets",
-     "node": "A2",
-     "ok": false,
-     "type": "seal_broken",
-     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
     },
     {
      "seq": 33,
@@ -10023,11 +11616,31 @@
      "node": "E3",
      "ok": false,
      "type": "stepped",
-     "text": "書記 が E3 を歩いた（テスト 4/5）"
+     "text": "書記 が E3 を歩いた（テスト 2/5）"
     },
     {
      "seq": 34,
      "ts": "2026-10-19T03:54:00.000Z",
+     "actor": "assets",
+     "character": "assets",
+     "node": "A2",
+     "ok": false,
+     "type": "seal_broken",
+     "text": "A2 の封印が破れている！（判定ファイルが書き換えられた）"
+    },
+    {
+     "seq": 35,
+     "ts": "2026-10-19T04:00:00.000Z",
+     "actor": "engine",
+     "character": "engine",
+     "node": "E3",
+     "ok": false,
+     "type": "stepped",
+     "text": "書記 が E3 を歩いた（テスト 4/5）"
+    },
+    {
+     "seq": 36,
+     "ts": "2026-10-19T04:06:00.000Z",
      "actor": "engine",
      "character": "engine",
      "node": "E3",
@@ -10036,8 +11649,8 @@
      "text": "書記 が E3「gridhub step で1件ずつ歩く」の判定に成功！ テスト 5/5、G1 で待機"
     },
     {
-     "seq": 35,
-     "ts": "2026-10-19T04:00:00.000Z",
+     "seq": 37,
+     "ts": "2026-10-19T04:12:00.000Z",
      "actor": "gmkit",
      "character": "gmkit",
      "node": "M1",
@@ -10046,8 +11659,8 @@
      "text": "地図職人 が M1 の復活したテストを倒し直した（テスト 3/3）"
     },
     {
-     "seq": 36,
-     "ts": "2026-10-19T04:06:00.000Z",
+     "seq": 38,
+     "ts": "2026-10-19T04:18:00.000Z",
      "actor": "board",
      "character": "board",
      "node": "B2",
@@ -10056,8 +11669,8 @@
      "text": "賢者クロード が B2「駒が1マスずつ歩く」の判定に成功！ G1 で待機"
     },
     {
-     "seq": 37,
-     "ts": "2026-10-19T04:12:00.000Z",
+     "seq": 39,
+     "ts": "2026-10-19T04:24:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -10066,8 +11679,8 @@
      "text": "中ボス G1「結合: 冒険が盤面に映る」を撃破！ テスト 3/3 — 賢者クロード・書記・伝令 が解散"
     },
     {
-     "seq": 38,
-     "ts": "2026-10-19T04:18:00.000Z",
+     "seq": 40,
+     "ts": "2026-10-19T04:30:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "G1",
@@ -10076,8 +11689,8 @@
      "text": "賢者クロード、書記、伝令 が G1 でセーブした（commit e6a08b5）"
     },
     {
-     "seq": 39,
-     "ts": "2026-10-19T04:24:00.000Z",
+     "seq": 41,
+     "ts": "2026-10-19T04:36:00.000Z",
      "actor": "gm",
      "character": null,
      "node": "A2",
@@ -10086,8 +11699,8 @@
      "text": "A2 の判定を封印しなおした（宝箱: 判定のバグを見つけた）"
     },
     {
-     "seq": 40,
-     "ts": "2026-10-19T04:30:00.000Z",
+     "seq": 42,
+     "ts": "2026-10-19T04:42:00.000Z",
      "actor": "assets",
      "character": "assets",
      "node": "A2",
@@ -10097,8 +11710,8 @@
     }
    ],
    "head": {
-    "seq": 40,
-    "hash": "e365db086aa9ba1ab699e5015da431c1dea058c1761f22b2c1593d0bb87e0b60",
+    "seq": 42,
+    "hash": "a51487b48d79734c037e9003b21a79a53b2066260286dd552c9bea9a69ecb375",
     "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
    },
    "integrity": {
@@ -10112,7 +11725,420 @@
     "revived": 2,
     "strong": 1
    },
-   "ending": null
+   "ending": null,
+   "margins": [
+    {
+     "id": "m-B1",
+     "road": "board",
+     "after": "B1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 13,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-B2",
+     "road": "board",
+     "after": "B2",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      },
+      {
+       "who": "engine",
+       "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+      }
+     ],
+     "seq": 38,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-B3",
+     "road": "board",
+     "after": "B3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-B4",
+     "road": "board",
+     "after": "B4",
+     "kind": "talk",
+     "title": "賢者クロード と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E1",
+     "road": "engine",
+     "after": "E1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 11,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-E2",
+     "road": "engine",
+     "after": "E2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 21,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-C1",
+     "road": "engine",
+     "after": "C1",
+     "kind": "npc",
+     "title": "宿屋「ふたつ星亭」 の住人",
+     "lines": [
+      {
+       "who": "宿屋の主人",
+       "text": "書記さん、おつかれさま。テスト 4 件、通ってきたね"
+      },
+      {
+       "who": "宿屋の主人",
+       "text": "セーブは commit d7ac733。変えたファイルは 3 件"
+      }
+     ],
+     "seq": 21,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E3",
+     "road": "engine",
+     "after": "E3",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [
+      {
+       "who": "engine",
+       "text": "累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 36,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-E4",
+     "road": "engine",
+     "after": "E4",
+     "kind": "talk",
+     "title": "書記 と 地図職人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-E5",
+     "road": "engine",
+     "after": "E5",
+     "kind": "talk",
+     "title": "書記 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S1",
+     "road": "server",
+     "after": "S1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 10,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-S2",
+     "road": "server",
+     "after": "S2",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [
+      {
+       "who": "server",
+       "text": "SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る"
+      },
+      {
+       "who": "board",
+       "text": "駒は view の square のマスに立てる。盤面でテストの出力は読まない"
+      }
+     ],
+     "seq": 25,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-C2",
+     "road": "server",
+     "after": "C2",
+     "kind": "npc",
+     "title": "港町の宿「しおかぜ」 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S3",
+     "road": "server",
+     "after": "S3",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-S4",
+     "road": "server",
+     "after": "S4",
+     "kind": "talk",
+     "title": "伝令 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M1",
+     "road": "gmkit",
+     "after": "M1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い"
+      }
+     ],
+     "seq": 37,
+     "commit": "d7ac733496449a469a0be3b27761977e7a4293c9"
+    },
+    {
+     "id": "m-M2",
+     "road": "gmkit",
+     "after": "M2",
+     "kind": "talk",
+     "title": "地図職人 と 書記",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-M3",
+     "road": "gmkit",
+     "after": "M3",
+     "kind": "talk",
+     "title": "地図職人 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A1",
+     "road": "assets",
+     "after": "A1",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）"
+      },
+      {
+       "who": null,
+       "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる"
+      }
+     ],
+     "seq": 12,
+     "commit": "2e7d9fc9862c2848ea765062831cb5f337d808ca"
+    },
+    {
+     "id": "m-A2",
+     "road": "assets",
+     "after": "A2",
+     "kind": "news",
+     "title": "瓦版",
+     "lines": [
+      {
+       "who": null,
+       "text": "号外: 絵師 が A2「モンスターの絵 8枚」を抜けた（テスト 3/3）"
+      },
+      {
+       "who": null,
+       "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる"
+      }
+     ],
+     "seq": 42,
+     "commit": "e6a08b5cf01cc53c4d8b22b3b3eb6f4ac0205089"
+    },
+    {
+     "id": "m-C3",
+     "road": "assets",
+     "after": "C3",
+     "kind": "npc",
+     "title": "アトリエの村 の住人",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-A3",
+     "road": "assets",
+     "after": "A3",
+     "kind": "talk",
+     "title": "絵師 と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    },
+    {
+     "id": "m-H1",
+     "road": "player",
+     "after": "H1",
+     "kind": "talk",
+     "title": "勇者（あなた） と 賢者クロード",
+     "lines": [],
+     "seq": null,
+     "commit": null
+    }
+   ],
+   "news": [
+    {
+     "text": "テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "タスク管理では、issue のチェックリストで進み具合を見る使い方が多い",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる",
+     "kind": "domain",
+     "seq": null
+    },
+    {
+     "text": "号外: 絵師 が A2「モンスターの絵 8枚」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 42
+    },
+    {
+     "text": "号外: 賢者クロード、書記、伝令 が G1「結合: 冒険が盤面に映る」を突破した",
+     "kind": "extra",
+     "seq": 39
+    },
+    {
+     "text": "号外: 賢者クロード が B2「駒が1マスずつ歩く」を抜けた",
+     "kind": "extra",
+     "seq": 38
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 37
+    },
+    {
+     "text": "号外: 書記 が E3「gridhub step で1件ずつ歩く」を抜けた（テスト 5/5）",
+     "kind": "extra",
+     "seq": 36
+    },
+    {
+     "text": "号外: 伝令 が S2「GET /api/stream で change を送る」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 25
+    },
+    {
+     "text": "号外: 書記 が E2「gridhub check で判定をくだす」を抜けた（テスト 4/4）",
+     "kind": "extra",
+     "seq": 21
+    },
+    {
+     "text": "号外: 地図職人 が M1「quest.map.json を検証する」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 14
+    },
+    {
+     "text": "号外: 賢者クロード が B1「svg#board に方眼ノートを描く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 13
+    },
+    {
+     "text": "号外: 絵師 が A1「駒の絵 sprites 12枚」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 12
+    },
+    {
+     "text": "号外: 書記 が E1「log.jsonl に genesis を書く」を抜けた（テスト 3/3）",
+     "kind": "extra",
+     "seq": 11
+    },
+    {
+     "text": "号外: 伝令 が S1「GET /api/state でビューを返す」を抜けた（テスト 2/2）",
+     "kind": "extra",
+     "seq": 10
+    }
+   ]
   }
  ]
 }

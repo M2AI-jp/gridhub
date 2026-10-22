@@ -1,9 +1,9 @@
 // GridHub の盤面。ビュー（CONTRACTS §5・§40〜§43）を受け取り、縦の5mm方眼ノートの世界地図として描く（§50）。
 import { layoutWorld, stopOf, U, PAGE, pageOrigin } from './world.js';
-import { defs, paperLayer, headLayer, sceneryLayer, roadLayer, monsterItems, nodeItems, wx, wy } from './draw.js';
+import { defs, paperLayer, headLayer, sceneryLayer, roadLayer, monsterItems, nodeItems, marginItems, wx, wy } from './draw.js';
 import { Pawns } from './pawns.js';
 import { Book } from './book.js';
-import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderLedger } from './panels.js';
+import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderMarginDrawer, renderNews, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
 import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing } from './command.js';
 import { own } from './sketch.js';
@@ -73,7 +73,7 @@ let pawns;
 let book;
 function ensureSvg() {
   if (svg.dataset.init) return;
-  svg.innerHTML = `${defs(state.monsters)}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
+  svg.innerHTML = `${defs(state.monsters)}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="margin-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
   pawns = new Pawns($('#pawns'), { walks: window.__masume.walks });
   svg.dataset.init = '1';
 }
@@ -176,6 +176,7 @@ function render(input) {
   setLayer('#road-layer', roadLayer(view, lay));
   patchLayer('#monster-layer', monsterItems(view, lay, state.monsters, { fresh: slain }));
   patchLayer('#node-layer', nodeItems(view, lay, state.monsters, { fresh, selected: sel }));
+  patchLayer('#margin-layer', marginItems(view, lay, state.sprites, { selected: state.selected?.kind === 'margin' ? state.selected.id : null }));
   setLayer('#head-layer', headLayer(view, lay, state.sprites, state.monsters));
   penIn(view);
   const moved = pawns.update(view, lay, state.sprites, sameQuest ? prev : null);
@@ -189,6 +190,9 @@ function render(input) {
   setLayer('#party-list-wrap', renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null));
   setLayer('#bestiary', renderBestiary(view, state.monsters));
   setLayer('#log', renderLog(view, prev ? seqOf(prev) : -1));
+  const news = renderNews(view);
+  setLayer('#news', news);
+  $('#news').hidden = !news;
   setLayer('#ledger', renderLedger(view, state.sprites));
   renderRecord(view.head);
   const ok = view.integrity?.ok !== false && !!view.head && !!view.quest;
@@ -298,7 +302,10 @@ function renderDrawer() {
     drawer.removeAttribute('data-id');
     return;
   }
-  const html = sel.kind === 'node' ? renderNodeDrawer(state.view, sel.id, { live: LIVE }) : renderCharDrawer(state.view, sel.id, state.sprites);
+  const html =
+    sel.kind === 'node' ? renderNodeDrawer(state.view, sel.id, { live: LIVE })
+    : sel.kind === 'margin' ? renderMarginDrawer(state.view, sel.id)
+    : renderCharDrawer(state.view, sel.id, state.sprites);
   if (!html) {
     state.selected = null;
     drawer.hidden = true;
@@ -469,12 +476,14 @@ function select(kind, id, { focus = false } = {}) {
   history.replaceState(null, '', url);
   if (state.view) {
     patchLayer('#node-layer', nodeItems(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null }));
+    patchLayer('#margin-layer', marginItems(state.view, state.lay, state.sprites, { selected: kind === 'margin' ? id : null }));
     setLayer('#party-list-wrap', renderParty(state.view, state.sprites, kind === 'char' ? id : null));
   }
   renderDrawer();
   if (focus && state.lay) {
     let page = null;
     if (kind === 'node' && state.lay.place[id]) page = state.lay.place[id].page;
+    if (kind === 'margin') page = state.lay.margins.find((m) => m.id === id)?.page ?? null;
     if (kind === 'char') {
       const c = state.view.characters.find((x) => x.id === id);
       page = c ? stopOf(state.view, state.lay, c)?.page ?? null : null;
@@ -523,6 +532,8 @@ function setupInteractions() {
     if (!t && inBoard) {
       const node = e.target.closest('.node');
       const sq = e.target.closest('.sq');
+      const margin = e.target.closest('.margin-sq');
+      if (margin) return select('margin', margin.dataset.margin);
       const head = e.target.closest('.lane-head, .pawn, .lane-tag');
       if (node) return select('node', node.dataset.node);
       if (sq) return select('node', sq.dataset.node);
@@ -583,10 +594,12 @@ function setupInteractions() {
     if (e.key === 'f') book.fit();
     if (e.key === 'ArrowRight' && document.body.dataset.view === 'board') $('#page-next').click();
     if (e.key === 'ArrowLeft' && document.body.dataset.view === 'board') $('#page-prev').click();
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('.node, .lane-head, .pawn, tr[data-node]')) {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.closest?.('.node, .margin-sq, .lane-head, .pawn, tr[data-node]')) {
       e.preventDefault();
       const n = e.target.closest('.node');
       if (n) select('node', n.dataset.node);
+      const mg = e.target.closest('.margin-sq');
+      if (mg) select('margin', mg.dataset.margin);
       const h = e.target.closest('.lane-head, .pawn');
       if (h) select('char', h.dataset.char);
     }

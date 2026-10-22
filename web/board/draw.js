@@ -1,7 +1,7 @@
 // 世界地図を SVG に描く。ノートのページ・題名・景色・道（蛍光ペン）・モンスターのマス・ダンジョンの出口の札・町・城・名札。
 // 線は筆記具を data-tool で描き分ける: 鉛筆 pencil（霧）/ ボールペン ballpoint / 蛍光ペン marker / 赤ペン redpen（RULEBOOK §10）。
 // 座標の属性は、すべて世界の座標（ページの位置を足したもの）で書く。transform でずらさない（方眼に合っているかを属性で確かめられるように）。
-import { U, PAGE, GRID, X0, X1, P1_TOP, PN_TOP, BOTTOM, pageOrigin, casesOf, titleLines, stopOf, TITLE_PX, wrapJa } from './world.js';
+import { U, PAGE, GRID, X0, X1, P1_TOP, PN_TOP, BOTTOM, pageOrigin, casesOf, titleLines, stopOf, TITLE_PX, wrapJa, marginHappened, marginSource, whoName, BUBBLE_PX, BUBBLE_LINE } from './world.js';
 import { INK, hl, tint, rect, box, line, circle, hanamaru, tape, smooth, esc, rng, own, byId, wrap } from './sketch.js';
 
 export const STATUS_JA = { fog: '霧の中', open: '見えている', current: '作業中', waiting: '待機中', ready: '全員そろった', cleared: '突破', stale: '要再検証' };
@@ -456,6 +456,122 @@ export function monsterItems(view, lay, monsters, { fresh = null } = {}) {
       if (c?.strong) inner += `<text class="sq-strong" x="${X + 2 * U - 2}" y="${Y + 8}" text-anchor="end">強</text>`;
       out.push(`<g class="sq ${state}${fr}" data-node="${esc(id)}" data-case="${unknown ? '?' : s.i}" data-ok="${String(ok)}" data-page="${s.page + 1}" data-box="${s.x} ${s.y} 2 2">${inner}</g>`);
     }
+  }
+  return out;
+}
+
+// ---------- 余白のマス（§53）: 別の担当との会話・町の住人との雑談・瓦版。進みは止めない ----------
+export const MARGIN_JA = { talk: '会話', npc: '町の住人', news: '瓦版' };
+
+/** 余白のマスの中の絵（2×2 目）: talk は話した2人の顔、npc は町の住人、news は瓦版。まだ起きていなければ鉛筆で薄く */
+function marginGlyph(view, m, X, Y, sprites, chars, happened) {
+  const faint = happened ? '' : ' faint';
+  if (m.kind === 'news') {
+    let g = `<g class="mg-glyph${faint}"><path class="mg-news-paper" d="${box(X + 5, Y + 6, 22, 21, `mgn:${m.id}`, 0.5)}"/>`;
+    g += `<rect class="mg-news-mark" x="${X + 8}" y="${Y + 9.5}" width="16" height="4"/>`;
+    for (let i = 0; i < 3; i++) g += `<path class="mg-news-line" d="${line(X + 8, Y + 17 + i * 3.4, X + 24 - (i === 2 ? 6 : 0), Y + 17 + i * 3.4, `mgl:${m.id}:${i}`, 0.3)}"/>`;
+    return g + '</g>';
+  }
+  if (m.kind === 'npc') {
+    const villager = { id: `npc:${m.id}`, job: 'villager', color: 'gray', name: whoName(view, m.lines[0]?.who) || '人' };
+    return `<g class="mg-glyph${faint}">${spriteMarkup(sprites, villager, X + 2, Y + 2, 2 * U - 4, 'npc')}</g>`;
+  }
+  // talk: 話した2人（いなければ、この道の人と、もう1人の顔）
+  const ids = [...new Set(m.lines.map((l) => l.who).filter((w) => w != null && chars[w]))];
+  const pair = [chars[ids[0] ?? m.road], ids[1] != null ? chars[ids[1]] : null];
+  const face = (c, x, y, seed) => (c ? spriteMarkup(sprites, c, x, y, 17, seed) : `<path class="mg-face" d="${circle(x + 8.5, y + 8.5, 6.5, seed, 0.5)}"/>`);
+  return `<g class="mg-glyph${faint}">${face(pair[0], X + 1, Y + 3, `mgf1:${m.id}`)}${face(pair[1], X + 2 * U - 18, Y + 12, `mgf2:${m.id}`)}</g>`;
+}
+
+/** ふきだし（会話・町の住人）と瓦版の切り抜き。b は world.js の bubbles の1つ（字は短くしてある。全文は <title> と詳細） */
+function bubbleMarkup(b, p, chars) {
+  const X = wx(p, b.x) + 2;
+  const Y = wy(b.y) + 2;
+  const W = b.w * U - 4;
+  const Hh = b.h * U - 4;
+  const AX = wx(p, b.ax);
+  const AY = wy(b.ay);
+  let s = '';
+  if (b.kind === 'news') {
+    s += `<path class="mg-clip" d="${box(X, Y, W, Hh, `clip:${b.margin}`, 0.6)}"/>`;
+    s += `<path class="tape" d="${tape(X + W / 2, Y + 1, Math.min(2.2 * U, W * 0.4), 0.7 * U, `cliptape:${b.margin}`, -6)}"/>`;
+  } else {
+    // しっぽの根元（ふきだしのふち）と先（余白のマスのほうへ最大 12px）。遠ければ、先から余白のマスまで鉛筆の点線
+    const side = AX < X ? 'l' : AX > X + W ? 'r' : AY < Y ? 't' : 'b';
+    const cx = Math.max(X + 9, Math.min(X + W - 9, AX));
+    const cy = Math.max(Y + 7, Math.min(Y + Hh - 7, AY));
+    const [bx, by] = side === 'l' ? [X, cy] : side === 'r' ? [X + W, cy] : side === 't' ? [cx, Y] : [cx, Y + Hh];
+    const dist = Math.hypot(AX - bx, AY - by);
+    const ux = (AX - bx) / (dist || 1);
+    const uy = (AY - by) / (dist || 1);
+    const len = Math.max(4, Math.min(12, dist - 14));
+    const tx = bx + ux * len;
+    const ty = by + uy * len;
+    const across = side === 'l' || side === 'r' ? [0, 4.5] : [4.5, 0];
+    const inX = side === 'l' ? 2 : side === 'r' ? -2 : 0;
+    const inY = side === 't' ? 2 : side === 'b' ? -2 : 0;
+    const tail = `M${f1(bx + inX - across[0])} ${f1(by + inY - across[1])} L${f1(tx)} ${f1(ty)} L${f1(bx + inX + across[0])} ${f1(by + inY + across[1])}`;
+    if (dist - 14 > len + 4) s += `<path class="mg-lead" data-tool="pencil" d="${line(tx, ty, AX - ux * 15, AY - uy * 15, `lead:${b.margin}`, 0.4)}"/>`;
+    s += `<path class="mg-bubble-bg" d="${box(X, Y, W, Hh, `bub:${b.margin}`, 0.7)}"/><path class="mg-bubble-tail" d="${tail}"/>`;
+  }
+  b.rows.forEach((row, i) => {
+    const y = Y + 5 + (i + 1) * BUBBLE_LINE - 2.5;
+    if (row.names) {
+      // 名前の行: 1人ずつ、その道の色の蛍光ペン
+      let x = X + 5;
+      let t = '';
+      row.names.forEach((n, k) => {
+        const c = n.speaker != null ? chars[n.speaker] : null;
+        const label = (k ? '・' : '') + n.name;
+        if (x + textW(label, BUBBLE_PX) > X + W - 4) return;
+        if (k) x += textW('・', BUBBLE_PX);
+        s += `<rect class="mg-who-hl" data-tool="marker" x="${f1(x)}" y="${f1(y - 4.5)}" width="${f1(textW(n.name, BUBBLE_PX))}" height="5.5" fill="${c ? hl(c.color) : hl('gray')}"/>`;
+        x += textW(n.name, BUBBLE_PX);
+        t += `${k ? '・' : ''}<tspan class="mg-who">${esc(n.name)}</tspan>`;
+      });
+      s += `<text class="hand mg-text" x="${X + 5}" y="${f1(y)}">${t}</text>`;
+      return;
+    }
+    const who = row.who && row.text.startsWith(row.who) ? row.who : '';
+    const c = row.speaker != null ? chars[row.speaker] : null;
+    if (who) s += `<rect class="mg-who-hl" data-tool="marker" x="${X + 5}" y="${f1(y - 4.5)}" width="${f1(textW(who, BUBBLE_PX))}" height="5.5" fill="${c ? hl(c.color) : hl('gray')}"/>`;
+    const rest = who ? row.text.slice(who.length) : row.text;
+    s += `<text class="hand mg-text${row.head ? ' head' : ''}" x="${X + 5}" y="${f1(y)}">${who ? `<tspan class="mg-who">${esc(who)}</tspan>` : ''}${esc(rest)}</text>`;
+  });
+  if (b.src) s += `<text class="mg-src" x="${X + W - 5}" y="${Y + Hh - 4}" text-anchor="end">${esc(b.src)}</text>`;
+  return `<g class="margin-bubble ${esc(b.kind)}" data-box="${b.x} ${b.y} ${b.w} ${b.h}">${s}</g>`;
+}
+
+/** 余白のマスの <title>: 題と、すべての行（話し手がいれば「名前: 」を前に）と、出典 */
+export function marginTitle(view, m) {
+  const kind = own(MARGIN_JA, m.kind) || m.kind;
+  if (!marginHappened(m)) return `${kind}: ${m.title || ''}（まだ起きていない。駒が通ると起きる）`;
+  const lines = m.lines.filter((l) => l && l.text).map((l) => `${whoName(view, l.who) ? whoName(view, l.who) + ': ' : ''}${l.text}`);
+  const src = marginSource(m);
+  return [`${kind}: ${m.title || ''}`, ...lines, src ? `（${src}）` : ''].filter(Boolean).join('\n');
+}
+
+/** 余白のマス（1つずつの文字列の配列。ビューの margins の順）。起きた余白は、その中にふきだしを持つ */
+export function marginItems(view, lay, sprites, { selected = null } = {}) {
+  const out = [];
+  const chars = byId(view.characters);
+  const bubbleOf = new Map();
+  lay.pages.forEach((page, p) => {
+    for (const b of page.bubbles || []) bubbleOf.set(b.margin, { b, p });
+  });
+  for (const m of lay.margins || []) {
+    const X = wx(m.page, m.x);
+    const Y = wy(m.y);
+    const happened = marginHappened(m);
+    const title = marginTitle(view, m);
+    let inner = `<title>${esc(title)}</title>`;
+    inner += `<rect class="margin-paper" x="${X}" y="${Y}" width="${2 * U}" height="${2 * U}"/>`;
+    inner += `<path class="${happened ? 'pen' : 'pencil-line'} mg-line" data-tool="${happened ? 'ballpoint' : 'pencil'}" d="${ruled(X + 1, Y + 1, 2 * U - 2, 2 * U - 2, `mg:${m.id}`, 0.35)}"/>`;
+    inner += marginGlyph(view, m, X, Y, sprites, chars, happened);
+    inner += `<rect class="cell-hit" x="${X}" y="${Y}" width="${2 * U}" height="${2 * U}"/>`;
+    const bub = bubbleOf.get(m.id);
+    if (bub) inner += bubbleMarkup(bub.b, bub.p, chars);
+    out.push(`<g class="margin-sq ${esc(m.kind)}${happened ? '' : ' unseen'}${selected === m.id ? ' selected' : ''}" data-margin="${esc(m.id)}" data-kind="${esc(m.kind)}" data-road="${esc(m.road)}" data-after="${esc(m.after)}" data-happened="${happened}" data-page="${m.page + 1}" data-box="${m.x} ${m.y} 2 2" tabindex="0" role="button" aria-label="${esc(title.split('\n').join(' '))}">${inner}</g>`);
   }
   return out;
 }

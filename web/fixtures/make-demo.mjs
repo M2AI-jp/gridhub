@@ -24,6 +24,12 @@ export const MAP = {
     pitch: 'テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。',
     goal: 'GOAL',
     save: 'git',
+    news: [
+      'テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる',
+      '小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある',
+      'タスク管理では、issue のチェックリストで進み具合を見る使い方が多い',
+      'SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる',
+    ],
   },
   characters: [
     { id: 'board', name: '賢者クロード', kind: 'agent', agent: 'claude', job: 'sage', color: 'blue', module: '盤面（web/board）', territory: ['web/index.html', 'web/board/**', 'web/fixtures/**'], path: ['B1', 'B2', 'G1', 'B3', 'B4', 'GOAL'] },
@@ -93,6 +99,81 @@ const base = { name, ok: null, losses: 0, revived: 0, strong: false };
     if (c === 'S') return { ...base, ok: true, losses: 2, strong: true };
     return base;
   });
+}
+
+// ---- 余白のマスと瓦版（CONTRACTS §53。エンジンと同じ規則で、地図と冒険の書から作る） ----
+const nameOf = (id) => MAP.characters.find((c) => c.id === id)?.name ?? id;
+const testsOf = (n) => (Array.isArray(n?.cases) && n.cases.length ? ` （テスト ${n.cases.filter((x) => x.ok === true).length}/${n.cases.length}）`.trimStart() : '');
+/** 冒険の書（entries は seq つき、log は commit などを持つ元の行）の seq までで、§52.3 のコミット */
+const commitUpTo = (log, seq) => [...log.slice(0, seq + 1)].reverse().find((e) => e.commit)?.commit ?? null;
+
+function marginsOf(chars, nodes, entries, log) {
+  const out = [];
+  let k = 0;
+  for (const c of chars) {
+    c.path.forEach((x, i) => {
+      const n = nodes[x];
+      if (i === c.path.length - 1 || !['task', 'camp'].includes(n?.type)) return;
+      const next = nodes[c.path[i + 1]];
+      const kind = n.type === 'camp' ? 'npc' : next?.type === 'gate' ? 'talk' : 'news';
+      const newsIndex = kind === 'news' ? k++ : null;
+      const happened = c.pos > i || c.status === 'done';
+      // 出典: 駒が x より先へ進んだイベント（task は自分の宣言・ハンコ、町はその手前の宣言）
+      const key = n.type === 'camp' ? c.path[i - 1] : x;
+      const S = happened ? entries.filter((e) => e.character === c.id && e.node === key && ['check_passed', 'stamped'].includes(e.type)).at(-1) : null;
+      const m = { id: `m-${x}`, road: c.id, after: x, kind, title: '', lines: [], seq: null, commit: null };
+      if (kind === 'news') m.title = '瓦版';
+      if (kind === 'npc') m.title = `${n.title} の住人`;
+      const partner = kind === 'talk' ? (next.members || []).find((id) => id !== c.id) : null;
+      if (kind === 'talk') m.title = `${c.name} と ${nameOf(partner)}`;
+      if (happened && S) {
+        m.seq = S.seq;
+        m.commit = commitUpTo(log, S.seq);
+        if (kind === 'news') {
+          m.lines.push({ who: null, text: `号外: ${c.name} が ${x}「${n.title}」を抜けた${testsOf(n)}` });
+          if (MAP.quest.news?.length) m.lines.push({ who: null, text: MAP.quest.news[newsIndex % MAP.quest.news.length] });
+        } else if (kind === 'npc') {
+          const before = nodes[key];
+          const tests = (before?.cases || []).filter((x2) => x2.ok === true).length;
+          m.lines.push({ who: '宿屋の主人', text: `${c.name}さん、おつかれさま。テスト ${tests} 件、通ってきたね` });
+          const sv = entries.find((e) => e.seq > S.seq && e.type === 'saved' && e.node === x && log[e.seq]?.commit);
+          if (sv) {
+            m.commit = log[sv.seq].commit;
+            m.lines.push({ who: '宿屋の主人', text: `セーブは commit ${m.commit.slice(0, 7)}。変えたファイルは ${log[sv.seq].files ?? 1} 件` });
+          }
+        } else {
+          for (const who of [c.id, partner]) {
+            const note = entries.filter((e) => e.type === 'note' && e.character === who && e.seq <= S.seq).at(-1);
+            if (note) {
+              const t = String(log[note.seq].note ?? note.text).split('\n')[0];
+              m.lines.push({ who, text: [...t].length > 80 ? [...t].slice(0, 79).join('') + '…' : t });
+            }
+          }
+          if (!m.lines.length) m.lines.push({ who: null, text: `${c.name} と ${nameOf(partner)} が ${next.title} の前で顔を合わせた` });
+        }
+      }
+      out.push(m);
+    });
+  }
+  return out;
+}
+
+/** 瓦版: quest.news を地図の順に、そのあとに号外を新しい順に（最大20件） */
+function newsOf(entries, log) {
+  const extra = [];
+  for (const e of [...entries].reverse()) {
+    if (extra.length >= 20) break;
+    if (e.type === 'check_passed' && e.character && e.node) {
+      const n = MAP.nodes[e.node];
+      const t = String(e.text).match(/テスト (\d+\/\d+)/)?.[1];
+      extra.push({ text: `号外: ${nameOf(e.character)} が ${e.node}「${n.title}」を抜けた${t ? `（テスト ${t}）` : ''}`, kind: 'extra', seq: e.seq });
+    }
+    if (e.type === 'gate_cleared' && e.node) {
+      const members = MAP.characters.filter((c) => c.path.includes(e.node)).map((c) => c.name);
+      extra.push({ text: `号外: ${members.join('、')} が ${e.node}「${MAP.nodes[e.node].title}」を突破した`, kind: 'extra', seq: e.seq });
+    }
+  }
+  return [...(MAP.quest.news || []).map((text) => ({ text, kind: 'domain', seq: null })), ...extra];
 }
 
 function build(scene, log) {
@@ -191,6 +272,8 @@ function build(scene, log) {
     finished,
     bestiary,
     ending: finished ? scene.ending : null,
+    margins: marginsOf(chars, nodes, entries, log),
+    news: newsOf(entries, log),
   };
 }
 
@@ -199,7 +282,7 @@ const COMMIT = { start: sha('commit:ふりだし'), C1: sha('commit:C1'), G1: sh
 const short = (h) => h.slice(0, 7);
 const save = (seq, node) => ({ seq, node, commit: COMMIT[node ?? 'start'] });
 const STASH = { engine: sha('grave:engine'), gmkit: sha('grave:gmkit') };
-const saved = (names, node) => ({ type: 'saved', node: node ?? null, commit: COMMIT[node ?? 'start'], text: `${names} が ${node ?? 'ふりだし'} でセーブした（commit ${short(COMMIT[node ?? 'start'])}）` });
+const saved = (names, node) => ({ type: 'saved', node: node ?? null, commit: COMMIT[node ?? 'start'], files: node ? 3 : 12, text: `${names} が ${node ?? 'ふりだし'} でセーブした（commit ${short(COMMIT[node ?? 'start'])}）` });
 const restored = (id, name, node) => ({ type: 'restored', character: id, node, text: `${name} の縄張りを commit ${short(COMMIT.start)} に戻した（墓: stash ${short(STASH[id])}）` });
 
 // ---- 冒険の書（ここまでに起きたこと） ----
@@ -224,10 +307,12 @@ const log = [
   { type: 'sortie', character: 'engine', node: 'E2', text: '書記 が出撃した（2代目・codex gpt-5）' },
   { type: 'stepped', character: 'engine', node: 'E2', ok: false, text: '書記 が E2 を歩いた（テスト 3/4）' },
   { type: 'stepped', character: 'engine', node: 'E2', ok: true, text: '書記 が E2 を歩いた（テスト 4/4）— 強敵を倒した！' },
-  { type: 'note', character: 'engine', text: '技: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる' },
+  { type: 'note', character: 'engine', note: '累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる', text: '書記 の日誌: 累積判定は町の次のマスから走らせる。E1 のロックを先に確かめる（技）' },
   { type: 'check_passed', character: 'engine', node: 'E2', ok: true, text: '書記 が E2「gridhub check で判定をくだす」の判定に成功！ テスト 4/4' },
   { ...saved('書記', 'C1'), character: 'engine' },
-  { type: 'check_passed', character: 'server', node: 'S2', ok: true, text: '伝令 が S2「GET /api/stream で change を送る」の判定に成功！ G1 で待機' },
+  { type: 'note', character: 'board', note: '駒は view の square のマスに立てる。盤面でテストの出力は読まない', text: '賢者クロード の日誌: 駒は view の square のマスに立てる。盤面でテストの出力は読まない' },
+  { type: 'note', character: 'server', note: 'SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る', text: '伝令 の日誌: SSE はつながったら hello、書かれたら change だけ送る。中身は /api/state で取る' },
+  { type: 'check_passed', character: 'server', node: 'S2', ok: true, text: '伝令 が S2「GET /api/stream で change を送る」の判定に成功！ テスト 3/3、G1 で待機' },
   { type: 'stepped', character: 'gmkit', node: 'M2', ok: false, text: '地図職人 が M2 を歩いた（テスト 2/3）' },
   { type: 'check_failed', character: 'gmkit', node: 'M2', ok: false, text: '地図職人 が M2「check.cases を地図に書く」の判定に失敗… M1 のテストが復活した。Lv2→1、ふりだしから' },
   restored('gmkit', '地図職人', 'M2'),
