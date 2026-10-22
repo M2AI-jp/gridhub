@@ -65,7 +65,7 @@ export function readLog(dir) {
     .map((l) => JSON.parse(l));
 }
 
-// ---- 正規化JSON・ハッシュ・じゅもん（SAVE_FORMAT.md を独立に実装） ----
+// ---- 正規化JSON・ハッシュ（SAVE_FORMAT.md を独立に実装。第11章でじゅもんは外した） ----
 
 export function canonical(v) {
   if (Array.isArray(v)) return '[' + v.map(canonical).join(',') + ']';
@@ -82,16 +82,6 @@ export function sha256(data) {
 
 export function eventHash(e) {
   return sha256(canonical({ seq: e.seq, ts: e.ts, type: e.type, actor: e.actor, data: e.data, prev: e.prev }));
-}
-
-export const KANA = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわがぎぐげござじずぜぞだぢづでどばびぶべぼ';
-
-export function jumonOf(hex) {
-  const n = BigInt('0x' + hex.slice(0, 18));
-  const chars = [];
-  for (let i = 0; i < 12; i++) chars.push(KANA[Number((n >> BigInt(66 - 6 * i)) & 63n)]);
-  const s = chars.join('');
-  return `${s.slice(0, 3)} ${s.slice(3, 6)} ${s.slice(6, 9)} ${s.slice(9, 12)}`;
 }
 
 // ---- おもちゃの冒険（エンジンの判定用） ----

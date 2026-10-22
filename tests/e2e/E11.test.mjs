@@ -137,3 +137,18 @@ test('§43.4 巻き戻し: .gitignore されたファイルも墓に残し、実
   assert.equal(grave.out, 'こわした x');
   assert.equal(git(root, ['show', `${restored.data.stash}^3:a/cache.log`]).out, 'ignore された大事なメモ', 'ignore されたファイルも墓に');
 });
+
+test('§43 load はセーブのコミットでも指せる（そのセーブを記録した時点に戻る）。じゅもんは受け付けない', () => {
+  const { root, check } = townDungeon((r) => write(r, 'a/x.js', '1\n'));
+  const town = events(root, 'saved').at(-1);
+  setCases(root, 'A3', { 'u が 6': 'ok', 't が 7': 'ok' });
+  assert.equal(check('a').code, 0, 'A3 を抜けて G1 へ');
+  const r = masume(['load', town.data.commit.slice(0, 7), '--dir', root, '--as', 'gm']);
+  assert.equal(r.code, 0, r.all);
+  assert.deepEqual(events(root, 'loaded').at(-1).data, { to_seq: town.seq });
+  const v = JSON.parse(masume(['status', '--json', '--dir', root]).out);
+  assert.equal(v.characters.find((c) => c.id === 'a').at, 'A3', '町のセーブの時点（A3 の前）に戻る');
+  assert.equal(v.head.jumon, undefined);
+  assert.equal(masume(['load', 'ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ', '--dir', root, '--as', 'gm']).code, 2);
+  assert.equal(masume(['verify', '--dir', root]).code, 0);
+});

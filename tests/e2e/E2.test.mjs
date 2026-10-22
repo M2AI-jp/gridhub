@@ -34,7 +34,9 @@ test('ふりだし: 全員が最初のマスにいる', () => {
   assert.equal(v.nodes.AC.xp, 0);
   assert.equal(v.finished, false);
   assert.equal(v.integrity.ok, true);
-  assert.match(v.head.jumon, /^[ぁ-ん]{3}( [ぁ-ん]{3}){3}$/);
+  // 第11章: じゅもんは外した。いまの時点は seq とハッシュ
+  assert.deepEqual(Object.keys(v.head).sort(), ['hash', 'seq']);
+  assert.match(v.head.hash, /^[0-9a-f]{64}$/);
   assert.ok(Array.isArray(v.log) && v.log[0].type === 'genesis');
   for (const e of v.log) assert.ok('seq' in e && 'text' in e && 'ok' in e && 'character' in e && 'node' in e);
 });
@@ -214,5 +216,6 @@ test('知らない相手・あがり済み・人間向けの表示', () => {
   assert.match(u.all, /E_UNKNOWN/);
   const s = masume(['status', '--dir', dir]);
   assert.equal(s.code, 0, s.all);
-  for (const word of ['戦士アリス', '魔法使いボブ', '勇者ひとみ', 'A1', 'ふっかつのじゅもん']) assert.match(s.out, new RegExp(word));
+  for (const word of ['戦士アリス', '魔法使いボブ', '勇者ひとみ', 'A1', '記録: seq']) assert.match(s.out, new RegExp(word));
+  assert.doesNotMatch(s.out, /じゅもん/, '第11章: じゅもんは外した');
 });

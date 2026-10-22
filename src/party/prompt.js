@@ -18,7 +18,7 @@ function briefText(root, bin, id, report) {
     if (report.current.detail) lines.push(report.current.detail);
     if (report.current.check?.kind === 'cmd') lines.push(`判定: ${report.current.check.run}`);
   }
-  lines.push(`ふっかつのじゅもん: ${report.jumon}`);
+  lines.push(`記録: seq ${report.seq}`);
   return lines.join('\n');
 }
 

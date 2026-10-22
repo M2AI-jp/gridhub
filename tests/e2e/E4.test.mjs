@@ -3,11 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { masume, masumeJson, newToy, toyMap, flag, view, char, readLog, jumonOf } from '../helpers.mjs';
+import { masume, masumeJson, newToy, toyMap, flag, view, char, readLog } from '../helpers.mjs';
 
 const check = (dir, who) => masume(['check', who, '--dir', dir, '--as', who]);
 
-test('load: seq でも、ふっかつのじゅもんでも、その時の盤面に戻せる', () => {
+// 第11章: ふっかつのじゅもんは外した。ロード先は記録の番号（seq）か、Git のセーブのコミット（E11）で指す。
+test('load: 記録の番号（seq）で、その時の盤面に戻せる', () => {
   const dir = newToy();
   flag(dir, 'A1');
   flag(dir, 'A2');
@@ -31,11 +32,10 @@ test('load: seq でも、ふっかつのじゅもんでも、その時の盤面�
   for (const id of Object.keys(snap.nodes)) assert.equal(v.nodes[id].state, snap.nodes[id].state, `${id} の state`);
   assert.equal(masume(['verify', '--dir', dir]).code, 0, 'ロードしても鎖は正常');
 
-  // 進めてから、じゅもんで戻る
+  // 進めてから、もう一度その seq へ戻る
   assert.equal(check(dir, 'a').code, 0);
   assert.equal(char(view(dir), 'a').at, 'A3');
-  const spell = jumonOf(readLog(dir)[seq1].hash);
-  const r2 = masume(['load', spell, '--dir', dir, '--as', 'gm']);
+  const r2 = masume(['load', String(seq1), '--dir', dir, '--as', 'gm']);
   assert.equal(r2.code, 0, r2.all);
   v = view(dir);
   assert.equal(char(v, 'a').at, 'A2');
@@ -48,8 +48,11 @@ test('load: seq でも、ふっかつのじゅもんでも、その時の盤面�
   const bad = masume(['load', '9999', '--dir', dir, '--as', 'gm']);
   assert.equal(bad.code, 2, bad.all);
   assert.match(bad.all, /E_LOAD/);
-  const badSpell = masume(['load', 'ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ', '--dir', dir, '--as', 'gm']);
-  assert.equal(badSpell.code, 2, badSpell.all);
+  const badCommit = masume(['load', 'deadbee', '--dir', dir, '--as', 'gm']);
+  assert.equal(badCommit.code, 2, badCommit.all);
+  assert.match(badCommit.all, /E_LOAD/, 'そのコミットのセーブが無い');
+  const oldSpell = masume(['load', 'ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ', '--dir', dir, '--as', 'gm']);
+  assert.equal(oldSpell.code, 2, 'じゅもんは受け付けない');
 });
 
 test('amend: 計画は変えられるが、歴史は書き換えられない', () => {

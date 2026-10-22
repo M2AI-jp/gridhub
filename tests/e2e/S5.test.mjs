@@ -16,8 +16,8 @@ test('初期化・道具の一覧・資料', async () => {
     assert.deepEqual(ping.result, {});
     const list = await c.request('tools/list');
     const names = list.result.tools.map((t) => t.name).sort();
-    // 第11章（CONTRACTS §47.1）で masume_step（歩く）が増えた。道具の名前は masume_* のまま。
-    assert.deepEqual(names, ['masume_brief', 'masume_check', 'masume_jumon', 'masume_log', 'masume_note', 'masume_quest', 'masume_stamp', 'masume_status', 'masume_step', 'masume_verify']);
+    // 第11章（CONTRACTS §47.1）で masume_step（歩く）が増え、masume_jumon（ふっかつのじゅもん）は外した。道具の名前は masume_* のまま。
+    assert.deepEqual(names, ['masume_brief', 'masume_check', 'masume_log', 'masume_note', 'masume_quest', 'masume_stamp', 'masume_status', 'masume_step', 'masume_verify']);
     for (const t of list.result.tools) {
       assert.ok(t.description && /[ぁ-んァ-ン一-龥]/.test(t.description), `${t.name} に日本語の説明`);
       assert.equal(t.inputSchema.type, 'object');
@@ -52,7 +52,7 @@ test('道具で遊ぶ: 指令書を読み、宣言判定し、日誌を書く', 
     const brief = await c.call('masume_brief', { character: 'a' });
     assert.equal(brief.isError, false);
     assert.match(brief.text, /剣をとぐ/);
-    assert.match(brief.text, /ふっかつのじゅもん/);
+    assert.match(brief.text, /記録: seq \d+/);
     const bj = await c.call('masume_brief', { character: 'a', json: true });
     assert.equal(JSON.parse(bj.text).current.id, 'A1');
 
@@ -72,8 +72,6 @@ test('道具で遊ぶ: 指令書を読み、宣言判定し、日誌を書く', 
     assert.equal(readLog(dir).pop().data.text, 'MCP から書いた日誌');
     const st = await c.call('masume_status', { json: true });
     assert.equal(JSON.parse(st.text).quest.id, 'TOY');
-    const j = await c.call('masume_jumon', {});
-    assert.match(j.text, /[ぁ-ん]{3}( [ぁ-ん]{3}){3}/);
     const v = await c.call('masume_verify', {});
     assert.equal(v.isError, false);
     assert.match(v.text, /冒険の書は正常です/);
@@ -102,7 +100,7 @@ test('冒険の書が無くても起動し、願いから冒険を始められ�
     assert.equal(bad.isError, true);
     const q = await c.call('masume_quest', { wish: 'メモアプリのようなアプリを作りたい', gm: 'claude' }, { timeout: 60000 });
     assert.equal(q.isError, false, q.text);
-    assert.match(q.text, /ふっかつのじゅもん/);
+    assert.match(q.text, /記録: seq \d+/);
     assert.equal(view(root).quest.id, 'MEMO');
   } finally {
     await c.close();

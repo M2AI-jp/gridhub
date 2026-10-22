@@ -8,6 +8,6 @@ export async function run(argv, ctx) {
   if (args.length !== 1) usage('つかいかた: amend <map>');
   const result = amend(gameRoot(command), resolve(cwd, args[0]), { actor });
   if (options.json) console.log(JSON.stringify(result));
-  else console.log(`地図を第${result.version}版に改訂しました\nふっかつのじゅもん: ${result.head.jumon}`);
+  else console.log(`地図を第${result.version}版に改訂しました（記録 seq ${result.head.seq}）`);
   return 0;
 }

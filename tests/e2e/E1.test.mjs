@@ -3,7 +3,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync, appendFileSync, existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
-import { tmp, masume, masumeJson, masumeAsync, readLog, setupToy, toyMap, eventHash, jumonOf, sha256, canonical } from '../helpers.mjs';
+import { tmp, masume, masumeJson, masumeAsync, readLog, setupToy, toyMap, eventHash, sha256, canonical } from '../helpers.mjs';
 
 const ZERO = '0'.repeat(64);
 
@@ -62,7 +62,7 @@ test('new: 冒険の書が生まれ、存在する判定ファイルは自動で
   setupToy(dir);
   const r = masume(['new', 'toy.map.json'], { cwd: dir });
   assert.equal(r.code, 0, r.all);
-  assert.match(r.out, /ふっかつのじゅもん/);
+  assert.match(r.out, /記録 seq \d+/);
   assert.ok(existsSync(join(dir, '.masume', 'log.jsonl')));
   assert.ok(existsSync(join(dir, '.masume', 'maps', '0001.json')));
 
@@ -104,36 +104,29 @@ test('new: 冒険の書が生まれ、存在する判定ファイルは自動で
   assert.ok(!existsSync(join(dir2, '.masume', 'log.jsonl')));
 });
 
-test('jumon / verify: ふっかつのじゅもんで状態を指せる', () => {
+// 第11章: ふっかつのじゅもんは外した（ユーザーの判断「意味のない、なくてもいいレガシー要素を入れるな」）。
+// いまの時点は、記録の番号（seq）とハッシュで指す。jumon コマンドと verify --jumon は無い。
+test('verify: いまの時点を記録の番号（seq）とハッシュで指す。jumon コマンドは無い', () => {
   const dir = tmp();
   setupToy(dir);
   masume(['new', 'toy.map.json'], { cwd: dir });
   const log = readLog(dir);
   const head = log[log.length - 1];
-  const expected = jumonOf(head.hash);
-
-  const j = masume(['jumon'], { cwd: dir });
-  assert.equal(j.code, 0, j.all);
-  assert.equal(j.out.trim().split('\n').pop().trim(), expected);
-  assert.match(expected, /^[ぁ-ん]{3}( [ぁ-ん]{3}){3}$/);
-  const jj = masumeJson(['jumon'], { cwd: dir });
-  assert.deepEqual(jj.data, { seq: head.seq, hash: head.hash, jumon: expected });
 
   const v = masume(['verify'], { cwd: dir });
   assert.equal(v.code, 0, v.all);
   assert.match(v.out, /冒険の書は正常です/);
+  assert.match(v.out, new RegExp(`記録: seq ${head.seq}（${head.hash.slice(0, 12)}）`));
+  assert.doesNotMatch(v.out, /じゅもん/);
   const vj = masumeJson(['verify'], { cwd: dir });
   assert.equal(vj.data.ok, true);
-  assert.deepEqual(vj.data.head, { seq: head.seq, hash: head.hash, jumon: expected });
+  assert.deepEqual(vj.data.head, { seq: head.seq, hash: head.hash });
 
-  // 過去のじゅもんでも見つかる（空白なし・カタカナでもよい）
-  const past = jumonOf(log[0].hash);
-  const katakana = past.replace(/\s/g, '').replace(/[ぁ-ゖ]/g, (c) => String.fromCharCode(c.charCodeAt(0) + 0x60));
-  const f = masumeJson(['verify', '--jumon', katakana], { cwd: dir });
-  assert.equal(f.code, 0, f.all);
-  assert.deepEqual(f.data.found, { seq: 0 });
-  const nf = masume(['verify', '--jumon', 'ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ'], { cwd: dir });
-  assert.equal(nf.code, 1, nf.all);
+  const j = masume(['jumon'], { cwd: dir });
+  assert.equal(j.code, 2, j.all);
+  assert.match(j.all, /E_USAGE/);
+  const old = masume(['verify', '--jumon', 'あいう えおか きくけ こさし'], { cwd: dir });
+  assert.equal(old.code, 2, old.all);
 });
 
 test('verify / repair: 改ざんは「呪い」として見つかり、修復できる', () => {
@@ -242,8 +235,8 @@ test('note / log: 日誌が書けて、ログが読める', () => {
   assert.equal(tail.data.length, 2);
   // --dir でも、子ディレクトリからでも見つかる
   const other = tmp();
-  assert.equal(masume(['jumon', '--dir', dir], { cwd: other }).code, 0);
-  const none = masume(['jumon'], { cwd: other });
+  assert.equal(masume(['verify', '--dir', dir], { cwd: other }).code, 0);
+  const none = masume(['verify'], { cwd: other });
   assert.equal(none.code, 2, none.all);
   assert.match(none.all, /E_NO_GAME/);
 });

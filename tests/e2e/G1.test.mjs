@@ -32,13 +32,11 @@ test('本物の冒険の書が盤面に映り、判定で駒がライブに動�
     const first = await page.eval(`(() => ({
       nodes: document.querySelectorAll('#node-layer [data-node]').length,
       pawns: Object.fromEntries([...document.querySelectorAll('.pawn[data-char]')].map((g) => [g.dataset.char, g.dataset.at])),
-      jumon: document.querySelector('#jumon').textContent.trim(),
       title: document.querySelector('.quest-title').textContent,
     }))()`);
     const v0 = view(dir);
     assert.equal(first.nodes, Object.keys(v0.nodes).length);
     assert.deepEqual(first.pawns, { a: 'A1', b: 'B1', h: 'H1' });
-    assert.equal(first.jumon, v0.head.jumon);
     assert.equal(first.title, 'おもちゃの冒険');
 
     // 宣言判定 → SSE → 盤面の駒が動く（書記 × 伝令 × 賢者クロード）
@@ -50,11 +48,11 @@ test('本物の冒険の書が盤面に映り、判定で駒がライブに動�
     await page.waitFor(`document.querySelector('.pawn[data-char="a"]').dataset.at === 'A2'`, { timeout: 10000, message: '駒 a が A2 へ進む' });
     await page.waitFor(`document.querySelector('#node-layer [data-node="A1"]').dataset.state === 'cleared'`, { message: 'A1 にはなまる' });
     const after = await page.eval(`({
-      jumon: document.querySelector('#jumon').textContent.trim(),
       log: [...document.querySelectorAll('#log .log-entry')].map((li) => li.dataset.type),
     })`);
     const v1 = view(dir);
-    assert.equal(after.jumon, v1.head.jumon, 'じゅもんも新しくなる');
+    // 第11章: ふっかつのじゅもんは外した（盤面に出す値はビューに無い）
+    assert.equal(v1.head.jumon, undefined);
     assert.ok(after.log.includes('check_passed'), '冒険の書に判定成功が流れる');
 
     // 失敗も映る（消しゴムとレベル）

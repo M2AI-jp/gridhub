@@ -61,6 +61,6 @@ export async function run(argv, ctx) {
   console.log(`  日誌: gridhub note ${c.id} "…"`);
   console.log('守ること:');
   for (const rule of report.rules) console.log(`  ${rule}`);
-  console.log(`ふっかつのじゅもん: ${report.jumon}（seq ${report.seq}）`);
+  console.log(`記録: seq ${report.seq}`);
   return 0;
 }

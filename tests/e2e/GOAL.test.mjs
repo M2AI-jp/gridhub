@@ -41,5 +41,6 @@ test('この冒険の書（マスメ自身のセーブデータ）が正常で�
 
 test('遊び方が書いてある', () => {
   const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
-  for (const w of ['遊び方', 'masume serve', 'masume brief', 'masume check', 'ふっかつのじゅもん', 'GM_GUIDE']) assert.match(readme, new RegExp(w), `README に「${w}」`);
+  // 第11章: ふっかつのじゅもんは外した（CONTRACTS §52）ので、README に求めない
+  for (const w of ['遊び方', 'masume serve', 'masume brief', 'masume check', 'GM_GUIDE']) assert.match(readme, new RegExp(w), `README に「${w}」`);
 });

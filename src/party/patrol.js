@@ -241,7 +241,7 @@ export class Party {
       if (view.finished) {
         await Promise.allSettled([...this.active.values()].map((e) => e.promise));
         if (this.fatal) throw this.fatal;
-        this.out(`あがり！ ${view.quest.title} を最後まで走りきりました（ふっかつのじゅもん: ${view.head.jumon}）`);
+        this.out(`あがり！ ${view.quest.title} を最後まで走りきりました（記録 seq ${view.head.seq}）`);
         return 0;
       }
 

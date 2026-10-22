@@ -15,7 +15,7 @@
 | 縄張り | 持ち主 |
 | --- | --- |
 | `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` | GM（判定と契約。キャラクターは編集禁止） |
-| `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load}.js` | 書記 `engine` |
+| `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step}.js` | 書記 `engine` |
 | `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
 | `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
 | `web/assets/sprites/**`、`web/assets/icons/**`、`web/assets/sheet.html` | 絵師 `assets` |
@@ -106,7 +106,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 
 | コマンド | 担当 | 挙動 |
 | --- | --- | --- |
-| `new <map> [--force]` | 書記 | 地図を検証（エラーなら1）→ `.masume/` を作る（既にあれば `--force` なしで `E_EXISTS`/2）→ genesis → **seal ファイルが存在するマスを自動封印**（マスごとに `sealed`）。stdout に `ふっかつのじゅもん: <じゅもん>` を含める |
+| `new <map> [--force]` | 書記 | 地図を検証（エラーなら1）→ `.masume/` を作る（既にあれば `--force` なしで `E_EXISTS`/2）→ genesis → **seal ファイルが存在するマスを自動封印**（マスごとに `sealed`）。stdout に `記録 seq <N>` を含める（第11章でじゅもんを外した） |
 | `validate <map>` | 書記 | §2 |
 | `seal <nodeId…>` / `seal --all` | 書記 | 指定したマスの封印。ファイルが無ければ `E_SEAL_MISSING`/2（何も記録しない）。`--all` は seal を持つマスのうち**ファイルがそろっているものだけ**を封印し、そろっていないマスは「保留」として表示して飛ばす（終了コード0） |
 | `check <characterId\|gateId> [--no-boss]` | 書記 | §4.3〜4.5。成功0 / 判定失敗1 / 前提不足2 |
@@ -114,12 +114,11 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 | `status [--json]` | 書記 | 人間向けの盤面要約。`--json` は §5 のビュー |
 | `brief <characterId> [--json]` | 書記 | §6 の指令書 |
 | `log [--tail N] [--json]` | 書記 | イベント一覧（`--json` はイベント行の配列） |
-| `verify [--jumon "…"] [--json]` | 書記 | SAVE_FORMAT §6。正常なら `冒険の書は正常です`（0）、呪いなら `呪われています` と最初の seq（3）。`--jumon` はそのじゅもんのイベントがあれば0、無ければ1。`--json` は `{ok, errors:[{seq, code, message}], warnings, head:{seq, hash, jumon}}`（`--jumon` 付きなら `found: {seq}|null` も） |
+| `verify [--json]` | 書記 | SAVE_FORMAT §6。正常なら `冒険の書は正常です` と `記録: seq <N>（<hash 12桁>）`（0）、呪いなら `呪われています` と最初の seq（3）。`--json` は `{ok, errors:[{seq, code, message}], warnings, head:{seq, hash}}` |
 | `repair` | 書記 | SAVE_FORMAT §6 |
-| `jumon [--json]` | 書記 | 現在のじゅもん。stdout の最後の行はじゅもんだけ（`--json` は `{seq, hash, jumon}`） |
 | `note <characterId> <text…>` | 書記 | `note` イベント（残りの引数を半角スペースでつないだものが text）。知らないキャラは `E_UNKNOWN`/2 |
 | `amend <map>` | 書記 | §4.8 |
-| `load <seq\|じゅもん>` | 書記 | §4.9 |
+| `load <seq\|commit>` | 書記 | §4.9 |
 | `serve [--port 5005] [--host 127.0.0.1]` | 伝令 | §8。起動したら stdout に `盤面: http://127.0.0.1:<port>/` を出して動き続ける。`--port 0` は空きポート |
 | `export linear [--format csv\|json] [--out file]` | 地図職人 | §9 |
 | `import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` | 地図職人 | §9 |
@@ -209,7 +208,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 
 ### 4.9 ロード
 
-`load <S>`（seq の数字、またはじゅもん）: `0 <= S < 現在の seq` でなければ `E_LOAD`/2。`loaded{to_seq:S}` を記録。再生では、状態を「seq 0..S を再生した状態」に置き換える。
+`load <S>`（seq の数字、または Git のセーブのコミットの先頭7〜40桁。コミットならそれを記録した `saved` の seq）: `0 <= S < 現在の seq` でなければ `E_LOAD`/2。`loaded{to_seq:S}` を記録。再生では、状態を「seq 0..S を再生した状態」に置き換える。
 
 ---
 
@@ -244,7 +243,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
   },
   "log": [ { "seq": 0, "ts": "…", "type": "genesis", "actor": "gm",
              "character": null, "node": null, "ok": null, "text": "冒険の書がひらかれた" } ],  // 古い順、最新200件
-  "head": { "seq": 12, "hash": "…", "jumon": "ゆうて いみや おうき むこう" },
+  "head": { "seq": 12, "hash": "…" },
   "integrity": { "ok": true, "errors": [] },
   "finished": false           // goal が cleared
 }
@@ -265,7 +264,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 
 ```jsonc
 {
-  "jumon": "…", "seq": 12,
+  "seq": 12,
   "character": { "id", "name", "kind", "module", "territory", "level", "xp", "xp_next", "vision", "status" },
   "current": { "id", "type", "title", "detail", "check", "sealed", "seal_broken", "rollback_to" } | null,
   "visible": [ { "id", "type", "title" } ],   // current の先、vision マスまで
@@ -298,7 +297,6 @@ export function seal(root, nodeIds /* string[] | 'all' */, { actor })  // → { 
 export function appendEvent(root, type, data, { actor }) // → 追記したイベント
 export function verify(root)                             // → { ok, errors, warnings, head }
 export function repair(root)                             // → { kept, moved, file }
-export function jumonOf(hashHex)                         // → "ゆうて いみや おうき むこう"
 export function logFile(root)                            // → <root>/.masume/log.jsonl の絶対パス
 export function outputFile(root, seq)                    // → 出力ファイルの絶対パス | null
 export function amend(root, mapPath, { actor })
@@ -529,7 +527,7 @@ export function recordWish(root, { actor = 'gm', text, gm = null, model = null }
   指示「ルートに `quest.map.json` を書く。判定ファイル（E2E）は、パーティが止まらずに進めるよう、**できるだけすべての task と gate の分**を書いて `check.seal` に入れる（少なくとも各エージェントの道の最初の task の分は必ず）。判定はいまは落ちること（まだ何も実装されていない）。本物の外部サービスは使わない。アプリそのものは実装しない」
 - GM を起動する（§13 と同じアダプタ。cwd = ルート、プロンプトは stdin。環境変数 `MASUME_DIR` `MASUME_BIN` `MASUME_WISH` `MASUME_PROMPT_FILE`）。GM の出力は `<root>/quest.log` に追記する。
 - GM が終わったら `quest.map.json` を `validateMap` で検査する。エラーなら、エラー（`[CODE] path: message` の行）と「`quest.map.json` を直して」を書いた追いプロンプトで GM をもう一度起動する（`--retries` 回まで、既定 2）。
-- 正しければ `newGame(root, 'quest.map.json')`（存在する判定ファイルは自動で封印）→ `wish` を記録 → 要約（キャラクター・マス・ゲートの数、ふっかつのじゅもん、次の一手 `masume serve` / `masume party`）を出して終了コード 0。
+- 正しければ `newGame(root, 'quest.map.json')`（存在する判定ファイルは自動で封印）→ `wish` を記録 → 要約（キャラクター・マス・ゲートの数、記録の番号、次の一手 `masume serve` / `masume party`）を出して終了コード 0。
 - 直らなければ `E_INVALID_MAP`/1。GM が 0 以外で終わったら `E_GM`/2。地図が書かれなかったら `E_GM`/2。
 - `--dry-run` は GM を起動せず、GM のコマンドとプロンプトの先頭を出して終了コード 0（何も書かない）。
 
@@ -612,8 +610,8 @@ export function recordWish(root, { actor = 'gm', text, gm = null, model = null }
 | `masume_stamp` | `{node, as}` | `stamp` |
 | `masume_note` | `{character, text, as?}` | `note`（`as` 既定は character） |
 | `masume_log` | `{tail?}` | `log --tail N`（既定 20） |
-| `masume_jumon` | `{}` | `jumon` |
-| `masume_verify` | `{jumon?}` | `verify` |
+| `masume_verify` | `{}` | `verify` |
+| `masume_step` | `{character, as?}` | `step <character>`（§47） |
 | `masume_quest` | `{wish, gm?, model?}` | `quest`（`gm` は `claude` / `codex`。`cmd:` は受け付けない。`MASUME_GM_OVERRIDE` はそのまま効く） |
 
 - `tools/call` `{name, arguments}` → `{content: [{type: "text", text}], isError}`。`text` は CLI の stdout+stderr、`isError` は終了コードが 0 でないとき true（判定失敗も true。出力は返す）。知らない道具・引数の不足は `isError: true` と説明の text。
@@ -1115,3 +1113,13 @@ npm test の揺れを調べたところ、盤面が外の字（Google Fonts）�
 
 - `GOAL11`: 第1章〜第11章のすべての判定がまとめて通り、すべての冒険の書が正常で、README が GridHub として書かれている（ゲームの対応表・`gridhub step`・Git のセーブ・作戦・前後の盤面の絵）。
 - `package.json` の `test:goal` は `GOAL11` に向ける。
+
+## 52. ふっかつのじゅもんを外す（第11章）
+
+ユーザーの判断（「意味のない、なくてもいいレガシー要素を入れるな」）で、ふっかつのじゅもんを外した。
+
+1. `jumon` コマンド・`verify --jumon`・MCP の `masume_jumon`・`verify` の `jumon` 引数は無い（`jumon` は `E_USAGE`/2）。
+2. ビュー・`verify --json`・`new`/`amend`/`load` の `head` は `{seq, hash}`。指令書の JSON に `jumon` は無い（`seq` はある）。
+3. テキストの出力（`new`・`amend`・`load`・`status`・`brief`・`verify`・`quest`・軍師のあがり）は `記録 seq <N>` / `記録: seq <N>` で時点を示す。
+4. 時点を指すのは記録の番号（seq）と、Git でセーブする冒険ではセーブのコミット（`load <commit>`）。ハッシュの鎖による改ざんの検出（`verify`・`repair`）はそのまま。
+5. 盤面（`#jumon`）の扱いは盤面の契約で決める（ビューに `head.jumon` は無い）。

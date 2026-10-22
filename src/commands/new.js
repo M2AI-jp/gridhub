@@ -8,6 +8,6 @@ export async function run(argv, ctx) {
   if (args.length !== 1) usage('つかいかた: new <map> [--force]');
   const result = newGame(gameRoot(command, { creating: true }), resolve(cwd, args[0]), { actor, force: options.force });
   if (options.json) console.log(JSON.stringify(result));
-  else console.log(`冒険の書をひらきました\nふっかつのじゅもん: ${result.head.jumon}`);
+  else console.log(`冒険の書をひらきました（記録 seq ${result.head.seq}）`);
   return 0;
 }

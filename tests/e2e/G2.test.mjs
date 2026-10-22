@@ -35,7 +35,7 @@ test('チュートリアルを CLI だけで最後まで遊びきれる', () => 
       // 指令書が読める
       const b = masume(['brief', c.id, '--dir', dir]);
       assert.equal(b.code, 0, b.all);
-      assert.match(b.out, /ふっかつのじゅもん/);
+      assert.match(b.out, /記録: seq \d+/);
       let r;
       if (node.check?.kind === 'stamp') {
         apply(c.at); // 人間のマスも、作業をしてからハンコを押す
