@@ -2,13 +2,12 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:f
 import { resolve } from 'node:path';
 import { canonical, sha256 } from './canonical.js';
 import { MasumeError } from './errors.js';
-import { findJumon, headOf } from './jumon.js';
 import { readMapFile, validateMap } from './map.js';
 import { containedFile, logFile } from './paths.js';
 import { saveTerritory } from './save.js';
 import { gateMembers, isSealed, replay, sealFiles } from './state.js';
 import {
-  appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+  appendEventsLocked, defaultActor, headOf, inspectLog, requireHealthy, withLock, writeDurable,
 } from './store.js';
 
 function collectSeals(root, map, nodeIds, { skipMissing = () => false } = {}) {
@@ -179,16 +178,32 @@ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
   });
 }
 
-export function load(root, seqOrJumon, { actor = defaultActor() } = {}) {
+/**
+ * ロード先を seq に直す。seq（数字）か、Git のセーブのコミット（7〜40桁の16進。saved の commit の先頭）で指す。
+ * コミットで指したときは、そのセーブを記録した時点（いちばん新しい saved）に戻る。
+ */
+export function resolveLoadTarget(events, target) {
+  if (typeof target === 'number') return target;
+  if (typeof target !== 'string') return null;
+  const text = target.trim();
+  if (/^\d+$/u.test(text)) return Number(text);
+  if (/^[0-9a-f]{7,40}$/iu.test(text)) {
+    const prefix = text.toLowerCase();
+    for (let i = events.length - 1; i >= 0; i--) {
+      const { type, data, seq } = events[i];
+      if (type === 'saved' && typeof data?.commit === 'string' && data.commit.startsWith(prefix)) return seq;
+    }
+  }
+  return null;
+}
+
+export function load(root, target, { actor = defaultActor() } = {}) {
   return withLock(root, actor, () => {
     const snapshot = requireHealthy(inspectLog(root));
     const previous = snapshot.events.at(-1);
-    const seq = typeof seqOrJumon === 'number' ? seqOrJumon
-      : typeof seqOrJumon !== 'string' ? null
-        : /^\d+$/u.test(seqOrJumon) ? Number(seqOrJumon)
-          : findJumon(snapshot.events, seqOrJumon)?.seq;
+    const seq = resolveLoadTarget(snapshot.events, target);
     if (!Number.isSafeInteger(seq) || seq < 0 || seq >= previous.seq) {
-      throw new MasumeError('E_LOAD', 'ロード先は現在より前の seq を指定してください');
+      throw new MasumeError('E_LOAD', 'ロード先は、いまより前の記録の番号（seq）か、Git のセーブのコミットで指定してください');
     }
     const events = appendEventsLocked(root, [{ type: 'loaded', data: { to_seq: seq } }],
       { actor, previous });

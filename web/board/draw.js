@@ -106,19 +106,28 @@ let monstersRef = {};
 /** 1ページ目の右上: 章のあがり（魔王の城）がここから見える（GAME_DESIGN §1・§6） */
 function goalPreview(view, pl, monsters) {
   const n = own(view.nodes, view.quest.goal);
-  const x = wx(0, 26.2);
-  const y = wy(2.9);
-  const w = 8.6 * U;
-  const h = 3.9 * U;
+  const x = wx(0, 25.6);
+  const y = wy(2.7);
+  const w = 9.2 * U;
+  const h = 6.6 * U;
   const cleared = n?.state === 'cleared';
   const tests = n?.tests?.total ? `テスト ${n.tests.pass}/${n.tests.total}` : '';
+  const title = (n?.title || '').replace(/^(結合|あがり)[:：]\s*/, '');
+  // 遠くに見える魔王の城（塔3つと門。手前に山の稜線）
+  const bx = x + 0.6 * U;
+  const by = y + h - 0.5 * U;
+  const castle = `M${f1(bx + 0.6 * U)} ${f1(by)} V${f1(by - 2.1 * U)} h${f1(0.9 * U)} v${f1(-0.9 * U)} l${f1(0.45 * U)} ${f1(-0.7 * U)} l${f1(0.45 * U)} ${f1(0.7 * U)} v${f1(0.9 * U)} h${f1(0.8 * U)} V${f1(by - 3.3 * U)} l${f1(0.6 * U)} ${f1(-0.9 * U)} l${f1(0.6 * U)} ${f1(0.9 * U)} V${f1(by - 2.1 * U)} h${f1(0.8 * U)} v${f1(-0.9 * U)} l${f1(0.45 * U)} ${f1(-0.7 * U)} l${f1(0.45 * U)} ${f1(0.7 * U)} v${f1(0.9 * U)} h${f1(0.9 * U)} V${f1(by)} Z`;
+  const gate = `M${f1(bx + 3)} ${f1(by)} v${f1(-0.9 * U)} q${f1(0.55 * U)} ${f1(-0.8 * U)} ${f1(1.1 * U)} 0 v${f1(0.9 * U)}`;
+  const ridge = `M${f1(x + 2)} ${f1(by)} l${f1(1.1 * U)} ${f1(-0.9 * U)} l${f1(0.8 * U)} ${f1(0.5 * U)} M${f1(x + w - 2.2 * U)} ${f1(by)} l${f1(0.9 * U)} ${f1(-1.1 * U)} l${f1(1.1 * U)} ${f1(1.1 * U)}`;
   return `<g class="goal-preview" aria-label="章のあがり ${esc(view.quest.goal)}（p.${pl.page + 1}）">
     <path class="pencil-line preview-frame" d="${box(x, y, w, h, 'preview', 0.8)}"/>
-    <path class="pen castle-mini" d="M${f1(x + 6)} ${f1(y + h - 4)} V${f1(y + h * 0.42)} h5 v-4 h4 v4 h5 V${f1(y + h * 0.3)} l5 -8 l5 8 V${f1(y + h * 0.42)} h5 v-4 h4 v4 h5 V${f1(y + h - 4)} Z M${f1(x + 25)} ${f1(y + h - 4)} v-9 q5 -6 10 0 v9"/>
-    ${monsterMarkup(monsters, 'maou', x + 2.75 * U, y + 0.15 * U, 1.9 * U, cleared ? '#ffffff' : '#e6dcff', cleared ? 'is-slain' : '')}
-    <text class="marker-text preview-head" x="${f1(x + 4.7 * U)}" y="${f1(y + 1.3 * U)}">あがり</text>
-    <text class="hand preview-sub" x="${f1(x + 4.7 * U)}" y="${f1(y + 2.25 * U)}">魔王の城 ↓p.${pl.page + 1}</text>
-    <text class="hand preview-sub" x="${f1(x + 4.7 * U)}" y="${f1(y + 3.15 * U)}">${esc(tests)}</text>
+    <text class="marker-text preview-head" x="${f1(x + 0.5 * U)}" y="${f1(y + 1.15 * U)}">あがり</text>
+    <text class="hand preview-sub" x="${f1(x + 3.4 * U)}" y="${f1(y + 1.1 * U)}">魔王の城 ↓p.${pl.page + 1}</text>
+    <text class="hand preview-title" x="${f1(x + 0.5 * U)}" y="${f1(y + 2.05 * U)}">${esc(wrap(title, 13, 1)[0] || '')}</text>
+    <path class="preview-ridge" d="${ridge}"/>
+    <path class="pen castle-mini" d="${castle}"/><path class="pen" d="${gate}"/>
+    ${monsterMarkup(monsters, 'maou', x + w - 3.6 * U, y + 2.2 * U, 3.1 * U, cleared ? '#ffffff' : '#e6dcff', cleared ? 'is-slain' : '')}
+    <text class="hand preview-sub" x="${f1(x + w - 2.05 * U)}" y="${f1(y + h - 0.3 * U)}" text-anchor="middle">${esc(tests)}</text>
   </g>`;
 }
 
@@ -143,8 +152,8 @@ export function headLayer(view, lay, sprites, monsters = {}) {
   if (big && titleW > 0) out += `<path class="title-swipe" data-tool="marker" d="M${wx(0, X0 + 1)} ${wy(3 + 1.55)} L${wx(0, X0 + 1 + titleW)} ${wy(3 + 1.5)}"/>`;
   const pitchY = 3 + rowsUsed + 0.95;
   const goalPl = lay.place[view.quest?.goal];
-  const preview = goalPl && title.length * cell <= 24 && rowsUsed <= 2;
-  out += `<text class="hand quest-pitch" x="${wx(0, X0 + 1)}" y="${wy(pitchY)}">${esc(wrap(view.quest?.pitch || '', preview ? 33 : 54, 1)[0] || '')}</text>`;
+  const preview = goalPl && title.length * cell <= 22 && rowsUsed <= 2;
+  out += `<text class="hand quest-pitch" x="${wx(0, X0 + 1)}" y="${wy(pitchY)}">${esc(wrap(view.quest?.pitch || '', preview ? 28 : 54, 1)[0] || '')}</text>`;
   if (preview) out += goalPreview(view, goalPl, monstersRef);
   // ふりだし（マジックの赤い字。2×2 目の枠に1字ずつ）
   const fy = 7;
@@ -526,7 +535,7 @@ function taskMarkup(pl, n, chars, attrs, extra) {
   const tests = n.tests && Number.isInteger(n.tests.total) ? n.tests : { pass: casesOf(n).filter((c) => c.ok === true).length, total: casesOf(n).length };
   const label = stamp ? 'ハンコ' : tests.total > 0 ? `テスト ${tests.pass}/${tests.total}` : 'テスト ？';
   s += `<text class="hand cell-tests${t}${narrow ? ' narrow' : ''}${!stamp && tests.total && tests.pass === tests.total ? ' all' : ''}" x="${X + W - 3}" y="${Y + U - 3.5}" text-anchor="end">${esc(label)}</text>`;
-  if (n.first_try === true && st === 'cleared') s += `<text class="medal-mark" x="${X + 3 + textW(id, 11.5) + 3}" y="${Y + U - 3.5}"><title>一発で出口を抜けた（ちいさなメダル）</title>◎</text>`;
+  if (n.first_try === true && st === 'cleared' && !narrow) s += `<text class="medal-mark" x="${X + 3 + textW(id, 11.5) + 3}" y="${Y + U - 3.5}"><title>一発で出口を抜けた（ちいさなメダル）</title>◎</text>`;
   // 題（技術の言葉。大きく、2行まで）
   const lines = titleLines(n.title, stamp ? pl.w - 2 : pl.w, Math.max(1, pl.h - 1));
   lines.forEach((l, k) => (s += `<text class="hand cell-title${t}" x="${X + 4}" y="${Y + U * (2 + k) - 3.5}">${esc(l)}</text>`));

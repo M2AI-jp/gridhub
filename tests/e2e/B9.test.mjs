@@ -180,7 +180,7 @@ test('§36.4 物: 駒はシール、名札は付箋とマスキングテープ�
     for (const n of r.heads) assert.ok(n >= 1, '名札はマスキングテープ（.tape）で貼る');
     assert.ok(r.punch >= 3, `ルーズリーフのとじ穴 #side .punch が3つ以上（${r.punch}）`);
 
-    await page.eval(`document.querySelector('#copy-jumon').click()`);
+    await page.eval(`document.querySelector('#copy-record').click()`); // 第11章 §52: 記録の目印を写す
     await page.waitFor(`document.querySelectorAll('#toast .toast').length > 0`, { message: '知らせが出る' });
     await sleep(900);
     const m = await page.eval(`getComputedStyle(document.querySelector('#toast .toast')).transform`);

@@ -35,7 +35,7 @@ test('チュートリアルを CLI だけで最後まで遊びきれる', () => 
       // 指令書が読める
       const b = masume(['brief', c.id, '--dir', dir]);
       assert.equal(b.code, 0, b.all);
-      // 第11章 §52（GM）: ふっかつのじゅもんは人に見せない。いまの記録の目印は「記録: seq N」（と Git のコミット）。
+      // 第11章 §52（GM）: いまの記録の目印は「記録: seq N」（と Git のコミット）。じゅもんはやめた。
       assert.match(b.out, /記録: seq \d+/);
       let r;
       if (node.check?.kind === 'stamp') {

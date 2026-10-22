@@ -14,7 +14,6 @@ export function brief(root, characterId) {
       && event.type === 'note' && event.data.character === characterId)
     .slice(-5).reverse().map(({ seq, ts, data }) => ({ seq, ts, text: data.text }));
   return {
-    jumon: view.head.jumon,
     seq: view.head.seq,
     character: {
       id: character.id, name: character.name, kind: character.kind,
