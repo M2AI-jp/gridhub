@@ -1,8 +1,9 @@
 // E11「Git のセーブの作法」— CONTRACTS §43.2（第11章）のうち E10 で確かめていない所。
 // ゲームのルートが Git のサブディレクトリでも動く・フックを走らせない・署名しない・ユーザーの名前があればそれを使う。
+// そして、Git のセーブはユーザーの変更を決して壊さない（merge の途中は触らない・ignore されたファイルも墓に・リンクの先に書かない）。
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdirSync, writeFileSync, readFileSync, chmodSync } from 'node:fs';
+import { mkdirSync, writeFileSync, readFileSync, chmodSync, symlinkSync, rmSync, statSync, lstatSync, readlinkSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmp, masume, setupDungeon, passAll, setCases, git, gitInit, GIT_ENV, events } from '../helpers5.mjs';
 
@@ -58,4 +59,81 @@ test('§43.2 ルートが Git のサブディレクトリ。フックは走ら�
   assert.equal(readFileSync(join(root, 'a', 'x.js'), 'utf8'), 'x\n');
   assert.equal(readFileSync(join(repo, 'a', 'outside.js'), 'utf8'), 'ルートの外の a/\n', 'ルートの外は触らない');
   assert.equal(masume(['verify', '--dir', root]).code, 0);
+});
+
+/** a を町（AC）まで進めてセーブさせた Git の冒険 */
+function townDungeon(prepare = () => {}) {
+  const root = tmp('gridhub-e11t-');
+  gitInit(root);
+  setupDungeon(root, { save: true });
+  assert.equal(masume(['new', 'dungeon.map.json'], { cwd: root, env: GIT_ENV }).code, 0);
+  prepare(root);
+  passAll(root, 'A1');
+  passAll(root, 'A2');
+  const check = (who) => masume(['check', who, '--as', who, '--dir', root], { env: GIT_ENV });
+  assert.equal(check('a').code, 0);
+  assert.equal(check('a').code, 0);
+  assert.equal(events(root, 'saved').at(-1).data.node, 'AC');
+  return { root, check };
+}
+
+test('§43 Git が merge の途中なら、セーブも巻き戻しもしない（ユーザーの作業を壊さない）', () => {
+  const { root, check } = townDungeon((r) => write(r, 'a/x.js', '1\n'));
+  write(root, 'a/x.js', 'merge の途中の変更\n');
+  const head = git(root, ['rev-parse', 'HEAD']).out;
+  writeFileSync(join(root, '.git', 'MERGE_HEAD'), `${head}\n`);
+  setCases(root, 'A3', {});
+  assert.equal(check('a').code, 1, '判定の結果は変わらない');
+  const restored = events(root, 'restored').at(-1);
+  assert.match(restored.data.error, /MERGE_HEAD/);
+  assert.equal(restored.data.stash, null);
+  assert.equal(readFileSync(join(root, 'a', 'x.js'), 'utf8'), 'merge の途中の変更\n', '作業ツリーはそのまま');
+  assert.equal(git(root, ['stash', 'list']).out, '');
+  assert.equal(masume(['verify', '--dir', root]).code, 0);
+});
+
+test('§43.4 巻き戻し: .gitignore されたファイルも墓に残し、実行ビットとシンボリックリンクを戻し、リンクの先には書かない', () => {
+  const { root, check } = townDungeon((r) => {
+    write(r, 'a/x.js', '町の x\n');
+    write(r, 'a/run.sh', '#!/bin/sh\necho 町\n');
+    chmodSync(join(r, 'a', 'run.sh'), 0o755);
+    symlinkSync('x.js', join(r, 'a', 'link'));
+    write(r, 'a/cache.log', '町の cache\n');
+    write(r, 'a/evil', '町の evil\n');
+  });
+  const town = events(root, 'saved').at(-1).data.commit;
+  // 町のあとで、ユーザーが自分でコミットした（縄張りのファイルを消し・変え、*.log を ignore にし、a/evil をルートの外へのリンクにした）
+  const outside = join(root, '..', `${root.split('/').pop()}-outside.txt`);
+  writeFileSync(outside, 'ルートの外\n');
+  write(root, 'a/x.js', 'ユーザーがコミットした x\n');
+  write(root, '.gitignore', '*.log\n');
+  assert.equal(git(root, ['rm', '-q', '--cached', 'a/run.sh', 'a/link', 'a/cache.log', 'a/evil']).code, 0);
+  rmSync(join(root, 'a', 'run.sh'));
+  rmSync(join(root, 'a', 'link'));
+  rmSync(join(root, 'a', 'evil'));
+  symlinkSync(outside, join(root, 'a', 'evil'));
+  assert.equal(git(root, ['add', 'a/x.js', 'a/evil', '.gitignore']).code, 0);
+  assert.equal(git(root, ['-c', 'user.name=u', '-c', 'user.email=u@example.com', 'commit', '-q', '-m', 'ユーザーのコミット']).code, 0);
+  write(root, 'a/cache.log', 'ignore された大事なメモ\n');
+  write(root, 'a/x.js', 'こわした x\n');
+
+  setCases(root, 'A3', {});
+  assert.equal(check('a').code, 1);
+  const restored = events(root, 'restored').at(-1);
+  assert.equal(restored.data.error, undefined, restored.data.error);
+  assert.equal(restored.data.commit, town);
+  assert.equal(readFileSync(join(root, 'a', 'x.js'), 'utf8'), '町の x\n');
+  assert.equal(readFileSync(join(root, 'a', 'run.sh'), 'utf8'), '#!/bin/sh\necho 町\n');
+  assert.ok(statSync(join(root, 'a', 'run.sh')).mode & 0o100, '実行ビットも戻る');
+  assert.ok(lstatSync(join(root, 'a', 'link')).isSymbolicLink(), 'シンボリックリンクはリンクとして戻る');
+  assert.equal(readlinkSync(join(root, 'a', 'link')), 'x.js');
+  assert.equal(readFileSync(join(root, 'a', 'cache.log'), 'utf8'), '町の cache\n');
+  assert.ok(!lstatSync(join(root, 'a', 'evil')).isSymbolicLink());
+  assert.equal(readFileSync(join(root, 'a', 'evil'), 'utf8'), '町の evil\n');
+  assert.equal(readFileSync(outside, 'utf8'), 'ルートの外\n', 'リンクの先（ルートの外）には書かない');
+  // 墓から、こわした x も ignore されていたメモも取り出せる（ユーザーのコミット済みの変更は HEAD に残っている）
+  assert.match(git(root, ['show', 'HEAD:a/x.js']).out, /ユーザーがコミットした x/);
+  const grave = git(root, ['show', `${restored.data.stash}:a/x.js`]);
+  assert.equal(grave.out, 'こわした x');
+  assert.equal(git(root, ['show', `${restored.data.stash}^3:a/cache.log`]).out, 'ignore された大事なメモ', 'ignore されたファイルも墓に');
 });

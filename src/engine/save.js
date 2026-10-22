@@ -1,7 +1,9 @@
 // 町 = セーブ = Git のコミット（CONTRACTS §43）。quest.save が "git" の冒険だけが使う。
 // ユーザーのほかの変更やステージ（index）には触れない。push・フック・署名はしない。
 import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync, unlinkSync, writeFileSync, mkdirSync } from 'node:fs';
+import {
+  chmodSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readdirSync, rmdirSync, rmSync, symlinkSync, unlinkSync, writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 
@@ -87,7 +89,36 @@ function repository(root) {
     GIT_AUTHOR_NAME: name || FALLBACK.name, GIT_COMMITTER_NAME: name || FALLBACK.name,
     GIT_AUTHOR_EMAIL: email || FALLBACK.email, GIT_COMMITTER_EMAIL: email || FALLBACK.email,
   };
+  // merge・rebase・cherry-pick・revert・bisect の途中は、ユーザーの作業の最中なので触らない。
+  const gitDir = run(['rev-parse', '--absolute-git-dir']).out.trim();
+  const busy = ['MERGE_HEAD', 'rebase-merge', 'rebase-apply', 'CHERRY_PICK_HEAD', 'REVERT_HEAD', 'BISECT_LOG']
+    .find((entry) => existsSync(join(gitDir, entry)));
+  if (busy) return { error: `Git が ${busy} の途中なので、触りません（終わってから続けてください）` };
   return { top, prefix, git: gitRunner(top, identity), head: head.code === 0 ? head.out.trim() : null };
+}
+
+/** ルートからの相対パスのファイルの、作業ツリーでの lstat（無ければ null） */
+function lstatOrNull(path) {
+  try {
+    return lstatSync(path);
+  } catch (error) {
+    if (['ENOENT', 'ENOTDIR'].includes(error.code)) return null;
+    throw error;
+  }
+}
+
+/** 中身が空になったディレクトリを、stop の手前まで消す */
+function pruneEmpty(directory, stop) {
+  let current = directory;
+  while (current.startsWith(`${stop}/`) && current !== stop) {
+    try {
+      if (readdirSync(current).length > 0) return;
+      rmdirSync(current);
+    } catch {
+      return;
+    }
+    current = dirname(current);
+  }
 }
 
 /** ルートの中で、Git で変更・追加・削除されているファイル（ルートからの相対パス） */
@@ -165,32 +196,55 @@ export function restoreTerritory(root, map, characterId, node, seq, target) {
     if (!target) return { ...base, stash: null, error: 'このキャラクターのセーブ（町のコミット）がありません' };
     const repo = repository(resolve(root));
     if (repo.error) return { ...base, stash: null, error: repo.error };
+    if (repo.git(['cat-file', '-e', `${target}^{commit}`], { allowFail: true }).code !== 0) {
+      return { ...base, stash: null, error: `戻り先のコミット ${target.slice(0, 7)} が見つかりません` };
+    }
     const inTerritory = matcher(map, [characterId]);
-    const changed = changedFiles(repo).filter(inTerritory).sort();
+    const base_ = join(repo.top, repo.prefix);
+    // 戻り先から取り出すファイル（いまの HEAD と戻り先で違う縄張りのファイル）
+    const restoring = repo.head && repo.head !== target ? diffFiles(repo, target, repo.head).filter(inTerritory) : [];
+    // 墓に入れるもの: 縄張りの変更・追加・削除と、取り出すと上書きされる .gitignore されたファイル。
+    // （ユーザーの変更は、どれも墓に残ってから作業ツリーが変わる。何も無くならない）
+    const changed = changedFiles(repo).filter(inTerritory);
+    const ignored = restoring.filter((file) => !changed.includes(file)
+      && repo.git(['cat-file', '-e', `${repo.head}:${repo.prefix}${file}`], { allowFail: true }).code !== 0
+      && lstatOrNull(join(base_, file)) !== null);
+    const graveFiles = [...new Set([...changed, ...ignored])].sort();
     let stash = null;
-    if (changed.length) {
+    if (graveFiles.length) {
       const before = repo.git(['rev-parse', '-q', '--verify', 'refs/stash'], { allowFail: true }).out.trim();
-      repo.git(['stash', 'push', '--include-untracked', '-q',
-        '-m', `gridhub grave: ${characterId} ${node} seq ${seq}`, '--', ...changed.map((file) => `:(literal)${repo.prefix}${file}`)]);
+      repo.git(['stash', 'push', ignored.length ? '--all' : '--include-untracked', '-q',
+        '-m', `gridhub grave: ${characterId} ${node} seq ${seq}`, '--', ...graveFiles.map((file) => `:(literal)${repo.prefix}${file}`)]);
       const after = repo.git(['rev-parse', '-q', '--verify', 'refs/stash'], { allowFail: true }).out.trim();
       stash = after && after !== before ? after : null;
+      // 墓に入ったことを確かめてから、作業ツリーを変える
+      const left = changedFiles(repo).filter(inTerritory);
+      if (!stash || left.length) {
+        return { ...base, stash, error: `縄張りの変更を墓に入れきれませんでした（${left.slice(0, 3).join('、') || 'stash が作れません'}）。作業ツリーはそのままです` };
+      }
     }
-    // いまの作業ツリー（= HEAD）と戻り先で違う縄張りのファイルを、戻り先から取り出す。
-    if (repo.head && repo.head !== target) {
-      for (const file of diffFiles(repo, target, repo.head).filter(inTerritory)) {
-        const path = join(repo.top, repo.prefix, file);
-        const blob = repo.git(['cat-file', '-e', `${target}:${repo.prefix}${file}`], { allowFail: true });
-        if (blob.code === 0) {
-          const bytes = repo.git(['cat-file', 'blob', `${target}:${repo.prefix}${file}`], { raw: true }).out;
-          mkdirSync(dirname(path), { recursive: true });
-          writeFileSync(path, bytes);
-        } else {
-          try {
-            unlinkSync(path);
-          } catch (error) {
-            if (error.code !== 'ENOENT') throw error;
-          }
-        }
+    // 消すものを先に（ファイルとディレクトリが入れ替わるときのため）、それから書く。
+    const entries = restoring.map((file) => {
+      const listed = repo.git(['ls-tree', '-z', target, '--', `${repo.prefix}${file}`]).out;
+      const match = /^(\d+) (\w+) ([0-9a-f]+)\t/u.exec(listed);
+      return { file, path: join(base_, file), mode: match?.[1] ?? null, type: match?.[2] ?? null, oid: match?.[3] ?? null };
+    });
+    for (const { path } of entries) {
+      const stat = lstatOrNull(path);
+      if (stat && !stat.isDirectory()) unlinkSync(path);
+      pruneEmpty(dirname(path), repo.top);
+    }
+    for (const { path, mode, type, oid } of entries) {
+      if (type !== 'blob') continue; // 戻り先に無い（消すだけ）・サブモジュールは書かない
+      const bytes = repo.git(['cat-file', 'blob', oid], { raw: true }).out;
+      mkdirSync(dirname(path), { recursive: true });
+      // 縄張りの外のファイルが入ったディレクトリかもしれないので、消さずに止める（ここまでの変更は墓にある）
+      if (lstatOrNull(path)?.isDirectory()) throw new GitError(`${path} がディレクトリなので戻せません`);
+      if (mode === '120000') {
+        symlinkSync(bytes.toString('utf8'), path);
+      } else {
+        writeFileSync(path, bytes, { flag: 'wx' });
+        if (mode === '100755') chmodSync(path, 0o755);
       }
     }
     return { ...base, stash };

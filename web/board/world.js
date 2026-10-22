@@ -22,12 +22,23 @@ export function pageOrigin(p) {
 }
 
 /** 道の並べ方: ゲートのメンバーがなるべく隣り合う順 */
+const laneCache = new Map();
 export function orderLanes(characters, nodes) {
   const ids = characters.map((c) => c.id);
   const gates = Object.values(nodes)
     .filter((n) => n && n.type === 'gate' && Array.isArray(n.members) && n.members.length < ids.length)
     .map((n) => n.members.filter((m) => ids.includes(m)))
     .filter((m) => m.length > 1);
+  // 同じキャラクターとゲートなら、前に決めた並びを使う（8人で 40320 通りを毎回数え直さない）
+  const key = JSON.stringify([ids, gates]);
+  if (laneCache.has(key)) return laneCache.get(key);
+  const best = searchLanes(ids, gates);
+  if (laneCache.size > 20) laneCache.clear();
+  laneCache.set(key, best);
+  return best;
+}
+
+function searchLanes(ids, gates) {
   if (ids.length > 8 || gates.length === 0) return ids;
   const score = (order) => {
     const pos = new Map(order.map((id, i) => [id, i]));
