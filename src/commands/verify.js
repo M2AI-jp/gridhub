@@ -1,5 +1,6 @@
 import { inspectLog } from '../engine/store.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+import { recordLine } from '../engine/record.js';
 
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx);
@@ -13,7 +14,7 @@ export async function run(argv, ctx) {
     for (const { seq, code, message } of errors) console.log(`[${code}] seq ${seq}: ${message}`);
   } else {
     console.log('冒険の書は正常です');
-    if (head) console.log(`記録: seq ${head.seq}（${head.hash.slice(0, 12)}）`);
+    if (head) console.log(`${recordLine(head)}（鎖の先頭 ${head.hash.slice(0, 12)}）`);
   }
   return ok ? 0 : 3;
 }

@@ -1,5 +1,6 @@
 import { buildView } from '../engine/index.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+import { recordLine } from '../engine/record.js';
 import { requireHealthy } from '../engine/store.js';
 
 export async function run(argv, ctx) {
@@ -17,7 +18,7 @@ export async function run(argv, ctx) {
       console.log(`${character.name}: ${location} / ${statuses[character.status]} / Lv${character.level}`
         + ` 経験値 ${character.xp}/${character.xp_next} / 成功 ${character.clears}・失敗 ${character.fails}`);
     }
-    console.log(`記録: seq ${view.head.seq}（${view.head.hash.slice(0, 12)}）`);
+    console.log(recordLine(view.head));
   }
   return 0;
 }

@@ -31,7 +31,7 @@ function recordWish(root, { actor, text, gm, model }) {
   return engine.appendEvent(root, 'wish', { text, gm, model }, { actor });
 }
 
-function summarize(root, view, seq) {
+function summarize(root, view) {
   const nodes = Object.values(view.nodes);
   const sealable = nodes.filter((n) => (n.check?.seal ?? []).length > 0);
   return {
@@ -46,7 +46,8 @@ function summarize(root, view, seq) {
     sealed: sealable.filter((n) => n.sealed).length,
     unsealed: sealable.filter((n) => !n.sealed).map((n) => n.id),
     sealable: sealable.length,
-    seq,
+    seq: view.head.seq,
+    commit: view.head.commit,
   };
 }
 
@@ -73,7 +74,7 @@ function printSummary(say, { root, cwd, bin }, s) {
   if (s.setup.error) say(`※ 支度（AGENTS.md ほか）に失敗しました: ${s.setup.error}\n  あとで masume init${root === cwd ? '' : ` --dir ${quote(root)}`} を打ってください`);
   else printSetup(say, s.setup);
   if (s.beginning?.commit) say(`  最初のコミット: ${s.beginning.commit.slice(0, 7)} gridhub: 冒険のはじまり`);
-  say(`記録: seq ${s.seq}`);
+  say(engine.recordLine(s));
   say('');
   say('次の一手:');
   say(`  盤面を開く      masume serve${dir}`);
@@ -202,14 +203,14 @@ export async function runQuest(opts, ctx) {
   const repository = ensureRepository(root);
   if (repository.error) say(`※ ${repository.error}。Git のセーブなしで続けます（町に着いてもコミットされません）`);
   else if (repository.initialized) say('ここは Git の作業ツリーではなかったので、git init しました');
-  const { head } = engine.newGame(root, mapFile, { actor: opts.actor, force: Boolean(opts.force) });
+  engine.newGame(root, mapFile, { actor: opts.actor, force: Boolean(opts.force) });
   const wish = recordWish(root, { actor: opts.actor, text: opts.wish, gm: gm.kind, model });
   try {
     writeFileSync(join(root, 'WISH.md'), `# 願い\n\n${opts.wish}\n`);
   } catch (error) {
     say(`※ WISH.md を書けませんでした（${error.message}）。願いは冒険の書に記録してあります`);
   }
-  const summary = summarize(root, engine.buildView(root), wish?.seq ?? head.seq);
+  const summary = summarize(root, engine.buildView(root));
   summary.setup = prepareProject(root, { gm: opts.gm, override, allowListen, ctx });
   if (repository.initialized) {
     const beginning = commitBeginning(root);

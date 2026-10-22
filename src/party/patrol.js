@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  MasumeError, buildView, outputFile, recordReturn, recordSortie,
+  MasumeError, buildView, outputFile, recordLine, recordReturn, recordSortie,
 } from '../engine/index.js';
 import { launch } from './agents.js';
 import { startBoss } from './boss.js';
@@ -241,7 +241,7 @@ export class Party {
       if (view.finished) {
         await Promise.allSettled([...this.active.values()].map((e) => e.promise));
         if (this.fatal) throw this.fatal;
-        this.out(`あがり！ ${view.quest.title} を最後まで走りきりました（記録 seq ${view.head.seq}）`);
+        this.out(`あがり！ ${view.quest.title} を最後まで走りきりました（${recordLine(view.head)}）`);
         return 0;
       }
 
