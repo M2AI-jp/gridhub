@@ -20,10 +20,9 @@ const COMMANDS = {
   log: ['書記', '冒険の書を読む', 'log [--tail N] [--json]'],
   verify: ['書記', '冒険の書のハッシュの鎖を検証する（改ざんを見つける）', 'verify [--json]'],
   repair: ['書記', '呪われたセーブデータを修復する', 'repair'],
-  jumon: ['書記', '旧版との互換', 'jumon [--json]'],
   note: ['書記', '日誌を書く（次の自分への申し送り）', 'note <characterId> <text>'],
   amend: ['書記', '地図を改訂する（歴史は書き換えられない）', 'amend <map.json>'],
-  load: ['書記', '過去の時点（冒険の書の seq）に戻る', 'load <seq>'],
+  load: ['書記', '過去の時点（冒険の書の seq か Git のコミット）の盤面に戻る', 'load <seq|commit>'],
   sortie: ['書記', 'エージェントの出撃を記録する', 'sortie <characterId> --agent <name> [--model M]'],
   return: ['書記', 'エージェントの帰還を記録する', 'return <characterId> --sortie <seq> --code <n> [--log file]'],
   wish: ['書記', '冒険の始まりの願いを記録する', 'wish <text> [--gm G] [--model M]'],
@@ -37,8 +36,6 @@ const COMMANDS = {
   linear: ['地図職人', 'Linear と同期する', 'linear push|pull [--team KEY] [--project NAME]'],
   jira: ['地図職人', 'Jira と同期する', 'jira push|pull [--project KEY]'],
 };
-// 旧版との互換のために受け付けるが、--help には出さないコマンド（CONTRACTS §52）。
-const HIDDEN = new Set(['jumon']);
 
 function usage() {
   const lines = [
@@ -48,7 +45,6 @@ function usage() {
     '',
   ];
   for (const [name, [who, what, how]] of Object.entries(COMMANDS)) {
-    if (HIDDEN.has(name)) continue;
     lines.push(`  ${how.padEnd(44)} ${what}（担当: ${who}）`);
   }
   lines.push('', '--allow-listen: 判定が 127.0.0.1 にサーバーを立てられるよう、Codex の箱（サンドボックス）のソケットを開ける。',
