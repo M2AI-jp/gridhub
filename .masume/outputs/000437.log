@@ -1,0 +1,15 @@
+=== E11: node --test --test-reporter=spec tests/e2e/E11.test.mjs ===
+✔ §43.2 ルートが Git のサブディレクトリ。フックは走らせず、commit.gpgsign があっても署名しない (751.614944ms)
+✔ §43 Git が merge の途中なら、セーブも巻き戻しもしない（ユーザーの作業を壊さない） (662.601366ms)
+✔ §43.4 巻き戻し: .gitignore されたファイルも墓に残し、実行ビットとシンボリックリンクを戻し、リンクの先には書かない (904.309928ms)
+✔ §43・§52.5 load は町のセーブのコミットでも指せる（そのセーブを記録した時点に戻る）。じゅもんは受け付けない (1008.187438ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3408.631946
+
+(exit 0, 3468ms)

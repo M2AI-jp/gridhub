@@ -1,0 +1,12 @@
+=== G9: node --test --test-reporter=spec tests/e2e/G9.test.mjs ===
+✔ step するたびに、盤面のモンスターと駒が1マスずつ映る（書記 × 盤面 × 絵師） (5024.708934ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 8112.651034
+
+(exit 0, 8159ms)

@@ -2,12 +2,12 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync } from 'node:f
 import { resolve } from 'node:path';
 import { canonical, sha256 } from './canonical.js';
 import { MasumeError } from './errors.js';
-import { findJumon, headOf } from './jumon.js';
 import { readMapFile, validateMap } from './map.js';
 import { containedFile, logFile } from './paths.js';
+import { saveTerritory } from './save.js';
 import { gateMembers, isSealed, replay, sealFiles } from './state.js';
 import {
-  appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock, writeDurable,
+  appendEventsLocked, commitOfEvent, defaultActor, headOf, inspectLog, requireHealthy, withLock, writeDurable,
 } from './store.js';
 
 function collectSeals(root, map, nodeIds, { skipMissing = () => false } = {}) {
@@ -80,6 +80,12 @@ export function newGame(root, mapPath, { actor = defaultActor(), force = false }
       },
       ...seals,
     ], { actor });
+    // Git でセーブする冒険は、ふりだしで全員の縄張りをセーブする（§43.3）。
+    if (map.quest.save === 'git') {
+      events.push(...appendEventsLocked(root, [{
+        type: 'saved', data: saveTerritory(root, map, map.characters.map(({ id }) => id), null),
+      }], { actor, previous: events.at(-1) }));
+    }
     return { head: headOf(events) };
   });
 }
@@ -168,23 +174,49 @@ export function amend(root, mapPath, { actor = defaultActor() } = {}) {
       { type: 'amended', data: { version, map_file: mapFile, map_hash: sha256(canonical(map)) } },
       ...seals,
     ], { actor, previous: snapshot.events.at(-1) });
-    return { version, events, head: headOf(events) };
+    return { version, events, head: headOf([...snapshot.events, ...events]) };
   });
 }
 
-export function load(root, seqOrJumon, { actor = defaultActor() } = {}) {
+/** コミット（4〜40桁の16進。前方一致）が冒険の書に初めて記録された時点の seq（§52.5）。知らない・曖昧なら E_LOAD */
+function seqOfCommit(events, text) {
+  const prefix = text.toLowerCase();
+  const first = new Map(); // コミット → 初めて記録された seq
+  for (const event of events) {
+    const commit = commitOfEvent(event);
+    if (commit !== null && commit.startsWith(prefix) && !first.has(commit)) first.set(commit, event.seq);
+  }
+  if (first.size === 0) throw new MasumeError('E_LOAD', `そのコミットは冒険の書に記録されていません: ${text}`);
+  if (first.size > 1) {
+    throw new MasumeError('E_LOAD', `コミット ${text} は ${first.size} 個に当たります。もっと長く書いてください: ${[...first.keys()].map((c) => c.slice(0, 12)).join('、')}`);
+  }
+  return [...first.values()][0];
+}
+
+/**
+ * ロード先を seq に直す（§52.5）。数字だけなら seq、4〜40桁の16進なら Git のコミット
+ * （セーブのコミットか、判定のときに見ていた HEAD。初めて記録された時点に戻る。町の看板の commit なら、その町でセーブした時点）。
+ * どちらでもなければ null。
+ */
+export function resolveLoadTarget(events, target) {
+  if (typeof target === 'number') return target;
+  if (typeof target !== 'string') return null;
+  const text = target.trim();
+  if (/^\d+$/u.test(text)) return Number(text);
+  if (/^[0-9a-f]{4,40}$/iu.test(text)) return seqOfCommit(events, text);
+  return null;
+}
+
+export function load(root, target, { actor = defaultActor() } = {}) {
   return withLock(root, actor, () => {
     const snapshot = requireHealthy(inspectLog(root));
     const previous = snapshot.events.at(-1);
-    const seq = typeof seqOrJumon === 'number' ? seqOrJumon
-      : typeof seqOrJumon !== 'string' ? null
-        : /^\d+$/u.test(seqOrJumon) ? Number(seqOrJumon)
-          : findJumon(snapshot.events, seqOrJumon)?.seq;
+    const seq = resolveLoadTarget(snapshot.events, target);
     if (!Number.isSafeInteger(seq) || seq < 0 || seq >= previous.seq) {
-      throw new MasumeError('E_LOAD', 'ロード先は現在より前の seq、または存在する過去のじゅもんを指定してください');
+      throw new MasumeError('E_LOAD', 'ロード先は、いまより前の記録の番号（seq）か、冒険の書に記録された Git のコミットで指定してください');
     }
     const events = appendEventsLocked(root, [{ type: 'loaded', data: { to_seq: seq } }],
       { actor, previous });
-    return { to_seq: seq, events, head: headOf(events) };
+    return { to_seq: seq, events, head: headOf([...snapshot.events, ...events]) };
   });
 }

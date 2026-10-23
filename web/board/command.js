@@ -4,6 +4,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '
 
 let ctx = null;
 let questTimer = null;
+let questRunning = false;
 let partyTimer = null;
 let party = { running: false, code: null, log: '' };
 let openSorties = 0;
@@ -38,21 +39,24 @@ export function initCommand(c) {
       return;
     }
     $('#lobby').dataset.phase = 'brewing';
+    questRunning = true;
     pollQuest();
   });
 
   // 出撃の指揮
   const modal = $('#sortie-modal');
   $('#sortie-open').addEventListener('click', () => {
-    if (!ctx.live) return ctx.toast({ text: '見本の盤面なので出撃はできません（masume serve で開くと本物のエージェントを出撃させられます）', ok: null });
+    if (!ctx.live) return ctx.toast({ text: '見本の盤面なので出撃はできません（gridhub serve で開くと本物のエージェントを出撃させられます）', ok: null });
     fillSortieChoices();
     modal.showModal();
     loadSortieDefaults();
   });
   // 窓を開いたあとで自分で触った欄は、あとから届いた既定値で上書きしない
-  for (const id of ['#sortie-agent', '#sortie-parallel', '#sortie-allow-listen'])
+  for (const id of ['#sortie-agent', '#sortie-parallel', '#sortie-allow-listen', '#sortie-tactic'])
     for (const type of ['input', 'change']) $(id).addEventListener(type, () => (touched[id] = true));
   $('#sortie-agent').addEventListener('change', syncListen);
+  $('#sortie-tactic').addEventListener('change', syncTactic);
+  syncTactic();
   syncListen();
   $('#sortie-cancel').addEventListener('click', () => modal.close());
   $('#sortie-form').addEventListener('submit', async (e) => {
@@ -66,12 +70,14 @@ export function initCommand(c) {
     if (chosen.length < boxes.length) body.only = chosen;
     // 箱のソケット（§34.2・34.3）: codex のときはチェックの状態を必ず送る。codex でなければ送らない
     if (body.agent === 'codex') body.allow_listen = $('#sortie-allow-listen').checked;
+    // 作戦（§50.12）: いつも入れる
+    body.tactic = TACTICS.includes($('#sortie-tactic').value) ? $('#sortie-tactic').value : 'balanced';
     $('#sortie-go').disabled = true;
     const j = await ctx.post('api/sortie', body);
     $('#sortie-go').disabled = false;
     if (j && j.ok !== false) {
       modal.close();
-      ctx.toast({ text: `パーティが出撃しました（${body.agent}${model ? ' ' + model : ''}）`, ok: null, type: 'battle' });
+      ctx.toast({ text: `パーティが出撃しました（${body.agent}${model ? ' ' + model : ''}・作戦: ${TACTIC_JA[body.tactic]}）`, ok: null, type: 'battle' });
       party.running = true;
       renderPartyStatus();
       pollParty(true);
@@ -87,6 +93,15 @@ export function initCommand(c) {
 }
 
 // ---- 入口（ロビー） ----
+
+/**
+ * 冒険づくり（GM と語り部。GET /api/quest の running）がまだ終わっていない。
+ * 冒険の書は、語り部が仕上げる（願いの記録・Git のふりだしのセーブ・party.json）より先に生まれるので、
+ * そのあいだは入口のまま待つ（生まれかけの冒険の書で盤面にすると、願いも出撃の既定もまだ無い）
+ */
+export function questBrewing() {
+  return questRunning;
+}
 
 export function showLobby() {
   const lobby = $('#lobby');
@@ -111,6 +126,8 @@ async function pollQuest() {
   if ($('#lobby').hidden) return;
   try {
     const q = await (await fetch('api/quest', { cache: 'no-store' })).json();
+    const wasRunning = questRunning;
+    questRunning = q.running === true;
     const box = $('#quest-progress');
     if (q.running || q.log) {
       box.hidden = false;
@@ -119,13 +136,16 @@ async function pollQuest() {
       box.dataset.state = q.running ? 'running' : q.code === 0 ? 'done' : 'failed';
       if (!q.running && q.code !== 0 && q.code !== null) $('#start-quest').disabled = !$('#wish').value.trim();
     }
-    if (!q.running && q.code === 0) ctx.refresh();
+    // 終わったら読み直す（失敗で終わっても、冒険の書が生まれていれば盤面にする）
+    if (!q.running && (q.code === 0 || wasRunning)) ctx.refresh();
   } catch {}
   questTimer = setTimeout(pollQuest, 1000);
 }
 
 // ---- 出撃 ----
 
+const TACTICS = ['careful', 'balanced', 'bold'];
+const TACTIC_JA = { careful: 'いのちだいじに', balanced: 'バッチリがんばれ', bold: 'ガンガンいこうぜ' };
 let touched = {};
 let defaultsSeq = 0;
 
@@ -145,7 +165,16 @@ async function loadSortieDefaults() {
   if (!touched['#sortie-allow-listen']) listen.checked = p?.allow_listen === true;
   if (p && (p.agent === 'claude' || p.agent === 'codex') && !touched['#sortie-agent']) $('#sortie-agent').value = p.agent;
   if (p && Number.isInteger(p.parallel) && p.parallel >= 1 && p.parallel <= 8 && !touched['#sortie-parallel']) $('#sortie-parallel').value = String(p.parallel);
+  // 作戦の既定は party.json の tactic（null・読めなければ balanced）
+  if (!touched['#sortie-tactic']) $('#sortie-tactic').value = TACTICS.includes(p?.tactic) ? p.tactic : 'balanced';
+  syncTactic();
   syncListen();
+}
+
+/** 作戦の説明（選んだ作戦の動き方と止まる条件） */
+function syncTactic() {
+  const v = $('#sortie-tactic').value;
+  for (const el of document.querySelectorAll('[data-tactic-hint]')) el.hidden = el.dataset.tacticHint !== v;
 }
 
 /** エージェントが codex でないあいだは、ソケットの切り替えを押せなくする（§34.3） */
@@ -176,7 +205,7 @@ function renderPartyStatus() {
   el.dataset.running = String(!!party.running);
   const lines = (party.log || '').split('\n').map((l) => l.trim()).filter(Boolean);
   const last = lines.slice(-2).join(' / ');
-  // 盤面からではなく CLI（masume party）や外の指揮役から出撃していることもあるので、冒険の書の「出撃中」も数えて見せる
+  // 盤面からではなく CLI（gridhub party）や外の指揮役から出撃していることもあるので、冒険の書の「出撃中」も数えて見せる
   const outside = !party.running && openSorties > 0 ? `⏳ 出撃中のエージェント ${openSorties}人` : '';
   $('#party-status-text').textContent = party.running
     ? `⚔ 出撃中… ${lines.slice(-1)[0] || ''}`

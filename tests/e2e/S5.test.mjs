@@ -16,7 +16,10 @@ test('初期化・道具の一覧・資料', async () => {
     assert.deepEqual(ping.result, {});
     const list = await c.request('tools/list');
     const names = list.result.tools.map((t) => t.name).sort();
-    assert.deepEqual(names, ['masume_brief', 'masume_check', 'masume_jumon', 'masume_log', 'masume_note', 'masume_quest', 'masume_stamp', 'masume_status', 'masume_verify']);
+    // 第11章（CONTRACTS §47.1）で masume_step（歩く）が増え、§52 で masume_jumon が無くなった。道具の名前は masume_* のまま。
+    assert.deepEqual(names, ['masume_brief', 'masume_check', 'masume_log', 'masume_note', 'masume_quest', 'masume_stamp', 'masume_status', 'masume_step', 'masume_verify']);
+    assert.deepEqual(list.result.tools.find((t) => t.name === 'masume_verify').inputSchema.properties ?? {}, {}, '§52: verify に jumon 引数は無い');
+    assert.doesNotMatch(JSON.stringify(list.result.tools), /じゅもん|jumon/i, '§52: 道具の説明にじゅもんは無い');
     for (const t of list.result.tools) {
       assert.ok(t.description && /[ぁ-んァ-ン一-龥]/.test(t.description), `${t.name} に日本語の説明`);
       assert.equal(t.inputSchema.type, 'object');
@@ -27,7 +30,8 @@ test('初期化・道具の一覧・資料', async () => {
     for (const u of ['masume://docs/RULEBOOK.md', 'masume://docs/GM_GUIDE.md', 'masume://docs/CONTRACTS.md']) assert.ok(uris.includes(u), u);
     const read = await c.request('resources/read', { uri: 'masume://docs/RULEBOOK.md' });
     assert.equal(read.result.contents[0].mimeType, 'text/markdown');
-    assert.match(read.result.contents[0].text, /マスメ ルールブック/);
+    // 第11章で RULEBOOK の見出しが「GridHub ルールブック」になった（§38）。旧名の見出しも受ける。
+    assert.match(read.result.contents[0].text, /(GridHub|マスメ) ルールブック/);
     const bad = await c.request('resources/read', { uri: 'masume://docs/NOPE.md' });
     assert.equal(bad.error.code, -32602);
     const unknown = await c.request('no/such/method');
@@ -50,7 +54,8 @@ test('道具で遊ぶ: 指令書を読み、宣言判定し、日誌を書く', 
     const brief = await c.call('masume_brief', { character: 'a' });
     assert.equal(brief.isError, false);
     assert.match(brief.text, /剣をとぐ/);
-    assert.match(brief.text, /ふっかつのじゅもん/);
+    // 第11章 §52（GM）: いまの記録の目印は「記録: seq N」（と Git のコミット）。じゅもんはやめた。
+    assert.match(brief.text, /記録: seq \d+/);
     const bj = await c.call('masume_brief', { character: 'a', json: true });
     assert.equal(JSON.parse(bj.text).current.id, 'A1');
 
@@ -70,8 +75,10 @@ test('道具で遊ぶ: 指令書を読み、宣言判定し、日誌を書く', 
     assert.equal(readLog(dir).pop().data.text, 'MCP から書いた日誌');
     const st = await c.call('masume_status', { json: true });
     assert.equal(JSON.parse(st.text).quest.id, 'TOY');
+    const st2 = await c.call('masume_status', {});
+    assert.match(st2.text, /記録: seq \d+/, '§52: いまの記録は seq で指す');
     const j = await c.call('masume_jumon', {});
-    assert.match(j.text, /[ぁ-ん]{3}( [ぁ-ん]{3}){3}/);
+    assert.equal(j.isError, true, '§52: masume_jumon は無い');
     const v = await c.call('masume_verify', {});
     assert.equal(v.isError, false);
     assert.match(v.text, /冒険の書は正常です/);
@@ -100,7 +107,8 @@ test('冒険の書が無くても起動し、願いから冒険を始められ�
     assert.equal(bad.isError, true);
     const q = await c.call('masume_quest', { wish: 'メモアプリのようなアプリを作りたい', gm: 'claude' }, { timeout: 60000 });
     assert.equal(q.isError, false, q.text);
-    assert.match(q.text, /ふっかつのじゅもん/);
+    // 第11章 §52（GM）: いまの記録の目印は「記録: seq N」（と Git のコミット）。じゅもんはやめた。
+    assert.match(q.text, /記録: seq \d+/);
     assert.equal(view(root).quest.id, 'MEMO');
   } finally {
     await c.close();

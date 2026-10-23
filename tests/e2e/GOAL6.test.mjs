@@ -40,11 +40,12 @@ test('遊び方に第6章（箱のソケットの名前と説明）が書いて�
   const guide = readFileSync(join(ROOT, 'docs', 'GM_GUIDE.md'), 'utf8');
   assert.match(readme, /第6章/);
   for (const [name, text] of [['README', readme], ['GM_GUIDE', guide]]) {
-    assert.match(text, /masume party[^\n]*--allow-listen/, `${name} に party --allow-listen`);
+    // 第11章（GM）: 名前は GridHub になり、README・GM_GUIDE は `gridhub …` で書く（`masume` は別名）。どちらの名前でも受ける。
+    assert.match(text, /(gridhub|masume) party[^\n]*--allow-listen/, `${name} に party --allow-listen`);
     assert.match(text, /127\.0\.0\.1/, `${name} に目的（127.0.0.1 にサーバーを立てる）`);
     assert.match(text, /ローカル/, `${name} に「ゲームはローカルのまま」`);
     assert.match(text, /インターネット/, `${name} に注意（インターネットにも出られる）`);
-    assert.doesNotMatch(text, /masume (party|quest|init)[^\n]*--network/, `${name} に古い名前 --network のコマンドを残さない`);
+    assert.doesNotMatch(text, /(gridhub|masume) (party|quest|init)[^\n]*--network/, `${name} に古い名前 --network のコマンドを残さない`);
   }
   assert.match(guide, /"allow_listen": true/, 'GM_GUIDE に party.json の allow_listen');
 

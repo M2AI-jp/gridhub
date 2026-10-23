@@ -1,6 +1,6 @@
 # AGENTS.md — このリポジトリで働くエージェントへ
 
-ここは「マスメ」（5mm方眼すごろく式の開発進行ゲーム）を、**マスメ自身のルールで**作っているリポジトリです。
+ここは「GridHub」（旧名マスメ。テスト1件が1マスの、5mm方眼すごろく式の開発進行ゲーム）を、**GridHub 自身のルールで**作っているリポジトリです。
 あなたは盤上のキャラクターの1人です。地図は `quests/masume.map.json`、ルールは `docs/RULEBOOK.md`。
 
 ## 絶対ルール
@@ -25,13 +25,13 @@
 
 ## 指令書と宣言判定
 
-マスメ本体（書記の担当）が動くようになったら:
+GridHub 本体（書記の担当）が動くようになったら（`bin/masume.js` は別名で、同じように動きます）:
 
 ```sh
-node bin/masume.js brief <あなたのID>      # 指令書
-node <判定コマンド>                          # 素振り（何度でも）
-node bin/masume.js check <あなたのID> --as <あなたのID>   # 宣言判定（GMに指示されたときだけ）
-node bin/masume.js note <あなたのID> "申し送り" --as <あなたのID>
+node bin/gridhub.js brief <あなたのID>      # 指令書（いま戦うテストと、記録: seq N / Git: commit abc1234）
+node bin/gridhub.js step <あなたのID> --as <あなたのID>    # 歩く: いちばん手前の落ちているテストだけを通して確かめる（何度でも・罰なし）
+node bin/gridhub.js check <あなたのID> --as <あなたのID>   # 宣言判定（GMに指示されたときだけ）
+node bin/gridhub.js note <あなたのID> "申し送り" --as <あなたのID>
 ```
 
 本体がまだ無いあいだは、GM が渡す指令書（プロンプト）があなたの現在のマスです。

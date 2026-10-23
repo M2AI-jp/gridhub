@@ -139,6 +139,7 @@ export async function runChecks(root, character, segment, map, { beforeRun } = {
   const outputs = [];
   const blamed = [];
   let failed = null;
+  let code = 0;
   for (const node of segment) {
     await beforeRun?.(node);
     const result = await runCommand(root, character, node, map.nodes[node].check.run, seconds * 1000);
@@ -147,10 +148,11 @@ export async function runChecks(root, character, segment, map, { beforeRun } = {
     blamed.push(...result.blamed);
     if (result.code !== 0) {
       failed = node;
+      code = result.code;
       break;
     }
   }
-  return { ran, failed, blamed, output: Buffer.concat(outputs), duration_ms: Math.round(performance.now() - start) };
+  return { ran, failed, code, blamed, output: Buffer.concat(outputs), duration_ms: Math.round(performance.now() - start) };
 }
 
 export function gitInfo(root) {

@@ -36,7 +36,7 @@ test('状態の列を再生すると、駒・マス・冒険の書が最後の�
       toasts: document.querySelectorAll('#toast .toast').length,
       freshClear: [...document.querySelectorAll('#node-layer .fresh-clear')].map((g) => g.dataset.node),
       gateDone: document.querySelector('#node-layer [data-node="G1"]').textContent,
-      jumon: document.querySelector('#jumon').textContent.trim(),
+      recordSeq: document.querySelector('#record')?.dataset.seq ?? null,
     }))()`);
     assert.deepEqual(r.pawns, Object.fromEntries(last.characters.map((c) => [c.id, c.at ?? ''])));
     assert.deepEqual(r.levels, Object.fromEntries(last.characters.map((c) => [c.id, String(c.level)])));
@@ -45,7 +45,7 @@ test('状態の列を再生すると、駒・マス・冒険の書が最後の�
     assert.ok(r.toasts >= 1, '新しい出来事がトーストで知らされる');
     assert.ok(r.freshClear.includes('A2'), '最後の場面で突破した A2 にはなまるの演出');
     assert.match(r.gateDone, /撃破/);
-    assert.equal(r.jumon, last.head.jumon);
+    assert.equal(r.recordSeq, String(last.head.seq), '§52: 記録の番号も最後の場面に追いつく');
   });
 });
 
@@ -68,7 +68,8 @@ test('マスの詳細（issue）とキャラクターシート', async () => {
     const d = await page.eval(`(() => { const d = document.querySelector('#drawer'); return { kind: d.dataset.kind, id: d.dataset.id, text: d.innerText, steps: d.querySelectorAll('.step').length }; })()`);
     assert.equal(d.kind, 'char');
     assert.equal(d.id, 'engine');
-    for (const w of ['書記', 'masume brief engine', 'ふたつ星亭', '縄張り']) assert.match(d.text, new RegExp(w), `キャラクターシートに「${w}」`);
+    // 第11章（§38）で直した: CLI の名前は gridhub（masume は別名）。キャラクターシートの案内はどちらでもよい
+    for (const w of ['書記', '(gridhub|masume) brief engine', 'ふたつ星亭', '縄張り']) assert.match(d.text, new RegExp(w), `キャラクターシートに「${w}」`);
     const engine = JSON.parse(readFileSync(join(ROOT, 'web', 'fixtures', 'demo-state.json'), 'utf8')).characters.find((c) => c.id === 'engine');
     assert.equal(d.steps, engine.path.length, '道のりが全部並ぶ');
   });

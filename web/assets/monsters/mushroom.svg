@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>おばけきのこ</title>
+  <desc>水玉のかさをかぶった、おこりんぼのきのこ。短い足でとことこ歩く。</desc>
+  <ellipse cx="32" cy="57" rx="16" ry="3" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 33Q20 46 23 52Q32 56 41 52Q44 46 42 33Z" fill="#ffffff"/>
+    <path d="M7 32Q6 12 32 9Q58 12 57 32Q50 37 32 36Q14 37 7 32Z" fill="var(--monster, #ffffff)"/>
+    <circle cx="20" cy="22" r="4" fill="#ffffff"/>
+    <circle cx="35" cy="16" r="3.2" fill="#ffffff"/>
+    <circle cx="46" cy="26" r="3.6" fill="#ffffff"/>
+    <path d="M25 40L29 42M39 40L35 42"/>
+    <circle cx="28" cy="44" r="1.8" fill="#1d2b5c"/>
+    <circle cx="36" cy="44" r="1.8" fill="#1d2b5c"/>
+    <path d="M29 50Q32 48 35 50"/>
+    <path d="M24 54L22 58M40 54L42 58"/>
+  </g>
+</svg>

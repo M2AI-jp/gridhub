@@ -17,7 +17,8 @@ test('霧: Lv1 の指令書には現在のマスしか出ない', () => {
   assert.equal(b.code, 0, b.all);
   assert.match(b.out, /剣をとぐ/);
   assert.match(b.out, /node checks\/flag\.mjs A1/);
-  assert.match(b.out, /ふっかつのじゅもん/);
+  // 第11章 §52（GM）: いまの記録の目印は「記録: seq N」（と Git のコミット）。じゅもんはやめた。
+  assert.match(b.out, /記録: seq \d+/);
   assert.doesNotMatch(b.out, /盾をみがく/, '霧の先（A2）のタイトルは出ない');
   assert.doesNotMatch(b.out, /洞窟の番人/, '霧の先（G1）のタイトルは出ない');
   const j = masumeJson(['brief', 'a', '--dir', dir]);
@@ -29,7 +30,9 @@ test('霧: Lv1 の指令書には現在のマスしか出ない', () => {
   assert.equal(j.data.current.check.run, 'node checks/flag.mjs A1');
   assert.deepEqual(j.data.visible, []);
   assert.equal(j.data.fog, 6);
-  assert.equal(j.data.jumon, v.head.jumon);
+  assert.equal(j.data.seq, v.head.seq);
+  assert.equal(j.data.commit, v.head.commit);
+  assert.ok(!('jumon' in j.data), '§52: 指令書にじゅもんは無い');
   assert.deepEqual(j.data.party.map((p) => p.id), ['b', 'h']);
   assert.ok(Array.isArray(j.data.rules) && j.data.rules.length >= 3);
   assert.doesNotMatch(JSON.stringify(j.data), /盾をみがく/);
@@ -145,8 +148,9 @@ test('モジュール API: buildView は status --json と同じ、ログに日�
   check(dir, 'a');
   masume(['note', 'a', 'A2は盾の裏がまだ', '--dir', dir, '--as', 'a']);
   const engine = await import(pathToFileURL(join(ROOT, 'src', 'engine', 'index.js')).href);
-  for (const fn of ['findRoot', 'validateMap', 'newGame', 'buildView', 'brief', 'check', 'stamp', 'seal', 'appendEvent', 'verify', 'repair', 'jumonOf', 'logFile', 'outputFile', 'amend', 'load'])
+  for (const fn of ['findRoot', 'validateMap', 'newGame', 'buildView', 'brief', 'check', 'stamp', 'seal', 'appendEvent', 'verify', 'repair', 'logFile', 'outputFile', 'amend', 'load'])
     assert.equal(typeof engine[fn], 'function', `engine.${fn}`);
+  assert.equal(engine.jumonOf, undefined, '§52: エンジンはじゅもんを出さない');
   assert.equal(typeof engine.MasumeError, 'function');
   const fromModule = JSON.parse(JSON.stringify(engine.buildView(dir)));
   assert.deepEqual(fromModule, view(dir));

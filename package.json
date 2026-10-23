@@ -1,9 +1,10 @@
 {
-  "name": "masume",
-  "version": "0.1.0",
-  "description": "5mm方眼ノートのすごろくで開発を進める、ゲーム型タスク管理（Linear/Jiraに「状態」を持たせる）",
+  "name": "gridhub",
+  "version": "0.2.0",
+  "description": "テスト1件が1マス。5mm方眼ノートのすごろくで開発を進める、ゲーム型の開発進行（旧名 マスメ。Linear/Jira に「状態」を持たせる）",
   "type": "module",
   "bin": {
+    "gridhub": "bin/gridhub.js",
     "masume": "bin/masume.js"
   },
   "engines": {
@@ -11,9 +12,9 @@
   },
   "scripts": {
     "test": "node --test tests/e2e/[ABEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs",
-    "test:goal": "node --test tests/e2e/GOAL10.test.mjs",
-    "serve": "node bin/masume.js serve",
-    "board": "node bin/masume.js serve"
+    "test:goal": "node --test tests/e2e/GOAL11.test.mjs",
+    "serve": "node bin/gridhub.js serve",
+    "board": "node bin/gridhub.js serve"
   },
   "license": "MIT"
 }

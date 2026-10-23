@@ -60,6 +60,7 @@ function rejectLargeBody(request, response) {
   sendError(response, 413, apiError('E_TOO_LARGE', 'POST の本文は 64KB までです'));
 }
 
+const TACTICS = ['careful', 'balanced', 'bold']; // 作戦（§45・§47）
 const GMS = ['claude', 'codex']; // HTTP から cmd: は受け付けない（任意のコマンド実行になるため）
 const MODEL_PATTERN = /^[A-Za-z0-9][\w.:@/+[\]-]{0,99}$/u;
 const CHARACTER_PATTERN = /^[a-z][a-z0-9-]{0,23}$/u;
@@ -108,9 +109,15 @@ function parseSortieBody(body) {
     }
     only = [...new Set(body.only)];
   }
+  // 作戦（§47.2）。省略（undefined・null）なら何も足さない
+  let tactic;
+  if (body.tactic !== undefined && body.tactic !== null) {
+    if (!TACTICS.includes(body.tactic)) throw badRequest('tactic は careful / balanced / bold のどれかで指定してください');
+    tactic = body.tactic;
+  }
   return {
     agent: body.agent, model: parseModel(body.model), parallel, only: only?.length ? only : undefined,
-    allow_listen: parseAllowListen(body.allow_listen ?? undefined),
+    allow_listen: parseAllowListen(body.allow_listen ?? undefined), tactic,
   };
 }
 
@@ -124,6 +131,7 @@ async function readPartyDefaults(root) {
   if (!isObject(config)) config = {};
   return {
     allow_listen: config.allow_listen === true,
+    tactic: TACTICS.includes(config.tactic) ? config.tactic : null,
     agent: GMS.includes(config.agent) ? config.agent : null,
     parallel: Number.isInteger(config.parallel) && config.parallel >= 1 && config.parallel <= 8
       ? config.parallel : null,
@@ -452,6 +460,23 @@ export function createServer({
   return server;
 }
 
+const QUEST_SETTLE_MS = 10_000; // 冒険の書が生まれてから、語り部の支度が済むのを待つ上限
+
+/** promise が片づくか ms たつか、早いほうで解決する（拒否はしない） */
+function settled(promise, ms) {
+  return new Promise((resolveSettled) => {
+    const timer = setTimeout(resolveSettled, ms);
+    timer.unref();
+    promise.then(() => {
+      clearTimeout(timer);
+      resolveSettled();
+    }, () => {
+      clearTimeout(timer);
+      resolveSettled();
+    });
+  });
+}
+
 /**
  * engine の公開 API を使って、指定した冒険の盤面を公開する。
  * 冒険の書がまだ無い場所でも開く（ロビー）。願いを受けて語り部（masume quest）を、出撃の合図を受けて軍師（masume party）を、
@@ -509,8 +534,11 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
 
   const server = createServer({
     webRoot: webRoot ?? fileURLToPath(new URL('../../web/', import.meta.url)),
-    getView: () => {
+    getView: async () => {
       requireGame();
+      // 冒険の書は語り部の終わりぎわに生まれる。支度（AGENTS.md・party.json・最初のコミット）が済むまで盤面を出さない。
+      // 先に出すと、生まれた冒険の出撃の窓が party.json を読めない（ふりだしの Git のセーブの分だけ間が空く）
+      if (quest.running) await settled(quest.exited, QUEST_SETTLE_MS);
       return engine.buildView(gameRoot);
     },
     watchFile: engine.logFile(gameRoot),
@@ -567,7 +595,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     getQuest: job(() => quest.running, () => quest.code, questLog),
 
     // ---- 出撃（軍師）----
-    onSortie: async ({ agent, model, parallel, only, allow_listen }) => {
+    onSortie: async ({ agent, model, parallel, only, allow_listen, tactic }) => {
       requireOpen();
       requireGame();
       if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
@@ -585,6 +613,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
         ...(parallel === undefined ? [] : ['--parallel', String(parallel)]),
         ...(only === undefined ? [] : ['--only', only.join(',')]),
         ...(allow_listen === undefined ? [] : [allow_listen ? '--allow-listen' : '--no-allow-listen']),
+        ...(tactic === undefined ? [] : ['--tactic', tactic]),
       ];
       const heading = `\n===== 出撃 ${new Date().toISOString()} =====\n$ masume ${args.slice(1).join(' ')}\n`;
       try {

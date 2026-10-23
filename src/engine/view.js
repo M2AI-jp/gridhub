@@ -1,6 +1,8 @@
 import { inspectLog } from './store.js';
 import { sortieStatus } from './sortie.js';
-import { isSealed, nodeXp, replay } from './state.js';
+import { chronicle, endingText } from './chronicle.js';
+import { buildMargins } from './margins.js';
+import { isSealed, nodeXp } from './state.js';
 
 function nodeState(node, progress, members, characters) {
   if (progress.cleared) return 'cleared';
@@ -68,6 +70,26 @@ function logEntry(event, map) {
     case 'sortie':
       text = `${name} が出撃した（${data.agent}${data.model ? ` ${data.model}` : ''}）`;
       break;
+    case 'stepped': {
+      ok = data.code === 0;
+      const list = data.cases?.[data.node] ?? [];
+      text = `${name} が ${node} を歩いた（テスト ${list.filter((c) => c.ok === true).length}/${list.length}）`;
+      break;
+    }
+    case 'saved': {
+      const names = (data.characters ?? []).map((id) => map?.characters.find((c) => c.id === id)?.name ?? id);
+      ok = Boolean(data.commit);
+      text = data.commit
+        ? `${names.join('、')} が ${data.node ?? 'ふりだし'} でセーブした（commit ${data.commit.slice(0, 7)}）`
+        : `セーブできなかった: ${data.error ?? '不明'}`;
+      break;
+    }
+    case 'restored':
+      ok = !data.error;
+      text = data.error
+        ? `${name} の縄張りを戻せなかった: ${data.error}`
+        : `${name} の縄張りを commit ${String(data.commit).slice(0, 7)} に戻した（墓: ${data.stash ? `stash ${data.stash.slice(0, 7)}` : 'なし'}）`;
+      break;
     case 'returned':
       ok = data.advanced === true;
       text = `${name} が帰還した（${data.node_before} → ${data.node_after ?? 'あがり'}、${ok ? '進んだ' : '進めなかった'}）`;
@@ -86,8 +108,14 @@ export function buildView(root) {
   // CLI の status はこの integrity を見て E_CURSED にする。
   const events = snapshot.ok ? snapshot.events
     : snapshot.records.slice(0, snapshot.errors[0].seq).map(({ event }) => event);
-  const state = replay(root, events);
+  const chronicled = events[0]?.type === 'genesis' ? chronicle(root, events) : null;
+  const state = chronicled?.state ?? null;
   const map = state?.map;
+  const count = (kind, id) => chronicled.incidents.filter((i) => i.kind === kind && i.character === id).length;
+  const lastSaved = (predicate) => {
+    const found = chronicled.saves.filter((e) => e.data.commit && predicate(e.data)).at(-1);
+    return found ?? null;
+  };
   const sorties = sortieStatus(events);
   const characters = map?.characters.map((definition) => {
     const character = state.characters[definition.id];
@@ -106,6 +134,22 @@ export function buildView(root) {
       last_note: character.lastNote,
       sortie: sorties.current[definition.id] ?? null,
       sorties: sorties.counts[definition.id] ?? 0,
+      generation: Math.max(1, sorties.counts[definition.id] ?? 0),
+      square: null,
+      revived: count('revived', definition.id),
+      strong: count('strong', definition.id),
+      skills: [...(chronicled.people.get(definition.id)?.skills ?? [])].reverse(),
+      medals: definition.path.filter((id) => chronicled.firstTry.get(id) === true).length,
+      treasures: chronicled.people.get(definition.id)?.treasures ?? 0,
+      traps: chronicled.people.get(definition.id)?.traps ?? 0,
+      save: (() => {
+        const found = lastSaved((data) => (data.characters ?? []).includes(definition.id));
+        return found && { seq: found.seq, node: found.data.node, commit: found.data.commit };
+      })(),
+      grave: (() => {
+        const found = chronicled.restores.filter((e) => e.data.character === definition.id && e.data.stash).at(-1);
+        return found ? { seq: found.seq, node: found.data.node, commit: found.data.commit, stash: found.data.stash } : null;
+      })(),
     };
   }) ?? [];
   const byId = Object.fromEntries(characters.map((character) => [character.id, character]));
@@ -124,10 +168,32 @@ export function buildView(root) {
       clears: progress.clears,
       fails: progress.fails,
       last_seq: progress.lastSeq,
+      cases: chronicled.nodeCases(map, id),
+      first_try: definition.type === 'task' && definition.check?.kind === 'cmd'
+        ? chronicled.firstTry.get(id) ?? null : null,
+      save: (() => {
+        const found = lastSaved((data) => data.node === id);
+        return found && { seq: found.seq, commit: found.data.commit };
+      })(),
     };
+    node.tests = { pass: node.cases.filter(({ ok }) => ok === true).length, total: node.cases.length };
     node.state = nodeState(node, progress, members, byId);
     return [id, node];
   }));
+  for (const character of characters) {
+    const at = character.at && nodes[character.at];
+    if (at && at.type === 'task' && at.check?.kind === 'cmd' && character.status === 'working') {
+      const index = at.cases.findIndex(({ ok }) => ok !== true);
+      character.square = index === -1 ? at.cases.length : index;
+    }
+  }
+  const finished = map ? state.nodes[map.quest.goal].cleared : false;
+  const ending = finished && chronicled.ending && chronicled.ending.gate === map.quest.goal
+    ? { seq: chronicled.ending.seq, text: endingText(map, chronicled.ending.stats), stats: chronicled.ending.stats }
+    : null;
+  const { margins, news } = map
+    ? buildMargins({ map, state, events, tracker: chronicled.margins })
+    : { margins: [], news: [] };
   return {
     masume: 1,
     quest: map?.quest ?? null,
@@ -137,6 +203,10 @@ export function buildView(root) {
     log: snapshot.events.slice(-200).map((event) => logEntry(event, map)),
     head: snapshot.head,
     integrity: { ok: snapshot.ok, errors: snapshot.errors },
-    finished: map ? state.nodes[map.quest.goal].cleared : false,
+    finished,
+    bestiary: map ? chronicled.bestiary(map) : { total: 0, defeated: 0, revived: 0, strong: 0 },
+    ending,
+    margins,
+    news,
   };
 }

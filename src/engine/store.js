@@ -6,13 +6,37 @@ import { randomUUID } from 'node:crypto';
 import { resolve } from 'node:path';
 import { canonical, eventHash, sha256 } from './canonical.js';
 import { MasumeError } from './errors.js';
-import { headOf } from './jumon.js';
 import { containedFile, logFile } from './paths.js';
 
 const ZERO = '0'.repeat(64);
 const HASH = /^[0-9a-f]{64}$/u;
 const sleepBuffer = new Int32Array(new SharedArrayBuffer(4));
 const utf8 = new TextDecoder('utf-8', { fatal: true });
+
+const COMMIT = /^[0-9a-f]{40}$/u;
+const JUDGED = new Set(['check_passed', 'check_failed', 'gate_cleared', 'gate_failed', 'stepped']);
+
+/** そのイベントが記録した Git のコミット（セーブのコミットか、判定のときに見ていた HEAD）。無ければ null（§52.3） */
+export function commitOfEvent(event) {
+  const data = event?.data;
+  const commit = event?.type === 'saved' ? data?.commit : JUDGED.has(event?.type) ? data?.git?.head : null;
+  return typeof commit === 'string' && COMMIT.test(commit) ? commit : null;
+}
+
+/**
+ * いちばん新しい、読めるイベントの {seq, hash, commit}（冒険の書のいまの時点）。
+ * commit は、新しいほうから見て最初に見つかる、記録が見ていた Git のコミット（§52.3。Git は呼ばない）。
+ */
+export function headOf(events) {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const { seq, hash } = events[i];
+    if (!Number.isSafeInteger(seq) || !HASH.test(hash)) continue;
+    let commit = null;
+    for (let j = events.length - 1; j >= 0 && commit === null; j--) commit = commitOfEvent(events[j]);
+    return { seq, hash, commit };
+  }
+  return null;
+}
 
 export const defaultActor = () => process.env.MASUME_ACTOR || 'gm';
 
@@ -162,7 +186,7 @@ function checkOutput(root, event) {
   }
 }
 
-// events は読めた行、errors は検証結果。破損時も log/jumon から調査できる。
+// events は読めた行、errors は検証結果。破損時も log から調査できる。
 export function inspectLog(root) {
   const bytes = readBytes(root);
   const records = parseLines(bytes);

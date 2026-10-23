@@ -7,7 +7,7 @@ import { ROOT, serveStatic, openBrowser } from '../helpers.mjs';
 
 const fixture = JSON.parse(readFileSync(join(ROOT, 'web', 'fixtures', 'demo-state.json'), 'utf8'));
 
-test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅもん', async () => {
+test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・いまの記録', async () => {
   const srv = await serveStatic();
   const page = await openBrowser({ width: 1440, height: 900 });
   try {
@@ -26,7 +26,11 @@ test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅも
         roads: qa('.road[data-char]').map((p) => p.dataset.char),
         pawns: Object.fromEntries(qa('.pawn[data-char]').map((g) => [g.dataset.char, g.dataset.at])),
         heads: qa('.lane-head[data-char]').length,
-        jumon: q('#jumon').textContent.trim(),
+        record: q('#record')?.textContent.trim() ?? null,
+        recordSeq: q('#record')?.dataset.seq ?? null,
+        recordCommit: q('#record')?.dataset.commit ?? null,
+        copyRecord: !!q('#copy-record'),
+        html: document.documentElement.outerHTML,
         party: qa('.party-card[data-char]').length,
         log: qa('#log .log-entry').length,
         integrity: q('#integrity').dataset.ok,
@@ -42,7 +46,15 @@ test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅも
     assert.deepEqual([...r.roads].sort(), fixture.characters.map((c) => c.id).sort(), 'キャラクターごとに道');
     assert.deepEqual(r.pawns, Object.fromEntries(fixture.characters.map((c) => [c.id, c.at ?? ''])), '駒は今いるマスに立つ');
     assert.equal(r.heads, fixture.characters.length, 'ふりだしの名札');
-    assert.equal(r.jumon, fixture.head.jumon);
+    // 第11章 §52（GM）: じゅもんはやめた。見出しには記録の番号（seq）と、記録が見ていた Git のコミット
+    assert.equal(r.recordSeq, String(fixture.head.seq), '#record の data-seq');
+    assert.match(r.record, new RegExp(`seq ${fixture.head.seq}(?!\\d)`), '#record の字に seq');
+    if (fixture.head.commit) {
+      assert.equal(r.recordCommit, fixture.head.commit);
+      assert.match(r.record, new RegExp(`commit ${fixture.head.commit.slice(0, 7)}`), '#record の字に commit');
+    } else assert.equal(r.recordCommit, '');
+    assert.ok(r.copyRecord, '#copy-record');
+    assert.doesNotMatch(r.html, /じゅもん|jumon/i, '盤面のどこにも、じゅもんが無い');
     assert.equal(r.party, fixture.characters.length);
     assert.equal(r.log, Math.min(80, fixture.log.length));
     assert.equal(r.integrity, 'true');
@@ -56,7 +68,10 @@ test('見本の盤面: 紙・道・マス・ゲート・宿屋・駒・じゅも
   }
 });
 
-test('ゲートは道を合流させ、駒の位置と道の高さがそろう', async () => {
+// 第11章（§50.3・§50.6）で直した: 道は横に並ぶ帯ではなく、ページの上から下へ下りる縦の道になった。
+// 「ゲートが名札の高さにかかる」という横の道の前提をやめ、ゲート（城壁の帯）がメンバーの道の横の範囲
+// （ゲートの直前のマスの札の真ん中）にかかり、帯がその札より下にあることを確かめる。
+test('ゲートは道を合流させる: 城壁の帯が、メンバーの道（ゲートの直前のマス）の横の範囲にかかる', async () => {
   const srv = await serveStatic();
   const page = await openBrowser({ width: 1440, height: 900 });
   try {
@@ -64,15 +79,23 @@ test('ゲートは道を合流させ、駒の位置と道の高さがそろう',
     await page.waitFor('window.__masume && window.__masume.ready', { timeout: 15000 });
     const r = await page.eval(`(() => {
       const box = (el) => { const b = el.getBBox(); return { x: b.x, y: b.y, w: b.width, h: b.height }; };
+      const v = window.__masume.view;
       const gate = document.querySelector('#node-layer [data-node="G1"] .gate-paper');
-      const members = window.__masume.view.nodes.G1.members;
-      const heads = Object.fromEntries([...document.querySelectorAll('.lane-head')].map((g) => [g.dataset.char, box(g)]));
-      return { gate: box(gate), members, heads };
+      const before = Object.fromEntries(v.nodes.G1.members.map((m) => {
+        const path = v.characters.find((c) => c.id === m).path;
+        const prev = path[path.indexOf('G1') - 1];
+        const el = document.querySelector('#node-layer [data-node="' + prev + '"] .cell-paper');
+        return [m, { prev, box: el ? box(el) : null, page: document.querySelector('#node-layer [data-node="' + prev + '"]')?.dataset.page }];
+      }));
+      return { gate: box(gate), gatePage: document.querySelector('#node-layer [data-node="G1"]').dataset.page, before };
     })()`);
-    for (const m of r.members) {
-      const h = r.heads[m];
-      const mid = h.y + h.h / 2;
-      assert.ok(mid > r.gate.y && mid < r.gate.y + r.gate.h, `ゲート G1 は ${m} の道の高さにかかっている`);
+    for (const [m, b] of Object.entries(r.before)) {
+      assert.ok(b.box, `${m} のゲートの直前のマス ${b.prev} の札`);
+      const mid = b.box.x + b.box.w / 2;
+      if (b.page === r.gatePage) {
+        assert.ok(mid > r.gate.x && mid < r.gate.x + r.gate.w, `ゲート G1 の帯は ${m} の道（${b.prev} の真下）にかかっている`);
+        assert.ok(b.box.y + b.box.h <= r.gate.y + 0.5, `${m} の ${b.prev} はゲートより上（道は上から下へ）`);
+      }
     }
   } finally {
     await page.close();

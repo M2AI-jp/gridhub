@@ -2,9 +2,9 @@
   "masume": 1,
   "quest": {
     "id": "MSM",
-    "title": "マスメ — マスメでマスメをつくる",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。",
-    "goal": "GOAL10"
+    "title": "GridHub — GridHub で GridHub をつくる（旧名 マスメ）",
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。",
+    "goal": "GOAL11"
   },
   "characters": [
     {
@@ -44,7 +44,13 @@
         "B9",
         "GOAL9",
         "B10",
-        "GOAL10"
+        "GOAL10",
+        "B11",
+        "B12",
+        "B13",
+        "G9",
+        "B14",
+        "GOAL11"
       ]
     },
     {
@@ -57,7 +63,7 @@
       "module": "冒険の書（セーブデータ）・ルールエンジン・CLI",
       "territory": [
         "src/engine/**",
-        "src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,jumon,note,amend,load,sortie,return,wish}.js"
+        "src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step,sortie,return,wish}.js"
       ],
       "path": [
         "E1",
@@ -83,7 +89,16 @@
         "GOAL7",
         "GOAL8",
         "GOAL9",
-        "GOAL10"
+        "GOAL10",
+        "E8",
+        "E9",
+        "E10",
+        "C2",
+        "E11",
+        "E12",
+        "G9",
+        "E13",
+        "GOAL11"
       ]
     },
     {
@@ -123,7 +138,9 @@
         "GOAL7",
         "GOAL8",
         "GOAL9",
-        "GOAL10"
+        "GOAL10",
+        "S8",
+        "GOAL11"
       ]
     },
     {
@@ -156,7 +173,9 @@
         "GOAL7",
         "GOAL8",
         "GOAL9",
-        "GOAL10"
+        "GOAL10",
+        "Q6",
+        "GOAL11"
       ]
     },
     {
@@ -188,7 +207,9 @@
         "GOAL7",
         "GOAL8",
         "GOAL9",
-        "GOAL10"
+        "GOAL10",
+        "P6",
+        "GOAL11"
       ]
     },
     {
@@ -224,7 +245,9 @@
         "M7",
         "GOAL8",
         "GOAL9",
-        "GOAL10"
+        "GOAL10",
+        "M8",
+        "GOAL11"
       ]
     },
     {
@@ -239,7 +262,8 @@
         "web/assets/sprites/**",
         "web/assets/icons/**",
         "web/assets/sheet.html",
-        "web/assets/marks/**"
+        "web/assets/marks/**",
+        "web/assets/monsters/**"
       ],
       "path": [
         "A1",
@@ -254,7 +278,10 @@
         "GOAL7",
         "GOAL8",
         "GOAL9",
-        "GOAL10"
+        "GOAL10",
+        "A4",
+        "G9",
+        "GOAL11"
       ]
     },
     {
@@ -278,7 +305,8 @@
         "GOAL7",
         "GOAL8",
         "GOAL9",
-        "GOAL10"
+        "GOAL10",
+        "GOAL11"
       ]
     }
   ],
@@ -303,7 +331,7 @@
     "B2": {
       "type": "task",
       "title": "駒が動き冒険の書が流れる",
-      "detail": "状態の変化を演出する（はなまる・消しゴム・駒のジャンプ／後退・レベル表示）。マスの詳細（issueビュー）、キャラクターシート、冒険の書（ログ）、ふっかつのじゅもん、セーブデータの健全性表示。?fixture=demo&script=demo で状態の列を順に再生できること。",
+      "detail": "状態の変化を演出する（はなまる・消しゴム・駒のジャンプ／後退・レベル表示）。マスの詳細（issueビュー）、キャラクターシート、冒険の書（ログ）、いまの記録、セーブデータの健全性表示。?fixture=demo&script=demo で状態の列を順に再生できること。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/B2.test.mjs",
@@ -337,7 +365,7 @@
     "E1": {
       "type": "task",
       "title": "冒険の書をひらく",
-      "detail": "src/engine/ にセーブデータ（SAVE_FORMAT.md）を実装する: 正規化JSON・ハッシュの鎖・ロック付き追記・地図の検証（CONTRACTS §2）・genesis と自動封印・verify / repair・ふっかつのじゅもん。コマンド new / validate / seal / verify / repair / jumon / log / note。",
+      "detail": "src/engine/ にセーブデータ（SAVE_FORMAT.md）を実装する: 正規化JSON・ハッシュの鎖・ロック付き追記・地図の検証（CONTRACTS §2）・genesis と自動封印・verify / repair・いまの記録の目印。コマンド new / validate / seal / verify / repair / log / note。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/E1.test.mjs",
@@ -392,7 +420,7 @@
     "E4": {
       "type": "task",
       "title": "時をさかのぼる",
-      "detail": "地図の改訂 amend（§4.8 歴史は書き換えられない）と、過去の状態のロード load（§4.9、seq かふっかつのじゅもんで指定）。",
+      "detail": "地図の改訂 amend（§4.8 歴史は書き換えられない）と、過去の状態のロード load（§4.9、seq か Git のコミットで指定。§52.5）。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/E4.test.mjs",
@@ -818,7 +846,7 @@
     "S5": {
       "type": "task",
       "title": "LLM の道具箱を開く",
-      "detail": "CONTRACTS §19: masume mcp（標準入出力の MCP サーバー）。道具 masume_status / brief / check / stamp / note / log / jumon / verify / quest、資料 RULEBOOK / GM_GUIDE / CONTRACTS。",
+      "detail": "CONTRACTS §19: masume mcp（標準入出力の MCP サーバー）。道具 masume_status / brief / check / stamp / note / log / verify / quest、資料 RULEBOOK / GM_GUIDE / CONTRACTS。",
       "check": {
         "kind": "cmd",
         "run": "node --test tests/e2e/S5.test.mjs",
@@ -1411,6 +1439,474 @@
           "tests/helpers4.mjs"
         ]
       }
+    },
+    "E8": {
+      "type": "task",
+      "title": "テスト1件ずつ読み、step で歩く",
+      "detail": "CONTRACTS §38〜§41: gridhub が受付係（masume は別名）。地図の check.cases と quest.save を検査する。判定の出力（spec・TAP・ほか）からテスト1件ずつの成否を読んで記録し、gridhub step で今のダンジョンだけを走らせる（位置もレベルも変わらない）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E8.test.mjs",
+        "seal": [
+          "tests/e2e/E8.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§39 地図: check.cases と quest.save の検査",
+          "§38 gridhub が受付係、masume は別名",
+          "§40・§41 歩く: テスト1件ずつ記録し、位置もレベルも変わらない。駒は最初に落ちているマスに立つ",
+          "§41 歩けないとき: 知らないキャラ・ハンコ・ゲート待ち・あがり・未封印・封印破り",
+          "§40 宣言の記録にもテスト1件ずつ。前に倒したテストが落ちたら復活、2回負けてから倒したら強敵",
+          "§40 出力の読み方: TAP・SKIP・まとめの繰り返し・cases の無いマス・名前が合わないとき",
+          "§40 第10章までの冒険の書: cases の無いイベントは、出力ファイルから読む"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "engine",
+        "cases"
+      ]
+    },
+    "E9": {
+      "type": "task",
+      "title": "代・技・メダル・図鑑・エンディング",
+      "detail": "CONTRACTS §42・§44: 出撃1回が1代。強敵を倒したあとの日誌が技になって次の代に受け継がれる。メダル・宝・罠・モンスター図鑑・章のエンディング。指令書にテスト1件ずつといま戦うテストと歩き方。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E9.test.mjs",
+        "seal": [
+          "tests/e2e/E9.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§42 代: 出撃1回が1代（出撃していなければ1）",
+          "§42 技: 強敵を倒したあとの最初の日誌が技になり、次の代の指令書に出る",
+          "§42 メダル（一発で出口を抜けた）・宝（GM が判定を直した）・罠（封印破り）",
+          "§42 図鑑とエンディング: 記録が違えば文も違う",
+          "§44 指令書: 今のマスのテスト・いま戦うテスト・歩き方"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "growth"
+      ]
+    },
+    "E10": {
+      "type": "task",
+      "title": "町 = Git のコミット、負けたら墓",
+      "detail": "CONTRACTS §43: quest.save が \"git\" の冒険で、町に着くと縄張りの変更だけをコミットし、負けたら町のコミットに戻す（戻す前の変更は git stash の墓に残す）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E10.test.mjs",
+        "seal": [
+          "tests/e2e/E10.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§43.3 ふりだし: 冒険の書が生まれると、Git の最初のコミット（ふりだし）を記録する",
+          "§43.2・§43.3 町に着くと、縄張りの変更だけをコミットする（ほかの変更やステージには触れない）",
+          "§43.4 負けたら、縄張りを町のコミットに戻す。戻す前の変更は墓（git stash）に残る",
+          "§43.3・§43.4 ゲート: 突破でメンバー全員の縄張りを1つのコミットに。負けたら責任のある仲間だけ戻す",
+          "§43 quest.save が無い冒険では Git に触らない。Git の外なら記録だけ（判定は変えない）"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "engine",
+        "git"
+      ]
+    },
+    "C2": {
+      "type": "camp",
+      "title": "宿屋「みっつ星亭」",
+      "detail": "第11章の書記の道の途中の町（セーブポイント）。"
+    },
+    "E11": {
+      "type": "task",
+      "title": "Git のセーブがユーザーの変更を壊さない",
+      "detail": "CONTRACTS §43: サブディレクトリ・フック・署名・merge の途中・.gitignore・実行ビット・シンボリックリンクでも、ユーザーの作業を壊さない。load は町のセーブのコミットでも指せる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E11.test.mjs",
+        "seal": [
+          "tests/e2e/E11.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§43.2 ルートが Git のサブディレクトリ。フックは走らせず、commit.gpgsign があっても署名しない",
+          "§43 Git が merge の途中なら、セーブも巻き戻しもしない（ユーザーの作業を壊さない）",
+          "§43.4 巻き戻し: .gitignore されたファイルも墓に残し、実行ビットとシンボリックリンクを戻し、リンクの先には書かない",
+          "§43・§52.5 load は町のセーブのコミットでも指せる（そのセーブを記録した時点に戻る）。じゅもんは受け付けない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "git"
+      ]
+    },
+    "E12": {
+      "type": "task",
+      "title": "記録の番号と Git のコミットで指す",
+      "detail": "CONTRACTS §52: ふっかつのじゅもんをやめる（ユーザーの指示）。head は {seq, hash, commit}、目印は「記録: seq N / Git: commit abc1234」、load は seq か Git のコミットで戻る。改ざんを見つける鎖と verify は残す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E12.test.mjs",
+        "seal": [
+          "tests/e2e/E12.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "じゅもんのコマンド・オプション・欄は、どこにも無い",
+          "head は {seq, hash, commit}: commit は、その記録が見ていた Git のコミット（ビューは Git を呼ばない）",
+          "記録の目印 `記録: seq N / Git: commit abc1234` を status・brief・amend・load が出す",
+          "load <commit>: 町の看板の commit で、その町でセーブした時点に戻る。知らない・短すぎるコミットは E_LOAD"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "record"
+      ]
+    },
+    "B11": {
+      "type": "task",
+      "title": "縦の5mm方眼ノートの世界地図を描く",
+      "detail": "CONTRACTS §50.1〜§50.4・§50.6: B5 縦の見開き、すべてを方眼に合わせ、キャラクターごとの道がページの上から下へ曲がりながら下りる。景色はマスではない。ダンジョンの出口の札・町・中ボスの砦・魔王の城。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B11.test.mjs",
+        "seal": [
+          "tests/e2e/B11.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "見本の条件（盤面がつくる見本）",
+          "§50.1 ページ: B5 の縦（36×51 目）が見開きで並び、方眼はページの中だけ。上の余白に No. と Date",
+          "§50.2 すべてを方眼に合わせる: マス・モンスター・札・題名の字は目の整数",
+          "§50.3 道はキャラクターごとに1本、ページの上から下へ曲がりながら下りる。名札",
+          "§50.4 景色はマスではない（どのマス・札・城とも重ならない）。各ページに1つ以上",
+          "§50.6 ダンジョンの出口の札・町・中ボス・魔王の城。技術の言葉が先",
+          "狭い画面（390px）でも横にはみ出さない"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "ui",
+        "world"
+      ]
+    },
+    "B12": {
+      "type": "task",
+      "title": "テスト1件を1体のモンスターに描く",
+      "detail": "CONTRACTS §50.5・§50.7・§50.11: テスト1件に1体のモンスターを札の手前の道に並べ、倒したら赤い斜線・復活したら赤い丸。駒は最初に落ちているテストのマスに立つ。右の欄に代・テスト・メダル・図鑑。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B12.test.mjs",
+        "seal": [
+          "tests/e2e/B12.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "見本の条件",
+          "§50.5 モンスターはテスト1件に1体。倒したら赤い斜線、復活したら赤い丸、？のマス",
+          "§50.5 モンスターは、そのダンジョンの札の手前（同じ道の上、札より上か同じ高さのページ）に並ぶ",
+          "§50.7 駒は、最初に落ちているテストのマスに立つ（全部倒していれば札の前）",
+          "§50.11 右の欄: 代・今のマスのテスト・メダル・図鑑。名前は GridHub"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "monsters"
+      ]
+    },
+    "B13": {
+      "type": "task",
+      "title": "ページをめくり、1マスずつ歩く",
+      "detail": "CONTRACTS §50.8〜§50.10・§50.12: 見開きとページめくり、狭い画面では1ページずつ、駒が1マスずつ歩く、エンディング、出撃の窓の作戦。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B13.test.mjs",
+        "seal": [
+          "tests/e2e/B13.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "見本の条件",
+          "§50.8 見開き（#page-prev・#page-next・#page-no、__masume.spread・pages）。めくるあいだは .page-flip の葉が <use href=\"#world\"> で回る",
+          "§50.8 動きを減らす設定では、めくる動きなしで切り替わる",
+          "§50.8 狭い画面（860px 以下）では1ページずつ",
+          "§50.8 駒が今の見開きの外のページへ進んだら、そのページの見開きへめくる",
+          "§50.9 1マスずつ歩く: __masume.walks に {char, from, to, steps}",
+          "§50.10 エンディング: ending があれば、#ending（role=\"dialog\"）に text。#ending-close で閉じ、新しい seq でまた開く",
+          "§50.12 作戦の窓（#sortie-tactic）の既定は GET /api/party の tactic（null なら balanced）。POST /api/sortie の本文に tactic を必ず入れる"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "motion"
+      ]
+    },
+    "A4": {
+      "type": "task",
+      "title": "モンスター8体を描く",
+      "detail": "CONTRACTS §49: スライムから魔王まで8枚のモンスター。駒と同じ制約で、体を var(--monster) で塗れる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/A4.test.mjs",
+        "seal": [
+          "tests/e2e/A4.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§49 モンスター8枚がそろい、駒と同じ制約で描かれ、体を var(--monster) で塗れる"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "assets",
+        "monsters"
+      ]
+    },
+    "S8": {
+      "type": "task",
+      "title": "歩く道具と作戦の窓口を開く",
+      "detail": "CONTRACTS §47: MCP の masume_step、GET /api/party と POST /api/sortie の tactic。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S8.test.mjs",
+        "seal": [
+          "tests/e2e/S8.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§47.1 MCP の masume_step: 今のダンジョンの判定だけを走らせ、テスト1件ずつ記録する（as の既定は character）",
+          "§47.3 GET /api/party の tactic: party.json の tactic が3つの id のどれかならその id、それ以外は null",
+          "§47.2 POST /api/sortie の tactic: id なら --tactic を渡す。省略なら何も足さない。ほかの値は 400 E_USAGE（何も起動しない）"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "server",
+        "mcp"
+      ]
+    },
+    "Q6": {
+      "type": "task",
+      "title": "Git でセーブする新しい冒険をつくる",
+      "detail": "CONTRACTS §46: gridhub quest は Git の外なら git init し、quest.save を補い、ふりだしをセーブし、支度のあとで最初のコミット。GM のプロンプトに cases・quest.save・territory。AGENTS.md に歩くコマンド。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/Q6.test.mjs",
+        "seal": [
+          "tests/e2e/Q6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§46.2・§46.3 Git の外なら git init し、quest.save を補い、ふりだしをセーブし、支度のあとで最初のコミット",
+          "§46.3 もとから Git の中なら git init もコミットもしない（ふりだしのセーブは記録する）",
+          "§46.3 --dry-run は git init しない",
+          "§46.3 git が無ければ、その旨を出して続ける",
+          "§46.1・§46.4 GM のプロンプトに cases・quest.save・territory。AGENTS.md は GridHub の名前で、歩くコマンドと1マスずつの進め方"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "teller",
+        "git"
+      ]
+    },
+    "P6": {
+      "type": "task",
+      "title": "作戦を出撃に渡す",
+      "detail": "CONTRACTS §45: gridhub party --tactic careful|balanced|bold（いのちだいじに・バッチリがんばれ・ガンガンいこうぜ）。プロンプトに作戦・動き方・止まる条件・歩くコマンド・伝承の代。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/P6.test.mjs",
+        "seal": [
+          "tests/e2e/P6.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§45.1・§45.3 --dry-run: 作戦の行・伝承の代・歩くコマンド。既定はバッチリがんばれ",
+          "§45.1 party.json の tactic。--tactic が優先。不正な値は E_USAGE/2",
+          "§45.2 プロンプト: 作戦・動き方・止まる条件・歩くコマンド・伝承（この出撃が何回目か）",
+          "§45.3 party --help に --tactic と3つの作戦"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "party",
+        "tactic"
+      ]
+    },
+    "M8": {
+      "type": "task",
+      "title": "テストのチェックリストを書き出す",
+      "detail": "CONTRACTS §48: export linear（Linear・Jira の push も）の説明に、cases のあるマスはテストのチェックリスト（- [x] / - [ ]）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/M8.test.mjs",
+        "seal": [
+          "tests/e2e/M8.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§48 export linear: cases のあるマスは、判定の行のあとに空行と「テスト:」、1件ずつ - [x] / - [ ]",
+          "§48 Linear と Jira の push も同じ文を使う"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "gmkit",
+        "linear"
+      ]
+    },
+    "G9": {
+      "type": "gate",
+      "title": "結合: 1マスずつ歩く盤面",
+      "detail": "書記（cases と step）＋盤面（モンスターと駒）＋絵師（モンスターの絵）。本物の冒険を gridhub serve で配り、gridhub step を打つたびに、盤面のモンスターと駒が1マスずつ映る。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/G9.test.mjs",
+        "seal": [
+          "tests/e2e/G9.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "step するたびに、盤面のモンスターと駒が1マスずつ映る（書記 × 盤面 × 絵師）"
+        ]
+      }
+    },
+    "GOAL11": {
+      "type": "gate",
+      "title": "あがり（第11章）: GridHub — テスト1件が1マス",
+      "detail": "第1章〜第11章のすべての判定がまとめて通り、すべての冒険の書が正常で、README が GridHub として書かれている（ゲームの対応表・gridhub step・Git のセーブ・作戦・前後の盤面の絵・Linear と Jira はオプション・GitHub がはじめての人の手引き）。盤面・CLI・MCP・docs に「じゅもん」が出てこない（§52）。余白のマス（§53）も、第1章〜第11章の判定に入る。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/GOAL11.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL11.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "第1章〜第11章のすべての判定が、まとめて本当に通る",
+          "GridHub 自身と、残っているすべての冒険の書が正常",
+          "README が GridHub として書かれている（対応表・step・Git のセーブ・作戦・前後の盤面・オプションの Linear と Jira・GitHub の手引き）",
+          "ふっかつのじゅもんは、盤面・CLI・MCP・docs のどこにも出てこない（§52）"
+        ]
+      }
+    },
+    "E13": {
+      "type": "task",
+      "title": "余白のマスをビューに出す",
+      "detail": "CONTRACTS §53: 開発に関係する、良い余白（ユーザーの指示）。地図の quest.news を検査し、task と camp のすぐ後に余白のマス（talk 別の担当との会話・npc 町の住人との雑談・news 瓦版）を置き、駒が通ると冒険の書と地図に本当にあることから出来事を作る。ビューの margins と news。語り部は GM のプロンプトに quest.news を足す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E13.test.mjs",
+        "seal": [
+          "tests/e2e/E13.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§53.1 地図の quest.news: 文字列の配列（0〜20件・各1〜200字）でなければ E_FORMAT",
+          "§53.2・§53.4 余白のマスは task と camp のすぐ後に1つ。町の後は npc、合流の前は talk、ほかは news。まだ起きていなければ lines は空",
+          "§53.3・§53.4 駒が通ると起きる: 号外と製品の話題・町の住人がテストの数とセーブの commit を・2人の最新の日誌で会話",
+          "§53.4 会話: 日誌が無ければ「顔を合わせた」、長い日誌は80字まで。ハンコで通っても起きる。話題が無ければ号外だけ"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "margins"
+      ]
+    },
+    "B14": {
+      "type": "task",
+      "title": "余白のマスとふきだしと瓦版を描く",
+      "detail": "CONTRACTS §53.6: 余白のマスを道の上の after のすぐ後に方眼に合わせて描き、起きている余白にはふきだし（話し手の名前つき）、右の欄に瓦版 #news。margins の無い古いビューでは何も描かない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B14.test.mjs",
+        "seal": [
+          "tests/e2e/B14.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "見本の条件（余白の3つの種類がそろう）",
+          "§53.6 余白のマスは、道の上の after のすぐ後に、方眼に合わせて描かれ、マス・札・城・モンスターと重ならない",
+          "§53.6 起きている余白は、ふきだしと <title> にすべての行の字（話し手の名前つき）。瓦版（#news）に view.news",
+          "§53.6 margins と news の無いビュー（古いエンジン）では、余白を描かず、エラーも出さない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "margins"
+      ]
     }
   }
 }

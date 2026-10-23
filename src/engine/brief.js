@@ -1,4 +1,5 @@
 import { MasumeError } from './errors.js';
+import { latestMargin } from './margins.js';
 import { inspectLog, requireHealthy } from './store.js';
 import { buildView } from './view.js';
 
@@ -14,8 +15,8 @@ export function brief(root, characterId) {
       && event.type === 'note' && event.data.character === characterId)
     .slice(-5).reverse().map(({ seq, ts, data }) => ({ seq, ts, text: data.text }));
   return {
-    jumon: view.head.jumon,
     seq: view.head.seq,
+    commit: view.head.commit,
     character: {
       id: character.id, name: character.name, kind: character.kind,
       module: character.module ?? null, territory: character.territory ?? [],
@@ -40,8 +41,18 @@ export function brief(root, characterId) {
         return member.at !== current.id || member.status !== 'waiting';
       }) : [],
     sortie: character.sortie,
+    generation: character.generation,
+    cases: current?.cases ?? [],
+    next_case: character.square === null ? null : current.cases[character.square]?.name ?? null,
+    square: character.square,
+    skills: character.skills,
+    medals: character.medals,
+    grave: character.grave && { ...character.grave, command: `git stash apply ${character.grave.stash}` },
+    save: view.quest.save ?? null,
+    margin: latestMargin(view.margins, characterId),
     notes,
     rules: [
+      '1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる',
       '現在のマスだけをやる',
       '自分の縄張りの中だけを編集する',
       '判定ファイルと地図を変更しない',

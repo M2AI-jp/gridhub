@@ -15,7 +15,7 @@ export const TOOLS = [
   {
     name: 'masume_status',
     title: '盤面の状態',
-    description: '盤面（マスメの冒険）の状態を見る。キャラクターごとの現在地・レベル・ふっかつのじゅもんが分かる。json を true にすると機械向けの JSON を返す。',
+    description: '盤面（GridHub の冒険）の状態を見る。キャラクターごとの現在地・レベル・テストの成否・記録の番号（seq）が分かる。json を true にすると機械向けの JSON を返す。',
     readOnly: true,
     properties: { json: { type: 'boolean', description: 'true なら盤面の JSON を返す' } },
     required: [],
@@ -25,7 +25,7 @@ export const TOOLS = [
   {
     name: 'masume_brief',
     title: '指令書を読む',
-    description: 'キャラクターの指令書を読む。いまのマス・やること・判定コマンド・縄張り・見えている先のマスが書いてある。作業の前にまず読む。',
+    description: 'キャラクターの指令書を読む。いまのマス・やること・判定コマンド・縄張り・見えている先のマスと、道の余白（別の担当との会話・町の住人・瓦版）のいちばん新しい出来事が書いてある。作業の前にまず読む。',
     readOnly: true,
     properties: {
       character: str('キャラクターのID（例: engine）'),
@@ -46,6 +46,17 @@ export const TOOLS = [
     },
     required: ['target'],
     argv: (a) => ['check', `--as=${a.as ?? a.target}`, ...(a.no_boss ? ['--no-boss'] : []), '--', a.target],
+  },
+  {
+    name: 'masume_step',
+    title: '歩く',
+    description: '歩く（GridHub の step）。いまのダンジョンの判定だけを走らせ、テスト1件ずつの成否を記録する。何度でもよく、位置もレベルも変わらない（罰なし）。いちばん手前の落ちているテストだけを通してから歩き、全部通ったら masume_check で宣言する。',
+    properties: {
+      character: str('歩くキャラクターのID'),
+      as: str('歩く者のID（既定は character）'),
+    },
+    required: ['character'],
+    argv: (a) => ['step', `--as=${a.as ?? a.character}`, '--', a.character],
   },
   {
     name: 'masume_stamp',
@@ -80,22 +91,13 @@ export const TOOLS = [
     argv: (a) => ['log', `--tail=${a.tail ?? 20}`],
   },
   {
-    name: 'masume_jumon',
-    title: 'ふっかつのじゅもん',
-    description: 'いまのふっかつのじゅもん（セーブの合言葉）を教える。',
+    name: 'masume_verify',
+    title: '冒険の書の検証',
+    description: '冒険の書（セーブデータ。ハッシュの鎖）が壊れていない・書き換えられていないか検証する。',
     readOnly: true,
     properties: {},
     required: [],
-    argv: () => ['jumon'],
-  },
-  {
-    name: 'masume_verify',
-    title: '冒険の書の検証',
-    description: '冒険の書（セーブデータ）が壊れていないか検証する。jumon を渡すと、そのじゅもんの記録があるかも調べる。',
-    readOnly: true,
-    properties: { jumon: str('調べたいふっかつのじゅもん') },
-    required: [],
-    argv: (a) => ['verify', ...(a.jumon !== undefined ? [`--jumon=${a.jumon}`] : [])],
+    argv: () => ['verify'],
   },
   {
     name: 'masume_quest',

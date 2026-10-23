@@ -3,11 +3,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { masume, masumeJson, newToy, toyMap, flag, view, char, readLog, jumonOf } from '../helpers.mjs';
+import { masume, masumeJson, newToy, toyMap, flag, view, char, readLog, gitCommitAll } from '../helpers.mjs';
 
 const check = (dir, who) => masume(['check', who, '--dir', dir, '--as', who]);
 
-test('load: seq でも、ふっかつのじゅもんでも、その時の盤面に戻せる', () => {
+// 第11章 §52（GM）: じゅもんはやめた。戻り先は記録の番号（seq）か、冒険の書に記録された Git のコミットで指す。
+test('load: seq でも、Git のコミットでも、その時の盤面に戻せる', () => {
   const dir = newToy();
   flag(dir, 'A1');
   flag(dir, 'A2');
@@ -23,16 +24,46 @@ test('load: seq でも、ふっかつのじゅもんでも、その時の盤面�
   assert.equal(ev.type, 'loaded');
   assert.deepEqual(ev.data, { to_seq: seq1 });
   let v = view(dir);
-  assert.deepEqual(v.characters, snap.characters, 'キャラクターはその時の状態');
+  // 第11章（CONTRACTS §40・§42）: 戦いの記録（テスト1件ずつの成否から導く square・メダルなど）は、ロードしても巻き戻らない。
+  // それ以外（位置・レベル・経験値など）がその時の状態に戻ることを確かめる。
+  const BATTLE = ['square', 'medals', 'revived', 'strong', 'skills', 'treasures', 'traps'];
+  const timeless = (characters) => characters.map((c) => Object.fromEntries(Object.entries(c).filter(([k]) => !BATTLE.includes(k))));
+  assert.deepEqual(timeless(v.characters), timeless(snap.characters), 'キャラクターはその時の状態');
   for (const id of Object.keys(snap.nodes)) assert.equal(v.nodes[id].state, snap.nodes[id].state, `${id} の state`);
   assert.equal(masume(['verify', '--dir', dir]).code, 0, 'ロードしても鎖は正常');
 
-  // 進めてから、じゅもんで戻る
+  // Git の作業ツリーにして、コミットの上で判定する。判定の記録は、そのとき見ていたコミットを持つ（§52.3）
+  const c1 = gitCommitAll(dir, 'c1');
   assert.equal(check(dir, 'a').code, 0);
   assert.equal(char(view(dir), 'a').at, 'A3');
-  const spell = jumonOf(readLog(dir)[seq1].hash);
-  const r2 = masume(['load', spell, '--dir', dir, '--as', 'gm']);
+  const atC1 = readLog(dir).filter((e) => e.data?.git?.head === c1);
+  assert.ok(atC1.length >= 1, '判定の記録に data.git.head');
+  assert.equal(view(dir).head.commit, c1, 'head.commit は最後に記録されたコミット');
+  const st = masume(['status', '--dir', dir]);
+  assert.equal(st.out.trim().split('\n').pop().trim(), `記録: seq ${view(dir).head.seq} / Git: commit ${c1.slice(0, 7)}`);
+  flag(dir, 'A3');
+  const c2 = gitCommitAll(dir, 'c2');
+  assert.equal(check(dir, 'a').code, 0);
+  assert.equal(char(view(dir), 'a').at, 'G1', 'A3 を抜けて砦で待つ');
+  assert.equal(view(dir).head.commit, c2);
+  // c1 が初めて記録された時点（a が A3 に進んだところ）に、短いコミットで戻る
+  // 数字だけの短いコミットは seq と読まれる（§52.5）ので、英字が入るところまで伸ばす
+  const short = c1.slice(0, Math.max(7, c1.search(/[a-f]/) + 1));
+  const r2 = masume(['load', short, '--dir', dir, '--as', 'gm']);
   assert.equal(r2.code, 0, r2.all);
+  assert.deepEqual(readLog(dir).pop().data, { to_seq: atC1[0].seq });
+  assert.match(r2.out.trim().split('\n').pop(), /^記録: seq \d+ \/ Git: commit [0-9a-f]{7}$/, 'load の最後の行は記録の目印');
+  v = view(dir);
+  assert.equal(char(v, 'a').at, 'A3');
+  // 大文字でも、40桁でも同じ
+  assert.equal(masume(['load', c1.toUpperCase(), '--dir', dir, '--as', 'gm']).code, 0);
+  assert.deepEqual(readLog(dir).pop().data, { to_seq: atC1[0].seq });
+  // 冒険の書に記録されていないコミットには戻れない
+  const unknown = masume(['load', 'deadbeef', '--dir', dir, '--as', 'gm']);
+  assert.equal(unknown.code, 2, unknown.all);
+  assert.match(unknown.all, /E_LOAD/);
+  // seq で戻って、A2 から
+  assert.equal(masume(['load', String(seq1), '--dir', dir, '--as', 'gm']).code, 0);
   v = view(dir);
   assert.equal(char(v, 'a').at, 'A2');
 
@@ -44,8 +75,12 @@ test('load: seq でも、ふっかつのじゅもんでも、その時の盤面�
   const bad = masume(['load', '9999', '--dir', dir, '--as', 'gm']);
   assert.equal(bad.code, 2, bad.all);
   assert.match(bad.all, /E_LOAD/);
-  const badSpell = masume(['load', 'ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ', '--dir', dir, '--as', 'gm']);
-  assert.equal(badSpell.code, 2, badSpell.all);
+  // seq でもコミットでもないもの（第10章までのじゅもんも）は受け付けない
+  for (const bad of ['ぼぼぼ ぼぼぼ ぼぼぼ ぼぼぼ', 'abc', 'seq12']) {
+    const r3 = masume(['load', bad, '--dir', dir, '--as', 'gm']);
+    assert.equal(r3.code, 2, r3.all);
+    assert.match(r3.all, /E_LOAD/);
+  }
 });
 
 test('amend: 計画は変えられるが、歴史は書き換えられない', () => {

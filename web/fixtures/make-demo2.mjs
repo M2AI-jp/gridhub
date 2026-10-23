@@ -22,12 +22,12 @@ const s3 = add({ type: 'sortie', character: 'gmkit', node: 'M1', text: '地図�
 add({ type: 'returned', character: 'gmkit', node: 'M1', ok: false, text: '地図職人 が帰還した（M1 → M1、進めなかった）' });
 for (const c of v.characters) {
   c.sortie = null;
-  c.sorties = 0;
+  c.sorties = v.log.filter((e) => e.type === 'sortie' && e.character === c.id).length;
+  c.generation = Math.max(1, c.sorties); // §42: 代 = sortie の数（0なら1）
 }
 const engine = v.characters.find((c) => c.id === 'engine');
 engine.sortie = { seq: s2.seq, agent: 'codex', model: 'gpt-5', node: 'E3', since: s2.ts };
-engine.sorties = 2;
-v.characters.find((c) => c.id === 'gmkit').sorties = 1;
+
 v.head = { ...v.head, seq };
 void s1, s3;
 writeFileSync(join(here, 'demo2-state.json'), JSON.stringify(v, null, 2) + '\n');

@@ -26,7 +26,7 @@ const VIEW = {
   characters: [],
   nodes: {},
   log: [],
-  head: { seq: 0, hash: 'ab', jumon: 'あいう えおか きくけ こさし' },
+  head: { seq: 0, hash: 'ab', commit: null },
   integrity: { ok: true, errors: [] },
   finished: false,
 };
