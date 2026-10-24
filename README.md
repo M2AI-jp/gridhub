@@ -144,25 +144,31 @@ git config --global user.email "you@example.com"
 git log --oneline                                      # 町でのセーブ（gridhub save: …）が並ぶ
 ```
 
-GitHub に置いて、変更をレビューしてもらう（PR を出す）には:
+#### GitHub につなぐ（`gridhub remote`・`gridhub push`・盤面の「GitHub に送る」ボタン）
 
-1. github.com で新しいリポジトリを作る（README などは足さず、空のまま）。
-2. 手元のフォルダをつなぎ、送る（push）。
+いちばん簡単なのは、盤面のセーブの欄です。GitHub につながっていなければ、つなぐ手引き（下の1〜4）が、まだの手順だけ出ます。つながっていれば「GitHub に送っていないセーブ: 2」のように数が出て、「GitHub に送る」ボタンで送れます。コマンドでも同じことができます。
 
-   ```sh
-   git remote add origin https://github.com/<あなた>/<リポジトリ>.git
-   git push -u origin HEAD
-   ```
+```sh
+gridhub remote        # いまの様子と、まだの手引き（gh が入っているか・ログインしたか・リポジトリがあるか・送ったか）
+```
 
-3. 次の作業はブランチで進め、終わったら送る。
+1. **gh（GitHub のコマンド）を入れる**: https://cli.github.com/ （macOS なら `brew install gh`）
+2. **GitHub にログインする**: `gh auth login`（ブラウザが開くので、画面のとおりに進める）
+3. **GitHub にリポジトリを作ってつなぐ**: `gh repo create <フォルダ名> --private --source . --remote origin`
+4. **送る**: `gridhub push`（盤面の「GitHub に送る」ボタンと同じ。2回目からは、送っていないセーブだけが送られる）
 
-   ```sh
-   git switch -c memo-search          # 作業用のブランチ
-   gridhub party --tactic bold        # 冒険を進める（町に着くたびにコミットされる）
-   git push -u origin memo-search
-   ```
+- `gridhub push` は、いまのブランチをリモートに送るだけです（中で `git push` を走らせます）。**force push はしません**（GitHub のほうが先に進んでいたら、送らずに止まって知らせます）。
+- gh を使わないなら、github.com で空のリポジトリを作り、`git remote add origin https://github.com/<あなた>/<リポジトリ>.git` でつないでから `gridhub push` でもかまいません。
 
-4. GitHub のリポジトリのページに出る「Compare & pull request」を押して、PR を作る（`gh` コマンドがあれば `gh pr create`）。PR の説明には `gridhub status` の最後の行（`記録: seq 42 / Git: commit a1b2c3d`）を貼っておくと、レビューする人が同じ時点の盤面を `gridhub load 42` で開けます。
+変更をレビューしてもらう（PR を出す）には、次の作業をブランチで進め、終わったら送ります。
+
+```sh
+git switch -c memo-search          # 作業用のブランチ
+gridhub party --tactic bold        # 冒険を進める（町に着くたびにコミットされる）
+gridhub push                       # このブランチを GitHub に送る
+```
+
+GitHub のリポジトリのページに出る「Compare & pull request」を押して、PR を作ります（`gh` コマンドがあれば `gh pr create`）。PR の説明には `gridhub status` の最後の行（`記録: seq 42 / Git: commit a1b2c3d`）を貼っておくと、レビューする人が同じ時点の盤面を `gridhub load 42` で開けます。
 
 迷ったら: `git status`（いま何が変わっているか）・`git log --oneline`（セーブの一覧）・`git stash list`（墓の一覧）。消してしまったように見えても、GridHub は変更を墓に残してから戻すので、`git stash apply <stash>` で取り出せます。
 
@@ -224,6 +230,8 @@ claude mcp add gridhub -- node /path/to/gridhub/bin/gridhub.js mcp --dir /path/t
 ## 盤面
 
 - 縦の5mm方眼ノート（B5）の見開きです。キャラクターごとの色の道が、ページの上から下へ、景色のあいだを曲がりながら下ります。駒が次のページへ進むと、ノートがめくれます。
+- ノートは縦です。横長の画面では見開き、**縦長の画面（スマホや、縦に置いたタブレット・モニター）では1ページずつ**縦に見せます。画面の向きを変えると切り替わります。
+- 札・吹き出し・瓦版の切り抜きは重ならないように置かれ、字は切れません（長い字は短くして、全文はマウスを乗せると出ます）。
 - 道のマスはテスト1件ずつで、テストの名前は拡大すると読めます。タスクの札には `POST /api/memos` のような題と `テスト 3/5`、町の看板には `commit a1b2c3d` が書いてあります。
 - 右の欄はエンジニア向けです: なかま（何代目・テストの数・メダル）、冒険の書（ログ）、モンスター図鑑（テストの一覧と成否）。
 - 道には、開発に関係する**余白のマス**もあります。進みは止めません（判定も罰もない）。駒が通ると、合流の前には別の担当との会話（それぞれの最新の日誌から）、町では住人との雑談（通したテストの数・セーブの commit）、ほかでは瓦版（「号外: 伝令 が S2 を抜けた」と、作っている製品の分野の話題 `quest.news`）が起きます。どれも冒険の書と地図に本当にあることからだけ作ります。
@@ -286,6 +294,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | `gridhub status` / `gridhub log` | 盤面の要約 / 冒険の書 |
 | `gridhub verify` / `gridhub repair` | 改ざんの検証 / 修復 |
 | `gridhub load <seq\|commit>` | 過去の時点の盤面に戻る（記録の番号か Git のコミットで指す） |
+| `gridhub remote` / `gridhub push` | GitHub につなぐ手引きと、送っていないセーブの数 / いまのブランチを GitHub に送る（force push はしない） |
 | `gridhub new <map>` / `gridhub validate <map>` / `gridhub amend <map>` | 地図から冒険の書をつくる / 検査 / 改訂（歴史は書き換えられない） |
 | `gridhub seal <node…\|--all>` | 判定ファイルを封印する（GM） |
 | `gridhub init` | よそのプロジェクトに支度をする |
@@ -335,6 +344,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 | 第9章 | 手書きの方眼ノートの盤面（筆記具の描き分け・貼った物・ペンで描いていく） |
 | 第10章 | 外の字を待たない: ネットが無くても盤面がすぐ描かれる（Google Fonts は届いたら差し替え） |
 | 第11章 | **GridHub**: テスト1件が1マス・`gridhub step`・Git のセーブと墓・作戦・伝承と技・エンディング・縦の方眼ノートの世界地図 |
+| 第12章 | 仕上げ: 瓦版は作っている製品の話題・札と吹き出しが重ならない・盤面から GitHub につなぐ（`gridhub remote`・`gridhub push`・「GitHub に送る」ボタン）・縦長の画面では1ページずつ |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
 
@@ -342,7 +352,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 
 ```sh
 npm test              # すべてのマスとゲートの判定を1回ずつ
-npm run test:goal     # いまのあがり（GOAL11）: 第1章〜第11章の全部の判定をまとめて＋冒険の書の確認
+npm run test:goal     # いまのあがり（GOAL12）: 第1章〜第12章の全部の判定をまとめて＋冒険の書の確認
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
