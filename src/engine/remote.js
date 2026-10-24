@@ -1,32 +1,28 @@
-// GitHub への導線（第12章）: リモート（GitHub など）への push と、つなぐための手引き。
-// ユーザーの言葉:「Github知らない人でもGitとかGithubで管理できるようになってるといい」。
-// push の結果は冒険の書に `pushed` として、自動 push の設定は `git_settings` として残す（ビューは冒険の書だけから作る）。
-// 生きた Git の状態（リモート・ahead・behind）と gh の状態は、ビューではなく gitStatus / ghStatus / gitGuide で返す。
+// GitHub につなぐ導線（CONTRACTS §56）。ユーザーの言葉:「Github知らない人でもGitとかGithubで管理できるようになってるといい」。
+// Git の様子はビュー（冒険の書）には入れない（§52.3）。ここで読み、gridhub remote・gridhub push・窓口が使う。
+// push はするが、force push はしない。フックは走らせない。冒険の書には書かない。
 import { execFile, spawnSync } from 'node:child_process';
 import { basename, resolve } from 'node:path';
 import { MasumeError } from './errors.js';
 import { gitRunner } from './save.js';
-import { appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLock } from './store.js';
 
-/** URL から、ユーザー名・パスワード・トークン（user:token@）を消す（記録や画面に出さない） */
+/** URL から、ユーザー名・パスワード・トークン（user:token@）を消す（画面や記録に出さない） */
 export function safeUrl(url) {
   if (typeof url !== 'string' || !url) return null;
   return url.replace(/^([a-z][a-z0-9+.-]*:\/\/)[^/@]*@/iu, '$1');
 }
 
 /**
- * いまの Git の状態（Git を呼ぶ。ビューには入れない）。
- * { inside, root, branch, head, remote: {name, url} | null, upstream, ahead, behind, error? }
- * behind は、最後に fetch した時点のリモートとの差（ここでは fetch しない）。
+ * いまの Git の様子（Git を呼ぶ）: { inside, branch, head, remote: {name, url, github} | null, upstream, ahead, behind, root }
+ * remote は上流のリモート、無ければ origin、無ければ最初のリモート。ahead・behind は上流と比べた数（上流が無ければ null。fetch はしない）。
  */
 export function gitStatus(root) {
-  const none = { inside: false, root: null, branch: null, head: null, remote: null, upstream: null, ahead: 0, behind: 0 };
-  const git = gitRunner(resolve(root));
+  const none = { inside: false, branch: null, head: null, remote: null, upstream: null, ahead: null, behind: null, root: null };
   let info;
   try {
-    info = git(['rev-parse', '--is-inside-work-tree', '--show-toplevel'], { allowFail: true });
-  } catch (error) {
-    return { ...none, error: error.message };
+    info = gitRunner(resolve(root))(['rev-parse', '--is-inside-work-tree', '--show-toplevel'], { allowFail: true });
+  } catch {
+    return none; // git が無い
   }
   const [inside, top] = info.out.split('\n');
   if (info.code !== 0 || inside?.trim() !== 'true' || !top) return none;
@@ -39,223 +35,106 @@ export function gitStatus(root) {
   const head = ask(['rev-parse', '--verify', '-q', 'HEAD']);
   const upstream = branch ? ask(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']) : null;
   const remotes = (ask(['remote']) ?? '').split('\n').filter(Boolean);
-  const upstreamRemote = upstream ? remotes.find((name) => upstream.startsWith(`${name}/`)) ?? null : null;
+  // 上流のリモート名は、いちばん長く一致するもの（リモート名に / が入っていてもよいように）
+  const upstreamRemote = upstream
+    ? remotes.filter((name) => upstream.startsWith(`${name}/`)).sort((a, b) => b.length - a.length)[0] ?? null : null;
   const name = upstreamRemote ?? (remotes.includes('origin') ? 'origin' : remotes[0] ?? null);
-  const remote = name ? { name, url: safeUrl(ask(['config', '--get', `remote.${name}.url`])) } : null;
-  let ahead = 0;
-  let behind = 0;
-  if (head) {
-    const tracking = upstream ?? (remote && branch && ask(['rev-parse', '--verify', '-q', `refs/remotes/${remote.name}/${branch}`]) ? `${remote.name}/${branch}` : null);
-    if (tracking) {
-      const counts = (ask(['rev-list', '--left-right', '--count', `HEAD...${tracking}`]) ?? '0 0').split(/\s+/u).map(Number);
-      [ahead, behind] = [counts[0] || 0, counts[1] || 0];
-    } else {
-      ahead = Number(ask(['rev-list', '--count', 'HEAD'])) || 0; // まだ一度も送っていない
-    }
+  const url = name ? safeUrl(ask(['config', '--get', `remote.${name}.url`])) : null;
+  const remote = name ? { name, url, github: typeof url === 'string' && url.includes('github.com') } : null;
+  let ahead = null;
+  let behind = null;
+  if (upstream && head) {
+    const counts = ask(['rev-list', '--left-right', '--count', 'HEAD...@{u}'])?.split(/\s+/u).map(Number);
+    if (counts?.length === 2 && counts.every(Number.isInteger)) [ahead, behind] = counts;
   }
-  return { inside: true, root: top.trim(), branch, head, remote, upstream, ahead, behind };
+  return { inside: true, branch, head, remote, upstream, ahead, behind, root: top.trim() };
 }
 
-/** GitHub CLI（gh）が入っているか、ログインしているか。MASUME_GH で gh の場所を差し替えられる（判定用） */
 const GH_AUTH = ['auth', 'status', '--hostname', 'github.com'];
+const ghBin = () => process.env.MASUME_GH || 'gh';
 const ghEnv = () => ({ ...process.env, GH_PROMPT_DISABLED: '1', NO_COLOR: '1' });
-function ghAuthOf(ok, text) {
-  const user = text.match(/account\s+([A-Za-z0-9-]+)/u)?.[1] ?? text.match(/Logged in to \S+ as ([A-Za-z0-9-]+)/u)?.[1] ?? null;
-  return { installed: true, authed: ok, user: ok ? user : null };
-}
 
+/** gh（MASUME_GH、既定 gh）があるか、ログインしているか: { installed, authenticated: true | false | null } */
 export function ghStatus() {
-  const bin = process.env.MASUME_GH || 'gh';
-  const version = spawnSync(bin, ['--version'], { encoding: 'utf8', timeout: 5_000 });
-  if (version.error || version.status !== 0) return { installed: false, authed: false, user: null };
-  const auth = spawnSync(bin, GH_AUTH, { encoding: 'utf8', timeout: 10_000, env: ghEnv() });
-  return ghAuthOf(!auth.error && auth.status === 0, `${auth.stdout ?? ''}\n${auth.stderr ?? ''}`);
+  const version = spawnSync(ghBin(), ['--version'], { encoding: 'utf8', timeout: 5_000, env: ghEnv() });
+  if (version.error || version.status !== 0) return { installed: false, authenticated: null };
+  const auth = spawnSync(ghBin(), GH_AUTH, { encoding: 'utf8', timeout: 10_000, env: ghEnv() });
+  return { installed: true, authenticated: !auth.error && auth.status === 0 };
 }
 
-/** ghStatus の非同期版（盤面のサーバーを止めない） */
+/** ghStatus の非同期版（gh auth status はネットワークを使うことがあるので、盤面のサーバーを止めない） */
 export async function ghStatusAsync() {
-  const bin = process.env.MASUME_GH || 'gh';
   const run = (args, timeout) => new Promise((done) => {
-    execFile(bin, args, { encoding: 'utf8', timeout, env: ghEnv() }, (error, stdout, stderr) => done({ error, text: `${stdout ?? ''}\n${stderr ?? ''}` }));
+    execFile(ghBin(), args, { encoding: 'utf8', timeout, env: ghEnv() }, (error) => done(!error));
   });
-  const version = await run(['--version'], 5_000);
-  if (version.error) return { installed: false, authed: false, user: null };
-  const auth = await run(GH_AUTH, 10_000);
-  return ghAuthOf(!auth.error, auth.text);
+  if (!await run(['--version'], 5_000)) return { installed: false, authenticated: null };
+  return { installed: true, authenticated: await run(GH_AUTH, 10_000) };
 }
 
-/** GitHub のリポジトリ名にしてよい形（フォルダ名から） */
-function repoName(root) {
-  const name = basename(root ?? '').replace(/[^A-Za-z0-9._-]+/gu, '-').replace(/^[-.]+|[-.]+$/gu, '');
-  return name || 'my-gridhub-project';
-}
+/** シェルにそのまま貼れる形（安全な字だけならそのまま、ほかは単一引用符で包む） */
+const word = (text) => (/^[A-Za-z0-9_.@%+=:,/-]+$/u.test(text) ? text : `'${String(text).replace(/'/gu, `'\\''`)}'`);
 
-/**
- * GitHub を知らない人のための手引き。上から順に、まだ済んでいない最初の手順が `next`。
- * status は gitStatus、gh は ghStatus、root はゲームのルート。
- * 戻り値: { steps: [{id, done, title, command, note}], next }
- */
-export function gitGuide(status, gh, root) {
-  const name = repoName(status.root ?? root);
-  const steps = [
+/** GitHub を知らない人のための手引き（§56.1）。git・gh・login・repo・push の順 */
+export function gitSteps(status, gh, root) {
+  const folder = basename(resolve(root)) || 'my-gridhub-project';
+  return [
     {
-      id: 'repo', done: status.inside, title: 'このフォルダを Git で管理する',
-      command: 'git init', note: 'gridhub quest で始めた冒険では、もう済んでいます',
+      id: 'git', done: status.inside, command: 'git init',
+      text: status.inside ? 'このフォルダは Git で管理されています' : 'このフォルダを Git で管理します（gridhub quest で始めた冒険では済んでいます）',
     },
     {
-      id: 'commit', done: status.head !== null, title: '最初のコミット（セーブ）をつくる',
-      command: 'git add -A && git commit -m "はじめのセーブ"', note: '町に着くと GridHub がコミットします',
+      id: 'gh', done: gh.installed, command: null,
+      text: gh.installed ? 'GitHub CLI（gh）が入っています' : 'GitHub CLI（gh）を https://cli.github.com/ から入れます（ブラウザで GitHub にログインできるようになります）',
     },
     {
-      // もうリモートにつながっていれば（SSH や GitHub 以外のリモートでも）、ログインの手順は要らない
-      id: 'login', done: gh.authed || status.remote !== null, title: 'GitHub にログインする',
-      command: gh.installed ? 'gh auth login' : null,
-      note: gh.installed ? 'ブラウザが開くので、GitHub のアカウントでログインします'
-        : 'GitHub CLI（gh）を https://cli.github.com/ から入れると、gh auth login でブラウザからログインできます（gh を使わず、GitHub のサイトでリポジトリをつくってもかまいません）',
+      id: 'login', done: gh.authenticated === true, command: 'gh auth login',
+      text: gh.authenticated === true ? 'GitHub にログインしています' : 'GitHub にログインします（ブラウザが開きます）',
     },
     {
-      id: 'remote', done: status.remote !== null, title: 'GitHub にリポジトリをつくって、つなぐ',
-      command: gh.authed ? `gh repo create ${name} --private --source . --remote origin`
-        : `git remote add origin https://github.com/<あなたのユーザー名>/${name}.git`,
-      note: gh.authed ? '非公開（private）のリポジトリをつくって、このフォルダとつなぎます'
-        : 'GitHub のサイトの「New repository」で空のリポジトリをつくり、その URL でつなぎます',
+      id: 'repo', done: status.remote !== null, command: `gh repo create ${word(folder)} --private --source . --remote origin`,
+      text: status.remote !== null ? `リモート ${status.remote.name} につながっています` : 'GitHub に非公開のリポジトリをつくって、このフォルダとつなぎます',
     },
     {
-      id: 'push', done: status.remote !== null && status.upstream !== null && status.ahead === 0,
-      title: 'GitHub に送る（push）', command: 'gridhub push',
-      note: status.ahead > 0 ? `まだ送っていないコミットが ${status.ahead} 件あります` : '町でセーブしたら、ここで送ります（自動で送る設定もできます: gridhub push --auto on）',
+      id: 'push', done: status.upstream !== null && status.ahead === 0, command: 'gridhub push',
+      text: status.upstream === null ? 'GitHub にまだ一度も送っていません。送ります'
+        : status.ahead === 0 ? 'GitHub に送っていないセーブはありません' : `GitHub に送っていないセーブが ${status.ahead} 件あります。送ります`,
     },
   ];
-  return { steps, next: steps.find((step) => !step.done)?.id ?? null };
 }
 
-/** 冒険の書の自動 push の設定（最新の git_settings。無ければ false） */
-export function autoPushOf(events) {
-  for (let i = events.length - 1; i >= 0; i--) {
-    if (events[i].type === 'git_settings') return events[i].data?.auto_push === true;
-  }
-  return false;
+/** gridhub remote --json の中身（§56.1）。gh を渡さなければ、ここで調べる */
+export function remoteInfo(root, gh = ghStatus()) {
+  const { root: _top, ...status } = gitStatus(root);
+  return { ...status, gh, steps: gitSteps(status, gh, root) };
 }
 
-/** 送る前の確かめと、git push の引数。送れないなら fail に理由 */
-function pushPlan(root) {
+/** remoteInfo の非同期版（窓口用） */
+export async function remoteInfoAsync(root) {
+  return remoteInfo(root, await ghStatusAsync());
+}
+
+/**
+ * いまのブランチをリモートに送る（§56.2）。上流があればそこへ、無ければ -u <remote> <branch>。force はしない。フックは走らせない。
+ * Git の外 E_NO_GIT/2、リモートが無い E_NO_REMOTE/2、HEAD が切り離されている E_USAGE/2 を投げる。
+ * 戻り値: { ok, remote, branch, commit, ahead, output }（送れなければ ok: false）。冒険の書には書かない。
+ */
+export function push(root) {
   const status = gitStatus(root);
-  const fail = (error) => ({ ok: false, remote: status.remote?.name ?? null, branch: status.branch, commit: status.head, error });
-  if (status.error) return { fail: fail(status.error) };
-  if (!status.inside) return { fail: fail('ゲームのルートが Git の作業ツリーの中ではありません（gridhub push --guide で手引きを見る）') };
-  if (!status.branch) return { fail: fail('ブランチの上にいません（detached HEAD）。git switch <ブランチ> で戻ってから送ってください') };
-  if (!status.head) return { fail: fail('まだコミットがありません') };
-  if (!status.remote) return { fail: fail('リモート（GitHub など）がつながっていません（gridhub push --guide で、つなぎ方を見る）') };
-  const upstreamBranch = status.upstream?.slice(status.remote.name.length + 1);
-  // force はしない。フックは走らせない（町のセーブと同じ）。資格情報を聞かれて止まらないようにする
-  const args = ['-c', 'core.hooksPath=/dev/null', ...(status.upstream
-    ? ['push', status.remote.name, `${status.branch}:${upstreamBranch}`]
-    : ['push', '-u', status.remote.name, status.branch])];
-  return { status, args, fail };
-}
-
-function pushEnv() {
-  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GIT_OPTIONAL_LOCKS: '0', GCM_INTERACTIVE: 'never' };
-  for (const key of ['GIT_INDEX_FILE', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_PREFIX']) delete env[key];
-  return env;
-}
-
-function pushOutcome({ status, fail }, code, text) {
-  if (code === 0) return { ok: true, remote: status.remote.name, branch: status.branch, commit: status.head };
-  return fail(/rejected|non-fast-forward|fetch first/iu.test(text)
-    ? 'リモートに、手元に無いコミットがあります。git pull で取り込んでから、もう一度送ってください'
-    : /Authentication failed|could not read Username|Permission denied|403|terminal prompts disabled/iu.test(text)
-      ? 'リモートにログインできていません（gh auth login でログインしてください）'
-      : `git push に失敗しました: ${String(text).trim().split('\n').at(-1) ?? ''}`);
-}
-
-function recordPush(root, actor, auto, result) {
-  const data = {
-    remote: result.remote, branch: result.branch, commit: result.commit, ok: result.ok, auto,
-    ...(result.ok ? {} : { error: result.error }),
-  };
-  const event = withLock(root, actor, () => {
-    const snapshot = requireHealthy(inspectLog(root));
-    return appendEventsLocked(root, [{ type: 'pushed', data }], { actor, previous: snapshot.events.at(-1) })[0];
-  });
-  return { exitCode: result.ok ? 0 : 1, event };
-}
-
-/**
- * リモートへ送り、結果を冒険の書に `pushed {remote, branch, commit, ok, auto, error?}` として残す。
- * 戻り値: { exitCode, event }（送れなければ exitCode 1。記録はする）
- */
-export function push(root, { actor = defaultActor(), auto = false } = {}) {
-  root = resolve(root);
-  requireHealthy(inspectLog(root));
-  const plan = pushPlan(root);
-  if (plan.args === undefined) return recordPush(root, actor, auto, plan.fail);
-  const r = spawnSync('git', plan.args, { cwd: plan.status.root, env: pushEnv(), encoding: 'utf8', timeout: 120_000 });
-  const code = r.error ? -1 : r.status;
-  return recordPush(root, actor, auto, pushOutcome(plan, code, r.error ? r.error.message : `${r.stderr ?? ''}\n${r.stdout ?? ''}`));
-}
-
-/** push の非同期版（盤面のサーバーを止めない） */
-export async function pushAsync(root, { actor = defaultActor(), auto = false } = {}) {
-  root = resolve(root);
-  requireHealthy(inspectLog(root));
-  const plan = pushPlan(root);
-  if (plan.args === undefined) return recordPush(root, actor, auto, plan.fail);
-  const { code, text } = await new Promise((done) => {
-    execFile('git', plan.args, { cwd: plan.status.root, env: pushEnv(), encoding: 'utf8', timeout: 120_000 }, (error, stdout, stderr) => {
-      done({ code: error ? (typeof error.code === 'number' ? error.code : -1) : 0, text: `${stderr ?? ''}\n${stdout ?? ''}${error && typeof error.code !== 'number' ? `\n${error.message}` : ''}` });
-    });
-  });
-  return recordPush(root, actor, auto, pushOutcome(plan, code, text));
-}
-
-/** 町のセーブのあとに自動で送るかどうかを、冒険の書に `git_settings {auto_push}` として残す */
-export function setAutoPush(root, autoPush, { actor = defaultActor() } = {}) {
-  if (typeof autoPush !== 'boolean') throw new MasumeError('E_USAGE', 'auto_push は true か false です');
-  root = resolve(root);
-  return withLock(root, actor, () => {
-    const snapshot = requireHealthy(inspectLog(root));
-    return appendEventsLocked(root, [{ type: 'git_settings', data: { auto_push: autoPush } }],
-      { actor, previous: snapshot.events.at(-1) })[0];
-  });
-}
-
-/**
- * 判定（宣言・ハンコ・ボス戦）の結果に、新しい町のセーブ（コミット）があり、自動 push が有効なら送る。
- * 送れなくても判定の結果は変えない（記録だけ）。ボス戦の中で送った分は、もう一度送らない。
- */
-export function pushAfterSaves(root, result, { actor = defaultActor() } = {}) {
-  const saved = result.events.filter((e) => e.type === 'saved' && typeof e.data?.commit === 'string' && e.data.changed === true);
-  if (saved.length === 0) return result;
-  const snapshot = inspectLog(resolve(root));
-  if (!snapshot.ok || !autoPushOf(snapshot.events)) return result;
-  const lastPush = snapshot.events.findLast((e) => e.type === 'pushed');
-  if (lastPush && lastPush.seq > saved.at(-1).seq) return result;
-  const pushed = push(root, { actor, auto: true });
-  result.events.push(pushed.event);
-  return result;
-}
-
-/**
- * ビューの git（冒険の書だけから。Git は呼ばない）:
- * { save, auto_push, last_push: {seq, commit, remote, branch, at} | null, push_error: {seq, error, at} | null, unpushed }
- * unpushed は、最後に送れたあとの、町のセーブ（変更があってコミットした saved）の数。
- */
-export function gitView(map, events) {
-  let autoPush = false;
-  let lastPush = null;
-  let pushError = null;
-  let unpushed = 0;
-  for (const event of events) {
-    const data = event.data ?? {};
-    if (event.type === 'git_settings') autoPush = data.auto_push === true;
-    else if (event.type === 'pushed') {
-      if (data.ok === true) {
-        lastPush = { seq: event.seq, commit: data.commit ?? null, remote: data.remote ?? null, branch: data.branch ?? null, at: event.ts };
-        pushError = null;
-        unpushed = 0;
-      } else pushError = { seq: event.seq, error: String(data.error ?? ''), at: event.ts };
-    } else if (event.type === 'saved' && typeof data.commit === 'string' && data.changed === true) unpushed++;
+  if (!status.inside) throw new MasumeError('E_NO_GIT', 'ここは Git の作業ツリーではありません（まず git init。gridhub remote で手引きを見る）');
+  if (!status.branch) throw new MasumeError('E_USAGE', 'HEAD がブランチから切り離されています。git switch <ブランチ> で戻ってから送ってください');
+  if (!status.remote) {
+    const repo = gitSteps(status, { installed: false, authenticated: null }, root).find((step) => step.id === 'repo');
+    throw new MasumeError('E_NO_REMOTE', `リモート（GitHub など）がつながっていません。つなぐには: ${repo.command}（くわしくは gridhub remote）`);
   }
-  return { save: map?.quest?.save === 'git', auto_push: autoPush, last_push: lastPush, push_error: pushError, unpushed };
+  const target = status.upstream ? status.upstream.slice(status.remote.name.length + 1) : status.branch;
+  const args = ['-c', 'core.hooksPath=/dev/null', 'push', ...(status.upstream ? [] : ['-u']), status.remote.name, `${status.branch}:${target}`];
+  const env = { ...process.env, GIT_TERMINAL_PROMPT: '0', GCM_INTERACTIVE: 'never' };
+  for (const key of ['GIT_INDEX_FILE', 'GIT_DIR', 'GIT_WORK_TREE', 'GIT_PREFIX']) delete env[key];
+  const r = spawnSync('git', args, { cwd: status.root, env, encoding: 'utf8', timeout: 120_000, maxBuffer: 16 * 1024 * 1024 });
+  const output = `${r.stdout ?? ''}${r.stderr ?? ''}${r.error ? `\n${r.error.message}` : ''}`.trim();
+  const after = gitStatus(root);
+  return {
+    ok: !r.error && r.status === 0, remote: status.remote.name, branch: status.branch, commit: status.head,
+    ahead: after.ahead, output,
+  };
 }

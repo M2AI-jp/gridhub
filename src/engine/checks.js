@@ -6,7 +6,6 @@ import { containedFile } from './paths.js';
 import { casesOf } from './cases.js';
 import { gitInfo, killActiveChecks, runChecks } from './runner.js';
 import { lastSave, restoreTerritory, saveTerritory } from './save.js';
-import { pushAfterSaves } from './remote.js';
 import { gateParty, isSealed, readyGate, reduceEvent, replay, sealFiles } from './state.js';
 import {
   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLockAsync, writeDurable,
@@ -247,15 +246,12 @@ async function runStamp(root, nodeId, { actor = defaultActor(), as = actor, boss
   return fightReady(root, result, result.ready === null ? [] : [result.ready], { actor, boss });
 }
 
-// 町でセーブしたら、設定に従ってリモート（GitHub など）へ送る（第12章。送れなくても判定の結果は変えない）
 export async function check(root, target, options = {}) {
-  const result = await withCheckSignals((requireRunning) => runCheck(root, target, options, requireRunning));
-  return pushAfterSaves(root, result, { actor: options.actor ?? defaultActor() });
+  return withCheckSignals((requireRunning) => runCheck(root, target, options, requireRunning));
 }
 
 export async function stamp(root, nodeId, options = {}) {
-  const result = await withCheckSignals((requireRunning) => runStamp(root, nodeId, options, requireRunning));
-  return pushAfterSaves(root, result, { actor: options.actor ?? defaultActor() });
+  return withCheckSignals((requireRunning) => runStamp(root, nodeId, options, requireRunning));
 }
 
 // 歩く（§41）: 今のダンジョンの判定だけを走らせ、テスト1件ずつの成否を記録する。位置・レベル・epoch は変えない。

@@ -2,7 +2,6 @@ import { inspectLog } from './store.js';
 import { sortieStatus } from './sortie.js';
 import { chronicle, endingText } from './chronicle.js';
 import { buildMargins } from './margins.js';
-import { gitView } from './remote.js';
 import { isSealed, nodeXp } from './state.js';
 
 function nodeState(node, progress, members, characters) {
@@ -90,15 +89,6 @@ function logEntry(event, map) {
       text = data.error
         ? `${name} の縄張りを戻せなかった: ${data.error}`
         : `${name} の縄張りを commit ${String(data.commit).slice(0, 7)} に戻した（墓: ${data.stash ? `stash ${data.stash.slice(0, 7)}` : 'なし'}）`;
-      break;
-    case 'pushed':
-      ok = data.ok === true;
-      text = ok
-        ? `${data.remote ?? 'リモート'} の ${data.branch ?? ''} へ送った（commit ${String(data.commit ?? '').slice(0, 7)}${data.auto ? '・自動' : ''}）`
-        : `リモートへ送れなかった: ${data.error ?? '不明'}`;
-      break;
-    case 'git_settings':
-      text = `町でセーブしたら、自動でリモートへ送る: ${data.auto_push ? 'する' : 'しない'}`;
       break;
     case 'returned':
       ok = data.advanced === true;
@@ -218,6 +208,5 @@ export function buildView(root) {
     ending,
     margins,
     news,
-    git: gitView(map, events),
   };
 }

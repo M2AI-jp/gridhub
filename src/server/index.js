@@ -1,4 +1,5 @@
 import { createServer as createHttpServer } from 'node:http';
+import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, watchFile as watchPath, unwatchFile } from 'node:fs';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -211,7 +212,7 @@ async function serveStatic(response, root, pathname) {
 export function createServer({
   webRoot, getView, watchFile, onStamp, onBattle, outputFor,
   onQuest, getQuest, onSortie, getParty, onPartyStop,
-  getGit, onPush, onGitSettings,
+  getGit, onPush,
 }) {
   const root = resolve(webRoot);
   const watchedPath = watchFile == null ? null : resolve(watchFile);
@@ -293,19 +294,9 @@ export function createServer({
   if (typeof onPartyStop === 'function') {
     postRoutes['/api/party/stop'] = { parse: () => ({}), call: () => onPartyStop(), status: 200, optionalBody: true };
   }
-  // GitHub への導線（第12章）: 送る・自動で送るかを選ぶ
+  // GitHub につなぐ導線（§56.3）: 送る
   if (typeof onPush === 'function') {
     postRoutes['/api/git/push'] = { parse: () => ({}), call: () => onPush(), status: 200, optionalBody: true };
-  }
-  if (typeof onGitSettings === 'function') {
-    postRoutes['/api/git/settings'] = {
-      parse(body) {
-        if (typeof body.auto_push !== 'boolean') throw badRequest('auto_push は true か false で指定してください');
-        return { auto_push: body.auto_push };
-      },
-      call: (value) => onGitSettings(value),
-      status: 200,
-    };
   }
   const getRoutes = {};
   if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
@@ -477,7 +468,6 @@ export function createServer({
 }
 
 const QUEST_SETTLE_MS = 10_000; // 冒険の書が生まれてから、語り部の支度が済むのを待つ上限
-const GH_CACHE_MS = 60_000; // gh の状態を覚えておく時間
 
 /** promise が片づくか ms たつか、早いほうで解決する（拒否はしない） */
 function settled(promise, ms) {
@@ -511,14 +501,6 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const battles = new Map();
   let shuttingDown = false;
   let pushing = false;
-  // gh auth status はネットワークを使うことがあるので、しばらく覚えておく
-  let ghCache = null;
-  const ghStatusCached = async () => {
-    if (ghCache && Date.now() - ghCache.at < GH_CACHE_MS) return ghCache.value;
-    const value = await engine.ghStatusAsync();
-    ghCache = { at: Date.now(), value };
-    return value;
-  };
 
   const requireOpen = () => {
     if (shuttingDown) throw apiError('E_BUSY', '窓口を閉じています');
@@ -655,38 +637,35 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     },
     onPartyStop: () => ({ ok: true, stopped: party.interrupt() }),
 
-    // ---- GitHub への導線（第12章）----
-    // 生きた Git の状態（リモート・ahead・behind）・gh の状態・つなぐ手引き。ビューは冒険の書だけから作るので、ここで返す
-    getGit: async () => {
-      const repo = engine.gitStatus(gameRoot);
-      const gh = await ghStatusCached();
-      const git = hasGame() ? engine.buildView(gameRoot).git : null;
-      return {
-        ok: true, repo, gh,
-        auto_push: git?.auto_push ?? false, last_push: git?.last_push ?? null,
-        push_error: git?.push_error ?? null, unpushed: git?.unpushed ?? 0,
-        ...engine.gitGuide(repo, gh, gameRoot),
-      };
-    },
+    // ---- GitHub につなぐ導線（§56.3）----
+    // Git の様子と手引き（gridhub remote --json と同じ）。ビュー（冒険の書）には入れない
+    getGit: () => engine.remoteInfoAsync(gameRoot),
+    // gridhub push --json を別プロセスで走らせる（送っているあいだも盤面のサーバーを止めない）。同時に2つは走らせない
     onPush: async () => {
       requireOpen();
-      requireGame();
-      if (pushing) throw apiError('E_BUSY', 'いまリモートへ送っています');
+      if (pushing) throw apiError('E_BUSY', 'いま GitHub に送っています');
       pushing = true;
       try {
-        // 送れなくても冒険の書には pushed（ok: false）が残り、SSE で盤面に届く
-        const result = await engine.pushAsync(gameRoot);
-        if (result.exitCode !== 0) throw apiError('E_PUSH', result.event.data.error, 409);
-        return { ok: true, seq: result.event.seq, pushed: result.event.data };
+        const { code, stdout, stderr } = await new Promise((done) => {
+          execFile(process.execPath, [bin, 'push', '--json', '--dir', gameRoot], {
+            cwd: gameRoot, encoding: 'utf8', timeout: 180_000, maxBuffer: 16 * 1024 * 1024,
+          }, (error, out, err) => done({ code: error ? (typeof error.code === 'number' ? error.code : -1) : 0, stdout: out, stderr: err }));
+        });
+        let result = null;
+        try {
+          result = JSON.parse(stdout);
+        } catch {
+          result = null;
+        }
+        if (code === 0 && result) return result;
+        if (code === 1 && result) throw apiError('E_PUSH', `GitHub に送れませんでした: ${result.output.split('\n').slice(-20).join('\n')}`, 409);
+        // Git の外・リモートなし・HEAD の切り離し（終了コード 2）は 400
+        const failure = String(stderr || stdout).trim().match(/^\[(E_[A-Z_]+)\]\s*([\s\S]*)$/u);
+        if (failure) throw apiError(failure[1], failure[2], 400);
+        throw apiError('E_PUSH', `gridhub push が失敗しました（終了コード ${code}）: ${String(stderr || stdout).trim().split('\n').at(-1) ?? ''}`, 500);
       } finally {
         pushing = false;
       }
-    },
-    onGitSettings: async ({ auto_push: autoPush }) => {
-      requireOpen();
-      requireGame();
-      const event = engine.setAutoPush(gameRoot, autoPush);
-      return { ok: true, auto_push: event.data.auto_push, seq: event.seq };
     },
   });
 
