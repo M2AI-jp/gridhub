@@ -459,6 +459,7 @@ function setupCamera() {
   $('#page-prev').addEventListener('click', () => book.turnTo(book.left + 1 - (book.single ? 1 : 2)));
   $('#page-next').addEventListener('click', () => book.turnTo(book.left + 1 + (book.single ? 1 : 2)));
   new ResizeObserver(() => {
+    if (book.relayout()) return; // 縦長と横長が入れかわったら、1ページずつ ⇄ 見開き
     if (!book.cam) return;
     if (book.cam.auto) book.fit();
     else book.apply();

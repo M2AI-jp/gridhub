@@ -1043,9 +1043,15 @@ body.in-lobby #stage { min-height: 70vh; }
 .news-head { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; font-size: 13px; font-weight: 600; color: var(--ink); }
 .news-head small { font-size: 10.5px; font-weight: 400; color: #4f5a6e; }
 .news-mast { font-family: var(--marker); font-size: 14px; color: #fffdf6; background: var(--red); padding: 0 6px 1px; border-radius: 2px; letter-spacing: 2px; }
-.news-list { list-style: none; margin: 0; padding: 0; font-size: 12px; line-height: 1.45; color: var(--ink); }
+.news-list { list-style: none; margin: 0; padding: 0; font-size: 12px; line-height: 1.45; color: var(--ink); display: flex; flex-direction: column; }
+.news-item.lead { order: -1; }
 .news-item { padding: 3px 0; border-bottom: 1px dotted rgba(29, 43, 92, 0.25); }
 .news-item:last-child { border-bottom: 0; }
 .news-item::before { content: '◆ '; color: #8a6d3b; }
 .news-item.extra::before { color: var(--red); }
 .news-seq { margin-left: 6px; font-family: var(--mono); font-size: 10px; color: #5b6475; }
+
+/* 1ページずつ（縦長の枠・狭い画面）: 凡例は隠し、めくりは左に寄せて拡大縮小と重ねない */
+#view-board.single-page .legend { display: none; }
+#view-board.single-page .pager { left: 12px; transform: none; }
+.tabs button { white-space: nowrap; }
