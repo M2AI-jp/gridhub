@@ -4,7 +4,14 @@
     "id": "KAKEIBO",
     "title": "月ごとに振り返る家計簿",
     "pitch": "手元のCLIで支出を残し、月合計とカテゴリ別内訳を確かめる",
-    "goal": "GOAL"
+    "goal": "GOAL",
+    "news": [
+      "家計簿では、食費・日用品・交通費のように費目に分けて記録する使い方が多い",
+      "月の終わりに費目ごとの合計を見返して、次の月の使い方を考える、という考え方がある",
+      "使ったその日のうちに記録すると、つけ忘れが少ないという考え方がある",
+      "家賃や通信費のように毎月決まって出ていくお金は、固定費としてまとめて見る使い方がよく使われる",
+      "細かすぎる費目は続かないので、少ない費目から始めて、必要になったら分ける考え方がある"
+    ]
   },
   "characters": [
     {
@@ -15,8 +22,17 @@
       "job": "merchant",
       "color": "green",
       "module": "支出の永続化と台帳の保護",
-      "territory": ["src/store/**"],
-      "path": ["S1", "S2", "G1", "S_CAMP", "S3", "GOAL"]
+      "territory": [
+        "src/store/**"
+      ],
+      "path": [
+        "S1",
+        "S2",
+        "G1",
+        "S_CAMP",
+        "S3",
+        "GOAL"
+      ]
     },
     {
       "id": "tally",
@@ -26,8 +42,17 @@
       "job": "sage",
       "color": "purple",
       "module": "月合計とカテゴリ別集計",
-      "territory": ["src/tally/**"],
-      "path": ["T1", "T2", "G1", "T_CAMP", "T3", "GOAL"]
+      "territory": [
+        "src/tally/**"
+      ],
+      "path": [
+        "T1",
+        "T2",
+        "G1",
+        "T_CAMP",
+        "T3",
+        "GOAL"
+      ]
     },
     {
       "id": "cli",
@@ -37,8 +62,16 @@
       "job": "herald",
       "color": "blue",
       "module": "利用コマンドとモジュール接続",
-      "territory": ["src/cli/**"],
-      "path": ["C1", "C2", "C_CAMP", "C3", "GOAL"]
+      "territory": [
+        "src/cli/**"
+      ],
+      "path": [
+        "C1",
+        "C2",
+        "C_CAMP",
+        "C3",
+        "GOAL"
+      ]
     }
   ],
   "nodes": {
@@ -49,11 +82,17 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/S1.mjs",
-        "seal": ["checks/S1.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/S1.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["store"]
+      "labels": [
+        "store"
+      ]
     },
     "S2": {
       "type": "task",
@@ -62,11 +101,18 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/S2.mjs",
-        "seal": ["checks/S2.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/S2.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 1,
       "rollback_to": "S1",
-      "labels": ["store", "validation"]
+      "labels": [
+        "store",
+        "validation"
+      ]
     },
     "T1": {
       "type": "task",
@@ -75,11 +121,17 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/T1.mjs",
-        "seal": ["checks/T1.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/T1.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["tally"]
+      "labels": [
+        "tally"
+      ]
     },
     "T2": {
       "type": "task",
@@ -88,11 +140,18 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/T2.mjs",
-        "seal": ["checks/T2.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/T2.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 1,
       "rollback_to": "T1",
-      "labels": ["tally", "validation"]
+      "labels": [
+        "tally",
+        "validation"
+      ]
     },
     "G1": {
       "type": "gate",
@@ -101,10 +160,16 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/G1.mjs",
-        "seal": ["checks/G1.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/G1.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 3,
-      "labels": ["integration"]
+      "labels": [
+        "integration"
+      ]
     },
     "S_CAMP": {
       "type": "camp",
@@ -123,11 +188,18 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/S3.mjs",
-        "seal": ["checks/S3.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/S3.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["store", "reliability"]
+      "labels": [
+        "store",
+        "reliability"
+      ]
     },
     "T3": {
       "type": "task",
@@ -136,11 +208,18 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/T3.mjs",
-        "seal": ["checks/T3.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/T3.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["tally", "boundaries"]
+      "labels": [
+        "tally",
+        "boundaries"
+      ]
     },
     "C1": {
       "type": "task",
@@ -149,11 +228,17 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/C1.mjs",
-        "seal": ["checks/C1.mjs", "checks/lib/harness.mjs", "CONTRACTS.md"]
+        "seal": [
+          "checks/C1.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["cli"]
+      "labels": [
+        "cli"
+      ]
     },
     "C2": {
       "type": "task",
@@ -174,7 +259,10 @@
       },
       "xp": 1,
       "rollback_to": "C1",
-      "labels": ["cli", "adapter"]
+      "labels": [
+        "cli",
+        "adapter"
+      ]
     },
     "C_CAMP": {
       "type": "camp",
@@ -200,7 +288,10 @@
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["cli", "adapter"]
+      "labels": [
+        "cli",
+        "adapter"
+      ]
     },
     "GOAL": {
       "type": "gate",
@@ -209,10 +300,18 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/GOAL.mjs",
-        "seal": ["checks/GOAL.mjs", "checks/lib/harness.mjs", "CONTRACTS.md", "ASSUMPTIONS.md"]
+        "seal": [
+          "checks/GOAL.mjs",
+          "checks/lib/harness.mjs",
+          "CONTRACTS.md",
+          "ASSUMPTIONS.md"
+        ]
       },
       "xp": 3,
-      "labels": ["integration", "goal"]
+      "labels": [
+        "integration",
+        "goal"
+      ]
     }
   }
 }

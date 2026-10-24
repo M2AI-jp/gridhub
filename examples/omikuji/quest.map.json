@@ -4,7 +4,14 @@
     "id": "OMK",
     "title": "おみくじを引いて記録する",
     "pitch": "6種類の運勢と助言をCLIで引き、seedで再現し、JSONと履歴で振り返る",
-    "goal": "GOAL"
+    "goal": "GOAL",
+    "news": [
+      "おみくじは、年のはじめや旅先など、ちょっとした区切りの場面で引かれることが多い",
+      "引いた結果を記録しておき、あとで見返して楽しむ使い方がある",
+      "運勢には、ひとことの助言を添えて見せる作りがよく使われる",
+      "同じ種（seed）から同じ結果が出るようにしておくと、結果を見せ合ったときに確かめやすいという考え方がある",
+      "よい結果は持ち帰り、よくない結果は結んで置いていく、という習わしがある"
+    ]
   },
   "characters": [
     {
@@ -15,8 +22,17 @@
       "job": "priest",
       "color": "purple",
       "module": "6種類の運勢・助言と再現可能な抽選",
-      "territory": ["src/fortune/**"],
-      "path": ["F1", "F2", "G1", "FC", "F3", "GOAL"]
+      "territory": [
+        "src/fortune/**"
+      ],
+      "path": [
+        "F1",
+        "F2",
+        "G1",
+        "FC",
+        "F3",
+        "GOAL"
+      ]
     },
     {
       "id": "history",
@@ -26,8 +42,17 @@
       "job": "scribe",
       "color": "blue",
       "module": "JSON Linesの履歴追記・一覧・保全",
-      "territory": ["src/history/**"],
-      "path": ["H1", "H2", "G1", "HC", "H3", "GOAL"]
+      "territory": [
+        "src/history/**"
+      ],
+      "path": [
+        "H1",
+        "H2",
+        "G1",
+        "HC",
+        "H3",
+        "GOAL"
+      ]
     },
     {
       "id": "cli",
@@ -37,8 +62,17 @@
       "job": "herald",
       "color": "orange",
       "module": "引数解釈・利用者向け表示・抽選と履歴の接続",
-      "territory": ["src/cli/**"],
-      "path": ["C1", "C2", "G1", "CC", "C3", "GOAL"]
+      "territory": [
+        "src/cli/**"
+      ],
+      "path": [
+        "C1",
+        "C2",
+        "G1",
+        "CC",
+        "C3",
+        "GOAL"
+      ]
     }
   ],
   "nodes": {
@@ -49,11 +83,16 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/F1.mjs",
-        "seal": ["checks/F1.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/F1.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["fortune"]
+      "labels": [
+        "fortune"
+      ]
     },
     "F2": {
       "type": "task",
@@ -62,11 +101,17 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/F2.mjs",
-        "seal": ["checks/F2.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/F2.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "F1",
-      "labels": ["fortune", "seed"]
+      "labels": [
+        "fortune",
+        "seed"
+      ]
     },
     "H1": {
       "type": "task",
@@ -75,11 +120,16 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/H1.mjs",
-        "seal": ["checks/H1.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/H1.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["history"]
+      "labels": [
+        "history"
+      ]
     },
     "H2": {
       "type": "task",
@@ -88,11 +138,17 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/H2.mjs",
-        "seal": ["checks/H2.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/H2.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "H1",
-      "labels": ["history", "persistence"]
+      "labels": [
+        "history",
+        "persistence"
+      ]
     },
     "C1": {
       "type": "task",
@@ -101,11 +157,16 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/C1.mjs",
-        "seal": ["checks/C1.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/C1.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["cli"]
+      "labels": [
+        "cli"
+      ]
     },
     "C2": {
       "type": "task",
@@ -114,11 +175,18 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/C2.mjs",
-        "seal": ["checks/C2.mjs", "checks/support.mjs", "checks/fakes.mjs"]
+        "seal": [
+          "checks/C2.mjs",
+          "checks/support.mjs",
+          "checks/fakes.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "C1",
-      "labels": ["cli", "seed"]
+      "labels": [
+        "cli",
+        "seed"
+      ]
     },
     "G1": {
       "type": "gate",
@@ -127,10 +195,15 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/G1.mjs",
-        "seal": ["checks/G1.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/G1.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 3,
-      "labels": ["integration"]
+      "labels": [
+        "integration"
+      ]
     },
     "FC": {
       "type": "camp",
@@ -157,11 +230,17 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/F3.mjs",
-        "seal": ["checks/F3.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/F3.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["fortune", "errors"]
+      "labels": [
+        "fortune",
+        "errors"
+      ]
     },
     "H3": {
       "type": "task",
@@ -170,11 +249,17 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/H3.mjs",
-        "seal": ["checks/H3.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/H3.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["history", "errors"]
+      "labels": [
+        "history",
+        "errors"
+      ]
     },
     "C3": {
       "type": "task",
@@ -183,11 +268,19 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/C3.mjs",
-        "seal": ["checks/C3.mjs", "checks/support.mjs", "checks/fakes.mjs"]
+        "seal": [
+          "checks/C3.mjs",
+          "checks/support.mjs",
+          "checks/fakes.mjs"
+        ]
       },
       "xp": 1,
       "rollback_to": "@here",
-      "labels": ["cli", "history", "errors"]
+      "labels": [
+        "cli",
+        "history",
+        "errors"
+      ]
     },
     "GOAL": {
       "type": "gate",
@@ -196,10 +289,16 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/GOAL.mjs",
-        "seal": ["checks/GOAL.mjs", "checks/support.mjs"]
+        "seal": [
+          "checks/GOAL.mjs",
+          "checks/support.mjs"
+        ]
       },
       "xp": 3,
-      "labels": ["integration", "goal"]
+      "labels": [
+        "integration",
+        "goal"
+      ]
     }
   }
 }

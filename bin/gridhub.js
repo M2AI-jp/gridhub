@@ -23,6 +23,8 @@ const COMMANDS = {
   note: ['書記', '日誌を書く（次の自分への申し送り）', 'note <characterId> <text>'],
   amend: ['書記', '地図を改訂する（歴史は書き換えられない）', 'amend <map.json>'],
   load: ['書記', '過去の時点（冒険の書の seq か Git のコミット）の盤面に戻る', 'load <seq|commit>'],
+  remote: ['書記', 'Git と GitHub の様子と、GitHub につなぐ手引き', 'remote [--json]'],
+  push: ['書記', 'いまのブランチを GitHub（リモート）に送る（force はしない）', 'push [--json]'],
   sortie: ['書記', 'エージェントの出撃を記録する', 'sortie <characterId> --agent <name> [--model M]'],
   return: ['書記', 'エージェントの帰還を記録する', 'return <characterId> --sortie <seq> --code <n> [--log file]'],
   wish: ['書記', '冒険の始まりの願いを記録する', 'wish <text> [--gm G] [--model M]'],
