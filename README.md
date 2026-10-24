@@ -247,6 +247,10 @@ claude mcp add gridhub -- node /path/to/gridhub/bin/gridhub.js mcp --dir /path/t
 | --- | --- |
 | ![ページをめくる](docs/board-flip.png) | ![エンディング](docs/board-ending.png) |
 
+縦長の画面（ここでは縦に置いたタブレット、1024×1366）では、ノートを1ページずつ見せます。
+
+![縦長の画面では1ページずつ](docs/board-portrait.png)
+
 スクリーンショットの撮り方は [docs/shots/README.md](docs/shots/README.md) にあります。
 
 ---
