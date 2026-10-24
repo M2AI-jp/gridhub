@@ -6,6 +6,7 @@ import { gmCommand, gmTimeoutSeconds, parseGm, runGm, tail } from './adapter.js'
 import { commitBeginning, ensureGitSave, ensureRepository } from './git.js';
 import { listenNotice } from './help.js';
 import { inspectMap, MAP_FILE } from './inspect.js';
+import { newsProblems } from './news.js';
 import { buildPrompt, buildRetryPrompt } from './prompt.js';
 import { AGENT_KINDS, fileEntry, printSetup, setupProject } from './setup.js';
 
@@ -31,7 +32,7 @@ function recordWish(root, { actor, text, gm, model }) {
   return engine.appendEvent(root, 'wish', { text, gm, model }, { actor });
 }
 
-function summarize(root, view) {
+function summarize(root, view, wish) {
   const nodes = Object.values(view.nodes);
   const sealable = nodes.filter((n) => (n.check?.seal ?? []).length > 0);
   return {
@@ -47,6 +48,8 @@ function summarize(root, view) {
     unsealed: sealable.filter((n) => !n.sealed).map((n) => n.id),
     sealable: sealable.length,
     seq: view.head.seq,
+    // 瓦版の話題（§54.2）: 件数と、製品の分野の話題になっていない所（願いを製品の説明として見る）
+    news: { count: (view.quest.news ?? []).length, problems: newsProblems(view.quest.news ?? [], wish) },
     commit: view.head.commit,
   };
 }
@@ -68,6 +71,8 @@ function printSummary(say, { root, cwd, bin }, s) {
   say(`  キャラクター ${s.agents + s.humans}人（エージェント ${s.agents}・人間 ${s.humans}）: ${s.names.join('、')}`);
   say(`  マス ${s.nodes}（task ${s.tasks}・結合ゲート ${s.gates}・宿屋 ${s.camps}）  あがり: ${s.quest.goal}`);
   say(`  封印した判定: ${s.sealed}/${s.sealable} マス`);
+  say(`  瓦版の話題: ${s.news.count} 件`);
+  for (const problem of s.news.problems) say(`  ※ ${problem}`);
   if (s.unsealed.length > 0) {
     say(`  ※ 判定ファイルがまだ無いマス: ${s.unsealed.join('、')}（キャラクターが着く前に masume seal <マス> で封印してください）`);
   }
@@ -210,7 +215,7 @@ export async function runQuest(opts, ctx) {
   } catch (error) {
     say(`※ WISH.md を書けませんでした（${error.message}）。願いは冒険の書に記録してあります`);
   }
-  const summary = summarize(root, engine.buildView(root));
+  const summary = summarize(root, engine.buildView(root), opts.wish);
   summary.setup = prepareProject(root, { gm: opts.gm, override, allowListen, ctx });
   if (repository.initialized) {
     const beginning = commitBeginning(root);
