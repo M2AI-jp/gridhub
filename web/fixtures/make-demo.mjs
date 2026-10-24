@@ -24,11 +24,12 @@ export const MAP = {
     pitch: 'テストが通ったぶんだけ進む開発すごろく GridHub を、GridHub 自身のルールでつくる。',
     goal: 'GOAL',
     save: 'git',
+    // 瓦版の話題（§54.5）: GridHub の分野（開発のタスク管理・AI のコーディングエージェント・進み具合の見える化）。作り話にしない
     news: [
-      'テストを先に書いてから実装する進め方（テスト駆動開発）がよく使われる',
-      '小さな変更をこまめにコミットすると、壊れたときに戻しやすいという考え方がある',
-      'タスク管理では、issue のチェックリストで進み具合を見る使い方が多い',
-      'SVG はブラウザがそのまま描けるので、図を HTML に埋め込む作りがよく使われる',
+      'AI のコーディングエージェントに、小さな作業を1つずつ任せる使い方がある',
+      'タスク管理の道具では、issue のチェックリストで進み具合を見る使い方が多い',
+      '進み具合を「できました」ではなく、通ったテストの数で見える化するという考え方がある',
+      'エージェントの作業を、人が要所で承認してから先へ進める流れがよく使われる',
     ],
   },
   characters: [
@@ -158,7 +159,7 @@ function marginsOf(chars, nodes, entries, log) {
   return out;
 }
 
-/** 瓦版: quest.news を地図の順に、そのあとに号外を新しい順に（最大20件） */
+/** 瓦版（§54.3）: 号外（新しい順に最大20件）と製品の話題（地図の順）を交互に x0, d0, x1, d1, …（片方が尽きたら残りを続ける） */
 function newsOf(entries, log) {
   const extra = [];
   for (const e of [...entries].reverse()) {
@@ -173,7 +174,13 @@ function newsOf(entries, log) {
       extra.push({ text: `号外: ${members.join('、')} が ${e.node}「${MAP.nodes[e.node].title}」を突破した`, kind: 'extra', seq: e.seq });
     }
   }
-  return [...(MAP.quest.news || []).map((text) => ({ text, kind: 'domain', seq: null })), ...extra];
+  const domain = (MAP.quest.news || []).map((text) => ({ text, kind: 'domain', seq: null }));
+  const out = [];
+  for (let i = 0; i < Math.max(extra.length, domain.length); i++) {
+    if (extra[i]) out.push(extra[i]);
+    if (domain[i]) out.push(domain[i]);
+  }
+  return out;
 }
 
 function build(scene, log) {

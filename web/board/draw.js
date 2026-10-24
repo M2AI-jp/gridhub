@@ -492,9 +492,9 @@ function bubbleMarkup(b, p, chars) {
   const AX = wx(p, b.ax);
   const AY = wy(b.ay);
   let s = '';
+  let lead = '';
   if (b.kind === 'news') {
     s += `<path class="mg-clip" d="${box(X, Y, W, Hh, `clip:${b.margin}`, 0.6)}"/>`;
-    s += `<path class="tape" d="${tape(X + W / 2, Y + 1, Math.min(2.2 * U, W * 0.4), 0.7 * U, `cliptape:${b.margin}`, -6)}"/>`;
   } else {
     // しっぽの根元（ふきだしのふち）と先（余白のマスのほうへ最大 12px）。遠ければ、先から余白のマスまで鉛筆の点線
     const side = AX < X ? 'l' : AX > X + W ? 'r' : AY < Y ? 't' : 'b';
@@ -511,7 +511,8 @@ function bubbleMarkup(b, p, chars) {
     const inX = side === 'l' ? 2 : side === 'r' ? -2 : 0;
     const inY = side === 't' ? 2 : side === 'b' ? -2 : 0;
     const tail = `M${f1(bx + inX - across[0])} ${f1(by + inY - across[1])} L${f1(tx)} ${f1(ty)} L${f1(bx + inX + across[0])} ${f1(by + inY + across[1])}`;
-    if (dist - 14 > len + 4) s += `<path class="mg-lead" data-tool="pencil" d="${line(tx, ty, AX - ux * 15, AY - uy * 15, `lead:${b.margin}`, 0.4)}"/>`;
+    // 遠ければ、しっぽの先から余白のマスまで鉛筆の点線（ふきだしの外に描く。ふきだしの大きさに入れない）
+    if (dist - 14 > len + 4) lead = `<path class="mg-lead" data-tool="pencil" d="${line(tx, ty, AX - ux * 15, AY - uy * 15, `lead:${b.margin}`, 0.4)}"/>`;
     s += `<path class="mg-bubble-bg" d="${box(X, Y, W, Hh, `bub:${b.margin}`, 0.7)}"/><path class="mg-bubble-tail" d="${tail}"/>`;
   }
   b.rows.forEach((row, i) => {
@@ -539,7 +540,7 @@ function bubbleMarkup(b, p, chars) {
     s += `<text class="hand mg-text${row.head ? ' head' : ''}" x="${X + 5}" y="${f1(y)}">${who ? `<tspan class="mg-who">${esc(who)}</tspan>` : ''}${esc(rest)}</text>`;
   });
   if (b.src) s += `<text class="mg-src" x="${X + W - 5}" y="${Y + Hh - 4}" text-anchor="end">${esc(b.src)}</text>`;
-  return `<g class="margin-bubble ${esc(b.kind)}" data-box="${b.x} ${b.y} ${b.w} ${b.h}">${s}</g>`;
+  return `${lead}<g class="margin-bubble ${esc(b.kind)}" data-box="${b.x} ${b.y} ${b.w} ${b.h}">${s}</g>`;
 }
 
 /** 余白のマスの <title>: 題と、すべての行（話し手がいれば「名前: 」を前に）と、出典 */

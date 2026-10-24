@@ -727,16 +727,23 @@ function sayBoxes(view, lay) {
       cands.push({ side: 'l', x: sp.x - 2 - w, y, lift: 0, pref: 1.1 + Math.abs(dy) * 0.4 });
     }
     for (const cd of cands) {
-      const r = { x: cd.x, y: cd.y, w, h };
-      let hit = 0;
-      if (r.x < 0.3 || r.x + r.w > PAGE.w - 0.3 || r.y < 0.2 || r.y + r.h > PAGE.h - 0.4) hit += 100;
-      for (const b of hard) if (b.pawn !== c.id) hit += hitArea(r, b) * 10;
-      for (const b of others) hit += hitArea(r, b) * 10;
-      let score = cd.pref + hit;
+      // 当たりは、しっぽ（駒のほうへ 7px + 持ち上げたぶん）も含めた四角で見る
+      const tail = 7 / U + cd.lift;
+      const r =
+        cd.side === 't' ? { x: cd.x, y: cd.y, w, h: h + tail }
+        : cd.side === 'b' ? { x: cd.x, y: cd.y - tail, w, h: h + tail }
+        : cd.side === 'l' ? { x: cd.x, y: cd.y, w: w + 7 / U, h }
+        : { x: cd.x - 7 / U, y: cd.y, w: w + 7 / U, h };
+      let score = cd.pref;
+      if (r.x < 0.3 || r.x + r.w > PAGE.w - 0.3 || r.y < 0.2 || r.y + r.h > PAGE.h - 0.4) score += 1000;
+      for (const b of [...hard.filter((b) => b.pawn !== c.id), ...others.map((o) => o.hit)]) {
+        const a = hitArea(r, b);
+        if (a > 0.0001) score += 1000 + a * 10; // 札・名札・余白・ほかの駒とふきだしには重ねない
+      }
       for (const b of soft) score += hitArea(r, b) * 0.35;
-      if (!best || score < best.score) best = { ...cd, score };
+      if (!best || score < best.score) best = { ...cd, score, hit: r };
     }
-    const box = { page: sp.page, x: best.x, y: best.y, w, h, side: best.side, lift: best.lift, lines, agent };
+    const box = { page: sp.page, x: best.x, y: best.y, w, h, side: best.side, lift: best.lift, lines, agent, hit: best.hit };
     placed.push(box);
     out[c.id] = box;
   }
@@ -834,7 +841,7 @@ function bubbles(view, lay, p) {
   // 駒が立つ所（どのマスでも）と、いま立っている駒の体とふきだし（札・吹き出し・カードが重ならない）
   for (const list of Object.values(lay.stops)) for (const st of list) if (st.page === p) mark(hard, st.x - 1, st.y - 3, 2, 3);
   for (const sp of Object.values(lay.spots || {})) if (sp.page === p) mark(hard, sp.x - 1.65, sp.y - PAWN_H, 3.3, PAWN_H + 0.4);
-  for (const b of Object.values(lay.say || {})) if (b.page === p) mark(hard, b.x, b.y, b.w, b.h + (b.side === 't' ? 0.5 + b.lift : 0));
+  for (const b of Object.values(lay.say || {})) if (b.page === p) mark(hard, b.hit.x, b.hit.y, b.hit.w, b.hit.h);
   for (const rd of Object.values(lay.roads))
     for (const piece of rd.pieces) {
       if (piece.page !== p) continue;
