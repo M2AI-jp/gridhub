@@ -8,4 +8,7 @@ export { check, stamp, step } from './checks.js';
 export { buildView } from './view.js';
 export { brief } from './brief.js';
 export { recordLine } from './record.js';
+export {
+  autoPushOf, ghStatus, ghStatusAsync, gitGuide, gitStatus, gitView, push, pushAsync, safeUrl, setAutoPush,
+} from './remote.js';
 export { recordReturn, recordSortie, recordWish } from './sortie.js';
