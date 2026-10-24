@@ -3,8 +3,17 @@
   "quest": {
     "id": "MSM",
     "title": "GridHub — GridHub で GridHub をつくる（旧名 マスメ）",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。",
-    "goal": "GOAL11"
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。",
+    "goal": "GOAL12",
+    "news": [
+      "課題管理ツールでは、課題を Todo・In Progress・Done の列に並べて、進み具合を一目で見る使い方が多い",
+      "課題の説明にチェックリストを書いて、終わったと言える条件をはっきりさせる使い方がよく使われる",
+      "AI のコーディングエージェントに仕事を任せるときは、終わったかどうかをテストで確かめる、という考え方がある",
+      "AI エージェントは一度に覚えておける会話の長さに限りがあるので、進み具合を外に書き残して次に引き継ぐ使い方がある",
+      "大きな仕事はマイルストーンで区切って、いまどこまで来たかを見る進め方が多い",
+      "課題と変更をつないでおくと、どの変更でどの課題が片付いたかを、あとからたどれるという考え方がある",
+      "人とエージェントが同じ画面で進み具合を見ると、だれが何をしているかの行き違いが減る、という考え方がある"
+    ]
   },
   "characters": [
     {
@@ -50,7 +59,12 @@
         "B13",
         "G9",
         "B14",
-        "GOAL11"
+        "GOAL11",
+        "B15",
+        "B16",
+        "B17",
+        "G10",
+        "GOAL12"
       ]
     },
     {
@@ -63,7 +77,7 @@
       "module": "冒険の書（セーブデータ）・ルールエンジン・CLI",
       "territory": [
         "src/engine/**",
-        "src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step,sortie,return,wish}.js"
+        "src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step,remote,push,sortie,return,wish}.js"
       ],
       "path": [
         "E1",
@@ -98,7 +112,10 @@
         "E12",
         "G9",
         "E13",
-        "GOAL11"
+        "GOAL11",
+        "E14",
+        "G10",
+        "GOAL12"
       ]
     },
     {
@@ -140,7 +157,10 @@
         "GOAL9",
         "GOAL10",
         "S8",
-        "GOAL11"
+        "GOAL11",
+        "S9",
+        "G10",
+        "GOAL12"
       ]
     },
     {
@@ -175,7 +195,9 @@
         "GOAL9",
         "GOAL10",
         "Q6",
-        "GOAL11"
+        "GOAL11",
+        "Q7",
+        "GOAL12"
       ]
     },
     {
@@ -209,7 +231,8 @@
         "GOAL9",
         "GOAL10",
         "P6",
-        "GOAL11"
+        "GOAL11",
+        "GOAL12"
       ]
     },
     {
@@ -247,7 +270,8 @@
         "GOAL9",
         "GOAL10",
         "M8",
-        "GOAL11"
+        "GOAL11",
+        "GOAL12"
       ]
     },
     {
@@ -281,7 +305,8 @@
         "GOAL10",
         "A4",
         "G9",
-        "GOAL11"
+        "GOAL11",
+        "GOAL12"
       ]
     },
     {
@@ -306,7 +331,8 @@
         "GOAL8",
         "GOAL9",
         "GOAL10",
-        "GOAL11"
+        "GOAL11",
+        "GOAL12"
       ]
     }
   ],
@@ -1907,6 +1933,218 @@
         "ui",
         "margins"
       ]
+    },
+    "Q7": {
+      "type": "task",
+      "title": "瓦版の話題を製品の分野にする",
+      "detail": "CONTRACTS §54.1・§54.2: GM のプロンプトに瓦版の決まり（NEWS_GUIDE: 作っている製品の分野の話題・開発の進め方のコツは書かない・作り話を事実のように書かない）。冒険のまとめに「瓦版の話題: N 件」と、newsProblems の気になる所。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/Q7.test.mjs",
+        "seal": [
+          "tests/e2e/Q7.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs"
+        ],
+        "cases": [
+          "§54.1・§54.2 GM のプロンプトに瓦版の決まり（製品の分野の話題・開発の進め方のコツは書かない・作り話を事実のように書かない）",
+          "§54.1・§54.2 話題が開発の進め方のコツや事実に見える書き方なら、まとめに ※ で知らせる（冒険は止めない）"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "teller",
+        "news"
+      ]
+    },
+    "E14": {
+      "type": "task",
+      "title": "gridhub remote と push で GitHub につなぐ",
+      "detail": "CONTRACTS §54.3・§56.1・§56.2: 瓦版は号外と製品の話題を交互に。gridhub remote（Git と GitHub の様子と、gh・ログイン・リポジトリ・送ったかの手引き）と gridhub push（いまのブランチを送る。force push はしない。フックは走らせない）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E14.test.mjs",
+        "seal": [
+          "tests/e2e/E14.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "§54.2 瓦版は、号外と製品の話題を交互に（両方が上のほうに見える）",
+          "§56.1 Git の外: inside は false、手引きの最初は git init",
+          "§56.1 リモートが無い: gh が入っているか・ログインしているかを手引きにする。push は E_NO_REMOTE",
+          "§56.2 手元の bare リポジトリに送る: 上流が無ければ -u で。送ったあと ahead は 0。フックは走らない",
+          "§56.2 先に進んだリモートには force push しない。HEAD が切り離されていれば E_USAGE"
+        ]
+      },
+      "estimate": 3,
+      "labels": [
+        "engine",
+        "github"
+      ]
+    },
+    "S9": {
+      "type": "task",
+      "title": "GitHub に送る窓口を開く",
+      "detail": "CONTRACTS §56.3: GET /api/git（gridhub remote --json と同じ）と POST /api/git/push（X-Masume・Origin、送れなければ 409、リモートなし・Git の外は 400）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S9.test.mjs",
+        "seal": [
+          "tests/e2e/S9.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "§56.3 GET /api/git は gridhub remote --json と同じ。POST /api/git/push で bare リポジトリに送れる（X-Masume が要る）",
+          "§56.3 リモートが無い・Git の外なら POST /api/git/push は 400（GET は様子を返す）"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "server",
+        "github"
+      ]
+    },
+    "B15": {
+      "type": "task",
+      "title": "札と吹き出しを重ねない",
+      "detail": "CONTRACTS §55: 駒の吹き出しと余白のふきだし・瓦版の切り抜きが、たがいに、また札・看板・名札の字に重ならず、字が切れない（見本 demo・demo2・end のすべての見開き、1440×900 と 1200×761）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B15.test.mjs",
+        "seal": [
+          "tests/e2e/B15.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§55 見本 demo（1440×900）: 吹き出しどうし・吹き出しと字が重ならず、字が切れない",
+          "§55 見本 demo（1200×761）: 吹き出しどうし・吹き出しと字が重ならず、字が切れない",
+          "§55 見本 demo2（1440×900）: 吹き出しどうし・吹き出しと字が重ならず、字が切れない",
+          "§55 見本 demo2（1200×761）: 吹き出しどうし・吹き出しと字が重ならず、字が切れない",
+          "§55 見本 end（1440×900）: 吹き出しどうし・吹き出しと字が重ならず、字が切れない",
+          "§55 見本 end（1200×761）: 吹き出しどうし・吹き出しと字が重ならず、字が切れない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "layout"
+      ]
+    },
+    "B16": {
+      "type": "task",
+      "title": "縦長の画面では1ページずつ",
+      "detail": "CONTRACTS §57: 縦長の画面（スマホ・縦置きのタブレットやモニター）ではノートを1ページずつ縦に、横長では見開きのまま。__masume.single。向きが変わったら切り替わる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B16.test.mjs",
+        "seal": [
+          "tests/e2e/B16.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§57.1〜§57.3 縦長の画面（1024×1366 のタブレット・1080×1920 の縦置きモニター）では1ページずつ縦に",
+          "§57.1 横長の画面（1366×1024）は見開きのまま",
+          "§57.4 画面の向きが変わったら切り替わる（見開き → 1ページずつ → 見開き）",
+          "§57.1 スマホ（390×844）は今までどおり1ページずつ"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "ui",
+        "portrait"
+      ]
+    },
+    "B17": {
+      "type": "task",
+      "title": "セーブの欄から GitHub につなぐ",
+      "detail": "CONTRACTS §56.4: #git-panel（outside・no-remote・unpushed・synced）。リモートが無ければ #git-guide の手引き、あれば「GitHub に送っていないセーブ: N」と #git-push（POST /api/git/push）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B17.test.mjs",
+        "seal": [
+          "tests/e2e/B17.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§56.4 Git の外（#git-panel[data-state=outside]）は git init の手引き",
+          "§56.4 リモートが無いときの手引き（#git-guide）は steps の順。まだの手引きのコマンドを <code> で",
+          "§56.4 送っていないセーブ（#git-ahead）と送るボタン（#git-push）。押すと X-Masume 付きで POST し、送り終えたら synced（押せない）",
+          "§56.4 まだ一度も送っていない（上流が無い）ときも押せる。送れなければ知らせて、押せる状態に戻る",
+          "§56.4 GET /api/git が取れなければ、セーブの欄（#git-panel）を出さない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "github"
+      ]
+    },
+    "G10": {
+      "type": "gate",
+      "title": "結合: 盤面から GitHub に送る",
+      "detail": "書記（gridhub remote・push）＋伝令（/api/git）＋盤面（#git-panel）。本物の冒険を gridhub serve で配り、手元の bare リポジトリをリモートにして、盤面の「GitHub に送る」ボタンで push する。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/G10.test.mjs",
+        "seal": [
+          "tests/e2e/G10.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "盤面のセーブの欄から、手元の bare リポジトリに送れる（書記 × 伝令 × 盤面）"
+        ]
+      }
+    },
+    "GOAL12": {
+      "type": "gate",
+      "title": "あがり（第12章）: 仕上げ",
+      "detail": "第1章〜第12章のすべての判定がまとめて通り、すべての冒険の書が正常で、このリポジトリと3つの examples の瓦版が作っている製品の話題になっていて、README に GitHub につなぐ導線と縦のノートが書いてある（§54〜§58）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/GOAL12.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL12.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "第1章〜第12章のすべての判定が、まとめて本当に通る",
+          "GridHub 自身と、残っているすべての冒険の書が正常。地図と package.json は第12章",
+          "§54 瓦版は、作っている製品の話題（このリポジトリと3つの examples の地図。3件以上・newsProblems が無い）",
+          "README に GitHub につなぐ導線（gridhub remote・gridhub push・盤面の送るボタン）と縦のノート"
+        ]
+      }
     }
   }
 }
