@@ -90,6 +90,8 @@ export function initCommand(c) {
     pollParty(true);
   });
   renderPartyStatus();
+  $('#git-push')?.addEventListener('click', pushGit);
+  refreshGit();
 }
 
 // ---- 入口（ロビー） ----
@@ -240,4 +242,81 @@ export function noteSorties(view) {
   if (n === openSorties) return;
   openSorties = n;
   if ($('#party-status')) renderPartyStatus();
+}
+
+// ---- GitHub につなぐ導線（§56.4）: 右の欄のセーブの近く。GET /api/git が取れなければ出さない ----
+
+let gitSeq = 0;
+let gitPushing = false;
+let gitState = null;
+
+/** GET /api/git の様子から、欄の状態（outside / no-remote / unpushed / synced） */
+function gitStateOf(g) {
+  if (!g || g.inside !== true) return 'outside';
+  if (!g.remote) return 'no-remote';
+  if (!g.upstream || !(g.ahead === 0)) return 'unpushed';
+  return 'synced';
+}
+
+/** 欄を読み直す（開いたとき・冒険の書が変わるたび・送ったあと）。見本の盤面では出さない */
+export async function refreshGit() {
+  const panel = $('#git-panel');
+  if (!panel) return;
+  if (!ctx?.live) return void (panel.hidden = true);
+  const no = ++gitSeq;
+  let g = null;
+  try {
+    const r = await fetch('api/git', { cache: 'no-store' });
+    g = r.ok ? await r.json() : null;
+  } catch {
+    g = null;
+  }
+  if (no !== gitSeq) return;
+  if (!g || typeof g !== 'object' || g.ok === false || typeof g.inside !== 'boolean') return void (panel.hidden = true);
+  renderGit(g);
+}
+
+function renderGit(g) {
+  const panel = $('#git-panel');
+  const state = gitStateOf(g);
+  gitState = state;
+  panel.hidden = false;
+  panel.dataset.state = state;
+  const steps = Array.isArray(g.steps) ? g.steps.filter((x) => x && typeof x === 'object') : [];
+  const guide = $('#git-guide');
+  const showGuide = state === 'outside' || state === 'no-remote';
+  guide.hidden = !showGuide;
+  guide.innerHTML = showGuide
+    ? steps
+        .map((x) => `<li data-step="${esc(x.id)}" data-done="${x.done === true}"><span class="git-step-mark" aria-hidden="true">${x.done === true ? '✓' : '・'}</span><span class="git-step-text">${esc(x.text)}</span>${x.done !== true && x.command ? `<code>${esc(x.command)}</code>` : ''}</li>`)
+        .join('')
+    : '';
+  $('#git-sub').textContent =
+    state === 'outside' ? 'ここはまだ Git の作業ツリーではありません'
+    : state === 'no-remote' ? 'GitHub につなぐ手引き（上から順に）'
+    : g.branch ? `ブランチ ${g.branch}` : '';
+  const remote = $('#git-remote');
+  remote.hidden = !g.remote;
+  remote.textContent = g.remote ? `${g.remote.name || 'origin'}: ${g.remote.url || ''}` : '';
+  const ahead = $('#git-ahead');
+  ahead.hidden = !(state === 'unpushed' || state === 'synced');
+  ahead.textContent = state === 'synced' ? 'GitHub に送っていないセーブ: 0' : !g.upstream ? 'まだ一度も送っていない' : `GitHub に送っていないセーブ: ${g.ahead}`;
+  const btn = $('#git-push');
+  btn.hidden = !(state === 'unpushed' || state === 'synced');
+  btn.disabled = gitPushing || state !== 'unpushed';
+  btn.title = state === 'synced' ? 'GitHub と同じです（送るものはありません）' : '町でセーブしたコミットを GitHub に送る（git push。force push はしない）';
+}
+
+/** 送る（POST /api/git/push）。送っているあいだは押せない。結果は知らせに出し、読み直す */
+export async function pushGit() {
+  const btn = $('#git-push');
+  if (gitPushing || gitState !== 'unpushed') return;
+  gitPushing = true;
+  btn.disabled = true;
+  btn.textContent = '送っています…';
+  const j = await ctx.post('api/git/push', {});
+  if (j && j.ok !== false) ctx.toast({ text: `GitHub に送った: ${j.remote ?? ''} ${j.branch ?? ''}${j.commit ? `（commit ${String(j.commit).slice(0, 7)}）` : ''}`, ok: true });
+  gitPushing = false;
+  btn.textContent = 'GitHub に送る';
+  await refreshGit();
 }
