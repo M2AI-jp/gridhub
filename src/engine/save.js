@@ -51,7 +51,7 @@ function baseEnv() {
 
 class GitError extends Error {}
 
-function gitRunner(cwd, extraEnv = {}) {
+export function gitRunner(cwd, extraEnv = {}) {
   const env = { ...baseEnv(), ...extraEnv };
   return (args, { input, allowFail = false, raw = false, env: more = {} } = {}) => {
     // フックは走らせない（reference-transaction・post-commit なども）。
