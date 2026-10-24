@@ -16,13 +16,31 @@ export class Book {
     this.left = 0; // いま見えている左のページ（0始まり。1ページずつのときは、そのページ）
     this.cam = null;
     this.flipping = null;
-    this.single = narrow();
-    matchMedia('(max-width: 860px)').addEventListener?.('change', () => {
-      this.single = narrow();
-      this.left = this.norm(this.left);
-      this.fit();
-      this.onChange?.();
-    });
+    this.single = this.wantSingle();
+    this.host.classList.toggle('single-page', this.single);
+    matchMedia('(max-width: 860px)').addEventListener?.('change', () => this.relayout());
+  }
+
+  /**
+   * 1ページずつにするか: 狭い画面（860px 以下）か、盤面の枠が縦長のとき（スマホ・縦置きの画面。ノートは縦の B5 なので、
+   * 縦長の枠には1ページを大きく映す）。横長の枠は見開き
+   */
+  wantSingle() {
+    if (narrow()) return true;
+    const r = this.svg.getBoundingClientRect();
+    return r.width > 0 && r.height > r.width;
+  }
+
+  /** 枠の形が変わって、1ページずつか見開きかが変わったら、映し直す。変わったら true */
+  relayout() {
+    const single = this.wantSingle();
+    if (single === this.single) return false;
+    this.single = single;
+    this.host.classList.toggle('single-page', single);
+    this.left = this.norm(this.left);
+    if (this.pages) this.fit();
+    this.onChange?.();
+    return true;
   }
 
   norm(p) {

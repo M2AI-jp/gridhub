@@ -1,9 +1,9 @@
 // 駒。ビューの (マス, square) が前に進んだら、間のマスを1つずつ踏んで進む（§50.9）。戻されるときは引きずられて戻る。
-import { U, stopOf, stopIndex } from './world.js';
+import { U, stopIndex, PAWN_H, SAY_AGENT_PX } from './world.js';
 import { wx, wy, spriteMarkup } from './draw.js';
 import { esc, hl, box, own } from './sketch.js';
 
-const SIZE = 3.3 * U; // 駒の大きさ（2.7目）
+const SIZE = PAWN_H * U; // 駒の大きさ
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function badge(c) {
@@ -15,50 +15,43 @@ function badge(c) {
   return `<g class="pawn-badge"><path d="${box(x, y, w, 0.78 * U, `badge:${c.id}`, 0.4)}" class="badge-bg" stroke="${hl(c.color)}"/><text class="hand badge-text" x="${(x + w / 2).toFixed(1)}" y="${(y + 0.58 * U).toFixed(1)}" text-anchor="middle">${esc(text)}</text></g>`;
 }
 
-const tw = (t, px) => [...t].reduce((a, ch) => a + (/[\x20-\x7e]/.test(ch) ? 0.56 : 1), 0) * px;
-
-/** 作業中の駒のふきだし: いま戦うテスト（技術の言葉）と、出撃中ならエージェント */
-function bubble(view, c) {
-  const n = c.at && view?.nodes ? own(view.nodes, c.at) : null;
-  let fight = '';
-  if (c.status === 'working' && n?.type === 'task' && n.check?.kind === 'cmd') {
-    const cases = Array.isArray(n.cases) ? n.cases : [];
-    if (!cases.length) fight = '？ まだ走らせていない';
-    else if (c.square != null && c.square < cases.length) fight = `${cases[c.square].ok === false ? '✖' : '⚔'} ${cases[c.square].name}`;
-    else fight = '✔ 全部倒した → check';
-  } else if (c.status === 'working' && n?.check?.kind === 'stamp') fight = '㊞ ハンコ待ち';
-  const agent = c.sortie ? `⏳ ${c.sortie.agent}${c.sortie.model ? ' ' + c.sortie.model : ''}` : '';
-  if (!fight && !agent) return '';
-  let line = fight;
-  while (line && tw(line, 13) > 12 * U) line = [...line].slice(0, -2).join('') + '…';
-  const w = Math.max(tw(line, 13), tw(agent, 10.5)) + 16;
-  const h = (line ? 1.1 * U : 0) + (agent ? 0.95 * U : 0) + 6;
-  const x = -0.6 * U;
-  const y = -SIZE - h - 0.25 * U;
-  let inner = `<path class="bubble-bg" d="M${x} ${y + 4} q0 -4 4 -4 h${(w - 8).toFixed(1)} q4 0 4 4 v${(h - 8).toFixed(1)} q0 4 -4 4 h${(-(w - 8) + 0.9 * U).toFixed(1)} l-6 7 l1 -7 h-${(0.9 * U - 5).toFixed(1)} q-4 0 -4 -4 Z"/>`;
-  if (line) inner += `<text class="hand fight-text" x="${x + 7}" y="${(y + 0.9 * U).toFixed(1)}">${esc(line)}</text>`;
-  if (agent) inner += `<g class="sortie-bubble" aria-label="出撃中 ${esc(agent)}"><text class="hand bubble-text" x="${x + 7}" y="${(y + (line ? 1.92 : 0.82) * U).toFixed(1)}">${esc(agent)}</text></g>`;
-  return `<g class="pawn-say">${inner}</g>`;
+/**
+ * 作業中の駒のふきだし: いま戦うテスト（技術の言葉。2行まで折り返す）と、出撃中ならエージェント。
+ * 置き場所は world.js の sayBoxes（札・吹き出し・カードと重ならない所）。上に置けばしっぽは下、下に置けばしっぽは上
+ */
+function bubble(say, spot) {
+  if (!say || !spot) return '';
+  const x = (say.x - spot.x) * U;
+  const y = (say.y - spot.y) * U;
+  const w = say.w * U;
+  const h = say.h * U;
+  const side = say.side;
+  const up = side === 't';
+  const r = 4;
+  const f = (n) => n.toFixed(1);
+  // しっぽ: 上に置けば下へ、下に置けば上へ、横に置けば駒のほうへ。四隅は丸く、時計回りに1本の線で描く
+  const tx = Math.max(x + 9, Math.min(x + w - 9, 0.2 * U));
+  const ty = Math.max(y + 7, Math.min(y + h - 7, -SIZE * 0.6));
+  const top = side === 'b' ? `L${f(tx - 4)} ${y} L${f(tx)} ${f(y - 7 - (say.lift || 0) * U)} L${f(tx + 4)} ${y}` : '';
+  const right = side === 'l' ? `L${x + w} ${f(ty - 4)} L${f(x + w + 7)} ${f(ty)} L${x + w} ${f(ty + 4)}` : '';
+  const bottom = up ? `L${f(tx + 4)} ${y + h} L${f(tx)} ${f(y + h + 7 + (say.lift || 0) * U)} L${f(tx - 4)} ${y + h}` : '';
+  const left = side === 'r' ? `L${x} ${f(ty + 4)} L${f(x - 7)} ${f(ty)} L${x} ${f(ty - 4)}` : '';
+  const d = `M${x + r} ${y} ${top} H${x + w - r} Q${x + w} ${y} ${x + w} ${y + r} ${right} V${y + h - r} Q${x + w} ${y + h} ${x + w - r} ${y + h} ${bottom} H${x + r} Q${x} ${y + h} ${x} ${y + h - r} ${left} V${y + r} Q${x} ${y} ${x + r} ${y} Z`;
+  let inner = `<path class="bubble-bg" d="${d}"/>`;
+  say.lines.forEach((l, i) => (inner += `<text class="hand fight-text" x="${(x + 7).toFixed(1)}" y="${(y + (0.9 + i * 1.1) * U).toFixed(1)}">${esc(l)}</text>`));
+  if (say.agent) inner += `<g class="sortie-bubble" aria-label="出撃中 ${esc(say.agent)}"><text class="hand bubble-text" x="${(x + 7).toFixed(1)}" y="${(y + (say.lines.length ? 0.82 + say.lines.length * 1.1 : 0.82) * U).toFixed(1)}" font-size="${SAY_AGENT_PX}">${esc(say.agent)}</text></g>`;
+  return `<g class="pawn-say" data-side="${{ t: 'top', b: 'bottom', l: 'left', r: 'right' }[side]}">${inner}</g>`;
 }
 
-export function pawnMarkup(c, sprites, view) {
+export function pawnMarkup(c, sprites, lay) {
   const working = c.status === 'working';
-  return `${working ? `<ellipse class="pawn-glow" cx="0" cy="-2" rx="${1.55 * U}" ry="${0.62 * U}" fill="${hl(c.color)}"/>` : ''}<ellipse class="pawn-foot" cx="0" cy="0" rx="${0.95 * U}" ry="${0.32 * U}" fill="${hl(c.color)}"/><g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.25 * U, SIZE, 'pawn')}</g>${badge(c)}${bubble(view, c)}`;
+  return `${working ? `<ellipse class="pawn-glow" cx="0" cy="-2" rx="${1.55 * U}" ry="${0.62 * U}" fill="${hl(c.color)}"/>` : ''}<ellipse class="pawn-foot" cx="0" cy="0" rx="${0.95 * U}" ry="${0.32 * U}" fill="${hl(c.color)}"/><g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.25 * U, SIZE, 'pawn')}</g>${badge(c)}${bubble(lay?.say?.[c.id], lay?.spots?.[c.id])}`;
 }
 
-/** 駒の世界座標（同じ場所に何人もいれば、少しずらす） */
+/** 駒の世界座標（world.js の pawnSpots。同じ場所に何人もいれば、少しずらしてある） */
 function targets(view, lay) {
   const pts = Object.create(null);
-  const seen = new Map();
-  for (const c of view.characters) {
-    const s = stopOf(view, lay, c);
-    if (!s) continue;
-    const key = `${s.node}:${s.square}:${s.page}:${s.x}`;
-    const k = seen.get(key) || 0;
-    seen.set(key, k + 1);
-    const shift = s.square == null ? (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 1.6 * U : 0;
-    pts[c.id] = { x: wx(s.page, s.x) + shift, y: wy(s.y), page: s.page, stop: s };
-  }
+  for (const [id, sp] of Object.entries(lay.spots || {})) pts[id] = { x: wx(sp.page, sp.x), y: wy(sp.y), page: sp.page, stop: sp.stop };
   return pts;
 }
 
@@ -98,7 +91,7 @@ export class Pawns {
       g.dataset.page = String(target.page + 1);
       g.dataset.sortie = c.sortie ? c.sortie.agent : '';
       g.setAttribute('aria-label', `${c.name} Lv${c.level} ${c.at ?? 'あがり'}`);
-      const markup = pawnMarkup(c, sprites, view);
+      const markup = pawnMarkup(c, sprites, lay);
       if (g.__markup !== markup) (g.innerHTML = markup), (g.__markup = markup);
       const before = prev?.characters?.find((p) => p.id === c.id);
       const from = this.pos.get(c.id);

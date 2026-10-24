@@ -356,8 +356,10 @@ export function renderMarginDrawer(view, id) {
 export function renderNews(view) {
   const list = newsOf(view);
   if (!list.length) return '';
+  // 上の方に「製品のまわりの話」と号外の両方が見えるように、いちばん新しい号外（view.news の号外の先頭）を見た目だけ一番上へ（並びは view.news のまま）
+  const lead = list.findIndex((n) => n.kind === 'extra');
   const rows = list
-    .map((n) => `<li class="news-item${n.kind === 'extra' ? ' extra' : ''}" data-kind="${esc(n.kind)}">${esc(n.text)}${n.seq != null ? `<small class="news-seq">seq ${esc(n.seq)}</small>` : ''}</li>`)
+    .map((n, i) => `<li class="news-item${n.kind === 'extra' ? ' extra' : ''}${i === lead ? ' lead' : ''}" data-kind="${esc(n.kind)}">${esc(n.text)}${n.seq != null ? `<small class="news-seq">seq ${esc(n.seq)}</small>` : ''}</li>`)
     .join('');
   return `<h2 class="news-head"><span class="news-mast">瓦版</span><small>製品のまわりの話と、冒険の号外</small></h2><ol class="news-list">${rows}</ol>`;
 }
