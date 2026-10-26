@@ -1,0 +1,14 @@
+=== B18: node --test --test-reporter=spec tests/e2e/B18.test.mjs ===
+✔ §59.6 セーブの欄の切り替え（#git-auto）は auto_push を映し、切り替えると X-Masume 付きで POST /api/git/auto (1930.932747ms)
+✔ §59.6 送った結果（view.push）を盤面に（#git-last）。送れたら commit、送れなければ理由 (3564.001631ms)
+✔ §60.2 仲間の欄とキャラクターシート: 最大なら「Lv9（最大）」で経験値の分数を出さない（data-max="true"） (1658.960437ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7245.123477
+
+(exit 0, 7297ms)

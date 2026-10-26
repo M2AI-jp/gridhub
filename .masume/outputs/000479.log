@@ -1,0 +1,12 @@
+=== S10: node --test --test-reporter=spec tests/e2e/S10.test.mjs ===
+✔ §59.5 POST /api/git/auto で切り替え、GET /api/git の auto_push に映る（X-Masume が要る・真偽でなければ 400） (399.522866ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3466.686385
+
+(exit 0, 3517ms)

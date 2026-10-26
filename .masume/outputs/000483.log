@@ -1,0 +1,14 @@
+=== GOAL13: node --test --test-reporter=spec tests/e2e/GOAL13.test.mjs ===
+✔ 第1章〜第13章のすべての判定が、まとめて本当に通る (303556.612ms)
+✔ すべての冒険の書が正常。地図と package.json は第13章。status に経験値が上限を超えて見える行が無い (551.964176ms)
+✔ README に「町でセーブしたら GitHub に送る」（初めはオフ・gridhub remote --auto-push on・盤面の切り替え・送れなくても止まらない）と第13章 (0.799949ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 304194.942378
+
+(exit 0, 304246ms)

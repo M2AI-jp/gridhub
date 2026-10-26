@@ -1,0 +1,28 @@
+=== E15: node --test --test-reporter=spec tests/e2e/E15.test.mjs ===
+✔ §59.1 設定は冒険ごと。初めはオフで、gridhub remote --auto-push on|off で切り替える (655.18674ms)
+✔ §59.2 オフなら送らない（pushed も記録しない） (652.458558ms)
+✔ §59.2〜§59.4 オンなら、町と結合ゲートのセーブのあとに送り、pushed を記録する。status に出る (1695.739905ms)
+✔ §59.2〜§59.4 送れなくても冒険は止めない（先に進んだリモート・リモートなし）。force push しない (1680.548455ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4784.056374
+
+(exit 0, 4834ms)
+=== E16: node --test --test-reporter=spec tests/e2e/E16.test.mjs ===
+✔ §60.1 ビューと指令書の character に max_level（level が 9 なら true） (2244.287226ms)
+✔ §60.2 status と brief: 最大なら「Lv9（最大）」で、経験値の分数を出さない。そうでなければ今までどおり (2542.665701ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4870.672868
+
+(exit 0, 4918ms)
