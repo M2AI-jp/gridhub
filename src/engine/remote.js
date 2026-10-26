@@ -2,7 +2,8 @@
 // Git の様子はビュー（冒険の書）には入れない（§52.3）。ここで読み、gridhub remote・gridhub push・窓口が使う。
 // push はするが、force push はしない。フックは走らせない。冒険の書には書かない。
 import { execFile, spawnSync } from 'node:child_process';
-import { basename, resolve } from 'node:path';
+import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
+import { basename, join, resolve } from 'node:path';
 import { MasumeError } from './errors.js';
 import { gitRunner } from './save.js';
 
@@ -102,10 +103,65 @@ export function gitSteps(status, gh, root) {
   ];
 }
 
-/** gridhub remote --json の中身（§56.1）。gh を渡さなければ、ここで調べる */
+/** 冒険ごとの Git の設定（§59.1）: <root>/.masume/git.json の {auto_push}。無い・読めない・真偽でなければオフ */
+export function gitSettings(root) {
+  try {
+    const value = JSON.parse(readFileSync(join(root, '.masume', 'git.json'), 'utf8'));
+    return { auto_push: value?.auto_push === true };
+  } catch {
+    return { auto_push: false };
+  }
+}
+
+/** 町でセーブしたら GitHub に送るかを書く（§59.1）。書いたあとの設定を返す */
+export function setAutoPush(root, on) {
+  if (typeof on !== 'boolean') throw new MasumeError('E_USAGE', 'auto_push は true か false です');
+  const dir = join(root, '.masume');
+  mkdirSync(dir, { recursive: true });
+  const file = join(dir, 'git.json');
+  let current = {};
+  try {
+    const value = JSON.parse(readFileSync(file, 'utf8'));
+    if (value && typeof value === 'object' && !Array.isArray(value)) current = value;
+  } catch {}
+  const next = { ...current, auto_push: on };
+  const temp = `${file}.${process.pid}.tmp`;
+  writeFileSync(temp, `${JSON.stringify(next, null, 2)}\n`);
+  renameSync(temp, file);
+  return { auto_push: on };
+}
+
+/**
+ * 町・結合ゲートのセーブのあとに送る（§59.2）。送れなくても投げない。
+ * 戻り値は pushed の data: {node, commit, remote, branch, ok, error?, code?}（error は理由の1行）
+ */
+export function autoPush(root, saved) {
+  const base = { node: saved.node ?? null, commit: saved.commit };
+  try {
+    const result = push(root);
+    if (result.ok) return { ...base, remote: result.remote, branch: result.branch, ok: true };
+    return { ...base, remote: result.remote, branch: result.branch, ok: false, error: reason(result.output) };
+  } catch (error) {
+    const status = gitStatus(root);
+    return {
+      ...base, remote: status.remote?.name ?? null, branch: status.branch ?? null, ok: false,
+      error: reason(error.message), ...(error.code ? { code: error.code } : {}),
+    };
+  }
+}
+
+/** git の出力から、理由の1行（いちばん意味のある行）を取り出す */
+function reason(text) {
+  const lines = String(text ?? '').split(/\r?\n/u).map((line) => line.trim()).filter(Boolean);
+  const pick = lines.find((line) => /^(error|fatal|!)/iu.test(line) && !/^hint:/iu.test(line))
+    ?? lines.find((line) => !/^hint:/iu.test(line)) ?? '送れませんでした';
+  return pick.length > 160 ? `${pick.slice(0, 159)}…` : pick;
+}
+
+/** gridhub remote --json の中身（§56.1・§59.1）。gh を渡さなければ、ここで調べる */
 export function remoteInfo(root, gh = ghStatus()) {
   const { root: _top, ...status } = gitStatus(root);
-  return { ...status, gh, steps: gitSteps(status, gh, root) };
+  return { ...status, gh, steps: gitSteps(status, gh, root), auto_push: gitSettings(root).auto_push };
 }
 
 /** remoteInfo の非同期版（窓口用） */
