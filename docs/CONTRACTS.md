@@ -1242,3 +1242,30 @@ Git の状態はビュー（冒険の書）には入れない（§52.3）。別�
 - `GOAL12`: 第1章〜第12章のすべての判定がまとめて通り、すべての冒険の書が正常で、README に「GitHub につなぐ」（`gridhub remote`・`gridhub push`・盤面の送るボタン）と縦のノートが書いてあり、このリポジトリと3つの examples の地図の `quest.news` が、それぞれの製品の分野の話題になっている（3件以上・`newsProblems` が `[]`）。
 - `package.json` の `test:goal` は `GOAL12` に向ける。
 
+## 59. 町でセーブしたら、自動で GitHub に送る（第13章）
+
+第12章の「次の章の候補」。ユーザーの指示「Github知らない人でもGItとかGithubで管理できるようになってるといい」の仕上げ。**初めはオフ。force push はしない。送れなくても冒険は止めない。**
+
+1. **設定**（冒険ごと）: `.masume/git.json` の `{"auto_push": true|false}`。ファイルが無い・読めない・`auto_push` が真偽でなければオフ。
+   - `gridhub remote --auto-push on|off`（書記）で書く。出力は `町でセーブしたら GitHub に送る: オン`（オフ）。ほかの値は `E_USAGE`/2。冒険の書が無ければ `E_NO_GAME`/2。
+   - `gridhub remote --json`（= `GET /api/git`）に `auto_push`（真偽）を足す。
+2. **送る時**: `quest.save` が `"git"` の冒険で、町（camp）か結合ゲートのセーブ（§43.3）の `saved` を記録したとき、`commit` が null でなく、設定がオンなら、§56.2 の `gridhub push` と同じやり方で送る（上流が無ければ `-u`。force しない。フックは走らせない）。ふりだしのセーブ（`new`）では送らない。
+   - 結果を `saved` のすぐ後に `pushed {node, commit, remote, branch, ok, error?, code?}` として記録する（`node` と `commit` は直前の `saved` のもの。`ok` が false なら `error` に理由の1行、Git の外・リモートなしなら `code` に `E_NO_GIT`・`E_NO_REMOTE`）。
+   - 送れなくても、判定の結果・終了コード・位置は変えない。
+3. **ビュー**（§5 に足す）: `push` = いちばん新しい `pushed` の `{seq, node, ok, commit, remote, branch, error}`（無ければ `null`）。`log[].text` は、送れたら `GitHub に送った: <remote> <branch>（commit <7桁>）`、送れなければ `GitHub に送れなかった: <error>`。
+4. **status**（テキスト）: `view.push` があれば、記録の目印の行（最後の行）のすぐ前に、送れたら `GitHub: 送った（<remote> <branch>・commit <7桁>）`、送れなければ `GitHub: 送れなかった（<error>）。gridhub push でもう一度送れる`。
+5. **伝令**: `POST /api/git/auto`（§8 の POST の作法）本文 `{"auto_push": true|false}` → 設定を書いて 200 `{ok: true, auto_push}`。真偽でなければ 400 `E_USAGE`。冒険の書が無ければ 404 `E_NO_GAME`。
+6. **盤面**: `#git-panel`（§56.4）の `data-state` が `outside` 以外のとき、`#git-auto`（`input[type=checkbox]`。字「町でセーブしたら GitHub に送る」）を出し、`GET /api/git` の `auto_push` を映す。切り替えたら `POST /api/git/auto` を送り、送り終えたら `GET /api/git` を読み直す。`view.push` があれば `#git-last[data-ok=true|false]` に、送れたら `GitHub に送った（commit <7桁>）`、送れなければ `GitHub に送れなかった: <error>`。
+
+## 60. 最大レベルの表示（第13章）
+
+RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールどおり）が、`Lv9 経験値 16/10` と出て壊れて見えた。
+
+1. ビューの `characters[]` に `max_level`（`level` が 9 なら `true`）を足す。`brief --json` の `character` にも。
+2. 最大のとき、字は `Lv9（最大）` で、`経験値 <xp>/<xp_next>` を出さない: `status` のキャラクターの行、`brief` の「Lv…」の行、盤面の仲間の欄（`.party-card[data-char] .lv`。最大なら `.party-card[data-max="true"]`）。最大でなければ今までどおり。
+
+## 61. あがり（第13章）
+
+- `GOAL13`: 第1章〜第13章のすべての判定がまとめて通り、すべての冒険の書が正常で、README に「町でセーブしたら GitHub に送る」（`gridhub remote --auto-push on`・盤面の切り替え・送れなくても止まらない）が書いてあり、このリポジトリの `gridhub status` に `経験値 <n>/<m>` で n > m の行が無い。
+- `package.json` の `test:goal` は `GOAL13` に向ける。
+

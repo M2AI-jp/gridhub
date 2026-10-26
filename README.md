@@ -158,6 +158,7 @@ gridhub remote        # いまの様子と、まだの手引き（gh が入っ�
 4. **送る**: `gridhub push`（盤面の「GitHub に送る」ボタンと同じ。2回目からは、送っていないセーブだけが送られる）
 
 - `gridhub push` は、いまのブランチをリモートに送るだけです（中で `git push` を走らせます）。**force push はしません**（GitHub のほうが先に進んでいたら、送らずに止まって知らせます）。
+- **町でセーブしたら GitHub に送る**（初めはオフ）: `gridhub remote --auto-push on` か、盤面のセーブの欄の「町でセーブしたら GitHub に送る」をオンにすると、町や結合ゲートでセーブするたびに、そのまま GitHub に送ります。送れなくても冒険は止まりません（盤面と `gridhub status` に「送れなかった」と理由が出るので、直してから `gridhub push` か「GitHub に送る」ボタンで送り直します）。force push はしません。
 - gh を使わないなら、github.com で空のリポジトリを作り、`git remote add origin https://github.com/<あなた>/<リポジトリ>.git` でつないでから `gridhub push` でもかまいません。
 
 変更をレビューしてもらう（PR を出す）には、次の作業をブランチで進め、終わったら送ります。
@@ -298,7 +299,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | `gridhub status` / `gridhub log` | 盤面の要約 / 冒険の書 |
 | `gridhub verify` / `gridhub repair` | 改ざんの検証 / 修復 |
 | `gridhub load <seq\|commit>` | 過去の時点の盤面に戻る（記録の番号か Git のコミットで指す） |
-| `gridhub remote` / `gridhub push` | GitHub につなぐ手引きと、送っていないセーブの数 / いまのブランチを GitHub に送る（force push はしない） |
+| `gridhub remote [--auto-push on\|off]` / `gridhub push` | GitHub につなぐ手引きと、送っていないセーブの数（町でセーブしたら送る設定） / いまのブランチを GitHub に送る（force push はしない） |
 | `gridhub new <map>` / `gridhub validate <map>` / `gridhub amend <map>` | 地図から冒険の書をつくる / 検査 / 改訂（歴史は書き換えられない） |
 | `gridhub seal <node…\|--all>` | 判定ファイルを封印する（GM） |
 | `gridhub init` | よそのプロジェクトに支度をする |
@@ -349,6 +350,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 | 第10章 | 外の字を待たない: ネットが無くても盤面がすぐ描かれる（Google Fonts は届いたら差し替え） |
 | 第11章 | **GridHub**: テスト1件が1マス・`gridhub step`・Git のセーブと墓・作戦・伝承と技・エンディング・縦の方眼ノートの世界地図 |
 | 第12章 | 仕上げ: 瓦版は作っている製品の話題・札と吹き出しが重ならない・盤面から GitHub につなぐ（`gridhub remote`・`gridhub push`・「GitHub に送る」ボタン）・縦長の画面では1ページずつ |
+| 第13章 | 町でセーブしたら GitHub に送る設定（`gridhub remote --auto-push on`・盤面の切り替え。初めはオフ）・最大レベルは「Lv9（最大）」と出す |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
 
@@ -356,7 +358,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 
 ```sh
 npm test              # すべてのマスとゲートの判定を1回ずつ
-npm run test:goal     # いまのあがり（GOAL12）: 第1章〜第12章の全部の判定をまとめて＋冒険の書の確認
+npm run test:goal     # いまのあがり（GOAL13）: 第1章〜第13章の全部の判定をまとめて＋冒険の書の確認
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
