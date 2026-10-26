@@ -1,0 +1,16 @@
+=== E14: node --test --test-reporter=spec tests/e2e/E14.test.mjs ===
+✔ §54.2 瓦版は、号外と製品の話題を交互に（両方が上のほうに見える） (608.707548ms)
+✔ §56.1 Git の外: inside は false、手引きの最初は git init (202.474024ms)
+✔ §56.1 リモートが無い: gh が入っているか・ログインしているかを手引きにする。push は E_NO_REMOTE (571.680012ms)
+✔ §56.2 手元の bare リポジトリに送る: 上流が無ければ -u で。送ったあと ahead は 0。フックは走らない (1122.016665ms)
+✔ §56.2 先に進んだリモートには force push しない。HEAD が切り離されていれば E_USAGE (732.484673ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3329.773915
+
+(exit 0, 3385ms)

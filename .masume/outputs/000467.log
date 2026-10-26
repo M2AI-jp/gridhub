@@ -1,0 +1,12 @@
+=== G10: node --test --test-reporter=spec tests/e2e/G10.test.mjs ===
+✔ 盤面のセーブの欄から、手元の bare リポジトリに送れる（書記 × 伝令 × 盤面） (4245.306585ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7326.071316
+
+(exit 0, 7378ms)
