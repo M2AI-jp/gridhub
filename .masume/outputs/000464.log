@@ -1,0 +1,13 @@
+=== S9: node --test --test-reporter=spec tests/e2e/S9.test.mjs ===
+✔ §56.3 GET /api/git は gridhub remote --json と同じ。POST /api/git/push で bare リポジトリに送れる（X-Masume が要る） (1264.700815ms)
+✔ §56.3 リモートが無い・Git の外なら POST /api/git/push は 400（GET は様子を返す） (743.478621ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 5085.115059
+
+(exit 0, 5144ms)

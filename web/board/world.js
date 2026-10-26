@@ -14,7 +14,7 @@ export const BOTTOM = 49; // マスや札の下の端の限り
 export const SPREAD_GAP = 40; // 見開きと見開きのあいだの机
 const SQ = 2;
 const H = { camp: 4, gate: 5, goal: 10, stamp: 4 };
-const MARGIN_ROOM = 4; // 余白のマスの下に空けておく目（吹き出し 3 目 + すき間 1 目。その道だけ）
+const MARGIN_ROOM = 5; // 余白のマスの下に空けておく目（吹き出し 4 目まで + すき間 1 目。その道だけ）
 
 /** ページ（0始まり）の左上の世界座標（目） */
 export function pageOrigin(p) {
@@ -284,9 +284,10 @@ export function layoutWorld(view) {
     for (const road of ms)
       for (const mg of marginsAfter.get(marginKey(road, id)) || []) {
         // 吹き出しの場所は、起きた余白（駒が通ったあと）だけに空ける。これから先の地図は今までどおり詰まっている
-        const room = marginHappened(mg) ? MARGIN_ROOM : 0;
+        // 余白のマスは after と同じページに置く（§53.6）。吹き出しの場所はページの下の端までに縮める。マスも入らないときだけ次のページへ
         let { page: mp, y: my } = cursor.get(road);
-        if (my + 1 + SQ + room > BOTTOM) (mp += 1), (my = topOf(mp));
+        if (my + 1 + SQ > BOTTOM) (mp += 1), (my = topOf(mp));
+        const room = marginHappened(mg) ? Math.max(0, Math.min(MARGIN_ROOM, BOTTOM - (my + 1 + SQ))) : 0;
         ensure(mp);
         Object.assign(mg, { page: mp, y: my + 1, w: SQ, h: SQ, room, placed: true });
         cursor.set(road, { page: mp, y: Math.min(BOTTOM, my + 1 + SQ + room) });
@@ -542,6 +543,9 @@ export function layoutWorld(view) {
   }
 
   const lay = { pages, place, roads, stops, lanes, order, quest, margins: placedMargins };
+  // 駒の立つ所と、作業中の駒のふきだし。余白の吹き出しはそれを避けて置く（札・吹き出し・カードが重ならない）
+  lay.spots = pawnSpots(view, lay);
+  lay.say = sayBoxes(view, lay);
   for (let p = 0; p < pages.length; p++) pages[p].bubbles = bubbles(view, lay, p);
   for (let p = 0; p < pages.length; p++) pages[p].scenery = scenery(view, lay, p);
   return lay;
@@ -616,6 +620,136 @@ export function stopIndex(view, lay, c) {
   return s ? list.indexOf(s) : -1;
 }
 
+// ---- 駒と、作業中の駒のふきだし ----
+export const PAWN_H = 3.3; // 駒の高さ（目）
+export const SAY_PX = 13; // ふきだしの字（いま戦うテスト）
+export const SAY_AGENT_PX = 10.5; // ふきだしの字（出撃中のエージェント）
+const SAY_MAX_W = 12; // ふきだしの幅の限り（目）
+
+/** 作業中の駒のふきだしの中身: いま戦うテスト（技術の言葉）と、出撃中ならエージェント */
+export function sayOf(view, c) {
+  const n = c.at && view?.nodes ? own(view.nodes, c.at) : null;
+  let fight = '';
+  if (c.status === 'working' && n?.type === 'task' && n.check?.kind === 'cmd') {
+    const cases = Array.isArray(n.cases) ? n.cases : [];
+    if (!cases.length) fight = '？ まだ走らせていない';
+    else if (c.square != null && c.square < cases.length) fight = `${cases[c.square].ok === false ? '✖' : '⚔'} ${cases[c.square].name}`;
+    else fight = '✔ 全部倒した → check';
+  } else if (c.status === 'working' && n?.check?.kind === 'stamp') fight = '㊞ ハンコ待ち';
+  const agent = c.sortie ? `⏳ ${c.sortie.agent}${c.sortie.model ? ' ' + c.sortie.model : ''}` : '';
+  return { fight, agent };
+}
+
+/** 駒の立つ所（ページの目）。同じ所に何人もいれば、横に少しずらす */
+export function pawnSpots(view, lay) {
+  const out = Object.create(null);
+  const seen = new Map();
+  for (const c of view.characters || []) {
+    const s = stopOf(view, lay, c);
+    if (!s) continue;
+    const key = `${s.node}:${s.square}:${s.page}:${s.x}`;
+    const k = seen.get(key) || 0;
+    seen.set(key, k + 1);
+    const shift = s.square == null ? (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 1.6 : 0;
+    out[c.id] = { page: s.page, x: s.x + shift, y: s.y, stop: s };
+  }
+  return out;
+}
+
+const hitArea = (a, b) => Math.max(0, Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)) * Math.max(0, Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y));
+
+/**
+ * 作業中の駒のふきだしの置き場所（目）。字は2行まで折り返す（切らない）。駒の右上・左上・右下・左下と、上へずらした所から、
+ * 札・城・名札・余白のマス・ほかの駒・ほかのふきだしに重ならない所を選ぶ（モンスターのマスと道は、なるべく避ける）
+ */
+function sayBoxes(view, lay) {
+  const out = Object.create(null);
+  const placed = [];
+  const chars = (view.characters || []).filter((c) => lay.spots[c.id]);
+  // ページごとの、重ねてはいけないもの・なるべく避けるもの
+  const hardOf = new Map();
+  const softOf = new Map();
+  const solids = (p) => {
+    if (hardOf.has(p)) return [hardOf.get(p), softOf.get(p)];
+    const hard = [];
+    const soft = [];
+    for (const id of lay.pages[p].units) {
+      const pl = lay.place[id];
+      const castle = pl.kind === 'gate' || pl.kind === 'goal';
+      if (pl.page === p) hard.push({ x: pl.x, y: pl.y - (castle ? 2 : 0), w: pl.w, h: pl.h + (castle ? 2 : 0) });
+      if (pl.squares) for (const sq of pl.squares) if (sq.page === p) soft.push({ x: sq.x, y: sq.y, w: SQ, h: SQ });
+    }
+    for (const mg of lay.margins) {
+      if (mg.page !== p) continue;
+      hard.push({ x: mg.x, y: mg.y, w: SQ, h: SQ });
+      // 起きた余白の吹き出しのために空けた場所（その道の帯の、マスの下）
+      if (mg.room) {
+        const g = lay.pages[p].lanes[mg.road];
+        hard.push({ x: g.x, y: mg.y + SQ, w: g.w, h: mg.room });
+      }
+    }
+    if (p === 0) hard.push({ x: 0, y: 0, w: PAGE.w, h: P1_TOP - 1 }); // 題名・ふりだし・名札
+    else hard.push({ x: 0, y: 0, w: PAGE.w, h: PN_TOP - 1 }); // 道の上の名札
+    for (const c of chars) {
+      const sp = lay.spots[c.id];
+      if (sp.page === p) hard.push({ x: sp.x - 1.65, y: sp.y - PAWN_H + 0.25, w: 3.3, h: PAWN_H - 0.1, pawn: c.id });
+    }
+    hardOf.set(p, hard);
+    softOf.set(p, soft);
+    return [hard, soft];
+  };
+  for (const c of chars) {
+    const { fight, agent } = sayOf(view, c);
+    if (!fight && !agent) continue;
+    const sp = lay.spots[c.id];
+    const lines = fight ? wrapJa(fight, (SAY_MAX_W * U - 16) / SAY_PX, 2) : [];
+    const wpx = Math.max(...lines.map((l) => cw(l) * SAY_PX), agent ? cw(agent) * SAY_AGENT_PX : 0) + 16;
+    const hpx = lines.length * 1.1 * U + (agent ? 0.95 * U : 0) + 6;
+    const w = wpx / U;
+    const h = hpx / U;
+    const [hard, soft] = solids(sp.page);
+    const others = placed.filter((b) => b.page === sp.page);
+    let best = null;
+    const cands = [];
+    for (const lift of [0, 1, 2]) {
+      const above = sp.y - PAWN_H - 0.25 - h - lift;
+      cands.push({ side: 't', x: sp.x - 0.6, y: above, lift, pref: lift * 0.6 });
+      cands.push({ side: 't', x: sp.x + 0.6 - w, y: above, lift, pref: 0.3 + lift * 0.6 });
+    }
+    for (const drop of [0, 1]) {
+      cands.push({ side: 'b', x: sp.x - 0.6, y: sp.y + 0.6 + drop, lift: drop, pref: 1 + drop * 0.6 });
+      cands.push({ side: 'b', x: sp.x + 0.6 - w, y: sp.y + 0.6 + drop, lift: drop, pref: 1.3 + drop * 0.6 });
+    }
+    // 駒の横（しっぽは横向き）
+    for (const dy of [0, -1, 1]) {
+      const y = sp.y - PAWN_H + 0.4 + dy;
+      cands.push({ side: 'r', x: sp.x + 2, y, lift: 0, pref: 0.8 + Math.abs(dy) * 0.4 });
+      cands.push({ side: 'l', x: sp.x - 2 - w, y, lift: 0, pref: 1.1 + Math.abs(dy) * 0.4 });
+    }
+    for (const cd of cands) {
+      // 当たりは、しっぽ（駒のほうへ 7px + 持ち上げたぶん）も含めた四角で見る
+      const tail = 7 / U + cd.lift;
+      const r =
+        cd.side === 't' ? { x: cd.x, y: cd.y, w, h: h + tail }
+        : cd.side === 'b' ? { x: cd.x, y: cd.y - tail, w, h: h + tail }
+        : cd.side === 'l' ? { x: cd.x, y: cd.y, w: w + 7 / U, h }
+        : { x: cd.x - 7 / U, y: cd.y, w: w + 7 / U, h };
+      let score = cd.pref;
+      if (r.x < 0.3 || r.x + r.w > PAGE.w - 0.3 || r.y < 0.2 || r.y + r.h > PAGE.h - 0.4) score += 1000;
+      for (const b of [...hard.filter((b) => b.pawn !== c.id), ...others.map((o) => o.hit)]) {
+        const a = hitArea(r, b);
+        if (a > 0.0001) score += 1000 + a * 10; // 札・名札・余白・ほかの駒とふきだしには重ねない
+      }
+      for (const b of soft) score += hitArea(r, b) * 0.35;
+      if (!best || score < best.score) best = { ...cd, score, hit: r };
+    }
+    const box = { page: sp.page, x: best.x, y: best.y, w, h, side: best.side, lift: best.lift, lines, agent, hit: best.hit };
+    placed.push(box);
+    out[c.id] = box;
+  }
+  return out;
+}
+
 // ---- 余白の吹き出し（会話・町の人の話・ニュースの切り抜き）。札・マス・道を避けて、空いた方眼に置く ----
 export const BUBBLE_PX = 9.5; // 吹き出しの字の大きさ
 export const BUBBLE_LINE = 11.5; // 吹き出しの行の高さ（px）
@@ -625,6 +759,20 @@ export function whoName(view, who) {
   if (who == null || who === '') return '';
   const c = (view?.characters || []).find((x) => x.id === who);
   return c ? String(c.name ?? who) : String(who);
+}
+
+/** 吹き出しの幅（目）に入る出典の字。両方入らなければ seq だけ（無ければ commit だけ）。字が吹き出しからはみ出さない */
+export function fitSource(m, w) {
+  const full = marginSource(m);
+  if (!full || cw(full) * 7.5 + 14 <= w * U - 4) return full;
+  const one = Number.isInteger(m.seq) ? `seq ${m.seq}` : full.split(' · ').pop();
+  return cw(one) * 7.5 + 14 <= w * U - 4 ? one : '';
+}
+
+/** 号外の見出しを短く（「号外: <名前> が <マス>「<題>」を抜けた（テスト p/t）」→「号外: <マス> を抜けた（テスト p/t）」）。名前と題は道の色とそばの札でわかる */
+function shortExtra(text) {
+  const m = String(text).match(/^号外: .+? が (\S+?)「.*」を(抜けた|突破した)(（テスト \d+\/\d+）)?$/);
+  return m ? `号外: ${m[1]} を${m[2]}${m[3] ?? ''}` : text;
 }
 
 /** 出典の目印（seq と commit）。無ければ空文字 */
@@ -645,9 +793,13 @@ export function bubbleRows(view, m, w, perSpeaker = 1) {
   if (m.kind === 'news') {
     // 瓦版の切り抜き: 題（いつも「瓦版」）は絵でわかるので書かず、中身（号外の見出しと、分野の話題）を。細ければ見出しだけを2行で
     const said = m.lines.filter((l) => l.text).map((l) => l.text);
-    const head = said[0] ?? m.title ?? '';
-    for (const t of wrapJa(head, max, w <= 8 || said.length < 2 ? 2 : 1)) rows.push({ text: t, head: true });
-    if (said[1] && w > 8) for (const t of wrapJa(said[1], max, 1)) rows.push({ text: t });
+    const lines = w <= 8 || said.length < 2 ? 2 : 1;
+    let head = said[0] ?? m.title ?? '';
+    // 入りきらない号外の見出しは、字を切らずに短い形にする（それでも入らなければ、テストの数はそばの札にあるので外す）
+    if (wrapJa(head, max, lines).at(-1)?.endsWith('…')) head = shortExtra(head);
+    if (wrapJa(head, max, lines).at(-1)?.endsWith('…')) head = head.replace(/（テスト \d+\/\d+）$/, '');
+    for (const t of wrapJa(head, max, lines)) rows.push({ text: t, head: true });
+    if (said[1] && w > 8) for (const t of wrapJa(said[1], max, Math.max(1, perSpeaker))) rows.push({ text: t });
     return rows;
   }
   const said = m.lines.filter((l) => l.text).slice(0, 2);
@@ -660,7 +812,7 @@ export function bubbleRows(view, m, w, perSpeaker = 1) {
   }
   for (const ln of said) {
     const name = whoName(view, ln.who);
-    wrapJa(`${name}「${ln.text}」`, max, said.length > 1 ? perSpeaker : 2).forEach((t, k) => rows.push({ text: t, who: k === 0 ? name : '', speaker: ln.who ?? null }));
+    wrapJa(`${name}「${ln.text}」`, max, said.length > 1 ? perSpeaker : Math.max(2, perSpeaker)).forEach((t, k) => rows.push({ text: t, who: k === 0 ? name : '', speaker: ln.who ?? null }));
   }
   return rows;
 }
@@ -686,8 +838,10 @@ function bubbles(view, lay, p) {
     if (pl.squares) for (const sq of pl.squares) if (sq.page === p) mark(hard, sq.x, sq.y, SQ, SQ);
   }
   for (const mg of lay.margins) if (mg.page === p) mark(hard, mg.x, mg.y, SQ, SQ);
-  // 駒が立つ所（どのマスでも。駒が進んでも吹き出しの場所が変わらないように、いまの駒の位置では決めない）
+  // 駒が立つ所（どのマスでも）と、いま立っている駒の体とふきだし（札・吹き出し・カードが重ならない）
   for (const list of Object.values(lay.stops)) for (const st of list) if (st.page === p) mark(hard, st.x - 1, st.y - 3, 2, 3);
+  for (const sp of Object.values(lay.spots || {})) if (sp.page === p) mark(hard, sp.x - 1.65, sp.y - PAWN_H, 3.3, PAWN_H + 0.4);
+  for (const b of Object.values(lay.say || {})) if (b.page === p) mark(hard, b.hit.x, b.hit.y, b.hit.w, b.hit.h);
   for (const rd of Object.values(lay.roads))
     for (const piece of rd.pieces) {
       if (piece.page !== p) continue;
@@ -730,11 +884,14 @@ function bubbles(view, lay, p) {
     let found = null;
     // 大きいほうから試す（字を切らずに済む大きさ）。余白のマスから 4 目以内に入らなければ、吹き出しは出さない
     // 大きいほうから。同じ大きさなら、道の線をまたがない所 → またぐ所。どの大きさも入らなければ、ほかの余白の場所に重なってもよい
-    const sizes = [[12, 2], [10, 2], [12, 1], [10, 1], [8, 1], [7, 1], [6, 1], [5, 1]];
-    const tries = [...sizes.flatMap(([w, per]) => [[w, per, true, false], [w, per, false, false]]), ...sizes.map(([w, per]) => [w, per, false, true])];
+    // 字を切らずに済む大きさを先に（入る空きがあれば全文を見せる）。どれも切れるなら、大きいほうから
+    const sizes = [[14, 3], [12, 3], [14, 2], [12, 2], [10, 2], [12, 1], [10, 1], [8, 1], [7, 1], [6, 1], [5, 1]];
+    const cut = ([w, per]) => bubbleRows(view, m, w, per).some((r) => r.text.endsWith('…'));
+    const ordered = [...sizes.filter((z) => !cut(z)), ...sizes.filter((z) => cut(z))];
+    const tries = [...ordered.flatMap(([w, per]) => [[w, per, true, false], [w, per, false, false]]), ...ordered.map(([w, per]) => [w, per, false, true])];
     for (const [w, per, strict, share] of tries) {
       const rows = bubbleRows(view, m, w, per);
-      const src = marginSource(m);
+      const src = fitSource(m, w);
       const h = Math.max(2, Math.ceil((7 + rows.length * BUBBLE_LINE + (src ? 10 : 0) + 4) / U));
       let best = null;
       for (let y = m.y - h - 6; y <= m.y + SQ + 6; y++)

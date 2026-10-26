@@ -5,7 +5,7 @@ import { Pawns } from './pawns.js';
 import { Book } from './book.js';
 import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderMarginDrawer, renderNews, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
-import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing } from './command.js';
+import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit } from './command.js';
 import { own } from './sketch.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
@@ -459,6 +459,7 @@ function setupCamera() {
   $('#page-prev').addEventListener('click', () => book.turnTo(book.left + 1 - (book.single ? 1 : 2)));
   $('#page-next').addEventListener('click', () => book.turnTo(book.left + 1 + (book.single ? 1 : 2)));
   new ResizeObserver(() => {
+    if (book.relayout()) return; // 縦長と横長が入れかわったら、1ページずつ ⇄ 見開き
     if (!book.cam) return;
     if (book.cam.auto) book.fit();
     else book.apply();
@@ -716,6 +717,7 @@ async function liveRefresh() {
   hideLobby();
   window.__masume.lobby = false;
   render(body);
+  refreshGit(); // セーブ（町のコミット）が増えたかもしれない（§56.4）
   if (!partyWatched) {
     partyWatched = true;
     pollParty();
@@ -864,6 +866,10 @@ window.__masume = {
   turnTo: (n, opts) => book.turnTo(n, opts),
   get flipping() {
     return !!book?.flipping;
+  },
+  /** いまの見せ方: 1ページずつなら true、見開きなら false（§57.2） */
+  get single() {
+    return !!book?.single;
   },
 };
 

@@ -1,4 +1,5 @@
 import { createServer as createHttpServer } from 'node:http';
+import { execFile } from 'node:child_process';
 import { existsSync, mkdirSync, watchFile as watchPath, unwatchFile } from 'node:fs';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
@@ -211,6 +212,7 @@ async function serveStatic(response, root, pathname) {
 export function createServer({
   webRoot, getView, watchFile, onStamp, onBattle, outputFor,
   onQuest, getQuest, onSortie, getParty, onPartyStop,
+  getGit, onPush,
 }) {
   const root = resolve(webRoot);
   const watchedPath = watchFile == null ? null : resolve(watchFile);
@@ -292,9 +294,14 @@ export function createServer({
   if (typeof onPartyStop === 'function') {
     postRoutes['/api/party/stop'] = { parse: () => ({}), call: () => onPartyStop(), status: 200, optionalBody: true };
   }
+  // GitHub につなぐ導線（§56.3）: 送る
+  if (typeof onPush === 'function') {
+    postRoutes['/api/git/push'] = { parse: () => ({}), call: () => onPush(), status: 200, optionalBody: true };
+  }
   const getRoutes = {};
   if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
   if (typeof getParty === 'function') getRoutes['/api/party'] = getParty;
+  if (typeof getGit === 'function') getRoutes['/api/git'] = getGit;
 
   async function handlePost(request, response, pathname) {
     if (request.headers['x-masume'] !== '1' || !allowedOrigin(request)) {
@@ -493,6 +500,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const party = new ChildJob();
   const battles = new Map();
   let shuttingDown = false;
+  let pushing = false;
 
   const requireOpen = () => {
     if (shuttingDown) throw apiError('E_BUSY', '窓口を閉じています');
@@ -628,6 +636,37 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       return { ...status, ...defaults };
     },
     onPartyStop: () => ({ ok: true, stopped: party.interrupt() }),
+
+    // ---- GitHub につなぐ導線（§56.3）----
+    // Git の様子と手引き（gridhub remote --json と同じ）。ビュー（冒険の書）には入れない
+    getGit: () => engine.remoteInfoAsync(gameRoot),
+    // gridhub push --json を別プロセスで走らせる（送っているあいだも盤面のサーバーを止めない）。同時に2つは走らせない
+    onPush: async () => {
+      requireOpen();
+      if (pushing) throw apiError('E_BUSY', 'いま GitHub に送っています');
+      pushing = true;
+      try {
+        const { code, stdout, stderr } = await new Promise((done) => {
+          execFile(process.execPath, [bin, 'push', '--json', '--dir', gameRoot], {
+            cwd: gameRoot, encoding: 'utf8', timeout: 180_000, maxBuffer: 16 * 1024 * 1024,
+          }, (error, out, err) => done({ code: error ? (typeof error.code === 'number' ? error.code : -1) : 0, stdout: out, stderr: err }));
+        });
+        let result = null;
+        try {
+          result = JSON.parse(stdout);
+        } catch {
+          result = null;
+        }
+        if (code === 0 && result) return result;
+        if (code === 1 && result) throw apiError('E_PUSH', `GitHub に送れませんでした: ${result.output.split('\n').slice(-20).join('\n')}`, 409);
+        // Git の外・リモートなし・HEAD の切り離し（終了コード 2）は 400
+        const failure = String(stderr || stdout).trim().match(/^\[(E_[A-Z_]+)\]\s*([\s\S]*)$/u);
+        if (failure) throw apiError(failure[1], failure[2], 400);
+        throw apiError('E_PUSH', `gridhub push が失敗しました（終了コード ${code}）: ${String(stderr || stdout).trim().split('\n').at(-1) ?? ''}`, 500);
+      } finally {
+        pushing = false;
+      }
+    },
   });
 
   // 伝令が突然終わるときも、子を置き去りにしない（最後の手段。待てないので SIGINT を送るだけ）

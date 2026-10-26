@@ -1171,3 +1171,74 @@ npm test の揺れを調べたところ、盤面が外の字（Google Fonts）�
    - ビューに `margins`・`news` が無い（古いエンジン）ときは、何も描かず、エラーも出さない。
 7. **判定**: 書記 E13（地図の `quest.news` とビューの `margins`・`news`）、盤面 B14（余白のマス・ふきだし・瓦版）。
 
+## 54. 瓦版は、作っている製品の話題（第12章）
+
+ユーザーの指示は「作ってる製品に関連ニュースが流れる」。第11章では、瓦版の話題が「テストを先に書く」「こまめにコミット」のような開発一般のコツになりがちで、また見本の冒険（examples）の地図には話題が1件も無く、README の写真の瓦版に号外しか出ていなかった（監督の監査）。
+
+1. **瓦版の話題の決まり**は `src/quest/news.js`（語り部）の1か所に置く。
+   - `NEWS_GUIDE`（GM のプロンプトに入れる決まりの行の配列）: `quest.news` には**作っている製品の分野**の話題を3〜8件（各120字以内）書く。製品を使う人・使われ方・その分野でよくある機能や考え方（例: メモアプリなら検索・同期・タグ・並べ方）。**開発の進め方のコツ（テストを先に書く・こまめにコミットする・レビュー・CI など）は書かない**（作っている製品そのものが開発の道具なら、その道具の使われ方は書いてよい）。作り話を事実のように書かない（実在の会社名・製品名・人名・数字・日付・「発表した」「調査によると」を書かない）。
+   - `newsProblems(news, product)` → `["quest.news[<i>]: <理由>", …]`: 開発の進め方のコツに見えるもの（`product` が開発の道具なら気にしない）と、事実に見える書き方のもの。問題が無ければ `[]`。
+2. **語り部**（§53.5 を書き換える）: GM のプロンプトに `NEWS_GUIDE` を入れる（願いの全文は §14 のとおりプロンプトにある）。冒険のまとめ（§14）に `瓦版の話題: <quest.news の件数> 件` の行を出し（0件でも出す）、`newsProblems` が返したものがあれば、その行のすぐ下に1件ずつ `  ※ <理由>` を出す（冒険は止めない。終了コードは変えない）。
+3. **ビューの `news` の順**（§53.4 を書き換える）: 製品の話題（`domain`）と号外（`extra`）の**両方が上のほうに見える**ように、交互に並べる。号外を新しい順に（最大20件）`x0, x1, …`、製品の話題を地図の順に `d0, d1, …` として、`x0, d0, x1, d1, …`（片方が尽きたら、残りをそのまま続ける）。号外が無ければ製品の話題だけ、話題が無ければ号外だけ。
+4. **地図**（GM）: このリポジトリ自身の地図には GridHub の分野（開発のタスク管理・Linear・Jira・AI のコーディングエージェント・進み具合の見える化）の話題を、`examples/memo`（メモアプリ）・`examples/kakeibo`（家計簿）・`examples/omikuji`（おみくじ）の地図には、それぞれの製品の分野の話題を、`gridhub amend` で足す（歴史は書き換えない）。どれも3件以上で、`newsProblems` が `[]`。
+5. **盤面の見本**（`web/fixtures/**`）は GridHub 自身の冒険なので、開発の道具の話題でよい（`newsProblems(news, 見本の題と pitch)` が `[]`）。
+
+## 55. 盤面: 札と吹き出しが重ならない（第12章）
+
+`docs/board-zoom.png` で、号外の瓦版の切り抜き（`.margin-bubble`）と駒の吹き出し（`.pawn-say`）が重なり、字が隠れていた。
+
+1. **吹き出し** = `.pawn-say`（駒の吹き出し）と `.margin-bubble`（余白のふきだし・瓦版の切り抜き）。**字** = `#node-layer .node` の中の `<text>`（札・町の看板・城の字）、`.lane-head` と `.lane-tag` の中の `<text>`。
+2. 画面に描かれている（`getBoundingClientRect` の幅と高さが0でない）ものどうしで:
+   - 吹き出しどうしが重ならない（1px まで許す）。
+   - 吹き出しが、どの字にも重ならない（1px まで許す）。
+   - 吹き出しの中の `<text>` は、その吹き出しの外に出ない（字が切れない。1px まで許す）。札（`.cell-paper`・`.gate-paper` を持つ `.node`）の中の `<text>` も、その札の紙の外に出ない。
+3. 見本 `demo`・`demo2`・`end` の、すべての見開き（`window.__masume.turnTo(n, { animate: false })`）で、1440×900 と 1200×761 の画面で守る。
+4. 守るために、吹き出しを置く場所をずらしたり、字を短くしたり（全文は `<title>`）してよい。§50.2（方眼に合わせる）と §53.6 はそのまま。
+
+## 56. GitHub につなぐ導線（第12章）
+
+ユーザーの指示は「Github知らない人でもGItとかGithubで管理できるようになってるといい」。盤面からも、GitHub につなぐ手引きと、送る（push）ボタンを出す。
+Git の状態はビュー（冒険の書）には入れない（§52.3）。別のコマンドと窓口で読む。**push はするが、force push はしない。**
+
+1. **`gridhub remote [--json]`**（書記。`src/commands/remote.js`）: ゲームのルートの Git の様子と、GitHub につなぐ手引き。冒険の書は要らない（ルートは §3 と同じに探し、無ければカレント）。`--json` は:
+   ```jsonc
+   { "inside": true,                         // Git の作業ツリーの中か
+     "branch": "main" | null,                // いまのブランチ（HEAD が切り離されていれば null）
+     "head": "<40桁>" | null,
+     "remote": { "name": "origin", "url": "…", "github": true } | null,  // 上流のリモート、無ければ origin、無ければ最初のリモート
+     "upstream": "origin/main" | null,       // いまのブランチの上流
+     "ahead": 2 | null, "behind": 0 | null,  // 上流と比べた数（上流が無ければ null）
+     "gh": { "installed": true, "authenticated": false | null },          // gh コマンドがあるか、ログインしているか（無ければ null）
+     "steps": [ { "id", "done", "text", "command" } ] }                   // 手引き。下の5つをこの順に
+   ```
+   - `steps`: `git`（作業ツリーの中か。`command` は `git init`）、`gh`（gh があるか。`command` は `null`、`text` に `https://cli.github.com/`）、`login`（`gh auth status` が 0 か。`command` は `gh auth login`）、`repo`（リモートがあるか。`command` は `gh repo create <ルートのフォルダ名> --private --source . --remote origin`）、`push`（上流があって `ahead` が 0 か。`command` は `gridhub push`）。`done` は真偽。`text` は日本語1行。
+   - `github` は、`url` に `github.com` を含むなら `true`。
+   - gh は環境変数 `MASUME_GH`（既定 `gh`）のコマンドとして起こす。起こせなければ `installed: false`・`authenticated: null`。
+   - テキスト版は、リモートとブランチと `GitHub に送っていないセーブ: <ahead>`（上流が無ければ「まだ一度も送っていない」）と、まだの手引きを `<text>`・`  $ <command>` で出す。終了コードは 0（Git の外でも）。
+2. **`gridhub push [--json]`**（書記。`src/commands/push.js`）: いまのブランチをリモートに送る。上流があれば `git push`、無ければ `git push -u <remote> <branch>`。**`--force` などは決して付けない。**
+   - Git の外 `E_NO_GIT`/2、リモートが無い `E_NO_REMOTE`/2（手引きの `repo` の `command` を出す）、HEAD が切り離されている `E_USAGE`/2。
+   - 送れたら 0 と `GitHub に送った: <remote> <branch>（commit <7桁>）`。送れなければ（相手が先に進んでいる・認証できない など）1 と git の出力の末尾（最大20行）。
+   - `--json` は `{ok, remote, branch, commit, ahead, output}`。冒険の書には書かない。
+   - フックは走らせない（`-c core.hooksPath=/dev/null`）。名前・メールの設定は要らない（push はコミットを作らない）。
+3. **伝令**: `GET /api/git` → `gridhub remote --json` と同じ JSON（200）。`POST /api/git/push`（§8 の POST の作法: `X-Masume: 1`・`Origin`）→ `gridhub push --json` を走らせ、送れたら 200、送れなければ 409、Git の外・リモートなしは 400（`{ok:false, code, error}`）。同時に2つの push を走らせない（走っていれば 409 `E_BUSY`）。
+4. **盤面**（右の欄の「セーブ」の近く）: `#git-panel[data-state]`。開いたときと、`change` のたびと、push のあとに `GET /api/git` を読む（取れなければ `#git-panel` を出さない）。`data-state` は:
+   - `outside`（Git の外）: `git init` の手引き。
+   - `no-remote`（リモートが無い）: `#git-guide` に `li[data-step=<id>][data-done=true|false]` を `steps` の順に。まだの手引きの `command` を `<code>` で（写せる）。
+   - `unpushed`（上流が無い、または `ahead > 0`）: `#git-remote` にリモートの `url`、`#git-ahead` に `GitHub に送っていないセーブ: <ahead>`（上流が無ければ「まだ一度も送っていない」）、`#git-push` ボタン（押すと `POST /api/git/push`、送っているあいだは押せない、結果を知らせ `#toast` に出す）。
+   - `synced`（`ahead` が 0）: `#git-ahead` に `GitHub に送っていないセーブ: 0`。`#git-push` は押せない（`disabled`）。
+5. **判定**: 手元の bare リポジトリ（`git init --bare`）をリモートにして確かめる（本物の GitHub には触らない）。gh は偽のコマンド（`MASUME_GH`）で確かめる。
+
+## 57. 縦のノート（第12章）
+
+ユーザーの言葉:「ノートって縦だからね？」。縦長の画面（スマホや、縦に置いたタブレット・モニター）では、ノートを1ページずつ縦に見せる。横長の画面の見開きは今のまま（ユーザー「ゲームの見た目はかなりいい」）。
+
+1. **1ページずつ**になるのは、画面の幅が 860px 以下（§50.8 のまま）か、**縦長**（`(orientation: portrait)`。高さ ≧ 幅）のとき。それ以外は見開き。
+2. `window.__masume.single`（真偽）で、いまの見せ方を示す。1ページずつのとき `#page-no` は `<n> / <全部>`、見開きのとき `<左>–<右> / <全部>`（§50.8）。
+3. 1ページずつのとき、見えているページ（`.page-sheet`）は縦長（高さ > 幅）で、画面の幅からはみ出さない。
+4. 画面の向きが変わったら（`resize`・`matchMedia` の `change`）、いまのページを含む見せ方に切り替える（見開き → 1ページずつなら、左のページから）。
+
+## 58. あがり（第12章）
+
+- `GOAL12`: 第1章〜第12章のすべての判定がまとめて通り、すべての冒険の書が正常で、README に「GitHub につなぐ」（`gridhub remote`・`gridhub push`・盤面の送るボタン）と縦のノートが書いてあり、このリポジトリと3つの examples の地図の `quest.news` が、それぞれの製品の分野の話題になっている（3件以上・`newsProblems` が `[]`）。
+- `package.json` の `test:goal` は `GOAL12` に向ける。
+

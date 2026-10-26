@@ -86,7 +86,8 @@ test('§53.3・§53.4 駒が通ると起きる: 号外と製品の話題・町�
     seq: s1.seq, commit: head1,
   });
   assert.deepEqual(margin(v, 'm-A2').lines, [], 'まだ A2 の前');
-  assert.deepEqual(v.news.at(-1), { text: '号外: 戦士アリス が A1「POST /api/x で x を保存する」を抜けた（テスト 2/2）', kind: 'extra', seq: s1.seq });
+  // 第12章 §54.3（GM）: 瓦版は号外と製品の話題を交互に（号外が先）。§53.4 の「話題が先」から直した
+  assert.deepEqual(v.news[0], { text: '号外: 戦士アリス が A1「POST /api/x で x を保存する」を抜けた（テスト 2/2）', kind: 'extra', seq: s1.seq });
 
   // 日誌（申し送り）を書いてから、A2 を抜けて町（AC）でセーブし、A3 へ
   note(dir, 'a', 'GET /api/x は配列で返す\n（中身は id と title）');
@@ -130,8 +131,8 @@ test('§53.3・§53.4 駒が通ると起きる: 号外と製品の話題・町�
   // 起きたあとで書いた日誌は、その会話に入らない（出典は S まで）
   note(dir, 'b', 'あとで書いた日誌');
   assert.deepEqual(margin(view(dir), 'm-A3').lines[1], { who: 'b', text: '一覧はそれで描く' });
-  // 瓦版: 地図の話題、そのあと号外が新しい順
-  assert.deepEqual(view(dir).news.map((x) => [x.kind, x.seq]), [['domain', null], ['domain', null], ['extra', s3.seq], ['extra', s2.seq], ['extra', s1.seq]]);
+  // 瓦版: 号外（新しい順）と地図の話題を交互に（第12章 §54.3）
+  assert.deepEqual(view(dir).news.map((x) => [x.kind, x.seq]), [['extra', s3.seq], ['domain', null], ['extra', s2.seq], ['domain', null], ['extra', s1.seq]]);
   // b はまだ動いていない
   assert.deepEqual(margin(v, 'm-B1').lines, []);
 

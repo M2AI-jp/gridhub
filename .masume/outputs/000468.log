@@ -1,0 +1,15 @@
+=== GOAL12: node --test --test-reporter=spec tests/e2e/GOAL12.test.mjs ===
+✔ 第1章〜第12章のすべての判定が、まとめて本当に通る (343555.832227ms)
+✔ GridHub 自身と、残っているすべての冒険の書が正常。地図と package.json は第12章 (432.183817ms)
+✔ §54 瓦版は、作っている製品の話題（このリポジトリと3つの examples の地図。3件以上・newsProblems が無い） (539.952798ms)
+✔ README に GitHub につなぐ導線（gridhub remote・gridhub push・盤面の送るボタン）と縦のノート (1.275511ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 344624.581063
+
+(exit 0, 344676ms)

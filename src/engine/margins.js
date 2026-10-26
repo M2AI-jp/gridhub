@@ -142,7 +142,7 @@ export function buildMargins({ map, state, events, tracker }) {
     return margin;
   });
 
-  // 瓦版（§53.4）: 地図の話題、そのあとに号外を新しい順に
+  // 瓦版（§53.4・§54.3）: 号外は新しい順に（最大20件）
   const extras = tracker.extras.slice(-EXTRAS).reverse().map(({ event, node, title }) => {
     const data = event.data ?? {};
     const text = event.type === 'gate_cleared'
@@ -150,7 +150,13 @@ export function buildMargins({ map, state, events, tracker }) {
       : `号外: ${nameOf(data.character)} が ${node}「${map.nodes[node]?.title ?? title}」を抜けた${testsOf(data, node)}`;
     return { text, kind: 'extra', seq: event.seq };
   });
-  const news = [...quests.map((text) => ({ text, kind: 'domain', seq: null })), ...extras];
+  // 号外と製品の話題の両方が上のほうに見えるように、交互に並べる（§54.3）: x0, d0, x1, d1, …（片方が尽きたら残りを続ける）
+  const domain = quests.map((text) => ({ text, kind: 'domain', seq: null }));
+  const news = [];
+  for (let i = 0; i < Math.max(extras.length, domain.length); i++) {
+    if (i < extras.length) news.push(extras[i]);
+    if (i < domain.length) news.push(domain[i]);
+  }
   return { margins, news };
 }
 

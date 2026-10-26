@@ -2,7 +2,9 @@
 import { U, PAGE, pageOrigin } from './world.js';
 
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-const narrow = () => matchMedia('(max-width: 860px)').matches;
+// 1ページずつ（§50.8・§57）: 幅 860px 以下か、縦長の画面（高さ ≧ 幅。ノートは縦の B5 なので、1ページを大きく縦に見せる）
+const SINGLE = '(max-width: 860px), (orientation: portrait)';
+const narrow = () => matchMedia(SINGLE).matches;
 const SVGNS = 'http://www.w3.org/2000/svg';
 const FLIP_MS = 900;
 
@@ -16,13 +18,27 @@ export class Book {
     this.left = 0; // いま見えている左のページ（0始まり。1ページずつのときは、そのページ）
     this.cam = null;
     this.flipping = null;
-    this.single = narrow();
-    matchMedia('(max-width: 860px)').addEventListener?.('change', () => {
-      this.single = narrow();
-      this.left = this.norm(this.left);
-      this.fit();
-      this.onChange?.();
-    });
+    this.single = this.wantSingle();
+    this.host.classList.toggle('single-page', this.single);
+    matchMedia(SINGLE).addEventListener?.('change', () => this.relayout());
+    addEventListener('resize', () => this.relayout());
+  }
+
+  /** 1ページずつにするか（§57.1）。横長の画面の見開きは今のまま */
+  wantSingle() {
+    return narrow();
+  }
+
+  /** 画面の向きが変わって、1ページずつか見開きかが変わったら、いまのページを含む見せ方で映し直す（§57.4）。変わったら true */
+  relayout() {
+    const single = this.wantSingle();
+    if (single === this.single) return false;
+    this.single = single;
+    this.host.classList.toggle('single-page', single);
+    this.left = this.norm(this.left);
+    if (this.pages) this.fit();
+    this.onChange?.();
+    return true;
   }
 
   norm(p) {
@@ -77,6 +93,30 @@ export class Book {
     const { w, h } = this.stageSize();
     const c = this.cam;
     this.svg.setAttribute('viewBox', `${c.x.toFixed(1)} ${c.y.toFixed(1)} ${(w / c.scale).toFixed(1)} ${(h / c.scale).toFixed(1)}`);
+    this.onstage();
+  }
+
+  /**
+   * 1ページずつのときは、映しているページだけを見せる（§57.3）: となりのページの紙は描かず、盤面の枠をそのページの形に切る
+   * （ページの影のぶん少し広く）。見開きでは何もしない。書き出し（#world の写し）には効かない
+   */
+  onstage() {
+    const vis = new Set(this.visible());
+    this.svg.classList.toggle('single', this.single);
+    for (const pg of this.svg.querySelectorAll('#paper .page[data-page]')) pg.classList.toggle('offstage', this.single && !vis.has(Number(pg.dataset.page) - 1));
+    if (!this.single || !this.cam) {
+      this.svg.style.clipPath = '';
+      return;
+    }
+    const { w, h } = this.stageSize();
+    const c = this.cam;
+    const r = this.rectOf();
+    const pad = 8;
+    const left = Math.max(0, (r.x - c.x) * c.scale - pad);
+    const top = Math.max(0, (r.y - c.y) * c.scale - pad);
+    const right = Math.max(0, w - ((r.x + r.w - c.x) * c.scale + pad));
+    const bottom = Math.max(0, h - ((r.y + r.h - c.y) * c.scale + pad));
+    this.svg.style.clipPath = `inset(${top.toFixed(1)}px ${right.toFixed(1)}px ${bottom.toFixed(1)}px ${left.toFixed(1)}px)`;
   }
 
   zoomAt(factor, cx, cy) {

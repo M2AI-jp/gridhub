@@ -356,6 +356,7 @@ export function renderMarginDrawer(view, id) {
 export function renderNews(view) {
   const list = newsOf(view);
   if (!list.length) return '';
+  // 並びは view.news のまま（§54.3: エンジンが号外と製品の話題を交互に並べるので、上のほうに両方が見える）
   const rows = list
     .map((n) => `<li class="news-item${n.kind === 'extra' ? ' extra' : ''}" data-kind="${esc(n.kind)}">${esc(n.text)}${n.seq != null ? `<small class="news-seq">seq ${esc(n.seq)}</small>` : ''}</li>`)
     .join('');

@@ -1049,3 +1049,34 @@ body.in-lobby #stage { min-height: 70vh; }
 .news-item::before { content: '◆ '; color: #8a6d3b; }
 .news-item.extra::before { color: var(--red); }
 .news-seq { margin-left: 6px; font-family: var(--mono); font-size: 10px; color: #5b6475; }
+
+/* 1ページずつ（縦長の枠・狭い画面）: 凡例は隠し、めくりは左に寄せて拡大縮小と重ねない */
+#view-board.single-page .legend { display: none; }
+#view-board.single-page .pager { left: 12px; transform: none; }
+.tabs button { white-space: nowrap; }
+#board.single .page.offstage { display: none; }
+
+/* GitHub につなぐ導線（§56.4）: 冒険の書のルーズリーフに貼ったカード */
+#git-panel {
+  margin: 10px 12px 0 54px; padding: 6px 10px 7px; flex: 0 0 auto; max-height: 34%; overflow: auto;
+  background: var(--card); border: 1.4px solid rgba(29, 43, 92, 0.55); border-radius: var(--wobbly);
+  box-shadow: 0 1px 1px rgba(60, 40, 10, 0.15), 0 6px 10px -7px rgba(60, 40, 10, 0.5);
+  font-family: var(--hand); font-size: 12px; color: var(--ink);
+}
+#git-panel[hidden] { display: none; }
+.git-head { display: flex; align-items: baseline; gap: 8px; margin: 0 0 4px; font-size: 13px; font-weight: 600; }
+.git-head small { font-size: 10.5px; font-weight: 400; color: #4f5a6e; }
+.git-mark { font-family: var(--mono); font-size: 12px; color: #fffdf6; background: var(--ink); padding: 0 6px 1px; border-radius: 2px; }
+#git-remote { margin: 0 0 3px; font-family: var(--mono); font-size: 10.5px; color: #4f5a6e; word-break: break-all; }
+.git-row { display: flex; align-items: center; gap: 8px; }
+#git-ahead { margin: 0; flex: 1; font-weight: 600; }
+#git-panel[data-state='synced'] #git-ahead { color: #2f6b3a; font-weight: 400; }
+.git-push { font-weight: 600; }
+.git-push:disabled { opacity: 0.45; cursor: default; }
+#git-guide { list-style: none; margin: 2px 0 0; padding: 0; }
+#git-guide li { padding: 3px 0; border-bottom: 1px dotted rgba(29, 43, 92, 0.2); line-height: 1.4; }
+#git-guide li:last-child { border-bottom: 0; }
+#git-guide li[data-done='true'] { color: #4f5a6e; }
+#git-guide li[data-done='true'] .git-step-mark { color: #2f6b3a; font-weight: 700; }
+.git-step-mark { display: inline-block; width: 1.2em; }
+#git-guide code { display: block; margin: 2px 0 0 1.2em; user-select: all; }

@@ -37,8 +37,13 @@ export function ensureRepository(root) {
 
 /** git init した冒険の、ルートの全部（.gitignore に従う）を「gridhub: 冒険のはじまり」としてコミットする。フックは走らせない */
 export function commitBeginning(root) {
-  const name = git(root, ['config', 'user.name']).out || IDENTITY.name;
-  const email = git(root, ['config', 'user.email']).out || IDENTITY.email;
+  // user.name と user.email を1回で読む（git を起こす回数を減らす）。同じキーが何度もあれば、git config と同じく最後のもの
+  const config = new Map(git(root, ['config', '--get-regexp', '^user\\.(name|email)$']).out.split('\n').filter(Boolean).map((line) => {
+    const space = line.indexOf(' ');
+    return space === -1 ? [line, ''] : [line.slice(0, space), line.slice(space + 1).trim()];
+  }));
+  const name = config.get('user.name') || IDENTITY.name;
+  const email = config.get('user.email') || IDENTITY.email;
   const env = { GIT_AUTHOR_NAME: name, GIT_COMMITTER_NAME: name, GIT_AUTHOR_EMAIL: email, GIT_COMMITTER_EMAIL: email };
   const add = git(root, ['add', '-A', '--', '.'], env);
   if (!add.ok) return { commit: null, error: `git add に失敗しました: ${add.err}` };
