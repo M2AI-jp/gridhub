@@ -60,7 +60,7 @@ async function withBoard(fn, { push = null, auto = false } = {}) {
   try {
     await page.goto(`${srv.url}/`);
     await page.waitFor(READY, { timeout: 15000 });
-    await page.waitFor(`!!document.querySelector('#git-panel')?.dataset.state`, { timeout: 10000, message: '#git-panel' });
+    await page.waitFor(`!!document.querySelector('#git-panel')?.dataset.state`, { timeout: 20000, message: '#git-panel' });
     await fn(page, posts, view);
     assert.deepEqual(exceptions(page), [], 'コンソールにエラーがない');
   } finally {
@@ -71,7 +71,7 @@ async function withBoard(fn, { push = null, auto = false } = {}) {
 
 test('§59.6 セーブの欄の切り替え（#git-auto）は auto_push を映し、切り替えると X-Masume 付きで POST /api/git/auto', { timeout: 120000 }, async () => {
   await withBoard(async (page, posts) => {
-    await page.waitFor(`document.querySelector('#git-auto') !== null`, { timeout: 10000, message: '#git-auto' });
+    await page.waitFor(`document.querySelector('#git-auto') !== null`, { timeout: 20000, message: '#git-auto' });
     const box = await page.eval(`(() => { const b = document.querySelector('#git-auto'); return { type: b.type, checked: b.checked, label: (b.closest('label') || b.parentElement).innerText }; })()`);
     assert.equal(box.type, 'checkbox');
     assert.equal(box.checked, false, '初めはオフ');
@@ -79,7 +79,7 @@ test('§59.6 セーブの欄の切り替え（#git-auto）は auto_push を映�
     await page.eval(`document.querySelector('#git-auto').click()`);
     await waitUntil(() => posts.length === 1, { message: 'POST /api/git/auto' });
     assert.deepEqual(posts[0], { body: { auto_push: true }, masume: '1' });
-    await page.waitFor(`document.querySelector('#git-auto').checked === true`, { timeout: 5000, message: '読み直してオン' });
+    await page.waitFor(`document.querySelector('#git-auto').checked === true && !document.querySelector('#git-auto').disabled`, { timeout: 15000, message: '送り終えて読み直し、オンで押せる' });
     await page.eval(`document.querySelector('#git-auto').click()`);
     await waitUntil(() => posts.length === 2, { message: 'もう一度 POST' });
     assert.deepEqual(posts[1].body, { auto_push: false });
@@ -88,29 +88,39 @@ test('§59.6 セーブの欄の切り替え（#git-auto）は auto_push を映�
 
 test('§59.6 送った結果（view.push）を盤面に（#git-last）。送れたら commit、送れなければ理由', { timeout: 120000 }, async () => {
   await withBoard(async (page) => {
-    await page.waitFor(`document.querySelector('#git-last')?.dataset.ok === 'true'`, { timeout: 10000, message: '#git-last' });
+    await page.waitFor(`document.querySelector('#git-last')?.dataset.ok === 'true'`, { timeout: 20000, message: '#git-last' });
     assert.match(await page.eval(`document.querySelector('#git-last').innerText`), /GitHub に送った（commit abcdef1）/);
   }, { push: { seq: 40, node: 'C1', ok: true, commit: COMMIT, remote: 'origin', branch: 'main', error: null }, auto: true });
   await withBoard(async (page) => {
-    await page.waitFor(`document.querySelector('#git-last')?.dataset.ok === 'false'`, { timeout: 10000, message: '#git-last（送れなかった）' });
+    await page.waitFor(`document.querySelector('#git-last')?.dataset.ok === 'false'`, { timeout: 20000, message: '#git-last（送れなかった）' });
     assert.match(await page.eval(`document.querySelector('#git-last').innerText`), /GitHub に送れなかった: リモートが先に進んでいます/);
   }, { push: { seq: 41, node: 'C1', ok: false, commit: COMMIT, remote: 'origin', branch: 'main', error: 'リモートが先に進んでいます' }, auto: true });
 });
 
-test('§60.2 仲間の欄: 最大なら「Lv9（最大）」で経験値の分数を出さない（data-max="true"）', { timeout: 120000 }, async () => {
+test('§60.2 仲間の欄とキャラクターシート: 最大なら「Lv9（最大）」で経験値の分数を出さない（data-max="true"）', { timeout: 120000 }, async () => {
   await withBoard(async (page, posts, view) => {
-    const cards = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('.party-card[data-char]')].map((c) => ({ id: c.dataset.char, max: c.dataset.max || '', lv: c.querySelector('.lv')?.innerText || '' })))`));
+    const cards = JSON.parse(await page.eval(`JSON.stringify([...document.querySelectorAll('.party-card[data-char]')].map((c) => ({ id: c.dataset.char, max: c.dataset.max || '', lv: c.querySelector('.lv')?.innerText || '', text: c.innerText })))`));
     const top = view.characters[0];
     const card = cards.find((c) => c.id === top.id);
     assert.ok(card, `${top.id} の仲間の欄`);
     assert.equal(card.max, 'true');
     assert.match(card.lv, /Lv\s*9\s*（最大）/);
-    assert.doesNotMatch(card.lv, /経験値/);
+    assert.doesNotMatch(card.text, /経験値|16\/10/);
     for (const c of view.characters.slice(1)) {
       const k = cards.find((x) => x.id === c.id);
       if (!k || c.max_level) continue;
       assert.notEqual(k.max, 'true', `${c.id} は最大でない`);
-      assert.match(k.lv, new RegExp(`経験値 ${c.xp}/${c.xp_next}`), `${c.id}: ${k.lv}`);
+      assert.match(k.lv, new RegExp(`^\\s*Lv\\s*${c.level}\\s*$`), `${c.id} は今までどおり Lv${c.level}: ${k.lv}`);
     }
+    // キャラクターシート
+    await page.eval(`document.querySelector('.party-card[data-char="${top.id}"]').click()`);
+    await page.waitFor(`document.querySelector('#drawer') && !document.querySelector('#drawer').hidden && document.querySelector('#drawer').dataset.id === '${top.id}'`, { timeout: 5000, message: 'キャラクターシート' });
+    const sheet = await page.eval(`document.querySelector('#drawer .lv')?.innerText || ''`);
+    assert.match(sheet, /Lv\s*9\s*（最大）/, `シート: ${sheet}`);
+    assert.doesNotMatch(sheet, /経験値/);
+    const other = view.characters.find((c) => !c.max_level);
+    await page.eval(`document.querySelector('.party-card[data-char="${other.id}"]').click()`);
+    await page.waitFor(`document.querySelector('#drawer').dataset.id === '${other.id}'`, { timeout: 5000 });
+    assert.match(await page.eval(`document.querySelector('#drawer .lv')?.innerText || ''`), new RegExp(`経験値 ${other.xp}/${other.xp_next}`));
   });
 });

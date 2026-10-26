@@ -91,6 +91,7 @@ export function initCommand(c) {
   });
   renderPartyStatus();
   $('#git-push')?.addEventListener('click', pushGit);
+  $('#git-auto')?.addEventListener('change', setAutoPush);
   refreshGit();
 }
 
@@ -305,6 +306,39 @@ function renderGit(g) {
   btn.hidden = !(state === 'unpushed' || state === 'synced');
   btn.disabled = gitPushing || state !== 'unpushed';
   btn.title = state === 'synced' ? 'GitHub と同じです（送るものはありません）' : '町でセーブしたコミットを GitHub に送る（git push。force push はしない）';
+  // 町でセーブしたら GitHub に送る（§59.6）。初めはオフ
+  const auto = $('#git-auto');
+  auto.closest('label').hidden = state === 'outside';
+  if (!gitAutoBusy) auto.checked = g.auto_push === true;
+  auto.disabled = gitAutoBusy;
+  renderLastPush(ctx.getView?.()?.push ?? null);
+}
+
+/** 町でセーブしたあとに GitHub へ送った結果（view.push、§59.6） */
+function renderLastPush(push) {
+  const last = $('#git-last');
+  if (!last) return;
+  const valid = push && typeof push === 'object' && typeof push.ok === 'boolean';
+  last.hidden = !valid;
+  if (!valid) return;
+  last.dataset.ok = String(push.ok);
+  last.textContent = push.ok
+    ? `GitHub に送った（commit ${String(push.commit ?? '').slice(0, 7)}）`
+    : `GitHub に送れなかった: ${push.error ?? '不明'}`;
+}
+
+let gitAutoBusy = false;
+/** 切り替え（POST /api/git/auto）。送り終えたら読み直す */
+async function setAutoPush() {
+  const auto = $('#git-auto');
+  if (gitAutoBusy) return;
+  gitAutoBusy = true;
+  auto.disabled = true;
+  const on = auto.checked;
+  const j = await ctx.post('api/git/auto', { auto_push: on });
+  if (j && j.ok !== false) ctx.toast({ text: `町でセーブしたら GitHub に送る: ${j.auto_push ? 'オン' : 'オフ'}`, ok: true });
+  gitAutoBusy = false;
+  await refreshGit();
 }
 
 /** 送る（POST /api/git/push）。送っているあいだは押せない。結果は知らせに出し、読み直す */

@@ -1262,7 +1262,7 @@ Git の状態はビュー（冒険の書）には入れない（§52.3）。別�
 RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールどおり）が、`Lv9 経験値 16/10` と出て壊れて見えた。
 
 1. ビューの `characters[]` に `max_level`（`level` が 9 なら `true`）を足す。`brief --json` の `character` にも。
-2. 最大のとき、字は `Lv9（最大）` で、`経験値 <xp>/<xp_next>` を出さない: `status` のキャラクターの行、`brief` の「Lv…」の行、盤面の仲間の欄（`.party-card[data-char] .lv`。最大なら `.party-card[data-max="true"]`）。最大でなければ今までどおり。
+2. 最大のとき、字は `Lv9（最大）` で、`経験値 <xp>/<xp_next>` を出さない: `status` のキャラクターの行、`brief` の「Lv…」の行、盤面のキャラクターシート（`#drawer .lv`）。盤面の仲間の欄（`.party-card[data-char] .lv`）は、最大なら `Lv9（最大）` で `.party-card[data-max="true"]`、そうでなければ今までどおり `Lv<n>`（仲間の欄は、もとから経験値の分数を出さない）。最大でなければ、ほかも今までどおり。
 
 ## 61. あがり（第13章）
 
