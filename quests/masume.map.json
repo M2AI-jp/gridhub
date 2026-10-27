@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "GridHub — GridHub で GridHub をつくる（旧名 マスメ）",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。",
-    "goal": "GOAL12",
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。 第13章で、町でセーブしたら自動で GitHub に送る設定（初めはオフ）と、最大レベルの表示を足す。",
+    "goal": "GOAL13",
     "news": [
       "課題管理ツールでは、課題を Todo・In Progress・Done の列に並べて、進み具合を一目で見る使い方が多い",
       "課題の説明にチェックリストを書いて、終わったと言える条件をはっきりさせる使い方がよく使われる",
@@ -64,7 +64,9 @@
         "B16",
         "B17",
         "G10",
-        "GOAL12"
+        "GOAL12",
+        "B18",
+        "GOAL13"
       ]
     },
     {
@@ -115,7 +117,10 @@
         "GOAL11",
         "E14",
         "G10",
-        "GOAL12"
+        "GOAL12",
+        "E15",
+        "E16",
+        "GOAL13"
       ]
     },
     {
@@ -160,7 +165,9 @@
         "GOAL11",
         "S9",
         "G10",
-        "GOAL12"
+        "GOAL12",
+        "S10",
+        "GOAL13"
       ]
     },
     {
@@ -197,7 +204,8 @@
         "Q6",
         "GOAL11",
         "Q7",
-        "GOAL12"
+        "GOAL12",
+        "GOAL13"
       ]
     },
     {
@@ -232,7 +240,8 @@
         "GOAL10",
         "P6",
         "GOAL11",
-        "GOAL12"
+        "GOAL12",
+        "GOAL13"
       ]
     },
     {
@@ -271,7 +280,8 @@
         "GOAL10",
         "M8",
         "GOAL11",
-        "GOAL12"
+        "GOAL12",
+        "GOAL13"
       ]
     },
     {
@@ -306,7 +316,8 @@
         "A4",
         "G9",
         "GOAL11",
-        "GOAL12"
+        "GOAL12",
+        "GOAL13"
       ]
     },
     {
@@ -332,7 +343,8 @@
         "GOAL9",
         "GOAL10",
         "GOAL11",
-        "GOAL12"
+        "GOAL12",
+        "GOAL13"
       ]
     }
   ],
@@ -2143,6 +2155,137 @@
           "GridHub 自身と、残っているすべての冒険の書が正常。地図と package.json は第12章",
           "§54 瓦版は、作っている製品の話題（このリポジトリと3つの examples の地図。3件以上・newsProblems が無い）",
           "README に GitHub につなぐ導線（gridhub remote・gridhub push・盤面の送るボタン）と縦のノート"
+        ]
+      }
+    },
+    "E15": {
+      "type": "task",
+      "title": "町でセーブしたら GitHub に送る",
+      "detail": "CONTRACTS §59.1〜§59.4: .masume/git.json の auto_push（初めはオフ）と gridhub remote --auto-push on|off。町と結合ゲートのセーブのあとに送り、pushed を記録する。送れなくても止めない。force push しない。view.push と status の行。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E15.test.mjs",
+        "seal": [
+          "tests/e2e/E15.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "§59.1 設定は冒険ごと。初めはオフで、gridhub remote --auto-push on|off で切り替える",
+          "§59.2 オフなら送らない（pushed も記録しない）",
+          "§59.2〜§59.4 オンなら、町と結合ゲートのセーブのあとに送り、pushed を記録する。status に出る",
+          "§59.2〜§59.4 送れなくても冒険は止めない（先に進んだリモート・リモートなし）。force push しない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "github"
+      ]
+    },
+    "E16": {
+      "type": "task",
+      "title": "最大レベルを Lv9（最大）と出す",
+      "detail": "CONTRACTS §60.1・§60.2: ビューと指令書の max_level。status と brief は最大なら「Lv9（最大）」で、経験値の分数を出さない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E16.test.mjs",
+        "seal": [
+          "tests/e2e/E16.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "§60.1 ビューと指令書の character に max_level（level が 9 なら true）",
+          "§60.2 status と brief: 最大なら「Lv9（最大）」で、経験値の分数を出さない。そうでなければ今までどおり"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "engine",
+        "level"
+      ]
+    },
+    "S10": {
+      "type": "task",
+      "title": "自動で送る設定の窓口を開く",
+      "detail": "CONTRACTS §59.5: POST /api/git/auto（X-Masume・Origin。真偽でなければ 400）で設定を書き、GET /api/git の auto_push に映す。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S10.test.mjs",
+        "seal": [
+          "tests/e2e/S10.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "§59.5 POST /api/git/auto で切り替え、GET /api/git の auto_push に映る（X-Masume が要る・真偽でなければ 400）"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "server",
+        "github"
+      ]
+    },
+    "B18": {
+      "type": "task",
+      "title": "自動で送る切り替えと最大レベルを描く",
+      "detail": "CONTRACTS §59.6・§60.2: セーブの欄の #git-auto と #git-last。仲間の欄は最大なら「Lv9（最大）」（data-max）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B18.test.mjs",
+        "seal": [
+          "tests/e2e/B18.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§59.6 セーブの欄の切り替え（#git-auto）は auto_push を映し、切り替えると X-Masume 付きで POST /api/git/auto",
+          "§59.6 送った結果（view.push）を盤面に（#git-last）。送れたら commit、送れなければ理由",
+          "§60.2 仲間の欄: 最大なら「Lv9（最大）」で経験値の分数を出さない（data-max=\"true\"）"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "ui",
+        "github"
+      ]
+    },
+    "GOAL13": {
+      "type": "gate",
+      "title": "あがり（第13章）: 町でセーブしたら GitHub に送る",
+      "detail": "第1章〜第13章のすべての判定がまとめて通り、すべての冒険の書が正常で、README に自動で送る設定が書いてあり、status に経験値が上限を超えて見える行が無い（§59〜§61）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/GOAL13.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL13.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs"
+        ],
+        "cases": [
+          "第1章〜第13章のすべての判定が、まとめて本当に通る",
+          "すべての冒険の書が正常。地図と package.json は第13章。status に経験値が上限を超えて見える行が無い",
+          "README に「町でセーブしたら GitHub に送る」（初めはオフ・gridhub remote --auto-push on・盤面の切り替え・送れなくても止まらない）と第13章"
         ]
       }
     }

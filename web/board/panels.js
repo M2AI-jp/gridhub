@@ -36,11 +36,11 @@ export function renderParty(view, sprites, selectedChar) {
       const cases = node && Array.isArray(node.cases) ? node.cases : [];
       const fight = c.status === 'working' && node?.check?.kind === 'cmd' ? (!cases.length ? '？ まだ走らせていない' : c.square != null && c.square < cases.length ? cases[c.square].name : '全部倒した → gridhub check') : '';
       const where = c.status !== 'done' && node ? `${c.at} ${node.title}` : '';
-      return `<button class="party-card${selectedChar === c.id ? ' selected' : ''}" data-char="${esc(c.id)}" style="--hl:${hl(c.color)}" aria-label="${esc(c.name)}のキャラクターシートを開く">
+      return `<button class="party-card${selectedChar === c.id ? ' selected' : ''}" data-char="${esc(c.id)}"${c.max_level ? ' data-max="true"' : ''} style="--hl:${hl(c.color)}" aria-label="${esc(c.name)}のキャラクターシートを開く">
         ${mini(sprites, c, 40)}
         <span class="pc-body">
           <span class="pc-top"><span class="pc-name">${esc(c.name)}</span><span class="pc-gen">${gen}代目</span></span>
-          <span class="pc-meta">${esc(agentLabel(c))}・${esc(jobJa(c.job))}・<b>Lv${c.level}</b>${medals ? ` <span class="pc-medal" title="ちいさなメダル（一発で出口を抜けた）">◎${medals}</span>` : ''}${c.strong ? ` <span class="pc-strong" title="強敵を倒した">強${c.strong}</span>` : ''}${c.skills?.length ? ` <span class="pc-skill" title="技（先代から受け継いだもの）">技${c.skills.length}</span>` : ''}</span>
+          <span class="pc-meta">${esc(agentLabel(c))}・${esc(jobJa(c.job))}・<b class="lv">Lv${c.level}${c.max_level ? '（最大）' : ''}</b>${medals ? ` <span class="pc-medal" title="ちいさなメダル（一発で出口を抜けた）">◎${medals}</span>` : ''}${c.strong ? ` <span class="pc-strong" title="強敵を倒した">強${c.strong}</span>` : ''}${c.skills?.length ? ` <span class="pc-skill" title="技（先代から受け継いだもの）">技${c.skills.length}</span>` : ''}</span>
           <span class="pc-where" data-status="${esc(c.status)}">${t ? `<b class="pc-tests${t.pass === t.total ? ' all' : ''}">テスト ${t.pass}/${t.total}</b> ` : ''}${esc(own(CHAR_STATUS, c.status) || c.status)}${where ? ` @ ${esc(where)}` : ''}</span>
           ${fight ? `<span class="pc-fight" title="いま戦うテスト">⚔ ${esc(fight)}</span>` : ''}
           ${c.sortie ? `<span class="pc-sortie">⏳ 出撃中（${esc(c.sortie.agent)}${c.sortie.model ? ' ' + esc(c.sortie.model) : ''}）</span>` : ''}
@@ -254,7 +254,7 @@ export function renderCharDrawer(view, id, sprites) {
       <div>
         <h3 class="issue-title">${esc(c.name)}</h3>
         <p class="issue-kind">${esc(jobJa(c.job))}・${esc(agentLabel(c))}・ID <code>${esc(c.id)}</code></p>
-        <p class="lv">Lv<b>${c.level}</b> <span class="xp">経験値 ${c.xp}/${c.xp_next}</span></p>
+        <p class="lv">Lv<b>${c.level}</b>${c.max_level ? '（最大）' : ` <span class="xp">経験値 ${c.xp}/${c.xp_next}</span>`}</p>
       </div>
     </div>
     <dl class="props">

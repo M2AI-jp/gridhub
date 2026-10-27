@@ -84,6 +84,12 @@ function logEntry(event, map) {
         : `セーブできなかった: ${data.error ?? '不明'}`;
       break;
     }
+    case 'pushed':
+      ok = data.ok === true;
+      text = ok
+        ? `GitHub に送った: ${data.remote} ${data.branch}（commit ${String(data.commit).slice(0, 7)}）`
+        : `GitHub に送れなかった: ${data.error ?? '不明'}`;
+      break;
     case 'restored':
       ok = !data.error;
       text = data.error
@@ -126,6 +132,7 @@ export function buildView(root) {
       level: character.level,
       xp: character.xp,
       xp_next: character.level + 1,
+      max_level: character.level >= 9, // §60: 最大は Lv9（RULEBOOK §4）。経験値は貯まり続けるが、字は「Lv9（最大）」
       vision: Math.min(character.level - 1, 4),
       status: character.status,
       checkpoint: definition.path[character.checkpoint] ?? null,
@@ -208,5 +215,19 @@ export function buildView(root) {
     ending,
     margins,
     news,
+    push: lastPushed(snapshot.events),
   };
+}
+
+/** いちばん新しい「町でセーブしたあとに GitHub へ送った結果」（§59.3） */
+function lastPushed(events) {
+  for (let i = events.length - 1; i >= 0; i--) {
+    const { type, seq, data } = events[i];
+    if (type !== 'pushed' || !data) continue;
+    return {
+      seq, node: data.node ?? null, ok: data.ok === true, commit: data.commit ?? null,
+      remote: data.remote ?? null, branch: data.branch ?? null, error: data.ok === true ? null : (data.error ?? '不明'),
+    };
+  }
+  return null;
 }

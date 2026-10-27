@@ -16,8 +16,8 @@ export async function run(argv, ctx) {
     console.log(`${view.quest.title}（地図の版 ${view.map_version}）`);
     for (const character of view.characters) {
       const location = character.at === null ? 'あがり' : `${character.at}「${view.nodes[character.at].title}」`;
-      console.log(`${character.name}: ${location} / ${statuses[character.status]} / Lv${character.level}`
-        + ` 経験値 ${character.xp}/${character.xp_next} / 成功 ${character.clears}・失敗 ${character.fails}`);
+      const level = character.max_level ? `Lv${character.level}（最大）` : `Lv${character.level} 経験値 ${character.xp}/${character.xp_next}`;
+      console.log(`${character.name}: ${location} / ${statuses[character.status]} / ${level} / 成功 ${character.clears}・失敗 ${character.fails}`);
     }
     const margin = latestMargin(view.margins);
     if (margin) {
@@ -25,6 +25,12 @@ export async function run(argv, ctx) {
       const [heading, ...lines] = marginText(margin, nameOf);
       console.log(`道の余白: ${nameOf(margin.road)} の道で ${heading}`);
       for (const line of lines) console.log(`  ${line}`);
+    }
+    if (view.push) {
+      const p = view.push;
+      console.log(p.ok
+        ? `GitHub: 送った（${p.remote} ${p.branch}・commit ${String(p.commit).slice(0, 7)}）`
+        : `GitHub: 送れなかった（${p.error}）。gridhub push でもう一度送れる`);
     }
     console.log(recordLine(view.head));
   }

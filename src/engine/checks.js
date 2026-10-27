@@ -6,6 +6,7 @@ import { containedFile } from './paths.js';
 import { casesOf } from './cases.js';
 import { gitInfo, killActiveChecks, runChecks } from './runner.js';
 import { lastSave, restoreTerritory, saveTerritory } from './save.js';
+import { autoPush, gitSettings } from './remote.js';
 import { gateParty, isSealed, readyGate, reduceEvent, replay, sealFiles } from './state.js';
 import {
   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLockAsync, writeDurable,
@@ -114,6 +115,13 @@ async function fightReady(root, result, gates, { actor, boss }) {
 const positions = (state) => Object.fromEntries(Object.entries(state.characters).map(([id, c]) => [id, c.pos]));
 const hasTerritory = (map, id) => (map.characters.find((c) => c.id === id)?.territory ?? []).length > 0;
 
+// 町・ゲートのセーブと、設定がオンならそのすぐ後に GitHub へ送った結果（§59.2）。送れなくても判定は変えない。
+function savedAndPushed(root, saved) {
+  const specs = [{ type: 'saved', data: saved }];
+  if (saved.commit && gitSettings(root).auto_push) specs.push({ type: 'pushed', data: autoPush(root, saved) });
+  return specs;
+}
+
 // 判定の記録のすぐ後に続く、Git のセーブ（町・ゲート）と巻き戻し（負け）。quest.save が "git" の冒険だけ（§43）。
 function saveFollowUps(root, state, before, event, history) {
   const map = state.map;
@@ -124,9 +132,9 @@ function saveFollowUps(root, state, before, event, history) {
     const path = map.characters.find(({ id }) => id === data.character).path;
     const camps = path.slice(before[data.character] + 1, state.characters[data.character].pos)
       .filter((id) => map.nodes[id]?.type === 'camp');
-    if (camps.length) specs.push({ type: 'saved', data: saveTerritory(root, map, [data.character], camps.at(-1)) });
+    if (camps.length) specs.push(...savedAndPushed(root, saveTerritory(root, map, [data.character], camps.at(-1))));
   } else if (type === 'gate_cleared') {
-    specs.push({ type: 'saved', data: saveTerritory(root, map, data.members, data.gate) });
+    specs.push(...savedAndPushed(root, saveTerritory(root, map, data.members, data.gate)));
   } else if (type === 'check_failed' || type === 'gate_failed') {
     const losers = type === 'check_failed' ? [data.character] : data.blamed ?? [];
     for (const id of losers.filter((member) => hasTerritory(map, member))) {

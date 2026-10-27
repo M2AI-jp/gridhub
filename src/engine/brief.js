@@ -20,7 +20,7 @@ export function brief(root, characterId) {
     character: {
       id: character.id, name: character.name, kind: character.kind,
       module: character.module ?? null, territory: character.territory ?? [],
-      level: character.level, xp: character.xp, xp_next: character.xp_next,
+      level: character.level, xp: character.xp, xp_next: character.xp_next, max_level: character.max_level,
       vision: character.vision, status: character.status,
     },
     current: current === null ? null : {

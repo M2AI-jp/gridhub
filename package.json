@@ -12,7 +12,7 @@
   },
   "scripts": {
     "test": "node --test tests/e2e/[ABEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs",
-    "test:goal": "node --test tests/e2e/GOAL12.test.mjs",
+    "test:goal": "node --test tests/e2e/GOAL13.test.mjs",
     "serve": "node bin/gridhub.js serve",
     "board": "node bin/gridhub.js serve"
   },

@@ -212,7 +212,7 @@ async function serveStatic(response, root, pathname) {
 export function createServer({
   webRoot, getView, watchFile, onStamp, onBattle, outputFor,
   onQuest, getQuest, onSortie, getParty, onPartyStop,
-  getGit, onPush,
+  getGit, onPush, onAutoPush,
 }) {
   const root = resolve(webRoot);
   const watchedPath = watchFile == null ? null : resolve(watchFile);
@@ -297,6 +297,17 @@ export function createServer({
   // GitHub につなぐ導線（§56.3）: 送る
   if (typeof onPush === 'function') {
     postRoutes['/api/git/push'] = { parse: () => ({}), call: () => onPush(), status: 200, optionalBody: true };
+  }
+  // 町でセーブしたら GitHub に送る設定（§59.5）
+  if (typeof onAutoPush === 'function') {
+    postRoutes['/api/git/auto'] = {
+      parse(body) {
+        if (typeof body.auto_push !== 'boolean') throw badRequest('auto_push は true か false で指定してください');
+        return { auto_push: body.auto_push };
+      },
+      call: (value) => onAutoPush(value),
+      status: 200,
+    };
   }
   const getRoutes = {};
   if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
@@ -640,6 +651,11 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     // ---- GitHub につなぐ導線（§56.3）----
     // Git の様子と手引き（gridhub remote --json と同じ）。ビュー（冒険の書）には入れない
     getGit: () => engine.remoteInfoAsync(gameRoot),
+    // 町でセーブしたら GitHub に送る設定を書く（§59.5）。冒険ごとなので、冒険の書が要る
+    onAutoPush: ({ auto_push: on }) => {
+      if (!hasGame()) throw apiError('E_NO_GAME', '冒険の書がまだありません', 404);
+      return { ok: true, ...engine.setAutoPush(gameRoot, on) };
+    },
     // gridhub push --json を別プロセスで走らせる（送っているあいだも盤面のサーバーを止めない）。同時に2つは走らせない
     onPush: async () => {
       requireOpen();
