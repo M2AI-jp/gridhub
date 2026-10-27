@@ -345,7 +345,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 
 | 章 | できたこと |
 | --- | --- |
-| 第1章 | 冒険の書・宣言判定・盤面・ハンコ。マスメでマスメを完成させる |
+| 第1章 | 冒険の書・宣言判定・盤面・ハンコ。自分自身を、自分のルールで完成させる（旧名マスメのころ） |
 | 第2章 | 願いから冒険（`gridhub quest`）と出撃（`gridhub party`）。Linear との同期（`gridhub linear push`） |
 | 第3章 | MCP（`gridhub mcp`）・Jira（`gridhub jira push`）・支度（`gridhub init`）・ノートに書き出す |
 | 第4章 | 5人のレビュアーによる総点検の修理 |
@@ -359,6 +359,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 | 第12章 | 仕上げ: 瓦版は作っている製品の話題・札と吹き出しが重ならない・盤面から GitHub につなぐ（`gridhub remote`・`gridhub push`・「GitHub に送る」ボタン）・縦長の画面では1ページずつ |
 | 第13章 | 町でセーブしたら GitHub に送る設定（`gridhub remote --auto-push on`・盤面の切り替え。初めはオフ）・最大レベルは「Lv9（最大）」と出す |
 | 第14章 | リリースの支度: `LICENSE`（MIT）・包み（`npm pack`）の中身を動くのに要るものだけに・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上。npm や GitHub Release にはまだ出していません |
+| 第15章 | 配る前に名前をそろえる: 包みの中の、使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
 
@@ -366,7 +367,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 
 ```sh
 npm test              # すべてのマスとゲートの判定を1回ずつ
-npm run test:goal     # いまのあがり（GOAL14）: 第1章〜第14章の全部の判定をまとめて＋冒険の書と配る支度の確認
+npm run test:goal     # いまのあがり（GOAL15）: 第1章〜第15章の全部の判定をまとめて＋冒険の書と包みの中の名前の確認
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
