@@ -41,7 +41,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 ```jsonc
 {
   "masume": 1,
-  "quest": { "id": "MSM", "title": "マスメ", "pitch": "一言で", "goal": "GOAL" },
+  "quest": { "id": "MSM", "title": "GridHub", "pitch": "一言で", "goal": "GOAL" },
   "characters": [
     {
       "id": "engine",                // /^[a-z][a-z0-9-]{0,23}$/
@@ -1290,3 +1290,21 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 - `G11`（結合: 配る包みから遊ぶ）: 書記・伝令・盤面・語り部・地図職人。§62.4 の最後の項目。
 - `GOAL14`: 第1章〜第14章のすべての判定がまとめて通り、すべての冒険の書が正常で、`package.json` が §62.2〜§62.4 のとおり（`version` 0.3.0・`engines.node` >=22・`files`・`license` MIT）、`LICENSE` が MIT の本文、`CHANGELOG.md` に `0.3.0` とそれより前、README の `gridhub --version` の例が `package.json` の版、README・AGENTS.md・契約書・チュートリアルの README に、古い下限（20）の「Node.js <n>」が残っていない。
 - `package.json` の `test:goal` は `GOAL14` に向ける。
+
+## 64. 配る前に名前をそろえる（第15章・監督の確認）
+
+監督が包みを手元で確かめたところ、配る包みの中の、使う人の目に入る所に旧名「マスメ」が残っていた。ユーザーは最初に「マスメってタイトルからして終わってるしセンスない」と言っている。リリースの前に GridHub にそろえる。**公開に当たることは、今回もしない。**
+
+1. **決まり**: 包み（§62.4 の `files`）に入る文字のファイルでは、旧名「マスメ」を名前として使わない（GridHub と書く）。書いてよいのは、旧名だと分かる書き方 `旧名マスメ`・`旧名 マスメ`・`旧名はマスメ` だけ。
+   - 例外（互換のため・使う人の目に入らないため・記録のため）: `src/quest/setup.js` の `.gitignore` の見出し（`IGNORE_HEADING`。変えると、前に書いた `.gitignore` に見出しが2つ並ぶ）、`web/board/board.css` の先頭のコメント、この契約書（章ごとの経緯とユーザーの言葉の記録。ただし GM のプロンプトに入る §2 の例は GridHub にする）。
+   - 変えないもの（§38.4 のまま）: `.masume/`・`MASUME_*`・MCP の道具名 `masume_*`・`masume: 1`・別名のコマンド `masume`。
+2. **地図職人**（`M10`）: チュートリアル（`quests/tutorial/`）の題は「はじめての GridHub」、例の名前は `GridHub`（あいさつは「こんにちは、GridHub！」）。手順のコマンドは `gridhub`（シェルの関数も `gridhub`、受付係は `bin/gridhub.js`）。`masume` という字は、`"masume": 1`・`.masume/`・`MASUME_*` のほかに使わない。手順（sh のブロック）は §35 のとおり、そのまま貼って最後まで遊べる。
+3. **伝令**（`S11`）: MCP の資料の名前は `GridHub ルールブック`・`GridHub GM ガイド`・`GridHub 契約書`。`initialize` の案内（`instructions`）も GridHub の名前で書く。
+4. **語り部**（`Q8`）: `gridhub init --help` と `gridhub quest --help` の説明に、旧名を名前として使わない（「GridHub の支度」）。
+5. **絵師**（`A5`）: `web/assets/sheet.html` の題と見出しと結びは「GridHub の絵帳」「GridHub / 絵師のノート」。
+6. **GM**: README・CHANGELOG・docs（GM_GUIDE・RULEBOOK・この契約書）も 1 の決まりのとおり。判定 `M2` はチュートリアルの README に `gridhub new`・`serve`・`check`・`stamp`・`brief` があることを見るように直して、封印し直す。
+
+## 65. あがり（第15章）
+
+- `GOAL15`: 第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、包み（`npm pack --dry-run`）に入るすべての文字のファイルが §64.1 の決まりを守り、README と CHANGELOG に第15章（名前をそろえた）が書いてある。
+- `package.json` の `test:goal` は `GOAL15` に向ける。版は `0.3.0` のまま。

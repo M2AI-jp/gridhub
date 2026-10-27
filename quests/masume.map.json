@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "GridHub — GridHub で GridHub をつくる（旧名 マスメ）",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。 第13章で、町でセーブしたら自動で GitHub に送る設定（初めはオフ）と、最大レベルの表示を足す。 第14章で、配る支度をする（LICENSE・包みの中身・版 0.3.0 とリリースノート・Node.js 22 以上）。公開はユーザーに聞いてから。",
-    "goal": "GOAL14",
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。 第13章で、町でセーブしたら自動で GitHub に送る設定（初めはオフ）と、最大レベルの表示を足す。 第14章で、配る支度をする（LICENSE・包みの中身・版 0.3.0 とリリースノート・Node.js 22 以上）。公開はユーザーに聞いてから。 第15章で、配る前に、包みの中の使う人の目に入る旧名を GridHub にそろえる（チュートリアルは gridhub コマンドに）。",
+    "goal": "GOAL15",
     "news": [
       "課題管理ツールでは、課題を Todo・In Progress・Done の列に並べて、進み具合を一目で見る使い方が多い",
       "課題の説明にチェックリストを書いて、終わったと言える条件をはっきりさせる使い方がよく使われる",
@@ -68,7 +68,8 @@
         "B18",
         "GOAL13",
         "G11",
-        "GOAL14"
+        "GOAL14",
+        "GOAL15"
       ]
     },
     {
@@ -124,7 +125,8 @@
         "E16",
         "GOAL13",
         "G11",
-        "GOAL14"
+        "GOAL14",
+        "GOAL15"
       ]
     },
     {
@@ -173,7 +175,9 @@
         "S10",
         "GOAL13",
         "G11",
-        "GOAL14"
+        "GOAL14",
+        "S11",
+        "GOAL15"
       ]
     },
     {
@@ -213,7 +217,9 @@
         "GOAL12",
         "GOAL13",
         "G11",
-        "GOAL14"
+        "GOAL14",
+        "Q8",
+        "GOAL15"
       ]
     },
     {
@@ -250,7 +256,8 @@
         "GOAL11",
         "GOAL12",
         "GOAL13",
-        "GOAL14"
+        "GOAL14",
+        "GOAL15"
       ]
     },
     {
@@ -293,7 +300,9 @@
         "GOAL13",
         "M9",
         "G11",
-        "GOAL14"
+        "GOAL14",
+        "M10",
+        "GOAL15"
       ]
     },
     {
@@ -330,7 +339,9 @@
         "GOAL11",
         "GOAL12",
         "GOAL13",
-        "GOAL14"
+        "GOAL14",
+        "A5",
+        "GOAL15"
       ]
     },
     {
@@ -358,7 +369,8 @@
         "GOAL11",
         "GOAL12",
         "GOAL13",
-        "GOAL14"
+        "GOAL14",
+        "GOAL15"
       ]
     }
   ],
@@ -2369,6 +2381,139 @@
           "第1章〜第14章のすべての判定が、まとめて本当に通る",
           "すべての冒険の書が正常。地図と package.json は第14章（版 0.3.0・engines >=22・files・MIT）",
           "LICENSE は MIT の本文、CHANGELOG.md に 0.3.0 とそれより前、README の版の例と Node.js 22 以上"
+        ]
+      }
+    },
+    "M10": {
+      "type": "task",
+      "title": "チュートリアルを GridHub の名前に",
+      "detail": "CONTRACTS §64.2: 題は「はじめての GridHub」、例の名前は GridHub、手順のコマンドは gridhub（bin/gridhub.js）。判定の文にも旧名を使わない。手順はそのまま貼って最後まで遊べる（§35）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/M10.test.mjs",
+        "seal": [
+          "tests/e2e/M10.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs"
+        ],
+        "cases": [
+          "§64.2 チュートリアルの題・例の名前・判定の文に旧名が無く、題は「はじめての GridHub」",
+          "§64.2 チュートリアルの手順のコマンドは gridhub（bin/gridhub.js）。masume は \"masume\": 1・.masume/・MASUME_* のほかに使わない"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "tutorial",
+        "name"
+      ]
+    },
+    "S11": {
+      "type": "task",
+      "title": "MCP の資料を GridHub の名前に",
+      "detail": "CONTRACTS §64.3: MCP の資料の名前は GridHub ルールブック・GridHub GM ガイド・GridHub 契約書。initialize の案内も GridHub。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S11.test.mjs",
+        "seal": [
+          "tests/e2e/S11.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs"
+        ],
+        "cases": [
+          "§64.3 MCP の資料の名前と説明・initialize の案内に旧名が無い（GridHub ルールブック・GridHub GM ガイド・GridHub 契約書）"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "mcp",
+        "name"
+      ]
+    },
+    "Q8": {
+      "type": "task",
+      "title": "支度と願いの説明を GridHub の名前に",
+      "detail": "CONTRACTS §64.4: gridhub init --help と gridhub quest --help の説明に旧名を使わない（GridHub の支度）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/Q8.test.mjs",
+        "seal": [
+          "tests/e2e/Q8.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs"
+        ],
+        "cases": [
+          "§64.4 gridhub init --help と gridhub quest --help の説明に旧名が無い（GridHub の支度）"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "quest",
+        "name"
+      ]
+    },
+    "A5": {
+      "type": "task",
+      "title": "絵帳を GridHub の名前に",
+      "detail": "CONTRACTS §64.5: web/assets/sheet.html の題・見出し・結びは「GridHub の絵帳」「GridHub / 絵師のノート」。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/A5.test.mjs",
+        "seal": [
+          "tests/e2e/A5.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs"
+        ],
+        "cases": [
+          "§64.5 絵帳（web/assets/sheet.html）の題・見出し・結びは GridHub で、旧名が無い"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "assets",
+        "name"
+      ]
+    },
+    "GOAL15": {
+      "type": "gate",
+      "title": "あがり（第15章）: 配る前に名前をそろえる",
+      "detail": "第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに入るすべての文字のファイルで旧名を名前として使っていない（旧名だと分かる書き方と §64.1 の例外のほか）。README と CHANGELOG に第15章（§64・§65）。公開はしない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/GOAL15.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL15.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs"
+        ],
+        "cases": [
+          "第1章〜第15章のすべての判定が、まとめて本当に通る",
+          "すべての冒険の書が正常。地図と package.json は第15章（版は 0.3.0 のまま）",
+          "§64.1 包み（npm pack）に入るすべての文字のファイルで、旧名を名前として使っていない。README と CHANGELOG に第15章"
         ]
       }
     }
