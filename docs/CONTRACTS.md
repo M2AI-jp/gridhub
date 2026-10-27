@@ -5,7 +5,7 @@
 各キャラクター（モジュール担当）は、この契約だけを頼りに並行して作る。結合ゲートでこの契約が守られているかが判定される。
 契約を変えたいときは GM に依頼する（自分で変えない）。
 
-- 実行環境: Node.js 20 以上、ESM（`"type": "module"`）、**外部パッケージなし**（標準ライブラリだけ）。
+- 実行環境: Node.js 22 以上（第14章で 20 から上げた。§62.3）、ESM（`"type": "module"`）、**外部パッケージなし**（標準ライブラリだけ）。
 - 文字コード UTF-8、改行 LF。ユーザー向けの文言は日本語。
 
 ---
@@ -14,7 +14,7 @@
 
 | 縄張り | 持ち主 |
 | --- | --- |
-| `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` | GM（判定と契約。キャラクターは編集禁止） |
+| `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` `LICENSE` `CHANGELOG.md` | GM（判定と契約。キャラクターは編集禁止） |
 | `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step}.js` | 書記 `engine` |
 | `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
 | `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
@@ -41,7 +41,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 ```jsonc
 {
   "masume": 1,
-  "quest": { "id": "MSM", "title": "マスメ", "pitch": "一言で", "goal": "GOAL" },
+  "quest": { "id": "MSM", "title": "GridHub", "pitch": "一言で", "goal": "GOAL" },
   "characters": [
     {
       "id": "engine",                // /^[a-z][a-z0-9-]{0,23}$/
@@ -941,7 +941,7 @@ npm test の揺れを調べたところ、盤面が外の字（Google Fonts）�
 
 1. 受付係は `bin/gridhub.js`。`bin/masume.js` は別名で、同じコマンドを同じように受け付ける。`ctx.bin` は実際に起動したファイル（エージェントに渡す `MASUME_BIN` もそれ）。
 2. `package.json` の `name` は `gridhub`、`bin` は `gridhub` と `masume` の2つ。
-3. `gridhub --help` の1行目に `GridHub`。`gridhub --version` は `gridhub <版> (rules 1)`。
+3. `gridhub --help` の1行目に `GridHub`。`gridhub --version` は `gridhub <版> (rules 1)`。`<版>` は `package.json` の `version`（第14章から。§62.2）。
 4. 変えないもの: `.masume/`、`MASUME_*`、MCP の `masume_*`、`masume: 1`、`rules: 1`。
 
 ## 39. 地図: `check.cases` と `quest.save`
@@ -1269,3 +1269,42 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 - `GOAL13`: 第1章〜第13章のすべての判定がまとめて通り、すべての冒険の書が正常で、README に「町でセーブしたら GitHub に送る」（`gridhub remote --auto-push on`・盤面の切り替え・送れなくても止まらない）が書いてあり、このリポジトリの `gridhub status` に `経験値 <n>/<m>` で n > m の行が無い。
 - `package.json` の `test:goal` は `GOAL13` に向ける。
 
+## 62. リリースの支度（第14章・ユーザーの指示）
+
+ユーザーの指示「リリースの準備（LICENSE・package.json の files・バージョンとリリースノート・engines）を進めて。公開や npm への公開はそのあとで聞いて」。**公開に当たること（リポジトリを公開する・名前を変える・`npm publish`・タグ・GitHub Release）はしない。** ユーザーに聞いてから。
+
+1. **LICENSE**: ルートに MIT License の本文を置く（`package.json` の `license` は `MIT`）。著作権者の行は `Copyright (c) 2026 M2AI-jp`（GitHub の持ち主。ユーザーに確かめる）。
+2. **版**: `package.json` の `version` は `0.3.0`。`gridhub --version`（`masume --version` も）は、版を `package.json` から読む（決め打ちしない。§38.3 の形 `gridhub <版> (rules 1)` は変えない）。README の `gridhub --version` の例も同じ版。
+3. **engines**: `"node": ">=22"`。Node 20 は 2026年4月にサポートが終わり、確かめているのは Node 22 と 26 だけなので。README・AGENTS.md・この契約書の冒頭・チュートリアルの README の「Node.js <n> 以上」も 22 にそろえる。
+4. **包み**（`npm pack`）: `package.json` の `files` で、動くのに要るものだけを入れる。
+   - 入れる: `bin/`・`src/`・`web/`（盤面。見本の `web/fixtures/` も）・`docs/*.md`（`gridhub quest` のプロンプト・MCP の資料・`gridhub init` の AGENTS.md が読む）・`quests/tutorial/`・`CHANGELOG.md`。npm がいつも入れる `package.json`・`README.md`・`LICENSE` も入る。
+   - 入れない: `.masume/`（このリポジトリ自身の冒険の書）・`tests/`・`examples/`・`demos/`・docs の写真と下書き（`docs/*.png`・`docs/shots/`・`docs/prototype/`）・`quests/masume.map.json`・`quests/kotozuke.*`・`AGENTS.md`。
+   - 包みを別のフォルダに `npm install` すると、`gridhub` と `masume` が動き、`--version` は包みの `package.json` の版、包みのチュートリアルで冒険を作って遊びきれ、`gridhub serve` の盤面が開き、MCP の資料と `gridhub init` の AGENTS.md が包みの中の docs を指す（結合ゲート `G11`）。
+5. **リリースノート**: ルートの `CHANGELOG.md`。新しい版が上。
+   - `## 0.3.0` に第11章〜第13章: GridHub への改名（`masume` は別名）・テスト1件が1マス（`gridhub step`）・町 = Git のコミット・ふっかつのじゅもんをやめた（seq と Git のコミットで時点を指す）・余白のマス・瓦版（作っている製品の話題）・GitHub につなぐ導線（`gridhub remote`・`gridhub push`）と町でセーブしたら自動で送る設定・縦のノート・最大レベルの表示。この版から Node.js 22 以上。
+   - その下に、それより前（`0.1.0`。第1章〜第10章）をまとめる。`0.2.0` は第11章の途中で `package.json` に書いただけで配っていないので、`0.3.0` にまとめたと書く。
+6. 地図職人: チュートリアルの README の「Node.js <n> 以上」は、`package.json` の `engines.node` の下限と同じ数（`M9`）。
+
+## 63. あがり（第14章）
+
+- `G11`（結合: 配る包みから遊ぶ）: 書記・伝令・盤面・語り部・地図職人。§62.4 の最後の項目。
+- `GOAL14`: 第1章〜第14章のすべての判定がまとめて通り、すべての冒険の書が正常で、`package.json` が §62.2〜§62.4 のとおり（`version` 0.3.0・`engines.node` >=22・`files`・`license` MIT）、`LICENSE` が MIT の本文、`CHANGELOG.md` に `0.3.0` とそれより前、README の `gridhub --version` の例が `package.json` の版、README・AGENTS.md・契約書・チュートリアルの README に、古い下限（20）の「Node.js <n>」が残っていない。
+- `package.json` の `test:goal` は `GOAL14` に向ける。
+
+## 64. 配る前に名前をそろえる（第15章・監督の確認）
+
+監督が包みを手元で確かめたところ、配る包みの中の、使う人の目に入る所に旧名「マスメ」が残っていた。ユーザーは最初に「マスメってタイトルからして終わってるしセンスない」と言っている。リリースの前に GridHub にそろえる。**公開に当たることは、今回もしない。**
+
+1. **決まり**: 包み（§62.4 の `files`）に入る文字のファイルでは、旧名「マスメ」を名前として使わない（GridHub と書く）。書いてよいのは、旧名だと分かる書き方 `旧名マスメ`・`旧名 マスメ`・`旧名はマスメ` だけ。
+   - 例外（互換のため・使う人の目に入らないため・記録のため）: `src/quest/setup.js` の `.gitignore` の見出し（`IGNORE_HEADING`。変えると、前に書いた `.gitignore` に見出しが2つ並ぶ）、`web/board/board.css` の先頭のコメント、この契約書（章ごとの経緯とユーザーの言葉の記録。ただし GM のプロンプトに入る §2 の例は GridHub にする）。
+   - 変えないもの（§38.4 のまま）: `.masume/`・`MASUME_*`・MCP の道具名 `masume_*`・`masume: 1`・別名のコマンド `masume`。
+2. **地図職人**（`M10`）: チュートリアル（`quests/tutorial/`）の題は「はじめての GridHub」、例の名前は `GridHub`（あいさつは「こんにちは、GridHub！」）。手順のコマンドは `gridhub`（シェルの関数も `gridhub`、受付係は `bin/gridhub.js`）。`masume` という字は、`"masume": 1`・`.masume/`・`MASUME_*` のほかに使わない。手順（sh のブロック）は §35 のとおり、そのまま貼って最後まで遊べる。
+3. **伝令**（`S11`）: MCP の資料の名前は `GridHub ルールブック`・`GridHub GM ガイド`・`GridHub 契約書`。`initialize` の案内（`instructions`）も GridHub の名前で書く。
+4. **語り部**（`Q8`）: `gridhub init --help` と `gridhub quest --help` の説明に、旧名を名前として使わない（「GridHub の支度」）。
+5. **絵師**（`A5`）: `web/assets/sheet.html` の題と見出しと結びは「GridHub の絵帳」「GridHub / 絵師のノート」。
+6. **GM**: README・CHANGELOG・docs（GM_GUIDE・RULEBOOK・この契約書）も 1 の決まりのとおり。判定 `M2` はチュートリアルの README に `gridhub new`・`serve`・`check`・`stamp`・`brief` があることを見るように直して、封印し直す。
+
+## 65. あがり（第15章）
+
+- `GOAL15`: 第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、包み（`npm pack --dry-run`）に入るすべての文字のファイルが §64.1 の決まりを守り、README と CHANGELOG に第15章（名前をそろえた）が書いてある。
+- `package.json` の `test:goal` は `GOAL15` に向ける。版は `0.3.0` のまま。

@@ -15,7 +15,8 @@ const run = (cmd, cwd) => spawnSync('/bin/sh', ['-c', cmd], { cwd, encoding: 'ut
 test('チュートリアルの一式がある', () => {
   for (const f of ['tutorial.map.json', 'SOLUTIONS.json', 'README.md']) assert.ok(existsSync(join(DIR, f)), `quests/tutorial/${f}`);
   const readme = readFileSync(join(DIR, 'README.md'), 'utf8');
-  for (const w of ['masume new', 'masume serve', 'masume check', 'masume stamp', 'masume brief']) assert.match(readme, new RegExp(w), `README に ${w}`);
+  // 第15章（§64.2）: 手順のコマンドは gridhub にそろえた（masume は別名）
+  for (const w of ['gridhub new', 'gridhub serve', 'gridhub check', 'gridhub stamp', 'gridhub brief']) assert.match(readme, new RegExp(w), `README に ${w}`);
 });
 
 test('地図の形: 小さく、全部の要素がそろっている', () => {

@@ -1,0 +1,13 @@
+=== M10: node --test --test-reporter=spec tests/e2e/M10.test.mjs ===
+✔ §64.2 チュートリアルの題・例の名前・判定の文に旧名が無く、題は「はじめての GridHub」 (3.18912ms)
+✔ §64.2 チュートリアルの手順のコマンドは gridhub（bin/gridhub.js）。masume は "masume": 1・.masume/・MASUME_* のほかに使わない (1.256944ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 100.010745
+
+(exit 0, 166ms)

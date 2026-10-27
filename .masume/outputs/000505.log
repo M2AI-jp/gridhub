@@ -1,0 +1,12 @@
+=== A5: node --test --test-reporter=spec tests/e2e/A5.test.mjs ===
+✔ §64.5 絵帳（web/assets/sheet.html）の題・見出し・結びは GridHub で、旧名が無い (3.788241ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89.348892
+
+(exit 0, 148ms)

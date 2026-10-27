@@ -49,7 +49,7 @@ export function readGreeting() {
   const greeting = readText('ai/hello.txt', 'apprentice').replace(/\r?\n$/u, '');
   const match = /^こんにちは、(.*)！$/u.exec(greeting);
   requireThat(match !== null && match[0] === greeting && validName(match[1]),
-    'apprentice', 'ai/hello.txt は「こんにちは、マスメ！」のような一行にしてください。名前は空にせず、前後の空白や改行を除いてください。');
+    'apprentice', 'ai/hello.txt は「こんにちは、GridHub！」のような一行にしてください。名前は空にせず、前後の空白や改行を除いてください。');
   return greeting;
 }
 

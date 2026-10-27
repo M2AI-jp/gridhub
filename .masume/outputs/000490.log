@@ -1,0 +1,12 @@
+=== M9: node --test --test-reporter=spec tests/e2e/M9.test.mjs ===
+✔ §62.6 チュートリアルの README の「Node.js <n> 以上」は 22 で、package.json の engines.node の下限と同じ (1.537372ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 81.670853
+
+(exit 0, 133ms)

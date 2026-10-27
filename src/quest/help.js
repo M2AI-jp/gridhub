@@ -48,7 +48,7 @@ export function initHelp() {
   return [
     '使い方: masume init [--dir D] [--agent claude|codex [--allow-listen]] [--force] [--json]',
     '',
-    'よそのプロジェクトに、マスメの支度（AGENTS.md・CLAUDE.md・.gitignore。--agent があれば .masume/party.json も）をします。',
+    'よそのプロジェクトに、GridHub の支度（AGENTS.md・CLAUDE.md・.gitignore。--agent があれば .masume/party.json も）をします。',
     '',
     'オプション:',
     '  --dir D        支度をするフォルダ（既定は今のフォルダ）',

@@ -2,7 +2,7 @@
 // GridHub CLI の受付係。各サブコマンドは src/commands/<name>.js が担当する（担当キャラクターの縄張り）。
 // この受付係は GM の縄張り。サブコマンドを足すときは COMMANDS に1行足すだけにする。
 // bin/masume.js は旧名の別名（第11章）。どちらから起動しても、ctx.bin は実際に起動したファイル。
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -39,6 +39,11 @@ const COMMANDS = {
   jira: ['地図職人', 'Jira と同期する', 'jira push|pull [--project KEY]'],
 };
 
+// 版は package.json から読む（決め打ちしない。CONTRACTS §62.2）
+function version() {
+  return JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
+}
+
 function usage() {
   const lines = [
     'GridHub — テスト1件が1マス。5mm方眼ノートのすごろくで開発を進めるゲーム（旧名 マスメ。masume は別名）',
@@ -64,7 +69,7 @@ export async function main(bin) {
     return 0;
   }
   if (cmd === '--version' || cmd === '-v') {
-    console.log('gridhub 0.2.0 (rules 1)');
+    console.log(`gridhub ${version()} (rules 1)`);
     return 0;
   }
   if (!Object.hasOwn(COMMANDS, cmd)) {

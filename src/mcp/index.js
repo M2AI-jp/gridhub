@@ -11,13 +11,13 @@ const DEFAULT_PROTOCOL = '2025-06-18';
 const ERR = { parse: -32700, request: -32600, method: -32601, params: -32602, internal: -32603 };
 
 const DOCS = [
-  ['RULEBOOK.md', 'マスメ ルールブック', 'ゲームのルール（マス・キャラクター・判定・ゲート・ハンコ）'],
-  ['GM_GUIDE.md', 'マスメ GM ガイド', '地図（冒険）をつくる GM のための手引き'],
-  ['CONTRACTS.md', 'マスメ 契約書', 'モジュール間の約束（CLI・API・MCP）'],
+  ['RULEBOOK.md', 'GridHub ルールブック', 'ゲームのルール（マス・キャラクター・判定・ゲート・ハンコ）'],
+  ['GM_GUIDE.md', 'GridHub GM ガイド', '地図（冒険）をつくる GM のための手引き'],
+  ['CONTRACTS.md', 'GridHub 契約書', 'モジュール間の約束（CLI・API・MCP）'],
 ];
 
 const INSTRUCTIONS = [
-  'マスメは、5mm方眼のすごろくで開発を進めるゲームです。あなたは盤上のキャラクターの1人として、いまのマスだけを実装します。',
+  'GridHub は、5mm方眼のすごろくで開発を進めるゲームです。あなたは盤上のキャラクターの1人として、いまのマスだけを実装します。',
   '1. masume_brief で指令書（いまのマス・縄張り・判定コマンド）を読む。',
   '2. 縄張りの中だけを実装し、判定を素振りする。判定ファイルや地図は編集しない。',
   '3. masume_check で宣言判定し、通ったら masume_note で次の自分への申し送りを書く。',

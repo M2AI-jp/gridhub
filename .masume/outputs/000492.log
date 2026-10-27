@@ -1,0 +1,14 @@
+=== GOAL14: node --test --test-reporter=spec tests/e2e/GOAL14.test.mjs ===
+✔ 第1章〜第14章のすべての判定が、まとめて本当に通る (272014.266623ms)
+✔ すべての冒険の書が正常。地図と package.json は第14章（版 0.3.0・engines >=22・files・MIT） (331.417003ms)
+✔ LICENSE は MIT の本文、CHANGELOG.md に 0.3.0 とそれより前、README の版の例と Node.js 22 以上 (2.777812ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 272427.172758
+
+(exit 0, 272472ms)
