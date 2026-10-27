@@ -1,0 +1,16 @@
+=== G11: node --test --test-reporter=spec tests/e2e/G11.test.mjs ===
+✔ §62.4 npm pack の包みは、動くのに要るもの（bin・src・web・docs の md・チュートリアル・README・LICENSE・CHANGELOG）だけ (535.305192ms)
+✔ §62.2・§62.4 包みを別のフォルダに入れると gridhub と masume が動き、--version は包みの package.json の版 (623.565542ms)
+✔ 包みのチュートリアルで冒険を作り、SOLUTIONS を当てると判定が通ってあがる（書記 × 地図職人） (1561.085285ms)
+✔ 包みの gridhub serve で、盤面（包みの web）が開く（伝令 × 盤面） (1282.802567ms)
+✔ 包みの MCP の資料・gridhub init の AGENTS.md・gridhub quest のプロンプトは、包みの中の docs を読む（伝令 × 語り部） (625.173415ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7013.511607
+
+(exit 0, 7058ms)
