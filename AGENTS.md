@@ -8,9 +8,9 @@
 1. **現在のマスだけ**を実装する。指令書に出ていない先のマスには手を出さない（霧の向こう）。
 2. **縄張り**（`docs/CONTRACTS.md` §1 と地図の `territory`）の外のファイルを作らない・編集しない。
    必要なら最終報告の「GMへの依頼」に書く。
-3. `tests/**` `docs/**` `bin/**` `schema/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` は **GM の縄張り**。
+3. `tests/**` `docs/**` `bin/**` `schema/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` `LICENSE` `CHANGELOG.md` は **GM の縄張り**。
    判定ファイルは封印されているので、**絶対に編集しない**（改変は「封印破り」として記録される）。
-4. 外部パッケージを追加しない。Node.js 20+ の標準ライブラリだけ。ESM。
+4. 外部パッケージを追加しない。Node.js 22+ の標準ライブラリだけ。ESM。
 5. git の書き込み操作（commit / push / reset / checkout / stash など）をしない。GM がやる。
 6. 判定コマンドを自分で走らせ、通ることを確かめてから報告する。通らなければ通らないと正直に書く。
    判定を通すためにテストの意図を回避するような実装（テスト環境の検出、出力の決め打ち）はしない。
