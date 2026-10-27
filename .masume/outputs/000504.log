@@ -1,0 +1,12 @@
+=== Q8: node --test --test-reporter=spec tests/e2e/Q8.test.mjs ===
+✔ §64.4 gridhub init --help と gridhub quest --help の説明に旧名が無い（GridHub の支度） (212.040123ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 310.92103
+
+(exit 0, 363ms)

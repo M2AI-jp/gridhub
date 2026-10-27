@@ -1,0 +1,12 @@
+=== S11: node --test --test-reporter=spec tests/e2e/S11.test.mjs ===
+✔ §64.3 MCP の資料の名前と説明・initialize の案内に旧名が無い（GridHub ルールブック・GridHub GM ガイド・GridHub 契約書） (88.051076ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1166.775338
+
+(exit 0, 1221ms)
