@@ -31,6 +31,9 @@ const safeName = (s) => (s != null && SAFE_NAME.test(s) ? s : null);
 const FIXTURE = safeName(params.get('fixture'));
 const SCRIPT = safeName(params.get('script'));
 const LIVE = !params.has('fixture');
+// アプリの起動役から開いたとき（?home= が手元の http）。CLI の言い方をボタンの名前に言い換える（§74.3）
+const HOME = homeUrl();
+const APP = HOME !== null;
 
 const $ = (sel) => document.querySelector(sel);
 const svg = $('#board');
@@ -189,7 +192,7 @@ function render(input) {
   updatePageNav();
   effects(prev, view, lay, sameQuest);
 
-  setLayer('#party-list-wrap', renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null));
+  setLayer('#party-list-wrap', renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null, { app: APP }));
   setLayer('#bestiary', renderBestiary(view, state.monsters));
   setLayer('#log', renderLog(view, prev ? seqOf(prev) : -1));
   const news = renderNews(view);
@@ -305,9 +308,9 @@ function renderDrawer() {
     return;
   }
   const html =
-    sel.kind === 'node' ? renderNodeDrawer(state.view, sel.id, { live: LIVE })
+    sel.kind === 'node' ? renderNodeDrawer(state.view, sel.id, { live: LIVE, app: APP })
     : sel.kind === 'margin' ? renderMarginDrawer(state.view, sel.id)
-    : renderCharDrawer(state.view, sel.id, state.sprites, { live: LIVE });
+    : renderCharDrawer(state.view, sel.id, state.sprites, { live: LIVE, app: APP });
   if (!html) {
     state.selected = null;
     drawer.hidden = true;
@@ -480,7 +483,7 @@ function select(kind, id, { focus = false } = {}) {
   if (state.view) {
     patchLayer('#node-layer', nodeItems(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null }));
     patchLayer('#margin-layer', marginItems(state.view, state.lay, state.sprites, { selected: kind === 'margin' ? id : null }));
-    setLayer('#party-list-wrap', renderParty(state.view, state.sprites, kind === 'char' ? id : null));
+    setLayer('#party-list-wrap', renderParty(state.view, state.sprites, kind === 'char' ? id : null, { app: APP }));
   }
   renderDrawer();
   if (focus && state.lay) {
@@ -880,19 +883,25 @@ window.__masume = {
   },
 };
 
-/** アプリの起動役から開いたとき（?home=）は、はじめの画面へのリンクを出す。手元（127.0.0.1・localhost）の http だけ（§70.5） */
-function setupHomeLink() {
-  const link = $('#home-link');
+/** ?home= のはじめの画面。手元（127.0.0.1・localhost）の http だけ。ほかは null（§70.5） */
+function homeUrl() {
   const home = params.get('home');
-  if (!link || !home) return;
+  if (!home) return null;
   let url;
   try {
     url = new URL(home);
   } catch {
-    return;
+    return null;
   }
-  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || !url.port) return;
-  link.href = url.href;
+  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || !url.port) return null;
+  return url;
+}
+
+/** アプリの起動役から開いたとき（?home=）は、はじめの画面へのリンクを出す（§70.5） */
+function setupHomeLink() {
+  const link = $('#home-link');
+  if (!link || !HOME) return;
+  link.href = HOME.href;
   link.hidden = false;
 }
 
@@ -902,7 +911,7 @@ function setupHomeLink() {
   setupCamera();
   setupInteractions();
   initCommand({ live: LIVE, post, refresh: liveRefresh, toast, getView: () => state.view });
-  hand = initHand({ live: LIVE, post, toast });
+  hand = initHand({ live: LIVE, post, toast, app: APP });
   $('#export-notebook').addEventListener('click', downloadNotebook);
   [state.sprites, state.monsters] = await Promise.all([loadArt('sprites', 'jobs'), loadArt('monsters', 'monsters')]);
   if (params.get('view')) setView(params.get('view'));

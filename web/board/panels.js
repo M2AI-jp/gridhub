@@ -2,6 +2,7 @@
 import { esc, hl, own, byId } from './sketch.js';
 import { spriteMarkup, jobJa, STATUS_JA, monsterMarkup, speciesOf, MARGIN_JA } from './draw.js';
 import { marginsOf, marginHappened, marginSource, whoName, newsOf } from './world.js';
+import { wordsFor } from './words.js';
 
 export const LINEAR = { cleared: 'Done', current: 'In Progress', waiting: 'In Review', ready: 'In Review', stale: 'Todo', open: 'Todo', fog: 'Backlog' };
 const LINEAR_JA = { 'In Progress': '進行中', 'In Review': '結合待ち', Todo: 'これから', Backlog: '霧の中', Done: '完了' };
@@ -25,7 +26,7 @@ function testsHere(view, c) {
   return n.tests;
 }
 
-export function renderParty(view, sprites, selectedChar) {
+export function renderParty(view, sprites, selectedChar, { app = false } = {}) {
   const cards = view.characters
     .map((c) => {
       const node = c.at ? own(view.nodes, c.at) : null;
@@ -34,7 +35,7 @@ export function renderParty(view, sprites, selectedChar) {
       const gen = Number.isInteger(c.generation) ? c.generation : 1;
       const medals = Number.isInteger(c.medals) ? c.medals : 0;
       const cases = node && Array.isArray(node.cases) ? node.cases : [];
-      const fight = c.status === 'working' && node?.check?.kind === 'cmd' ? (!cases.length ? '？ まだ走らせていない' : c.square != null && c.square < cases.length ? cases[c.square].name : '全部倒した → gridhub check') : '';
+      const fight = c.status === 'working' && node?.check?.kind === 'cmd' ? (!cases.length ? '？ まだ走らせていない' : c.square != null && c.square < cases.length ? cases[c.square].name : `全部倒した → ${app ? '「宣言判定」' : 'gridhub check'}`) : '';
       const where = c.status !== 'done' && node ? `${c.at} ${node.title}` : '';
       return `<button class="party-card${selectedChar === c.id ? ' selected' : ''}" data-char="${esc(c.id)}"${c.max_level ? ' data-max="true"' : ''} style="--hl:${hl(c.color)}" aria-label="${esc(c.name)}のキャラクターシートを開く">
         ${mini(sprites, c, 40)}
@@ -161,9 +162,10 @@ function relatedLog(view, id) {
   return (view.log || []).filter((e) => e.node === id).slice(-8).reverse();
 }
 
-export function renderNodeDrawer(view, id, { live }) {
+export function renderNodeDrawer(view, id, { live, app = false }) {
   const n = own(view.nodes, id);
   if (!n) return '';
+  const words = wordsFor(app);
   const chars = byId(view.characters);
   const people = (n.members || []).map((m) => chars[m]).filter(Boolean);
   const kind = n.type === 'gate' ? (view.quest?.goal === id ? '魔王の城（章のあがり・結合テスト）' : '中ボスの砦（結合テスト）') : n.type === 'camp' ? '町（セーブ = git commit）' : n.check?.kind === 'stamp' ? '王様の城（人間のハンコ）' : 'ダンジョン（タスク）。出口で宣言判定';
@@ -188,7 +190,7 @@ export function renderNodeDrawer(view, id, { live }) {
     </div>
     <h3 class="issue-title">${esc(n.title)}</h3>
     <p class="issue-kind">${esc(kind)}</p>
-    ${n.detail ? `<p class="issue-detail">${esc(n.detail)}</p>` : ''}
+    ${n.detail ? `<p class="issue-detail">${esc(words(n.detail))}</p>` : ''}
     ${action}
     <dl class="props">
       <dt>${n.type === 'gate' ? 'メンバー' : '担当'}</dt><dd>${people.map((c) => `<span class="who" style="--hl:${hl(c.color)}">${esc(c.name)}${n.type === 'gate' ? (c.at === id && c.status === 'waiting' ? ' ✓' : c.status === 'done' ? ' ✓' : ' …') : ''}</span>`).join(' ') || '—'}</dd>
@@ -233,7 +235,12 @@ function skillList(c) {
   return `<h4>技（閃き） <small>先代から受け継いだもの</small></h4><ol class="skill-list">${c.skills.map((k) => `<li><span class="skill-text">「${esc(k.text)}」</span><small>${esc(k.node || '')}${k.case ? ` ・ ${esc(k.case)}` : ''}</small></li>`).join('')}</ol>`;
 }
 
-export function renderCharDrawer(view, id, sprites, { live = false } = {}) {
+/** エージェントへの最初の指示（CLI）。アプリの中では「ターミナルでは」に畳む（§74.3） */
+function cliHint(c) {
+  return `<p class="hint">このキャラクターを動かすエージェントへの最初の指示: <code>gridhub brief ${esc(c.id)}</code> を読んで、いちばん手前の落ちているテストだけを通し、<code>gridhub step ${esc(c.id)}</code> で歩く（何度でも）。全部倒したら <code>gridhub check ${esc(c.id)}</code> で宣言（一発勝負）。</p>`;
+}
+
+export function renderCharDrawer(view, id, sprites, { live = false, app = false } = {}) {
   const c = view.characters.find((x) => x.id === id);
   if (!c) return '';
   const steps = c.path
@@ -273,7 +280,7 @@ export function renderCharDrawer(view, id, sprites, { live = false } = {}) {
     </dl>
     ${sortieRows(view, c)}
     ${skillList(c)}
-    <p class="hint">このキャラクターを動かすエージェントへの最初の指示: <code>gridhub brief ${esc(c.id)}</code> を読んで、いちばん手前の落ちているテストだけを通し、<code>gridhub step ${esc(c.id)}</code> で歩く（何度でも）。全部倒したら <code>gridhub check ${esc(c.id)}</code> で宣言（一発勝負）。</p>
+    ${app ? `<details class="cli"><summary>ターミナルでは</summary>${cliHint(c)}</details>` : cliHint(c)}
     <h4>道のり</h4>
     <ol class="steps">${steps}</ol>`;
 }

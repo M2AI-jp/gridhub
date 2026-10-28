@@ -1,6 +1,8 @@
 // 手で進める（CONTRACTS §71）。盤面の担当。
 // 人間が、キャラクターの役を盤面から手で演じる: 指令書を読む・縄張りのファイルを書く・歩く・宣言判定・ハンコ・ボス戦。
-// #hand はキャラクターシート（#drawer）とは別の欄。盤面が新しくなっても書きかけを消さない。
+// #hand はキャラクターシート（#drawer）とは別の欄。盤面が新しくなっても書きかけを消さない（いまのマスが変わったら空にする。§74.3）。
+import { wordsFor } from './words.js';
+
 const $ = (sel) => document.querySelector(sel);
 
 function el(tag, attrs = {}, ...children) {
@@ -15,12 +17,29 @@ function el(tag, attrs = {}, ...children) {
   return node;
 }
 
-export function initHand({ live, post, toast }) {
+/** 縄張りの glob から、ファイル名の欄の例を作る（human/** → human/memo.txt。§74.3） */
+function exampleOf(glob) {
+  const parts = String(glob ?? '').split('/').filter(Boolean);
+  const fixed = [];
+  for (const part of parts) {
+    if (/[*?[\]{}]/.test(part)) break;
+    fixed.push(part);
+  }
+  if (!parts.length) return '';
+  if (fixed.length === parts.length) return fixed.join('/');
+  const ext = /^\*(\.[\w.-]+)$/.exec(parts.at(-1))?.[1] ?? '.txt';
+  return [...fixed, `memo${ext}`].join('/');
+}
+
+export function initHand({ live, post, toast, app = false }) {
   const panel = $('#hand');
-  if (!panel) return { open() {} };
+  if (!panel) return { open() {}, refresh() {} };
+  const words = wordsFor(app);
   let character = null;
   let data = null;
   let busy = false;
+  let readonly = false;
+  let shownNode; // いま書き込み欄が向いているマス（変わったら欄を空にする）
 
   const show = (sel, on) => {
     const node = $(sel);
@@ -37,7 +56,22 @@ export function initHand({ live, post, toast }) {
   function setBusy(on) {
     busy = on;
     panel.dataset.busy = String(on);
-    for (const b of panel.querySelectorAll('button:not(#hand-close)')) b.disabled = on;
+    for (const b of panel.querySelectorAll('button:not(#hand-close)')) b.disabled = on || (b.id === 'hand-save' && readonly);
+  }
+
+  /** 書き込み欄を、読むだけ（仲間のファイル）か、書ける（自分の縄張り）にする */
+  function setReadonly(on) {
+    readonly = on;
+    $('#hand-content').readOnly = on;
+    $('#hand-path').readOnly = on;
+    $('#hand-save').disabled = on || busy;
+    show('#hand-readonly', on);
+  }
+
+  function clearEdit() {
+    $('#hand-path').value = '';
+    $('#hand-content').value = '';
+    setReadonly(false);
   }
 
   function renderBrief() {
@@ -50,7 +84,7 @@ export function initHand({ live, post, toast }) {
       parts.push(el('p', { class: 'hand-node', text: 'あがりました。もう進むマスはありません。' }));
     } else {
       parts.push(el('h4', { class: 'hand-node', text: `${n.id}「${n.title}」` }));
-      if (n.detail) parts.push(el('p', { class: 'hand-detail', text: n.detail }));
+      if (n.detail) parts.push(el('p', { class: 'hand-detail', text: words(n.detail) }));
       if (n.type === 'gate') {
         const waiting = b.waiting_for ?? [];
         parts.push(el('p', { class: 'hand-wait', text: waiting.length ? `仲間を待っています: ${waiting.join('、')}` : '仲間がそろいました。ボス戦（結合テスト）を始められます。' }));
@@ -71,6 +105,11 @@ export function initHand({ live, post, toast }) {
     show('#hand-files-empty', files.length === 0);
     const samples = $('#hand-samples');
     samples.replaceChildren(...(data.solutions ?? []).map((s) => el('button', { type: 'button', class: 'mini-btn', 'data-sample': s.path, text: `見本を写す: ${s.path}` })));
+    // 承認のマスで、指令書と判定に書かれた仲間のファイル（読むだけ。§74.3）
+    const review = data.review ?? [];
+    $('#hand-review-list').replaceChildren(...review.map((f) => el('li', { 'data-path': f.path, tabIndex: 0, title: `${f.owner} の縄張り・${f.size} バイト` }, el('code', { text: f.path }))));
+    show('#hand-review', review.length > 0);
+    $('#hand-path').placeholder = data.solutions?.[0]?.path ?? exampleOf((data.territory ?? [])[0]);
   }
 
   function renderActions() {
@@ -83,7 +122,7 @@ export function initHand({ live, post, toast }) {
     show('#hand-check', task && !stamp);
     show('#hand-stamp', stamp && me.kind === 'human' && n.check.by === me.id);
     show('#hand-battle', n?.type === 'gate' && (b.waiting_for ?? []).length === 0);
-    show('.hand-edit', (data.territory ?? []).length > 0 && n !== null);
+    show('.hand-edit', ((data.territory ?? []).length > 0 || (data.review ?? []).length > 0) && n !== null);
   }
 
   async function load() {
@@ -103,6 +142,9 @@ export function initHand({ live, post, toast }) {
       return;
     }
     data = got;
+    const node = got.brief.current?.id ?? null;
+    if (shownNode !== undefined && shownNode !== node) clearEdit(); // 進んだ・戻された
+    shownNode = node;
     $('#hand-title').textContent = `手で進める: ${got.brief.character.name}`;
     renderBrief();
     renderFiles();
@@ -149,20 +191,24 @@ export function initHand({ live, post, toast }) {
       }
       $('#hand-path').value = r.path;
       $('#hand-content').value = r.content;
+      setReadonly(r.readonly === true);
       return;
     }
     if (t.matches('[data-sample]')) {
       const sample = (data?.solutions ?? []).find((s) => s.path === t.dataset.sample);
       if (!sample) return;
+      setReadonly(false);
       $('#hand-path').value = sample.path;
       $('#hand-content').value = sample.content;
       message('見本を書き込み欄に写しました。中身を確かめて「保存」を押してください。', true);
       return;
     }
     if (t.id === 'hand-save') {
+      if (readonly) return;
       const path = $('#hand-path').value.trim();
       if (!path) {
-        message('ファイルのパスを書いてください（例: ai/hello.txt）', false);
+        const example = $('#hand-path').placeholder;
+        message(`ファイルのパスを書いてください${example ? `（例: ${example}）` : ''}`, false);
         return;
       }
       await act('api/file', { character, path, content: $('#hand-content').value }, (j) => message(`保存しました: ${j.path}（${j.bytes} バイト）`, true));
@@ -216,11 +262,11 @@ export function initHand({ live, post, toast }) {
     open(id) {
       if (!live) return;
       if (character !== id) {
-        $('#hand-path').value = '';
-        $('#hand-content').value = '';
+        clearEdit();
         $('#hand-result').replaceChildren();
         message('', true);
         data = null;
+        shownNode = undefined;
       }
       character = id;
       panel.dataset.char = id;

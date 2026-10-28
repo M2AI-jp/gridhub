@@ -1178,7 +1178,16 @@ body.start-page { overflow: auto; min-height: 100%; display: flex; align-items: 
 .hand-edit label { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
 #hand-path, #hand-content { width: 100%; font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: #fff; border: 1.3px solid var(--ink); border-radius: 6px; padding: 6px 8px; }
 #hand-content { margin-top: 6px; resize: vertical; min-height: 120px; }
+/* 承認のマスの、読むだけのファイル（§74.3） */
+.hand-review[hidden], .hand-readonly[hidden] { display: none; }
+.hand-review .hint { margin: 0 0 4px; }
+.hand-readonly { display: inline-block; margin: 6px 0 0; padding: 1px 8px; font-size: 12px; color: var(--ink-soft); border: 1.3px dashed var(--ink-soft); border-radius: 4px; }
+#hand-path:read-only, #hand-content:read-only { background: #f4f1e6; color: var(--ink-soft); }
 .act.hand-open { margin-top: 10px; }
+/* アプリの中では、CLI の指示を「ターミナルでは」に畳む（§74.3） */
+details.cli { margin: 10px 0; font-size: 12.5px; color: var(--ink-soft); }
+details.cli summary { cursor: pointer; width: fit-content; }
+details.cli .hint { margin: 4px 0 0; }
 @media (max-width: 900px) {
   .hand-panel { left: 8px; right: 8px; width: auto; min-width: 0; top: auto; bottom: 8px; max-height: 70vh; }
 }

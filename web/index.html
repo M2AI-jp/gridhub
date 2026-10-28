@@ -147,8 +147,14 @@
         <ul id="hand-files" class="hand-files"></ul>
         <p id="hand-files-empty" class="hint">まだありません。下の欄で書いて保存すると作れます。</p>
         <div id="hand-samples" class="hand-samples"></div>
+        <div id="hand-review" class="hand-review" hidden>
+          <h4>読むだけのファイル</h4>
+          <p class="hint">指令書と判定に書かれた、仲間のファイルです。押すと下の欄に出します（書けません）。</p>
+          <ul id="hand-review-list" class="hand-files"></ul>
+        </div>
         <label for="hand-path">ファイル（縄張りの中の相対パス）</label>
-        <input id="hand-path" type="text" spellcheck="false" autocomplete="off" placeholder="ai/hello.txt">
+        <input id="hand-path" type="text" spellcheck="false" autocomplete="off" placeholder="">
+        <p id="hand-readonly" class="hand-readonly" hidden>読むだけ（書けません）</p>
         <textarea id="hand-content" rows="8" spellcheck="false" aria-label="ファイルの中身"></textarea>
         <button id="hand-save" class="act" type="button">保存</button>
       </section>
