@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "GridHub — GridHub で GridHub をつくる（旧名 マスメ）",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。 第13章で、町でセーブしたら自動で GitHub に送る設定（初めはオフ）と、最大レベルの表示を足す。 第14章で、配る支度をする（LICENSE・包みの中身・版 0.3.0 とリリースノート・Node.js 22 以上）。公開はユーザーに聞いてから。 第15章で、配る前に、包みの中の使う人の目に入る旧名を GridHub にそろえる（チュートリアルは gridhub コマンドに）。",
-    "goal": "GOAL15",
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。 第13章で、町でセーブしたら自動で GitHub に送る設定（初めはオフ）と、最大レベルの表示を足す。 第14章で、配る支度をする（LICENSE・包みの中身・版 0.3.0 とリリースノート・Node.js 22 以上）。公開はユーザーに聞いてから。 第15章で、配る前に、包みの中の使う人の目に入る旧名を GridHub にそろえる（チュートリアルは gridhub コマンドに）。 第16章で、Mac のアプリにして、ターミナルなしでフォルダを選んで遊べるようにする（はじめの画面・手で進める・チュートリアル）。",
+    "goal": "GOAL16",
     "news": [
       "課題管理ツールでは、課題を Todo・In Progress・Done の列に並べて、進み具合を一目で見る使い方が多い",
       "課題の説明にチェックリストを書いて、終わったと言える条件をはっきりさせる使い方がよく使われる",
@@ -69,7 +69,8 @@
         "GOAL13",
         "G11",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -126,7 +127,8 @@
         "GOAL13",
         "G11",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -177,7 +179,8 @@
         "G11",
         "GOAL14",
         "S11",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -219,7 +222,8 @@
         "G11",
         "GOAL14",
         "Q8",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -257,7 +261,8 @@
         "GOAL12",
         "GOAL13",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -302,7 +307,8 @@
         "G11",
         "GOAL14",
         "M10",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -341,7 +347,8 @@
         "GOAL13",
         "GOAL14",
         "A5",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -370,7 +377,27 @@
         "GOAL12",
         "GOAL13",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "H4",
+        "GOAL16"
+      ]
+    },
+    {
+      "id": "mac",
+      "name": "大工",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "villager",
+      "color": "orange",
+      "module": "Mac のアプリ（Swift・AppKit・WebKit の窓に盤面を映す。フォルダのダイアログ・命綱・組み立て）",
+      "territory": [
+        "mac/**"
+      ],
+      "path": [
+        "D1",
+        "D2",
+        "D3",
+        "GOAL16"
       ]
     }
   ],
@@ -2514,6 +2541,113 @@
           "第1章〜第15章のすべての判定が、まとめて本当に通る",
           "すべての冒険の書が正常。地図と package.json は第15章（版は 0.3.0 のまま）",
           "§64.1 包み（npm pack）に入るすべての文字のファイルで、旧名を名前として使っていない。README と CHANGELOG に第15章"
+        ]
+      }
+    },
+    "D1": {
+      "type": "task",
+      "title": "Mac のアプリの骨組み",
+      "detail": "CONTRACTS §72.1: mac/GridHub.swift（1ファイル。AppKit と WebKit だけ）。WKWebView の窓・フォルダのダイアログ（新しいフォルダも作れる）・ログインシェルの PATH で node を探す・gridhub app --port 0 --lifeline を標準入力の Pipe つきで起こす・窓を閉じたら終わる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/D1.test.mjs",
+        "seal": [
+          "tests/e2e/D1.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§72.1 mac/GridHub.swift は1ファイルで、AppKit・WebKit・Foundation だけを使い、@main がある",
+          "§72.1 フォルダのダイアログ（NSOpenPanel。新しいフォルダも作れる）と、スクリプトの窓口 gridhub・folderChosen",
+          "§72.1 ログインシェルの PATH で node を探し、22 以上でなければ日本語で入れ方を出す",
+          "§72.1 node で gridhub app --port 0 --lifeline を起こし、標準入力は Pipe。窓を閉じると終わり、終わるときにサーバーを止める",
+          "§72.1 編集メニュー・終了・alert と confirm・手元でない URL は既定のブラウザで開く"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "mac",
+        "app"
+      ]
+    },
+    "D2": {
+      "type": "task",
+      "title": "アプリを組み立てる",
+      "detail": "CONTRACTS §72.2・§72.3・§72.5: mac/Info.plist（127.0.0.1 への通信を許す）と mac/build.sh（swiftc だけ。npm pack と同じ中身を入れる・アイコン・アドホック署名）。npm run mac。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/D2.test.mjs",
+        "seal": [
+          "tests/e2e/D2.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§72.2 mac/Info.plist: 実行ファイル・ID・版の置き場・アイコン・127.0.0.1 への通信（NSAllowsLocalNetworking）",
+          "§72.3・§72.5 mac/build.sh は swiftc で組み（xcodebuild は使わない）、sips・iconutil でアイコン、アドホック署名。npm run mac と .gitignore の dist/",
+          "§72.3 GRIDHUB_SKIP_SWIFT=1 で組むと、GridHub.app に包みと同じ中身と、版の入った Info.plist が入り、中の gridhub が動く"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "mac",
+        "build"
+      ]
+    },
+    "D3": {
+      "type": "task",
+      "title": "今の絵からアイコンを作る",
+      "detail": "CONTRACTS §72.4: web/assets の勇者と方眼の紙から mac/icon.mjs で mac/AppIcon.png（1024×1024）を作り、組み立てで AppIcon.icns にする。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/D3.test.mjs",
+        "seal": [
+          "tests/e2e/D3.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§72.4 mac/AppIcon.png は 1024×1024 の透明つき PNG で、今の絵（web/assets の勇者と方眼の紙）から mac/icon.mjs で作る",
+          "§72.2・§72.4 アイコンの名前が Info.plist（CFBundleIconFile）と組み立て（AppIcon.icns）でそろう"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "mac",
+        "icon"
+      ]
+    },
+    "H4": {
+      "type": "task",
+      "title": "王様の城: Mac のアプリでハンコを押す",
+      "detail": "CONTRACTS §73: 勇者（ユーザー）が、自分の Mac で npm run mac で作った GridHub.app を Finder から開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。ターミナルは組み立てのときだけ。",
+      "check": {
+        "kind": "stamp",
+        "by": "player"
+      },
+      "labels": [
+        "human",
+        "mac"
+      ]
+    },
+    "GOAL16": {
+      "type": "gate",
+      "title": "あがり（第16章）: Mac のアプリで遊ぶ",
+      "detail": "第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く、package.json の scripts.mac と test:goal、README の「Mac アプリで遊ぶ」と CHANGELOG の第16章（§66〜§73）。公開はしない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/GOAL16.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL16.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs"
+        ],
+        "cases": [
+          "第1章〜第16章のすべての判定が、まとめて本当に通る",
+          "すべての冒険の書が正常。地図と package.json は第16章（scripts.mac・test に大工の判定）",
+          "§64.1 包みに旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章"
         ]
       }
     }

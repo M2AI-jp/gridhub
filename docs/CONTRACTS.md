@@ -15,6 +15,7 @@
 | 縄張り | 持ち主 |
 | --- | --- |
 | `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` `LICENSE` `CHANGELOG.md` | GM（判定と契約。キャラクターは編集禁止） |
+| `mac/**`（Mac のアプリ。第16章） | 大工 `mac` |
 | `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step}.js` | 書記 `engine` |
 | `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
 | `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
@@ -1308,3 +1309,104 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 
 - `GOAL15`: 第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、包み（`npm pack --dry-run`）に入るすべての文字のファイルが §64.1 の決まりを守り、README と CHANGELOG に第15章（名前をそろえた）が書いてある。
 - `package.json` の `test:goal` は `GOAL15` に向ける。版は `0.3.0` のまま。
+
+## 66. Mac のアプリ（第16章・ユーザーの指示）
+
+ユーザーの指示（10/28）「めんどくさすぎる、Macでローカルアプリケーションとして、私が簡単にフォルダを選んでゲームとして遊べるように、GUIも作って。」。ユーザーはチュートリアルを始めようとして、README の sh のブロックを貼る段階で止まった。前に「ゲームの見た目はかなりいいよ、本当にかなりいい」とも言っているので、見た目は今の方眼ノートのまま広げる。
+
+受け入れ条件（ユーザーから見て）:
+
+1. Finder で `GridHub.app` をダブルクリックすると、窓が開く。ターミナルは一度も使わない。
+2. はじめの画面に「フォルダを選ぶ」（Mac 標準のダイアログ。その場で新しいフォルダも作れる）・「最近のフォルダ」・「チュートリアルで遊ぶ」がある。この画面も方眼ノートの見た目。
+3. 選んだフォルダに冒険の書があれば盤面を、無ければ今の入口（願いを書く）を、アプリの窓の中に出す。そのあとの冒険づくり・出撃・ハンコ・ゲートは、すべてアプリの中のボタンでできる。
+4. チュートリアルは、アプリの中だけであがりまで遊べる（ターミナルもエディタも開かない）。手で演じる役のために、盤面から「指令書を読む」「縄張りのファイルを書く」「歩く」「宣言判定」ができる（§67〜§71）。ファイルを書けるのは、そのキャラクターの縄張りの中だけ。封印された判定・地図・冒険の書には書けない。
+5. アプリを閉じると、盤面のサーバーも止まる。アプリが落ちても、サーバーが残らない（標準入力が閉じたら止まる。§68.2）。
+6. Finder から開いたアプリは PATH が短いので、ログインシェルの PATH で node と claude を見つける。Node.js 22 以上が無い・claude が無いときは、何を入れればよいかを日本語で出す。claude が無くても、チュートリアルは遊べる。
+7. アイコンは今の絵（`web/assets`）から作る。
+
+作り: Swift の1ファイル（`mac/GridHub.swift`）で、Apple 標準の AppKit と WebKit だけを使う。ネイティブの窓（WKWebView）に、Node の GridHub（`gridhub app`。§68）が配る画面をそのまま映す。フォルダのダイアログだけを Swift が出す。Xcode は使わず、`swiftc` だけで組める（`mac/build.sh`・`npm run mac`。§72）。**公開に当たること（npm publish・タグ・GitHub Release・アプリの zip を配る）はしない。**
+
+## 67. 書記: 手で演じる役のファイル（第16章）
+
+`src/engine/hand.js`。`src/engine/index.js` から `handFiles`・`readHandFile`・`writeHandFile`・`handPathProblem` を出す。冒険の書に何も記録しない（ファイルはゲームの状態ではない）。
+
+1. `handPathProblem(root, characterId, path)` は、書いてよければ `null`、だめなら `MasumeError` を返す（投げない）。調べる順:
+   1. `path` が文字列でない・空・`/` で始まる・`\` か NUL を含む・`.` `..` や空の区切りがある → `E_USAGE`（400）。
+   2. 冒険の書が無い → `E_NO_GAME`（404）。キャラクターがいない → `E_UNKNOWN`（404）。
+   3. 守られた場所 → `E_SEALED`（403）: `.masume/` と `.git/` の下、どれかのマスの `check.seal` にあるファイル（いまの地図）、名前が `.map.json` で終わるファイル（地図）。
+   4. キャラクターの `territory`（§2 の glob。§43 と同じ読み方）に合わない・縄張りが無い → `E_TERRITORY`（403）。
+   5. ルートの外を指すシンボリックリンクをたどる・途中か本人がシンボリックリンク → `E_TERRITORY`。
+2. `handFiles(root, characterId)` → `{character, territory, files: [{path, size}]}`。ルートの下（`.masume/`・`.git/`・`node_modules/` とシンボリックリンクは見ない）で、1 の決まりで書いてよいファイルを、パスの順に最大500件。
+3. `readHandFile(root, characterId, path)` → `{path, exists, content}`（1 の決まりで書いてよいパスだけ読める。無ければ `exists: false`・`content: ''`）。
+4. `writeHandFile(root, characterId, path, content)` → `{path, bytes}`。`content` は文字列で、UTF-8 で 1MiB まで（超えたら `E_USAGE`）。途中のフォルダは作る。書き込みは一時ファイルから置き換える。
+
+## 68. 伝令: アプリの起動役（`gridhub app`）（第16章）
+
+`src/commands/app.js` と `src/server/app.js`。Mac のアプリはこれを起こし、出てきた URL を窓に映す。ブラウザから開いてもよい。
+
+1. `gridhub app [--port 0] [--host 127.0.0.1] [--home D] [--play D] [--lifeline]`。`--port` の既定は 0（空いているポート）。起動したら stdout の1行目に `GridHub: http://127.0.0.1:<port>/`。
+   - `--home`（無ければ環境変数 `GRIDHUB_APP_HOME`、それも無ければ macOS は `~/Library/Application Support/GridHub`、ほかは `${XDG_CONFIG_HOME:-~/.config}/gridhub`）に、最近のフォルダ `recent.json` を置く。
+   - `--play`（無ければ `GRIDHUB_PLAY_DIR`、それも無ければ `~/GridHub`）に、チュートリアルのフォルダを作る。
+2. **命綱**: `--lifeline` なら、標準入力が閉じたら（end・close）止まる。SIGINT・SIGTERM・SIGHUP でも止まる。止まるときは、開いている冒険の盤面のサーバー（とその子。語り部・軍師・ボス戦）も止める。`gridhub serve --lifeline` も同じ。
+3. `GET /` は、はじめの画面（`web/start.html`。§70）。ほかの静的ファイルは `web/` から（`gridhub serve` と同じ）。Host と Origin と `X-Masume` の決まりは §8 と同じ。
+4. `GET /api/app` → `{ok: true, version, node, in_app, claude: {found, path}, home, play, recent: [{dir, name, has_game, title, missing}], current: {dir, url} | null}`。
+   - `node` は動いている Node.js の版、`in_app` は環境変数 `GRIDHUB_APP` が `1` か。`claude` は PATH の中の実行できる `claude`（無ければ `found: false`・`path: null`）。
+   - `recent` は新しい順に最大10件。`title` は冒険の書があれば地図の題、`missing` はフォルダがもう無いとき `true`。
+5. `POST /api/app/open {dir}` → `dir` は絶対パスの文字列（でなければ 400 `E_USAGE`）、あるフォルダ（無ければ 404 `E_NO_DIR`）。前に開いていた盤面のサーバーを止め、`dir` で盤面のサーバー（§15。冒険の書が無ければ入口）を `--port 0` で起こし、最近のフォルダの先頭に入れる（同じ場所は1つにまとめる）。200 `{ok: true, dir, url, has_game}`。`url` は盤面のサーバーの URL に `?home=<はじめの画面の URL>` を足したもの。
+6. `POST /api/app/tutorial {}` → 包みの `quests/tutorial/` を、`play` の下の新しいフォルダ `チュートリアル`（あれば `チュートリアル 2`・`チュートリアル 3`…）に写し、`tutorial.map.json` で冒険の書を作り（`gridhub new` と同じ）、5 と同じく開く。200 `{ok: true, dir, url, has_game: true}`。
+7. `POST /api/app/forget {dir}` → 最近のフォルダから外す。200 `{ok: true, recent}`。
+
+## 69. 伝令: 手で演じる窓口（第16章）
+
+盤面のサーバー（`gridhub serve` と、`gridhub app` が開く盤面）に足す。POST の決まりは §8 と同じ（`X-Masume`・Origin）。エラーは `{ok: false, code, error}`。
+
+1. `GET /api/hand?character=<id>` → `{ok: true, brief, territory, files, solutions}`。`brief` は `gridhub brief --json` と同じ、`files` は §67.2。`solutions` は、ルートに `SOLUTIONS.json`（チュートリアルの解答の形 `{<マスID>: [{path, content}]}`）があれば、いまのマスの分のうち書いてよいもの（§67.1）、無ければ `[]`。
+2. `GET /api/file?character=<id>&path=<p>` → §67.3。`POST /api/file {character, path, content}` → §67.4。200 `{ok: true, path, bytes}`。だめなら §67.1 のコードと状態。
+3. `POST /api/step {character}` → `gridhub step <id> --as <id> --json` を子プロセスで走らせる。200 `{ok: true, exit, node, cases: [{name, ok}], seq}`。歩けない（ゲートで待っている・ハンコのマスなど）なら 409 とそのコード。
+4. `POST /api/check {character}` → `gridhub check <id> --as <id> --no-boss --json` を子プロセスで走らせる。200 `{ok: true, passed, exit, ready}`（`ready` は仲間がそろった結合ゲートの ID か `null`）。`ready` があれば、ハンコ（§15）と同じくボス戦を別に始める。前提が足りない（未封印・待機中など）なら 409 とそのコード。
+5. 同じキャラクターの step・check は同時に1つだけ（2つ目は 409 `E_BUSY`）。
+
+## 70. 盤面: はじめの画面（第16章）
+
+`web/start.html`（と `web/board/start.js`）。方眼ノートの見た目（`board/board.css` の紙・方眼・インク・手書きの字）。
+
+1. `#choose-folder`（字「フォルダを選ぶ」）・`#tutorial`（字「チュートリアルで遊ぶ」）・`#recent`（最近のフォルダ。`li[data-dir]` に、開く `button.open-recent` と外す `button.forget`）・`#env`（`#env-node` に Node.js の版、`#env-claude[data-found=true|false]`）・`#start-error`。読み終えたら `window.__gridhubStart = {ready: true}`。
+2. アプリの中（`window.webkit.messageHandlers.gridhub` がある）では、`#choose-folder` を押すと `postMessage({type: 'chooseFolder'})` を送る。アプリは選ばれたフォルダで `window.gridhubApp.folderChosen(<絶対パス>)` を呼ぶ。ブラウザでは、`#choose-folder` を押すと `#folder-form`（`input#folder-path` と開くボタン）を出す。
+3. フォルダが決まったら `POST /api/app/open`、チュートリアルは `POST /api/app/tutorial`。返ってきた `url` に移る。できなければ `#start-error` に理由。
+4. `claude.found` が `false` なら、`#env-claude` に「claude（Claude Code）が見つかりません」と入れ方（`npm install -g @anthropic-ai/claude-code`）と、「チュートリアルは claude なしで遊べます」を出す。
+5. 盤面（`web/index.html`）は、URL の `?home=` が手元（`http://127.0.0.1:<port>/` か `http://localhost:<port>/`）なら、`a#home-link`（字「はじめの画面」）をそこへのリンクとして出す。それ以外の `home` は無視する。
+
+## 71. 盤面: 手で進める（第16章）
+
+1. キャラクターシート（§50 の `#drawer`）に、あがっていなければ `button[data-hand="<id>"]`（字「手で進める」）を出す（見本の盤面では出さない）。
+2. 押すと `#hand`（`data-char`。シートとは別の欄で、盤面が新しくなっても書きかけを消さない）を開き、`GET /api/hand` を読む。
+   - `#hand-brief`: いまのマスの題と説明・縄張り・テストの名前。
+   - `#hand-files`: 書けるファイル `li[data-path]`（押すと読み込む）。`input#hand-path`・`textarea#hand-content`・`button#hand-save`（`POST /api/file`）。
+   - `solutions` があれば `button[data-sample="<path>"]`（字「見本を写す」）。押すと、そのパスと中身を書き込み欄に入れる（保存はしない）。
+   - いまのマスが判定のあるダンジョンなら `button#hand-step`（「歩く」）と `button#hand-check`（「宣言判定」）。ハンコのマスで本人が人間なら `button#hand-stamp`（「ハンコを押す」）。ゲートで仲間がそろっていれば `button#hand-battle`（「ボス戦を始める」）。
+   - 結果は `#hand-msg[data-ok=true|false]` と、`#hand-result` のテスト1件ずつ（`li.ok`・`li.ng`）。
+   - 動いたあとは `GET /api/hand` を読み直す。`#hand-close` で閉じる。
+
+## 72. 大工: Mac のアプリ（`mac/`）（第16章）
+
+1. `mac/GridHub.swift`: 1ファイル。`import` は `AppKit`・`WebKit`・`Foundation` だけ。`@main`。
+   - 窓は `NSWindow` に `WKWebView`。スクリプトの窓口の名前は `gridhub`（§70.2）。`type` が `chooseFolder` なら `NSOpenPanel`（`canChooseDirectories = true`・`canChooseFiles = false`・`canCreateDirectories = true`）を出し、選ばれたら `window.gridhubApp.folderChosen(…)` を呼ぶ。
+   - ログインシェル（`getpwuid` の `pw_shell`、無ければ `SHELL`）を `-l` で起こして PATH を読み、よくある場所（`/opt/homebrew/bin`・`/usr/local/bin`・`~/.local/bin` など）を足す。その PATH で `node` を探し、`node -p process.versions.node` の版が 22 以上か確かめる。無い・古いなら、窓に「Node.js 22 以上が要ります」と入れ方（https://nodejs.org ・`brew install node`）を出す（「もう一度さがす」ボタンつき）。
+   - `node <Resources>/gridhub/bin/gridhub.js app --port 0 --lifeline` を `Process` で起こす。環境変数は、その PATH と `GRIDHUB_APP=1`。標準入力は `Pipe`（アプリが生きているあいだ閉じない。アプリが落ちれば閉じて、サーバーが止まる）。stdout の `GridHub: http://127.0.0.1:<port>/` を窓に読み込む。
+   - 窓を閉じるとアプリも終わる（`applicationShouldTerminateAfterLastWindowClosed` が `true`）。終わるときは命綱を閉じてサーバーを止める（`applicationWillTerminate`）。
+   - 「編集」メニュー（取り消す・カット・コピー・ペースト・すべてを選択）と、終了（⌘Q）。JavaScript の alert・confirm を出す。手元（127.0.0.1・localhost）でない URL と、新しい窓で開くリンクは、既定のブラウザで開く。
+2. `mac/Info.plist`: `CFBundleExecutable` は `GridHub`、`CFBundleIdentifier` は `jp.m2ai.gridhub`、`CFBundlePackageType` は `APPL`、`CFBundleShortVersionString` と `CFBundleVersion` は `__VERSION__`（組み立てで `package.json` の版に置き換える）、`CFBundleIconFile` は `AppIcon`、`LSMinimumSystemVersion`、`NSHighResolutionCapable`、`NSAppTransportSecurity` の `NSAllowsLocalNetworking` が `true`。
+3. `mac/build.sh`（`npm run mac`）: POSIX の sh。`dist/GridHub.app` を作る。
+   - `npm pack` と同じ中身（§62.4）を `Contents/Resources/gridhub/` に入れる（`npm pack` して開く）。`Info.plist` の `__VERSION__` を置き換えて `Contents/Info.plist` に。
+   - `swiftc`（Xcode の `xcodebuild` は使わない）で `Contents/MacOS/GridHub` を作る。`mac/AppIcon.png` から `sips` と `iconutil` で `Contents/Resources/AppIcon.icns` を作る。アドホック署名（`codesign --force --deep --sign -`）。
+   - 環境変数 `GRIDHUB_SKIP_SWIFT=1` なら、Swift・アイコン・署名を飛ばし、中身だけを詰める（Mac でない所の判定のため）。
+   - 終わりに、`dist/GridHub.app` の場所と「はじめて開くときは、右クリックして「開く」を選ぶ（署名していないため）」を出す。
+4. `mac/AppIcon.png`: 1024×1024 の PNG。今の絵（`web/assets/sprites/` の勇者と、方眼ノートの紙）から `mac/icon.mjs` で作る（ヘッドレスの Chrome で描く。作り直すときだけ使う）。
+5. `package.json` の `scripts.mac` は `sh mac/build.sh`。`mac/` は npm の包みに入れない（§62.4 のまま）。`dist/` は Git に入れない（`.gitignore`）。
+
+## 73. あがり（第16章）
+
+- `G12`（結合: アプリの中だけでチュートリアルをあがる）: 書記・伝令・盤面・地図職人。`gridhub app` を起こし、はじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけで（見本を写す → 保存 → ハンコ・宣言判定・ボス戦）チュートリアルをあがる。claude が PATH に無くても遊べ、はじめの画面がそれを知らせる。最後に標準入力を閉じると、起動役も盤面のサーバーも止まる。
+- `H4`（王様の城）: 勇者（ユーザー）が、自分の Mac で `npm run mac` で作った `GridHub.app` を開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。
+- `GOAL16`: 第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く（§64.1）、`package.json` の `scripts.mac`・`test:goal`、README の「Mac アプリで遊ぶ」（`npm run mac`・`dist/GridHub.app`・右クリックして「開く」・Node.js 22 以上・claude が無くてもチュートリアル）と、CHANGELOG の第16章。
+- `package.json` の `test:goal` は `GOAL16` に、`test` の判定に `D*`（大工）を足す。

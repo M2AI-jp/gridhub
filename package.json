@@ -19,10 +19,11 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test tests/e2e/[ABEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs",
-    "test:goal": "node --test tests/e2e/GOAL15.test.mjs",
+    "test": "node --test tests/e2e/[ABDEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs",
+    "test:goal": "node --test tests/e2e/GOAL16.test.mjs",
     "serve": "node bin/gridhub.js serve",
-    "board": "node bin/gridhub.js serve"
+    "board": "node bin/gridhub.js serve",
+    "mac": "sh mac/build.sh"
   },
   "license": "MIT"
 }
