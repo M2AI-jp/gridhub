@@ -17,7 +17,7 @@
 | `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` `LICENSE` `CHANGELOG.md` | GM（判定と契約。キャラクターは編集禁止） |
 | `mac/**`（Mac のアプリ。第16章） | 大工 `mac` |
 | `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step}.js` | 書記 `engine` |
-| `src/server/**`、`src/commands/serve.js` | 伝令 `server` |
+| `src/server/**`、`src/commands/serve.js`、`src/commands/app.js`（第16章） | 伝令 `server` |
 | `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
 | `web/assets/sprites/**`、`web/assets/icons/**`、`web/assets/sheet.html` | 絵師 `assets` |
 | `web/**`（上の絵師の場所を除く） | 盤面 `board`（賢者クロード） |
@@ -1342,7 +1342,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 
 ## 68. 伝令: アプリの起動役（`gridhub app`）（第16章）
 
-`src/commands/app.js` と `src/server/app.js`。Mac のアプリはこれを起こし、出てきた URL を窓に映す。ブラウザから開いてもよい。
+`src/commands/app.js` と `src/server/app.js`。Mac のアプリはこれを起こし、出てきた URL を窓に映す。ブラウザから開いてもよい。`src/server/app.js` は `startApp({port, host, home, play, webRoot})` → `{server, url, port, stop}` を出す（`webRoot` の既定は `web/`）。
 
 1. `gridhub app [--port 0] [--host 127.0.0.1] [--home D] [--play D] [--lifeline]`。`--port` の既定は 0（空いているポート）。起動したら stdout の1行目に `GridHub: http://127.0.0.1:<port>/`。
    - `--home`（無ければ環境変数 `GRIDHUB_APP_HOME`、それも無ければ macOS は `~/Library/Application Support/GridHub`、ほかは `${XDG_CONFIG_HOME:-~/.config}/gridhub`）に、最近のフォルダ `recent.json` を置く。

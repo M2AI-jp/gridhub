@@ -70,6 +70,7 @@
         "G11",
         "GOAL14",
         "GOAL15",
+        "B19",
         "GOAL16"
       ]
     },
@@ -143,7 +144,8 @@
         "src/server/**",
         "src/commands/serve.js",
         "src/mcp/**",
-        "src/commands/mcp.js"
+        "src/commands/mcp.js",
+        "src/commands/app.js"
       ],
       "path": [
         "S1",
@@ -180,6 +182,7 @@
         "GOAL14",
         "S11",
         "GOAL15",
+        "S12",
         "GOAL16"
       ]
     },
@@ -2650,6 +2653,67 @@
           "§64.1 包みに旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章"
         ]
       }
+    },
+    "S12": {
+      "type": "task",
+      "title": "アプリの起動役（gridhub app）",
+      "detail": "CONTRACTS §68: はじめの画面を配り、フォルダを開くとその盤面のサーバー（無ければ入口）を起こす。最近のフォルダ（recent.json）・チュートリアルを作って開く・命綱（--lifeline。標準入力が閉じたら、開いた盤面ごと止まる）。gridhub serve --lifeline も。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S12.test.mjs",
+        "seal": [
+          "tests/e2e/S12.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "§68.1・§68.3 startApp は web の start.html を / に配り、ほかは web から。gridhub app は1行目に URL を出す",
+          "§68.4 GET /api/app: 版・Node・claude（PATH の中）・in_app・home・play・最近のフォルダ（はじめは空）",
+          "§68.5 POST /api/app/open: X-Masume が要る・絶対パスでなければ 400・無いフォルダは 404。冒険の書が無ければ入口、あれば盤面。前の盤面は止まる",
+          "§68.5・§68.7 最近のフォルダ: 新しい順・同じ場所は1つ・最大10件・recent.json に残り、起こし直しても読める。forget で外す。消えたフォルダは missing",
+          "§68.6 POST /api/app/tutorial: play の下にチュートリアル（2回目は「チュートリアル 2」）を写し、冒険の書を作って盤面を開く",
+          "§68.2 命綱: --lifeline なら標準入力を閉じると止まり、開いていた盤面のサーバーも止まる。SIGTERM でも止まる。gridhub serve --lifeline も同じ"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "server",
+        "app"
+      ]
+    },
+    "B19": {
+      "type": "task",
+      "title": "はじめの画面（方眼ノート）",
+      "detail": "CONTRACTS §70: web/start.html。フォルダを選ぶ（アプリの中は Mac のダイアログ、ブラウザはパスの欄）・チュートリアルで遊ぶ・最近のフォルダ・Node.js と claude の様子。盤面の「はじめの画面」のリンク（?home= が手元のときだけ）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B19.test.mjs",
+        "seal": [
+          "tests/e2e/B19.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§70.1 はじめの画面: 方眼ノートの紙に、フォルダを選ぶ・チュートリアルで遊ぶ・最近のフォルダ・Node.js の版",
+          "§70.2 アプリの中では「フォルダを選ぶ」で postMessage({type: \"chooseFolder\"})、folderChosen で開いて移る",
+          "§70.2・§70.3 ブラウザでは #folder-form にパスを書いて開く。できなければ #start-error。チュートリアルは POST /api/app/tutorial。最近のフォルダから開く・外す",
+          "§70.4 claude が無ければ、入れ方と「チュートリアルは claude なしで遊べます」",
+          "§70.5 盤面の ?home= が手元（127.0.0.1・localhost）のときだけ「はじめの画面」のリンク"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "app"
+      ]
     }
   }
 }
