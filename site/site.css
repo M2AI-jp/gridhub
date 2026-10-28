@@ -119,9 +119,72 @@ pre {
 pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre; }
 .sticky pre { background: rgba(255, 255, 255, 0.6); }
 
-/* 画面 */
-.shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 28px 22px; margin-top: 20px; }
-.shots .photo { margin: 0; }
+/* 引用（人間の言葉は原文のまま） */
+.quote { margin: 14px 0; padding: 12px 18px 12px 20px; background: var(--card); border-left: 5px solid var(--red); border-radius: 0 10px 10px 0; font-family: var(--hand); }
+.quote p { margin: 0; }
+.quote cite { display: block; margin-top: 6px; font-style: normal; font-size: 14px; color: var(--ink-soft); }
+.quote.big { font-size: clamp(16px, 2.3vw, 19px); line-height: 1.85; max-width: 52em; }
+.answer { font-size: clamp(17px, 2.4vw, 20px); max-width: 46em; margin: 16px 0 4px; }
+.answer b { background: linear-gradient(transparent 58%, var(--mark) 58%); }
+
+/* 実録: 縦の方眼ノートのすごろくの道（1つの出来事が1マス） */
+.road { list-style: none; margin: 22px 0 0; padding: 0 0 0 58px; position: relative; max-width: 900px; }
+.road::before { content: ''; position: absolute; left: 21px; top: 22px; bottom: 22px; border-left: 4px dashed rgba(217, 74, 58, 0.55); }
+.road > li { position: relative; margin: 0 0 26px; min-width: 0; }
+.road .sq {
+  position: absolute; left: -58px; top: 0; width: 46px; height: 46px; display: grid; place-items: center;
+  background: var(--card); border: 2.2px solid var(--ink); border-radius: 4px; font-family: var(--hand); font-weight: 700; font-size: 20px;
+}
+.road .sq img { width: 36px; height: 36px; }
+.road .start, .road .goal { min-height: 46px; display: flex; align-items: center; }
+.road-label { margin: 0; font-family: var(--hand); font-weight: 700; color: var(--ink-soft); }
+.day.wipe .sq { background: #ffe1dc; border-color: var(--red); color: var(--red); }
+.card { background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 12px 18px 14px; box-shadow: 0 6px 14px -10px rgba(29, 43, 92, 0.5); }
+.day:nth-child(odd) .card { border-radius: var(--wobbly-2); }
+.when { margin: 0 0 4px; font-family: var(--hand); font-weight: 700; color: var(--ink-soft); display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.stamp { display: inline-block; padding: 0 10px; border: 2.5px solid var(--red); border-radius: 6px; color: var(--red); font-weight: 700; transform: rotate(-6deg); letter-spacing: 0.2em; }
+.label { display: block; font-family: var(--hand); font-weight: 700; font-size: 13.5px; color: var(--ink-soft); margin: 10px 0 2px; }
+.said blockquote, .record blockquote { margin: 6px 0; padding: 6px 12px; background: rgba(255, 243, 163, 0.55); border-left: 4px solid var(--red); font-family: var(--hand); font-size: 16.5px; }
+.record blockquote { background: rgba(143, 195, 218, 0.18); border-left-color: var(--ink-soft); font-size: 15px; }
+.said blockquote p, .record blockquote p { margin: 0; }
+.said blockquote p::before { content: '「'; }
+.said blockquote p::after { content: '」'; }
+.ai, .mech { margin: 4px 0 0; font-size: 15.5px; }
+.mech { padding: 6px 10px; border: 1.5px dashed var(--ink-soft); border-radius: 8px; background: rgba(255, 255, 255, 0.7); }
+.mech a, .to-day { font-family: var(--hand); font-weight: 700; font-size: 14px; white-space: nowrap; margin-left: 4px; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 22px 18px; margin-top: 18px; }
+.pair .photo { margin: 0; }
+.note { max-width: 52em; padding: 12px 16px; background: rgba(255, 255, 255, 0.75); border: 1.5px dashed var(--ink-soft); border-radius: 8px; }
+
+/* 体制と数字 */
+.roles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); gap: 12px; margin: 14px 0; }
+.roles > div { background: var(--card); border: 1.5px solid var(--ink); border-radius: var(--wobbly); padding: 10px 14px; }
+.roles dt { font-family: var(--hand); font-weight: 700; }
+.roles dd { margin: 4px 0 0; font-size: 15px; }
+.chars { list-style: none; margin: 14px 0 6px; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 160px), 1fr)); gap: 8px; }
+.chars li { padding: 6px 10px; background: rgba(255, 255, 255, 0.8); border: 1.3px solid rgba(29, 43, 92, 0.45); border-radius: 6px; font-size: 14.5px; }
+.chars li b { font-family: var(--hand); margin-right: 4px; }
+.chars li small { display: block; color: var(--ink-soft); font-size: 13px; }
+.chars li[data-agent="codex"] { border-left: 5px solid #7cc7ff; }
+.chars li[data-agent="claude"] { border-left: 5px solid #ffb35c; }
+.chars li[data-agent="human"] { border-left: 5px solid #c9a2ff; }
+.numbers { margin-top: 24px; }
+.numbers-when { font-family: var(--hand); font-weight: 700; margin: 0 0 8px; }
+.tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 10px; }
+.tiles li { background: var(--sticky); padding: 8px 12px 10px; box-shadow: 0 6px 10px -8px rgba(29, 43, 92, 0.5); }
+.tiles li:nth-child(3n+1) { transform: rotate(-0.8deg); }
+.tiles li:nth-child(3n+2) { transform: rotate(0.6deg); }
+.tiles b { font-family: var(--hand); font-size: 28px; line-height: 1.2; }
+.tiles small { display: block; font-size: 13px; color: var(--ink-soft); }
+.tiles li.red b { color: var(--red); }
+
+/* 向いている人・向いていない人 */
+.fit { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 22px; margin-top: 14px; align-items: start; }
+.fit h3 { margin: 0 0 6px; }
+.fit ul { margin: 0; padding-left: 1.2em; }
+.fit li { margin: 4px 0; }
+.sticky.gray { background: #eef0f4; }
+.way .photo { margin-top: 12px; }
 
 /* ---- 下の帯 ---- */
 .bottom { max-width: 1080px; margin: 40px auto 0; padding: 18px var(--gutter) 40px; border-top: 2px solid var(--ink); font-size: 15px; }
@@ -133,5 +196,12 @@ pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre
   .brand { font-size: 21px; }
   .top nav { gap: 2px 14px; font-size: 14px; }
   .photo { padding: 6px 6px 4px; }
-  .tilt-l, .tilt-r { transform: none; }
+  .tilt-l, .tilt-r, .tiles li { transform: none !important; }
+  .road { padding-left: 44px; }
+  .road::before { left: 15px; }
+  .road .sq { left: -44px; width: 34px; height: 34px; font-size: 16px; }
+  .road .sq img { width: 28px; height: 28px; }
+  .card { padding: 10px 12px 12px; }
+  .said blockquote { font-size: 15.5px; }
 }
+@media (prefers-reduced-motion: reduce) { .tiles li { transform: none; } }

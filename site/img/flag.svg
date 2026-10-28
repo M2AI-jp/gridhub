@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>旗</title>
+  <desc>細い棒にはためく黄色い旗。旗の先は二つに分かれ、赤いしるしがある。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 14Q29 8 40 13Q47 16 55 13L48 24L55 32Q44 36 34 31Q26 27 18 32Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M18 11Q17 34 18 55" stroke-width="3"/>
+    <path d="M16 7Q20 5 21 9Q20 13 16 11Q14 9 16 7Z" fill="#d94a3a"/>
+    <path d="M30 17L38 22L31 27Z" fill="#d94a3a" stroke="none"/>
+    <path d="M11 57Q18 54 26 57M10 50L8 47M26 51L29 48" stroke-width="2"/>
+  </g>
+</svg>
