@@ -1,6 +1,7 @@
 // 手で演じる役のファイル（CONTRACTS §67）。書記の縄張り。
 // 盤面から、人間がキャラクターの役を手で演じるときに、そのキャラクターの縄張りの中のファイルだけを読み書きする。
 // 封印された判定・地図・冒険の書（.masume/）・.git/ には書かない。冒険の書には何も記録しない（ファイルはゲームの状態ではない）。
+// 承認のマス（人間が自分のハンコのマスにいるとき）では、指令書と判定に書かれた仲間のファイルも読むだけで見せる（§74.1）。
 import {
   existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync,
 } from 'node:fs';
@@ -13,6 +14,7 @@ import { buildView } from './view.js';
 const MAX_BYTES = 1024 * 1024;
 const MAX_FILES = 500;
 const SKIP_DIRS = new Set(['.masume', '.git', 'node_modules']);
+const PATH_WORD = /[A-Za-z0-9_][A-Za-z0-9_./-]*/gu;
 
 /** パスの形（§67.1 の 1）: 相対で、/ 区切り、空・.・.. の区切りが無い */
 function badShape(path) {
@@ -30,12 +32,28 @@ function gameOf(root, characterId) {
   const sealed = new Set(Object.values(view.nodes).flatMap((node) => node.check?.seal ?? []).map(clean));
   const territory = character.territory ?? [];
   const patterns = territory.map((glob) => globToRegExp(clean(glob)));
+  const at = character.at ? view.nodes[character.at] : null;
+  const approving = character.kind === 'human' && character.status === 'working'
+    && at?.type === 'task' && at.check?.kind === 'stamp' && at.check.by === character.id;
+  // 指令書（いまのマス）と判定（すぐ次のゲート）の説明に書かれたパス。承認のマスでだけ使う（§74.1）
+  const mentioned = new Set();
+  if (approving) {
+    const next = view.nodes[character.path[character.pos + 1]];
+    const texts = [at.title, at.detail, next?.type === 'gate' ? next.detail : null];
+    for (const word of texts.filter((t) => typeof t === 'string').flatMap((t) => t.match(PATH_WORD) ?? [])) {
+      const path = word.replace(/\.+$/u, '');
+      if ((path.includes('/') || path.includes('.')) && !badShape(path)) mentioned.add(path);
+    }
+  }
+  const owners = view.characters.map(({ id, territory: globs = [] }) => ({ id, patterns: globs.map((glob) => globToRegExp(clean(glob))) }));
   return {
     character,
     territory,
     isProtected: (path) => path === '.masume' || path.startsWith('.masume/') || path === '.git' || path.startsWith('.git/')
       || sealed.has(path) || path.endsWith('.map.json'),
     inTerritory: (path) => patterns.some((pattern) => pattern.test(path)),
+    mentioned,
+    ownerOf: (path) => owners.find(({ patterns: globs }) => globs.some((pattern) => pattern.test(path)))?.id ?? null,
   };
 }
 
@@ -79,6 +97,12 @@ export function handPathProblem(root, characterId, path) {
   return problemIn(root, game, path);
 }
 
+/** 承認のマスで読むだけで見せてよいファイルなら、その縄張りの持ち主。だめなら null（§74.1） */
+function reviewOwner(root, game, path) {
+  if (!game.mentioned.has(path) || game.isProtected(path) || throughSymlink(root, path)) return null;
+  return game.ownerOf(path);
+}
+
 function requireWritable(root, characterId, path) {
   const problem = handPathProblem(root, characterId, path);
   if (problem) throw problem;
@@ -120,19 +144,46 @@ export function handFiles(root, characterId) {
   return { character: characterId, territory: game.territory, files };
 }
 
-/** 縄張りの中のファイルを読む（§67.3）。無ければ exists: false */
+/** 承認のマスで、読むだけで見せるファイル（§74.1）。指令書と判定に書かれた、だれかの縄張りの守られていないもの。ほかのときは空 */
+export function handReviewFiles(root, characterId) {
+  root = resolve(root);
+  const game = gameOf(root, characterId);
+  if (game instanceof MasumeError) throw game;
+  const files = [];
+  for (const path of [...game.mentioned].sort()) {
+    const owner = reviewOwner(root, game, path);
+    if (owner === null) continue;
+    let info;
+    try {
+      info = lstatSync(join(root, path));
+    } catch {
+      continue; // まだ無い
+    }
+    if (info.isFile()) files.push({ path, size: info.size, owner });
+  }
+  return { character: characterId, files };
+}
+
+/** 縄張りの中のファイルを読む（§67.3）。無ければ exists: false。承認のマスでは読むだけのファイルも（readonly: true。§74.1） */
 export function readHandFile(root, characterId, path) {
   root = resolve(root);
-  requireWritable(root, characterId, path);
+  let readonly = false;
+  const problem = handPathProblem(root, characterId, path);
+  if (problem) {
+    const game = problem.code === 'E_TERRITORY' ? gameOf(root, characterId) : null;
+    if (!game || game instanceof MasumeError || reviewOwner(root, game, path) === null) throw problem;
+    readonly = true;
+  }
+  const mark = readonly ? { readonly: true } : {};
   const file = join(root, path);
   let info;
   try {
     info = lstatSync(file);
   } catch {
-    return { path, exists: false, content: '' };
+    return { path, exists: false, content: '', ...mark };
   }
   if (!info.isFile()) throw new MasumeError('E_USAGE', `${path} はファイルではありません`);
-  return { path, exists: true, content: readFileSync(file, 'utf8') };
+  return { path, exists: true, content: readFileSync(file, 'utf8'), ...mark };
 }
 
 /** 縄張りの中のファイルを書く（§67.4）。途中のフォルダは作り、一時ファイルから置き換える */
