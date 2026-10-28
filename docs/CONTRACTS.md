@@ -1437,12 +1437,19 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - `site/` だけで動く静的なページ。入口は `site/index.html`、見た目は `site/site.css`、絵とスクリーンショットは `site/img/`。HTML・CSS・画像（PNG・SVG）だけで、スクリプトは使わない。組み立ての手順・外部パッケージ・CDN・外の字（Web フォント）は使わない。`site/` の外を指さない（`../` を使わない）。
    - 方眼ノートの見た目（5mm方眼の紙・付箋・貼った写真）。字は手元にある字だけ（`Klee One`・ヒラギノ丸ゴなどの名前を並べ、無ければ OS の字）。日本語（`<html lang="ja">`）。
    - スクリーンショットは `tools/site-shots.mjs`（テストの Chrome。`MASUME_CHROME=… node tools/site-shots.mjs`）で撮り直せる。冒険は一時フォルダに作り、このリポジトリの冒険の書には書かない（盤面の1枚は、このリポジトリの冒険の書を読むだけで配る）。
-2. **中身**（`W1`）:
+2. **中身**（`W1`）。第17章の途中で作り直した（ユーザー「うーんと、価値訴求が意味不明で読んでも入れたいと思うユーザーいないと思うよ？　コンテキストがないから意味不明なんですよ。あなたの私の開発工程そのものが、このゲームを必要としているユーザーへのメッセージになるので、作り直してください。」）。ページの背骨は、仕組みの説明ではなく、GridHub 自身を作った14日間の記録。読む人は、AI のコーディングエージェントに開発を任せ、「いま、どこまでできてる？」をチャットで聞いている人（ディレクター・PM・個人開発者が主。エンジニアが読んでも違和感のない言葉で）。
    - `<head>`: `meta charset="utf-8"`・`viewport`（`width=device-width`）・`<title>`（GridHub）・`description`・OGP（`og:title`・`og:description`・`og:url` は `https://gridhub.matsunai.com/`・`og:image` はその下の、`site/` にある画像）。
-   - `#what`「GridHub とは」: テスト1件 = 1マス（`gridhub step`）・タスク = ダンジョン（出口で宣言 `gridhub check`）・町 = Git のコミット（`git stash` の墓）・キャラクター = AI エージェントと人間（縄張り）・中ボス・魔王 = 結合テスト・王様の城 = 人間のハンコ・余白のマス（会話・雑談・瓦版）・冒険の書（ハッシュの鎖・封印）。エンジニアにすぐ伝わるよう、開発の言葉を先に書く。
+   - `#hero`（1画面目）: 読む人の困りごと（「いま、どこまで」）を先に書き、ユーザーの最初の依頼（2026-10-15）の芯の一節（『セーブデータ』が失われたり…コンテキストは有限…）を原文で引く。そのあと「GridHub はその答え。AI が本当に通したテストの数だけ駒が進み、自己申告では進まない」と、「このページの GridHub も GridHub の盤の上で作った。その14日間の記録」へ（`#days` へのリンク）。仕組みの言葉（封印・ダンジョン・町・ゲート）は出さない。盤面の写真は置いてよい。
+   - `#origin`（はじまり）: 最初の依頼の2つの一節（兄と遊んだ方眼ノート・このゲームの意義）。
+   - `#days`（実録: 14日間）: `li.day`（`id="day-N"`・`data-date`）を日付の順に10マス以上、縦のすごろくの道として並べる。どのマスにも、人間のひと言（`.said`。原文のまま）か冒険の書の記録（`.record`。GM の裁定の日誌の引用）・そのとき AI 側で起きていたこと（`.ai`）・それで GridHub に入ったもの（`.mech`）。ボス戦の全滅は、その時点の記録にあるぶんを隠さずに書く（`li.day.wipe`）。出来事の seq は `<span data-seq="N" data-type="…">seq N</span>`（`data-gate`・`data-node` を添えてよい）で書き、冒険の書のそのとおり。
+   - 人間の言葉は原文のまま。縮めるのは「…」だけで、言い換えない。ほかのサービス名・メールアドレス・手元のパスは出さない。記録で確かめられない数（「生産性が○倍」など）は書かない。
+   - `#team`（体制と数字）: 人間（勇者）・監督・GM・キャラクター。キャラクターは `li[data-char][data-agent]` で、地図の `characters` とその担当（Codex・Claude・人間）のとおり。`#numbers` は、書いた時点（`data-commit`・`data-seq`・`data-from`・`data-to`）を字でも添え、`data-count` の数（日数・コミット・地図のマス・判定ファイル・冒険の書の記録・封印・改訂・宣言判定の成功・ゲート突破・全滅・出撃とその内訳）は、そのコミットと冒険の書から数え直せる。`npm test` のテストの数は、そのコミットの本文に残した結果のとおり。
+   - `#what`（仕組み）: 8つ以上（`div.term#m-…`）。どれも実録のマス（`#day-N`）へのリンクを持つ。実録から `#m-…` へのリンクは、ある仕組みを指す。
+   - `#fit`（向いている人・向いていない人）: 向いていない・まだ足りないこととして、テストで確かめられない仕事・日本語だけ・Node.js 22 以上が要る・Mac のアプリは自分で組み立てる（配布用の署名・公証はしていない）・npm には出していない、を書く。
    - `#play`「遊び方は3つ」: `#way-mac`（Mac のアプリ。フォルダを選ぶだけ）・`#way-tutorial`（5分のチュートリアル。claude が無くてもあがれる）・`#way-idea`（自分のアイデアで、Claude と。`gridhub quest`）。
-   - `#install`「入れる」: GitHub（`https://github.com/M2AI-jp/gridhub`。リンク）・Mac のアプリ（`git clone https://github.com/M2AI-jp/gridhub.git` と `npm run mac`、`dist/GridHub.app`、はじめは右クリックして「開く」、macOS 13 以上・Node.js 22 以上・Command Line Tools）・コマンド（`npm install -g github:M2AI-jp/gridhub#v0.3.0`）。
+   - `#install`「入れる」: GitHub（`https://github.com/M2AI-jp/gridhub`。リンク）・Mac のアプリ（`git clone https://github.com/M2AI-jp/gridhub.git` と `npm run mac`、`dist/GridHub.app`、はじめは右クリックして「開く」、macOS 13 以上・Node.js 22 以上・Command Line Tools）・コマンド（`npm install -g github:M2AI-jp/gridhub#v0.3.0`。npm には出していない）。
    - スクリーンショット4枚: `img/board.png`（盤面）・`img/start.png`（はじめの画面）・`img/hand.png`（手で進める）・`img/ending.png`（あがり）。PNG・幅 1000px 以上。`<img>` には `alt` と、本当の大きさの `width`・`height`。
+   - 第17章の冒険の書の記録（§75.6）を足すときに、`#numbers` の時点と数・H4 のハンコのくだりを、その時点の記録に合わせて書き直す。
 3. **リンクと読み込み**（`W2`）:
    - `site/` の中は HTML・CSS・画像だけ。SVG にもスクリプトが無い。CSS に `@import`・`@font-face` が無い。
    - `href`・`src`・`srcset`・CSS の `url()` は、`site/` の中にあるファイル（相対）・ページの中の `#id`（その `id` がある）・GitHub（`https://github.com/M2AI-jp/gridhub` とその下）への `<a href>` のリンクだけ。`og:url`・`og:image` は `https://gridhub.matsunai.com/` の下で、`site/` にあるもの。
