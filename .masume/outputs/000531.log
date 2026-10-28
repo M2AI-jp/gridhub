@@ -1,0 +1,33 @@
+=== S12: node --test --test-reporter=spec tests/e2e/S12.test.mjs ===
+✔ §68.1・§68.3 startApp は web の start.html を / に配り、ほかは web から。gridhub app は1行目に URL を出す (143.292723ms)
+✔ §68.4 GET /api/app: 版・Node・claude（PATH の中）・in_app・home・play・最近のフォルダ（はじめは空） (155.827341ms)
+✔ §68.5 POST /api/app/open: X-Masume が要る・絶対パスでなければ 400・無いフォルダは 404。冒険の書が無ければ入口、あれば盤面。前の盤面は止まる (198.899903ms)
+✔ §68.5・§68.7 最近のフォルダ: 新しい順・同じ場所は1つ・最大10件・recent.json に残り、起こし直しても読める。forget で外す。消えたフォルダは missing (229.381966ms)
+✔ §68.6 POST /api/app/tutorial: play の下にチュートリアル（2回目は「チュートリアル 2」）を写し、冒険の書を作って盤面を開く (149.747319ms)
+✔ §68.2 命綱: --lifeline なら標準入力を閉じると止まり、開いていた盤面のサーバーも止まる。SIGTERM でも止まる。gridhub serve --lifeline も同じ (353.545381ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 16295.907586
+
+(exit 0, 16338ms)
+=== S13: node --test --test-reporter=spec tests/e2e/S13.test.mjs ===
+✔ §69.1 GET /api/hand: 指令書・縄張り・書けるファイル・見本（SOLUTIONS.json のいまのマスの分） (232.342964ms)
+✔ §69.2 GET・POST /api/file: 縄張りの中は読み書きでき、外は 403 E_TERRITORY、封印された判定は 403 E_SEALED、X-Masume が要る (181.440538ms)
+✔ §69.3 POST /api/step: いまのダンジョンの判定だけを走らせる（位置は変わらない）。ハンコのマスでは 409 (469.383222ms)
+✔ §69.4 POST /api/check: 宣言判定（ボス戦は省く）。通れば passed: true で進み、仲間がそろえば ready を返して、ボス戦を別に始める (1085.245318ms)
+✔ §69.5 同じキャラクターの step・check は同時に1つだけ（2つ目は 409 E_BUSY） (281.758076ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2321.691602
+
+(exit 0, 2367ms)

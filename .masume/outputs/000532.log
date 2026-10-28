@@ -1,0 +1,32 @@
+=== B19: node --test --test-reporter=spec tests/e2e/B19.test.mjs ===
+✔ §70.1 はじめの画面: 方眼ノートの紙に、フォルダを選ぶ・チュートリアルで遊ぶ・最近のフォルダ・Node.js の版 (700.074424ms)
+✔ §70.2 アプリの中では「フォルダを選ぶ」で postMessage({type: "chooseFolder"})、folderChosen で開いて移る (760.3242ms)
+✔ §70.2・§70.3 ブラウザでは #folder-form にパスを書いて開く。できなければ #start-error。チュートリアルは POST /api/app/tutorial。最近のフォルダから開く・外す (1726.310921ms)
+✔ §70.4 claude が無ければ、入れ方と「チュートリアルは claude なしで遊べます」 (1533.694326ms)
+✔ §70.5 盤面の ?home= が手元（127.0.0.1・localhost）のときだけ「はじめの画面」のリンク (3004.905661ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7790.063482
+
+(exit 0, 7836ms)
+=== B20: node --test --test-reporter=spec tests/e2e/B20.test.mjs ===
+✔ §71.1・§71.2 キャラクターシートの「手で進める」で、手で進める欄（#hand）を開き、指令書・縄張り・書けるファイル (1601.425779ms)
+✔ §71.2 ファイルを押すと読み込み、書いて保存すると POST /api/file。見本を写すは欄に入れるだけ（保存しない） (2124.13993ms)
+✔ §71.2 歩く・宣言判定の結果を、知らせ（#hand-msg）とテスト1件ずつ（#hand-result）に。動いたあとは読み直す (3465.512579ms)
+✔ §71.2 ハンコのマスで本人が人間ならハンコのボタン（#hand-stamp）、ゲートで仲間がそろえばボス戦のボタン（#hand-battle） (4879.640758ms)
+✔ §71.2・§71.3 書きかけは盤面が新しくなっても消えない（#drawer と別の欄）。見本の盤面では「手で進める」を出さない (3408.886525ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15561.321559
+
+(exit 0, 15594ms)

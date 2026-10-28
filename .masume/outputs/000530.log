@@ -1,0 +1,15 @@
+=== E17: node --test --test-reporter=spec tests/e2e/E17.test.mjs ===
+✔ §67.1 handPathProblem: 形のおかしいパスは E_USAGE、冒険の書が無ければ E_NO_GAME、いないキャラクターは E_UNKNOWN (77.88184ms)
+✔ §67.1 封印された判定・地図・.masume/・.git/ は縄張りの中でも E_SEALED、縄張りの外と縄張りの無いキャラクターは E_TERRITORY (83.764132ms)
+✔ §67.1 シンボリックリンクをたどる・本人がシンボリックリンクなら E_TERRITORY（ルートの外を書き換えない） (72.711816ms)
+✔ §67.2〜§67.4 handFiles・readHandFile・writeHandFile: 縄張りの中のファイルを一覧し、読み、書く（途中のフォルダを作る・1MiB まで）。冒険の書には何も記録しない (129.120307ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 452.556614
+
+(exit 0, 496ms)
