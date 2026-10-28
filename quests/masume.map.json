@@ -73,6 +73,7 @@
         "B19",
         "B20",
         "G12",
+        "B21",
         "GOAL16"
       ]
     },
@@ -133,6 +134,7 @@
         "GOAL15",
         "E17",
         "G12",
+        "E18",
         "GOAL16"
       ]
     },
@@ -189,6 +191,7 @@
         "S12",
         "S13",
         "G12",
+        "S14",
         "GOAL16"
       ]
     },
@@ -2637,10 +2640,72 @@
         "mac"
       ]
     },
+    "E18": {
+      "type": "task",
+      "title": "承認のマスで、仲間のファイルを読むだけで見せる",
+      "detail": "CONTRACTS §74.1: handReviewFiles（人間が自分のハンコのマスにいるとき、だれかの縄張りの守られていないファイル）と、readHandFile の readonly。読むだけのファイルには書かない（E_TERRITORY）。冒険の書には記録しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E18.test.mjs",
+        "seal": [
+          "tests/e2e/E18.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§74.1 人間が承認のマス（自分のハンコのマス）にいるとき、handReviewFiles は仲間と自分の縄張りの、守られていないファイルを返す。ほかのときは空",
+          "§74.1 readHandFile は読むだけのファイルに readonly: true をつけ、writeHandFile は書かない（E_TERRITORY）。守られた場所は E_SEALED"
+        ]
+      }
+    },
+    "S14": {
+      "type": "task",
+      "title": "承認のマスの、読むだけのファイル",
+      "detail": "CONTRACTS §74.2: GET /api/hand に review、GET /api/file は readonly をそのまま返す。読むだけのファイルへの POST は 403 E_TERRITORY。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S14.test.mjs",
+        "seal": [
+          "tests/e2e/S14.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "§74.2 GET /api/hand の review（人間が承認のマスにいるとき、縄張りのファイル）と、GET /api/file の readonly。読むだけのファイルには書けない"
+        ]
+      }
+    },
+    "B21": {
+      "type": "task",
+      "title": "手で進めるの手直し",
+      "detail": "CONTRACTS §74.3: 承認のマスの読むだけのファイル（#hand-review・#hand-readonly）、ファイル名の例は見本か縄張りから、進んだら欄を空に、アプリの中では CLI の言い方をボタンの名前に言い換え、キャラクターシートの CLI は「ターミナルでは」に畳む。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B21.test.mjs",
+        "seal": [
+          "tests/e2e/B21.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§74.3 承認のマスでは、読むだけのファイル（#hand-review）を押すと中身を出し、書き込み欄は読むだけ（保存できない）。自分のファイルを開けばまた書ける",
+          "§74.3 ファイル名の欄の例は、見本があれば見本のパス、無ければ縄張りから（ai/hello.txt の決め打ちをしない）",
+          "§74.3 次のマスに進んだら、ファイル名と中身の欄を空にする",
+          "§74.3 アプリの中（?home= が手元）では、指令書・マスの説明・キャラクターシートに CLI の言い方を出さない（ボタンの名前に言い換え、CLI は「ターミナルでは」で畳む）"
+        ]
+      }
+    },
     "GOAL16": {
       "type": "gate",
       "title": "あがり（第16章）: Mac のアプリで遊ぶ",
-      "detail": "第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く、package.json の scripts.mac と test:goal、README の「Mac アプリで遊ぶ」と CHANGELOG の第16章（§66〜§73）。公開はしない。",
+      "detail": "第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く、package.json の scripts.mac と test:goal、README の「Mac アプリで遊ぶ」と CHANGELOG の第16章（§66〜§74）。公開はしない。",
       "check": {
         "kind": "cmd",
         "run": "node --test --test-reporter=spec tests/e2e/GOAL16.test.mjs",

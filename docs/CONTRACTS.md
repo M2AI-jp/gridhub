@@ -1412,3 +1412,17 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 - `H4`（王様の城）: 勇者（ユーザー）が、自分の Mac で `npm run mac` で作った `GridHub.app` を開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。
 - `GOAL16`: 第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く（§64.1）、`package.json` の `scripts.mac`・`test:goal`、README の「Mac アプリで遊ぶ」（`npm run mac`・`dist/GridHub.app`・右クリックして「開く」・Node.js 22 以上・claude が無くてもチュートリアル）と、CHANGELOG の第16章。
 - `package.json` の `test:goal` は `GOAL16` に、`test` の判定に `D*`（大工）を足す。
+
+## 74. 手で進めるの手直し（第16章・監督の確かめ）
+
+監督が Mac のアプリでチュートリアルを最後まで通して、4つの手直しを頼んだ。
+
+1. **書記**（`E18`）: 承認のマス（人間が `check.by` の本人として、ハンコのマスにいるとき）では、指令書や判定が読むファイルを、読むだけで見せる。
+   - `handReviewFiles(root, characterId)` → `{files: [{path, size, owner}]}`。だれかの縄張り（自分のも）に合い、守られていない（§67.1 の 3）ファイル。`owner` は、そのパスの縄張りを持つキャラクター（地図の順で最初）。承認のマスにいないときは `files: []`。シンボリックリンクは見ない。
+   - `readHandFile` は、承認のマスでは、その読むだけのファイルも読み、`readonly: true` をつけて返す（書けるファイルには `readonly` をつけない。§67.3 のまま）。`writeHandFile` は今までどおり（読むだけのファイルは `E_TERRITORY`）。守られた場所は読むだけでも `E_SEALED`。
+2. **伝令**（`S14`）: `GET /api/hand` に `review`（1 の `files`）を足す。`GET /api/file` は `readonly` をそのまま返す。
+3. **盤面**（`B21`）:
+   - `review` があれば `#hand-review`（`li[data-path]`。字「読むだけのファイル」）。押すと中身を書き込み欄に出し、`#hand-content` は `readOnly`、`#hand-save` は押せない、`#hand-readonly`（「読むだけ（書けません）」）を出す。自分のファイルや見本を開けば、また書ける。
+   - `#hand-path` の例（`placeholder`）は、見本があれば最初の見本のパス、無ければ縄張りの最初の glob から作る（`human/**` なら `human/` で始まる）。`ai/hello.txt` の決め打ちをやめる。
+   - いまのマスが変わったら（進んだ・戻された）、`#hand-path` と `#hand-content` を空にする。
+   - アプリの中（`?home=` が手元。§70.5）では、手で進める欄の指令書・マスの説明（`#drawer`）・仲間の欄に、CLI の言い方を出さない。`gridhub`（`masume`）の `stamp …`・`check …`・`step …`・`brief …` は、ボタンの名前（「ハンコを押す」・「宣言判定」・「歩く」・「手で進める」）に言い換える。キャラクターシートの CLI の指示は `details.cli`（字「ターミナルでは」。初めは閉じている）に畳む。アプリの外（`?home=` が無い）は今までどおり。
