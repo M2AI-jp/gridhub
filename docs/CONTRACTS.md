@@ -16,6 +16,7 @@
 | --- | --- |
 | `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` `LICENSE` `CHANGELOG.md` | GM（判定と契約。キャラクターは編集禁止） |
 | `mac/**`（Mac のアプリ。第16章） | 大工 `mac` |
+| `site/**`・`tools/site-shots.mjs`（紹介ページ。第17章） | 看板屋 `site` |
 | `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step}.js` | 書記 `engine` |
 | `src/server/**`、`src/commands/serve.js`、`src/commands/app.js`（第16章） | 伝令 `server` |
 | `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
@@ -1427,3 +1428,25 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - `#hand-path` の例（`placeholder`）は、見本があれば最初の見本のパス、無ければ縄張りの最初の glob から作る（`human/**` なら `human/` で始まる）。`ai/hello.txt` の決め打ちをやめる。
    - いまのマスが変わったら（進んだ・戻された）、`#hand-path` と `#hand-content` を空にする。
    - アプリの中（`?home=` が手元。§70.5）では、手で進める欄の指令書・マスの説明（`#drawer`）・仲間の欄に、CLI の言い方を出さない。`gridhub`（`masume`）の `stamp …`・`check …`・`step …`・`brief …` は、ボタンの名前（「ハンコを押す」・「宣言判定」・「歩く」・「手で進める」）に言い換える。キャラクターシートの CLI の指示は `details.cli`（字「ターミナルでは」。初めは閉じている）に畳む。アプリの外（`?home=` が無い）は今までどおり。
+
+## 75. 紹介ページ（第17章）
+
+監督から（ユーザーの言葉「完成したらさ、Grithubをmatsunai.comのサブドメインで取得していいから、ゲーム紹介用のページも作っておいて。」）。`gridhub.matsunai.com` に置く、GridHub を紹介する1ページを作る。ページを置く（Cloudflare・DNS）のは監督で、このリポジトリからは公開しない。
+
+1. **看板屋**（`site`。新しいキャラクター。縄張りは `site/**` と `tools/site-shots.mjs`）:
+   - `site/` だけで動く静的なページ。入口は `site/index.html`、見た目は `site/site.css`、絵とスクリーンショットは `site/img/`。HTML・CSS・画像（PNG・SVG）だけで、スクリプトは使わない。組み立ての手順・外部パッケージ・CDN・外の字（Web フォント）は使わない。`site/` の外を指さない（`../` を使わない）。
+   - 方眼ノートの見た目（5mm方眼の紙・付箋・貼った写真）。字は手元にある字だけ（`Klee One`・ヒラギノ丸ゴなどの名前を並べ、無ければ OS の字）。日本語（`<html lang="ja">`）。
+   - スクリーンショットは `tools/site-shots.mjs`（テストの Chrome。`MASUME_CHROME=… node tools/site-shots.mjs`）で撮り直せる。冒険は一時フォルダに作り、このリポジトリの冒険の書には書かない（盤面の1枚は、このリポジトリの冒険の書を読むだけで配る）。
+2. **中身**（`W1`）:
+   - `<head>`: `meta charset="utf-8"`・`viewport`（`width=device-width`）・`<title>`（GridHub）・`description`・OGP（`og:title`・`og:description`・`og:url` は `https://gridhub.matsunai.com/`・`og:image` はその下の、`site/` にある画像）。
+   - `#what`「GridHub とは」: テスト1件 = 1マス（`gridhub step`）・タスク = ダンジョン（出口で宣言 `gridhub check`）・町 = Git のコミット（`git stash` の墓）・キャラクター = AI エージェントと人間（縄張り）・中ボス・魔王 = 結合テスト・王様の城 = 人間のハンコ・余白のマス（会話・雑談・瓦版）・冒険の書（ハッシュの鎖・封印）。エンジニアにすぐ伝わるよう、開発の言葉を先に書く。
+   - `#play`「遊び方は3つ」: `#way-mac`（Mac のアプリ。フォルダを選ぶだけ）・`#way-tutorial`（5分のチュートリアル。claude が無くてもあがれる）・`#way-idea`（自分のアイデアで、Claude と。`gridhub quest`）。
+   - `#install`「入れる」: GitHub（`https://github.com/M2AI-jp/gridhub`。リンク）・Mac のアプリ（`git clone https://github.com/M2AI-jp/gridhub.git` と `npm run mac`、`dist/GridHub.app`、はじめは右クリックして「開く」、macOS 13 以上・Node.js 22 以上・Command Line Tools）・コマンド（`npm install -g github:M2AI-jp/gridhub#v0.3.0`）。
+   - スクリーンショット4枚: `img/board.png`（盤面）・`img/start.png`（はじめの画面）・`img/hand.png`（手で進める）・`img/ending.png`（あがり）。PNG・幅 1000px 以上。`<img>` には `alt` と、本当の大きさの `width`・`height`。
+3. **リンクと読み込み**（`W2`）:
+   - `site/` の中は HTML・CSS・画像だけ。SVG にもスクリプトが無い。CSS に `@import`・`@font-face` が無い。
+   - `href`・`src`・`srcset`・CSS の `url()` は、`site/` の中にあるファイル（相対）・ページの中の `#id`（その `id` がある）・GitHub（`https://github.com/M2AI-jp/gridhub` とその下）への `<a href>` のリンクだけ。`og:url`・`og:image` は `https://gridhub.matsunai.com/` の下で、`site/` にあるもの。
+   - Chrome で `http://` と `file://` の両方で開いて、読み込んだもの（`performance` の resource）がすべて同じ場所から。画像はすべて読める。コンソールにエラーが無い。
+4. **スマホ**（`W3`）: 幅 320・375・390（スマホの縦）・768・1280 で、ページが横にはみ出さない（`scrollWidth` が画面の幅に収まり、画面の外にはみ出す要素が無い）。コードの箱（`pre`）は画面に収まり、箱の中で横に動かせる（`overflow-x: auto`）。幅 320 でも字は 13px 以上、上の帯の目次とボタンは 24px 以上。
+5. **あがり**（`GOAL17`）: 第1章〜第17章のすべての判定がまとめて通り、すべての冒険の書が正常で、地図の `quest.goal` が `GOAL17`、看板屋の縄張りが `site/**`、すべての道が `GOAL17` で終わり、`package.json` の `test` に `W*`・`test:goal` が `GOAL17`。`site/` と `tools/` は包みに入らない。README に紹介ページ（`site/`・`gridhub.matsunai.com`）、CHANGELOG に第17章。
+6. **冒険の書の順番**: 冒険の書はハッシュの鎖なので、2本に分かれると取り込めない。勇者（ユーザー）が自分の Mac で H4 のハンコを押して、GOAL16 のボス戦の記録が main に入ってから、第17章の地図（第24版。看板屋の道 `W1`→`W2`→`W3`→`GOAL17`、ほかの全員は `GOAL16` のあとに `GOAL17`）に改訂し、封印して、宣言判定をする。それまでは、`quests/masume.map.json` と `package.json` の `test:goal` は第16章のまま（GOAL16 の判定が地図と `test:goal` を確かめるため）。
