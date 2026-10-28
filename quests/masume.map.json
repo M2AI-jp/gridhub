@@ -71,6 +71,8 @@
         "GOAL14",
         "GOAL15",
         "B19",
+        "B20",
+        "G12",
         "GOAL16"
       ]
     },
@@ -129,6 +131,8 @@
         "G11",
         "GOAL14",
         "GOAL15",
+        "E17",
+        "G12",
         "GOAL16"
       ]
     },
@@ -183,6 +187,8 @@
         "S11",
         "GOAL15",
         "S12",
+        "S13",
+        "G12",
         "GOAL16"
       ]
     },
@@ -311,6 +317,7 @@
         "GOAL14",
         "M10",
         "GOAL15",
+        "G12",
         "GOAL16"
       ]
     },
@@ -2714,6 +2721,113 @@
         "ui",
         "app"
       ]
+    },
+    "E17": {
+      "type": "task",
+      "title": "手で演じる役のファイル（縄張りの中だけ）",
+      "detail": "CONTRACTS §67: src/engine/hand.js。handPathProblem・handFiles・readHandFile・writeHandFile。縄張りの外・封印された判定・地図・.masume/・.git/・シンボリックリンクには書かない。冒険の書には記録しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E17.test.mjs",
+        "seal": [
+          "tests/e2e/E17.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§67.1 handPathProblem: 形のおかしいパスは E_USAGE、冒険の書が無ければ E_NO_GAME、いないキャラクターは E_UNKNOWN",
+          "§67.1 封印された判定・地図・.masume/・.git/ は縄張りの中でも E_SEALED、縄張りの外と縄張りの無いキャラクターは E_TERRITORY",
+          "§67.1 シンボリックリンクをたどる・本人がシンボリックリンクなら E_TERRITORY（ルートの外を書き換えない）",
+          "§67.2〜§67.4 handFiles・readHandFile・writeHandFile: 縄張りの中のファイルを一覧し、読み、書く（途中のフォルダを作る・1MiB まで）。冒険の書には何も記録しない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "app"
+      ]
+    },
+    "S13": {
+      "type": "task",
+      "title": "手で演じる窓口",
+      "detail": "CONTRACTS §69: GET /api/hand（指令書・縄張り・書けるファイル・見本）・GET/POST /api/file・POST /api/step・POST /api/check（ボス戦は省き、仲間がそろえば別に始める）。同じキャラクターは同時に1つだけ。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S13.test.mjs",
+        "seal": [
+          "tests/e2e/S13.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "§69.1 GET /api/hand: 指令書・縄張り・書けるファイル・見本（SOLUTIONS.json のいまのマスの分）",
+          "§69.2 GET・POST /api/file: 縄張りの中は読み書きでき、外は 403 E_TERRITORY、封印された判定は 403 E_SEALED、X-Masume が要る",
+          "§69.3 POST /api/step: いまのダンジョンの判定だけを走らせる（位置は変わらない）。ハンコのマスでは 409",
+          "§69.4 POST /api/check: 宣言判定（ボス戦は省く）。通れば passed: true で進み、仲間がそろえば ready を返して、ボス戦を別に始める",
+          "§69.5 同じキャラクターの step・check は同時に1つだけ（2つ目は 409 E_BUSY）"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "server",
+        "app"
+      ]
+    },
+    "B20": {
+      "type": "task",
+      "title": "手で進める",
+      "detail": "CONTRACTS §71: キャラクターシートの「手で進める」で #hand を開き、指令書・縄張りのファイル・見本を写す・保存・歩く・宣言判定・ハンコ・ボス戦。書きかけは盤面が新しくなっても消えない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B20.test.mjs",
+        "seal": [
+          "tests/e2e/B20.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§71.1・§71.2 キャラクターシートの「手で進める」で、手で進める欄（#hand）を開き、指令書・縄張り・書けるファイル",
+          "§71.2 ファイルを押すと読み込み、書いて保存すると POST /api/file。見本を写すは欄に入れるだけ（保存しない）",
+          "§71.2 歩く・宣言判定の結果を、知らせ（#hand-msg）とテスト1件ずつ（#hand-result）に。動いたあとは読み直す",
+          "§71.2 ハンコのマスで本人が人間ならハンコのボタン（#hand-stamp）、ゲートで仲間がそろえばボス戦のボタン（#hand-battle）",
+          "§71.2・§71.3 書きかけは盤面が新しくなっても消えない（#drawer と別の欄）。見本の盤面では「手で進める」を出さない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "app"
+      ]
+    },
+    "G12": {
+      "type": "gate",
+      "title": "結合: アプリの中だけでチュートリアルをあがる",
+      "detail": "書記・伝令・盤面・地図職人。gridhub app のはじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけであがる（claude なし）。標準入力を閉じると、起動役も盤面のサーバーも止まる（§73）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/G12.test.mjs",
+        "seal": [
+          "tests/e2e/G12.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "はじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけであがり、標準入力を閉じると全部止まる（書記 × 伝令 × 盤面 × 地図職人）"
+        ]
+      }
     }
   }
 }

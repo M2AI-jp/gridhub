@@ -1386,6 +1386,8 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - いまのマスが判定のあるダンジョンなら `button#hand-step`（「歩く」）と `button#hand-check`（「宣言判定」）。ハンコのマスで本人が人間なら `button#hand-stamp`（「ハンコを押す」）。ゲートで仲間がそろっていれば `button#hand-battle`（「ボス戦を始める」）。
    - 結果は `#hand-msg[data-ok=true|false]` と、`#hand-result` のテスト1件ずつ（`li.ok`・`li.ng`）。
    - 動いたあとは `GET /api/hand` を読み直す。`#hand-close` で閉じる。
+   - `GET /api/hand` を読み終えて描いたら `#hand[data-loaded="true"]`、窓口に送っているあいだは `#hand[data-busy="true"]`（ボタンは押せない）。
+3. 見本の盤面（`?fixture=`）では「手で進める」を出さない。
 
 ## 72. 大工: Mac のアプリ（`mac/`）（第16章）
 
