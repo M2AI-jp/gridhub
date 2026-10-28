@@ -1,0 +1,43 @@
+=== D1: node --test --test-reporter=spec tests/e2e/D1.test.mjs ===
+✔ §72.1 mac/GridHub.swift は1ファイルで、AppKit・WebKit・Foundation だけを使い、@main がある (3.775205ms)
+✔ §72.1 フォルダのダイアログ（NSOpenPanel。新しいフォルダも作れる）と、スクリプトの窓口 gridhub・folderChosen (0.932653ms)
+✔ §72.1 ログインシェルの PATH で node を探し、22 以上でなければ日本語で入れ方を出す (1.816601ms)
+✔ §72.1 node で gridhub app --port 0 --lifeline を起こし、標準入力は Pipe。窓を閉じると終わり、終わるときにサーバーを止める (1.012924ms)
+✔ §72.1 編集メニュー・終了・alert と confirm・手元でない URL は既定のブラウザで開く (1.125803ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 104.913161
+
+(exit 0, 151ms)
+=== D2: node --test --test-reporter=spec tests/e2e/D2.test.mjs ===
+✔ §72.2 mac/Info.plist: 実行ファイル・ID・版の置き場・アイコン・127.0.0.1 への通信（NSAllowsLocalNetworking） (1.346419ms)
+✔ §72.3・§72.5 mac/build.sh は swiftc で組み（xcodebuild は使わない）、sips・iconutil でアイコン、アドホック署名。npm run mac と .gitignore の dist/ (5.761879ms)
+✔ §72.3 GRIDHUB_SKIP_SWIFT=1 で組むと、GridHub.app に包みと同じ中身と、版の入った Info.plist が入り、中の gridhub が動く (692.523338ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 775.991449
+
+(exit 0, 816ms)
+=== D3: node --test --test-reporter=spec tests/e2e/D3.test.mjs ===
+✔ §72.4 mac/AppIcon.png は 1024×1024 の透明つき PNG で、今の絵（web/assets の勇者と方眼の紙）から mac/icon.mjs で作る (2.50076ms)
+✔ §72.2・§72.4 アイコンの名前が Info.plist（CFBundleIconFile）と組み立て（AppIcon.icns）でそろう (0.483485ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64.928232
+
+(exit 0, 116ms)
