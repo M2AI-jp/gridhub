@@ -47,7 +47,7 @@ npm link              # gridhub コマンドが使えるようになる（使わ
 gridhub --version     # gridhub 0.3.0 (rules 1)
 ```
 
-包み（tgz）から入れることもできます。npm にはまだ出していないので、手元で包みを作ります。
+包み（tgz）から入れることもできます。npm には出していないので、手元で包みを作ります。
 
 ```sh
 npm pack                                # gridhub-0.3.0.tgz ができる（動くのに要るものだけ）
