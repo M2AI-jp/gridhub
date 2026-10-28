@@ -19,7 +19,7 @@ Node.js 22 以上と Git だけで動きます（外部パッケージはあり�
 ### 0. 入れる
 
 ```sh
-git clone https://github.com/m2ai-jp/masume.git gridhub && cd gridhub
+git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub
 npm link              # gridhub コマンドが使えるようになる（使わないなら node /path/to/gridhub/bin/gridhub.js）
 gridhub --version     # gridhub 0.3.0 (rules 1)
 ```
