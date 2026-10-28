@@ -128,6 +128,32 @@
       <div id="toast" aria-live="polite"></div>
     </section>
 
+    <aside id="hand" class="hand-panel" hidden aria-labelledby="hand-title" data-char="" data-loaded="false" data-busy="false">
+      <div class="hand-head">
+        <h3 id="hand-title">手で進める</h3>
+        <button id="hand-close" class="close" type="button" aria-label="閉じる">✕</button>
+      </div>
+      <section id="hand-brief" class="hand-brief" aria-label="指令書"></section>
+      <div class="hand-actions">
+        <button id="hand-step" class="act" type="button" hidden>歩く（このダンジョンのテストを走らせる）</button>
+        <button id="hand-check" class="act" type="button" hidden>宣言判定（通れば次のマスへ）</button>
+        <button id="hand-stamp" class="act stamp" type="button" hidden>ハンコを押す</button>
+        <button id="hand-battle" class="act battle" type="button" hidden>ボス戦を始める</button>
+      </div>
+      <p id="hand-msg" class="hand-msg" role="status" hidden></p>
+      <ol id="hand-result" class="hand-result" aria-label="テスト1件ずつ"></ol>
+      <section class="hand-edit" aria-label="縄張りのファイル">
+        <h4>縄張りのファイル</h4>
+        <ul id="hand-files" class="hand-files"></ul>
+        <p id="hand-files-empty" class="hint">まだありません。下の欄で書いて保存すると作れます。</p>
+        <div id="hand-samples" class="hand-samples"></div>
+        <label for="hand-path">ファイル（縄張りの中の相対パス）</label>
+        <input id="hand-path" type="text" spellcheck="false" autocomplete="off" placeholder="ai/hello.txt">
+        <textarea id="hand-content" rows="8" spellcheck="false" aria-label="ファイルの中身"></textarea>
+        <button id="hand-save" class="act" type="button">保存</button>
+      </section>
+    </aside>
+
     <div id="rail">
       <aside id="party" class="slip" aria-label="なかま">
         <div id="party-list-wrap"></div>

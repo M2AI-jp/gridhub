@@ -1138,3 +1138,47 @@ body.start-page { overflow: auto; min-height: 100%; display: flex; align-items: 
 #env-claude[data-found="false"] { color: var(--ink); background: linear-gradient(transparent 60%, rgba(255, 143, 199, 0.45) 60%); }
 .home-link { text-decoration: none; white-space: nowrap; }
 .home-link[hidden] { display: none; }
+
+/* ---------- 手で進める（§71）: 盤面の上に置いた、指令書とファイルの付箋 ---------- */
+.hand-panel {
+  position: fixed; z-index: 20;
+  top: calc(var(--head-h) + 12px); left: calc(var(--party-w) + 22px);
+  width: min(430px, calc(100vw - var(--party-w) - var(--side-w) - 44px)); min-width: 300px;
+  max-height: calc(100vh - var(--head-h) - 28px); overflow: auto;
+  background-color: #fffefa;
+  background-image: linear-gradient(90deg, transparent 30px, rgba(217, 74, 58, 0.45) 30px, rgba(217, 74, 58, 0.45) 31.5px, transparent 31.5px);
+  border: 1.6px solid var(--ink); border-radius: var(--wobbly-2);
+  box-shadow: 3px 5px 0 rgba(29, 43, 92, 0.25), 0 18px 34px -16px rgba(50, 30, 5, 0.6);
+  padding: 0 16px 16px 44px; font-family: var(--hand);
+}
+.hand-panel[hidden] { display: none; }
+.hand-panel[data-busy="true"] { cursor: progress; }
+.hand-head { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; background: #fffefa; padding: 12px 0 8px; border-bottom: 1.5px solid rgba(29, 43, 92, 0.4); z-index: 1; }
+.hand-head h3 { margin: 0; flex: 1; font-family: var(--marker); font-size: 17px; }
+.hand-brief { font-size: 13px; line-height: 1.7; }
+.hand-brief .hand-node { margin: 10px 0 4px; font-size: 15px; }
+.hand-brief .hand-detail { margin: 0 0 6px; }
+.hand-brief .hand-cases { margin: 4px 0; padding-left: 20px; color: var(--ink-soft); }
+.hand-brief .hand-wait { background: linear-gradient(transparent 60%, var(--sticky) 60%); display: inline; }
+.hand-brief .hand-run, .hand-brief .hand-territory, .hand-brief .hand-who { margin: 4px 0; color: var(--ink-soft); }
+.hand-actions .act[hidden] { display: none; }
+.hand-msg { margin: 6px 0; padding: 7px 10px; border-left: 4px solid var(--ink); background: rgba(255, 228, 92, 0.35); font-size: 13px; }
+.hand-msg[data-ok="false"] { border-left-color: var(--red); background: #ffe1dc; }
+.hand-msg[hidden] { display: none; }
+.hand-result { margin: 4px 0 8px; padding-left: 4px; list-style: none; font-size: 13px; }
+.hand-result li.ok { color: #1d6b2a; }
+.hand-result li.ng { color: var(--red); }
+.hand-edit[hidden] { display: none; }
+.hand-edit h4 { margin: 14px 0 4px; font-family: var(--marker); font-size: 14px; }
+.hand-files { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 3px; }
+.hand-files li { cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+.hand-files li:hover, .hand-files li:focus-visible { background: #fff8cf; outline: none; }
+#hand-files-empty[hidden] { display: none; }
+.hand-samples { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.hand-edit label { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+#hand-path, #hand-content { width: 100%; font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: #fff; border: 1.3px solid var(--ink); border-radius: 6px; padding: 6px 8px; }
+#hand-content { margin-top: 6px; resize: vertical; min-height: 120px; }
+.act.hand-open { margin-top: 10px; }
+@media (max-width: 900px) {
+  .hand-panel { left: 8px; right: 8px; width: auto; min-width: 0; top: auto; bottom: 8px; max-height: 70vh; }
+}

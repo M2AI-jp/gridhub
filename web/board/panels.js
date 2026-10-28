@@ -233,7 +233,7 @@ function skillList(c) {
   return `<h4>技（閃き） <small>先代から受け継いだもの</small></h4><ol class="skill-list">${c.skills.map((k) => `<li><span class="skill-text">「${esc(k.text)}」</span><small>${esc(k.node || '')}${k.case ? ` ・ ${esc(k.case)}` : ''}</small></li>`).join('')}</ol>`;
 }
 
-export function renderCharDrawer(view, id, sprites) {
+export function renderCharDrawer(view, id, sprites, { live = false } = {}) {
   const c = view.characters.find((x) => x.id === id);
   if (!c) return '';
   const steps = c.path
@@ -257,6 +257,8 @@ export function renderCharDrawer(view, id, sprites) {
         <p class="lv">Lv<b>${c.level}</b>${c.max_level ? '（最大）' : ` <span class="xp">経験値 ${c.xp}/${c.xp_next}</span>`}</p>
       </div>
     </div>
+    ${live && c.status !== 'done' ? `<button class="act hand-open" type="button" data-hand="${esc(c.id)}">手で進める</button>
+    <p class="hint">エージェントを出撃させずに、あなたがこの役を演じます（指令書を読む・縄張りのファイルを書く・歩く・宣言判定）。</p>` : ''}
     <dl class="props">
       <dt>担当モジュール</dt><dd>${esc(c.module || '—')}</dd>
       <dt>いまの場所</dt><dd>${c.at ? `${esc(c.at)} ${esc(own(view.nodes, c.at)?.title || '')}` : 'あがり'}（${esc(own(CHAR_STATUS, c.status) || c.status)}）</dd>
