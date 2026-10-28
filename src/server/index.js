@@ -703,7 +703,9 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       return handCall(() => {
         const brief = engine.brief(gameRoot, character);
         const { territory, files } = engine.handFiles(gameRoot, character);
-        return { ok: true, brief, territory, files, solutions: solutionsFor(character, brief.current?.id) };
+        // 承認のマスで、指令書と判定に書かれた仲間のファイル（読むだけ。§74.2）
+        const review = engine.handReviewFiles(gameRoot, character).files;
+        return { ok: true, brief, territory, files, solutions: solutionsFor(character, brief.current?.id), review };
       });
     },
     getFile: (params) => {
