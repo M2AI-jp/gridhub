@@ -18,8 +18,8 @@ const MIME = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
-const MAX_POST_BYTES = 64 * 1024;
-const SECURITY_HEADERS = {
+export const MAX_POST_BYTES = 64 * 1024;
+export const SECURITY_HEADERS = {
   'X-Frame-Options': 'DENY',
   'Content-Security-Policy': "frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff',
@@ -31,15 +31,15 @@ function send(response, status, body, contentType, headers = {}) {
   response.end(body);
 }
 
-function sendText(response, status, text, headers) {
+export function sendText(response, status, text, headers) {
   send(response, status, text, 'text/plain; charset=utf-8', headers);
 }
 
-function sendJson(response, status, value, headers) {
+export function sendJson(response, status, value, headers) {
   send(response, status, JSON.stringify(value), 'application/json; charset=utf-8', headers);
 }
 
-function sendError(response, status, error) {
+export function sendError(response, status, error) {
   sendJson(response, status, {
     ok: false,
     code: typeof error?.code === 'string' ? error.code : 'E_INTERNAL',
@@ -47,13 +47,13 @@ function sendError(response, status, error) {
   });
 }
 
-function apiError(code, message, status) {
+export function apiError(code, message, status) {
   return Object.assign(new Error(message), status === undefined ? { code } : { code, status });
 }
 
 const badRequest = (message) => apiError('E_USAGE', message, 400);
 
-function rejectLargeBody(request, response) {
+export function rejectLargeBody(request, response) {
   // 本文の残りを待たずに応答し、413 を送ってから接続を閉じる。
   request.pause();
   response.setHeader('Connection', 'close');
@@ -66,7 +66,7 @@ const GMS = ['claude', 'codex']; // HTTP から cmd: は受け付けない（任
 const MODEL_PATTERN = /^[A-Za-z0-9][\w.:@/+[\]-]{0,99}$/u;
 const CHARACTER_PATTERN = /^[a-z][a-z0-9-]{0,23}$/u;
 
-function isObject(value) {
+export function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
@@ -139,7 +139,7 @@ async function readPartyDefaults(root) {
   };
 }
 
-function allowedOrigin(request) {
+export function allowedOrigin(request) {
   if (request.headers.origin === undefined) return true;
   try {
     const origin = new URL(request.headers.origin);
@@ -158,7 +158,7 @@ const LOOPBACK_HOST = /^(localhost|[^.]+\.localhost|127\.\d+\.\d+\.\d+|\[::1\])$
  * 外のページが自分のドメインをこの端末の 127.0.0.1 に向けても、Host がそのドメインなので弾ける。
  * LAN に公開した（--host 0.0.0.0 など）ときは、公開した本人の選択なので確認しない。
  */
-function allowedHost(request) {
+export function allowedHost(request) {
   const local = request.socket.localAddress;
   if (typeof local !== 'string' || !LOOPBACK_ADDRESS.test(local)) return true;
   const host = request.headers.host;
@@ -175,7 +175,7 @@ function isWithin(root, file) {
   return path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path);
 }
 
-async function serveStatic(response, root, pathname) {
+export async function serveStatic(response, root, pathname) {
   const name = pathname.endsWith('/') ? `${pathname}index.html` : pathname;
   const file = resolve(root, `.${name}`);
   if (!isWithin(root, file)) {

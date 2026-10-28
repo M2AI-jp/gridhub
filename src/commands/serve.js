@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { startServer } from '../server/index.js';
+import { holdUntilStopped } from '../server/lifeline.js';
 
 function usageError(message) {
   return Object.assign(new Error(message), { code: 'E_USAGE', exitCode: 2 });
@@ -16,12 +17,13 @@ export async function run(argv, ctx) {
         port: { type: 'string', default: '5005' },
         host: { type: 'string', default: '127.0.0.1' },
         dir: { type: 'string' },
+        lifeline: { type: 'boolean', default: false },
       },
       strict: true,
       allowPositionals: false,
     }));
   } catch {
-    throw usageError('引数が不正です。使い方: masume serve [--port N] [--host H] [--dir D]');
+    throw usageError('引数が不正です。使い方: masume serve [--port N] [--host H] [--dir D] [--lifeline]');
   }
 
   const port = Number(values.port);
@@ -39,28 +41,8 @@ export async function run(argv, ctx) {
   const running = await startServer({ root, port, host: values.host });
   const lobby = !existsSync(logFile(root));
 
-  return new Promise((resolveRun, rejectRun) => {
-    let stopping = false;
-    const cleanup = () => {
-      process.off('SIGINT', shutdown);
-      process.off('SIGTERM', shutdown);
-      process.off('SIGHUP', shutdown);
-    };
-    const shutdown = () => {
-      if (stopping) return;
-      stopping = true;
-      running.stop().then(() => {
-        cleanup();
-        resolveRun(0);
-      }, (error) => {
-        cleanup();
-        rejectRun(error);
-      });
-    };
-    process.on('SIGINT', shutdown);
-    process.on('SIGTERM', shutdown);
-    process.on('SIGHUP', shutdown);
-    console.log(`盤面: ${running.url}`);
-    if (lobby) console.log('冒険の書はまだありません。盤面の入口で願いを書いて、冒険をはじめてください。');
-  });
+  console.log(`盤面: ${running.url}`);
+  if (lobby) console.log('冒険の書はまだありません。盤面の入口で願いを書いて、冒険をはじめてください。');
+  // 止める合図（SIGINT・SIGTERM・SIGHUP。--lifeline なら標準入力が閉じたときも。§68.2）を待つ
+  return holdUntilStopped(running.stop, { lifeline: values.lifeline });
 }
