@@ -31,13 +31,18 @@
   <main>
     <section id="hero" class="hero" aria-labelledby="hero-title">
       <p class="kicker">AI のコーディングエージェント（Claude Code・Codex など）に、開発を任せている人へ</p>
-      <h1 id="hero-title"><span class="mark">「いま、どこまでできてる？」</span><br>その答えが、会話と一緒に消えていく。</h1>
+      <h1 id="hero-title"><span class="ph mark">「いま、</span><span class="ph mark">どこまで</span><span class="ph mark">できてる？」</span><br><span class="ph">その答えが、</span><span class="ph">会話と一緒に</span><span class="ph">消えていく。</span></h1>
       <p class="lead">エージェントは「できました」と言います。でも、どのテストが本当に通ったのか、どこから先がまだなのかは、チャットをさかのぼらないとわかりません。会話の文脈には限りがあり、切れるたびに説明し直し、ときには動いていたものまで壊れて、元の状態に戻れなくなります。</p>
       <blockquote class="quote big">
         <p>どのエージェントがどこまで何をやっていないのかという『セーブデータ』が失われたり、セーブデータ自体がバグって、元の開発状況に戻れなくなったりする、これはGitやGitHubを使うだけじゃ解決できない。なぜならコンテキストは有限で、ゲームデザインされた制約がないと、あなたは好き勝手やって開発業務全体を破壊するから</p>
         <cite>GridHub を頼んだ人の、最初の依頼から（2026-10-15）</cite>
       </blockquote>
       <p class="answer"><b>GridHub は、その答えです。</b>テスト1件を1マスにした方眼ノートのすごろくで、AI が本当に通したテストの数だけ駒が進みます。自己申告では1マスも進みません。</p>
+      <ul class="gains" aria-label="盤面でわかること">
+        <li>どのエージェントが、どのテストまで本当に通したか <a href="#day-6">→ マス6</a></li>
+        <li>会話が切れても、どこから続ければいいか <a href="#day-2">→ マス2</a></li>
+        <li>誰かの修理が、前に通っていたものを壊していないか <a href="#day-4">→ マス4</a></li>
+      </ul>
       <p class="lead">このページの GridHub も、AI たちが GridHub の盤の上で作りました。その14日間の記録を、そのまま載せます。</p>
       <p class="actions">
         <a class="btn primary" href="#days">14日間の記録を読む</a>
@@ -359,7 +364,7 @@ gridhub party --agent claude</code></pre>
       <p>要るもの: macOS 13 以上・Node.js 22 以上・Command Line Tools（<code>xcode-select --install</code>）。Xcode は要りません。ターミナルを使うのは、最初に組み立てる1回だけです。</p>
       <pre><code>git clone https://github.com/M2AI-jp/gridhub.git &amp;&amp; cd gridhub
 npm run mac        # dist/GridHub.app ができる</code></pre>
-      <p><code>dist/GridHub.app</code> を「アプリケーション」フォルダに入れて開きます。署名していないので、はじめて開くときは右クリックして「開く」を選んでください。</p>
+      <p><code>dist/GridHub.app</code> を「アプリケーション」フォルダに入れて開きます。配布用の署名をしていないので、はじめて開くときに「開けません」と出たら、右クリックして「開く」を選んでください。</p>
 
       <h3>コマンドで</h3>
       <p>要るもの: Node.js 22 以上と Git。版 0.3.0 を GitHub から入れます（npm には出していません）。</p>

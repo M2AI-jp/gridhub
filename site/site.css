@@ -69,6 +69,9 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 var(--gutter); }
 h1, h2, h3 { font-family: var(--hand); line-height: 1.45; font-weight: 700; }
 h1 { font-size: clamp(28px, 6.4vw, 50px); margin: 8px 0 14px; letter-spacing: 0.01em; }
 .mark { background: linear-gradient(transparent 58%, var(--mark) 58%); padding: 0 2px; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+/* 見出しは句のまとまりで折る（語の途中で折らない） */
+.ph { display: inline-block; }
+h1 .ph.mark { padding: 0; }
 .lead { font-size: clamp(16px, 2.2vw, 18px); max-width: 46em; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 18px 0 28px; }
 .btn {
@@ -126,6 +129,11 @@ pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre
 .quote.big { font-size: clamp(16px, 2.3vw, 19px); line-height: 1.85; max-width: 52em; }
 .answer { font-size: clamp(17px, 2.4vw, 20px); max-width: 46em; margin: 16px 0 4px; }
 .answer b { background: linear-gradient(transparent 58%, var(--mark) 58%); }
+.gains { list-style: none; margin: 10px 0 6px; padding: 0; display: grid; gap: 6px; max-width: 46em; }
+.gains li { position: relative; padding: 6px 12px 6px 34px; background: rgba(255, 255, 255, 0.8); border: 1.5px solid var(--ink); border-radius: var(--wobbly); font-size: clamp(15px, 2vw, 17px); }
+.gains li:nth-child(even) { border-radius: var(--wobbly-2); }
+.gains li::before { content: '✓'; position: absolute; left: 11px; top: 5px; color: var(--red); font-weight: 700; }
+.gains a { font-family: var(--hand); font-weight: 700; font-size: 14px; white-space: nowrap; margin-left: 4px; }
 
 /* 実録: 縦の方眼ノートのすごろくの道（1つの出来事が1マス） */
 .road { list-style: none; margin: 22px 0 0; padding: 0 0 0 58px; position: relative; max-width: 900px; }
