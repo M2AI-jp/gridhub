@@ -2643,7 +2643,7 @@
     "E18": {
       "type": "task",
       "title": "承認のマスで、仲間のファイルを読むだけで見せる",
-      "detail": "CONTRACTS §74.1: handReviewFiles（人間が自分のハンコのマスにいるとき、だれかの縄張りの守られていないファイル）と、readHandFile の readonly。読むだけのファイルには書かない（E_TERRITORY）。冒険の書には記録しない。",
+      "detail": "CONTRACTS §74.1: handReviewFiles（人間が自分のハンコのマスにいるとき、指令書と、すぐ次のゲートの説明に書かれた、だれかの縄張りの守られていないファイル）と、readHandFile の readonly。説明に書かれていないファイルと、読むだけのファイルへの書き込みは E_TERRITORY。冒険の書には記録しない。",
       "check": {
         "kind": "cmd",
         "run": "node --test --test-reporter=spec tests/e2e/E18.test.mjs",
@@ -2652,7 +2652,7 @@
           "tests/helpers.mjs"
         ],
         "cases": [
-          "§74.1 人間が承認のマス（自分のハンコのマス）にいるとき、handReviewFiles は仲間と自分の縄張りの、守られていないファイルを返す。ほかのときは空",
+          "§74.1 人間が承認のマスにいるとき、handReviewFiles は指令書とすぐ次のゲートの説明に書かれた、だれかの縄張りの守られていないファイルを返す。ほかのときは空",
           "§74.1 readHandFile は読むだけのファイルに readonly: true をつけ、writeHandFile は書かない（E_TERRITORY）。守られた場所は E_SEALED"
         ]
       }
@@ -2676,7 +2676,7 @@
           "tests/helpers8.mjs"
         ],
         "cases": [
-          "§74.2 GET /api/hand の review（人間が承認のマスにいるとき、縄張りのファイル）と、GET /api/file の readonly。読むだけのファイルには書けない"
+          "§74.2 GET /api/hand の review（人間が承認のマスにいるとき、指令書と判定に書かれたファイル）と、GET /api/file の readonly。読むだけのファイルには書けない"
         ]
       }
     },

@@ -1418,9 +1418,10 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 監督が Mac のアプリでチュートリアルを最後まで通して、4つの手直しを頼んだ。
 
 1. **書記**（`E18`）: 承認のマス（人間が `check.by` の本人として、ハンコのマスにいるとき）では、指令書や判定が読むファイルを、読むだけで見せる。
-   - `handReviewFiles(root, characterId)` → `{files: [{path, size, owner}]}`。だれかの縄張り（自分のも）に合い、守られていない（§67.1 の 3）ファイル。`owner` は、そのパスの縄張りを持つキャラクター（地図の順で最初）。承認のマスにいないときは `files: []`。シンボリックリンクは見ない。
-   - `readHandFile` は、承認のマスでは、その読むだけのファイルも読み、`readonly: true` をつけて返す（書けるファイルには `readonly` をつけない。§67.3 のまま）。`writeHandFile` は今までどおり（読むだけのファイルは `E_TERRITORY`）。守られた場所は読むだけでも `E_SEALED`。
-2. **伝令**（`S14`）: `GET /api/hand` に `review`（1 の `files`）を足す。`GET /api/file` は `readonly` をそのまま返す。
+   - 読むだけのファイルは、**指令書と判定に書かれたパス**: いまのマスの `title`・`detail` と、道でそのすぐ次がゲートなら（このハンコを確かめるボス戦）そのゲートの `detail` に出てくる、パスの形の語（英数字と `_` `.` `-` `/`。`/` か `.` を含む。終わりの `.` は除く）のうち、だれかの縄張り（自分のも）に合い、守られていない（§67.1 の 3）もの。判定のスクリプトが中で何を読むかは走らせないとわからないので、説明に書かれたものだけにする。縄張りに合っても、説明に書かれていないファイルは読めない（§67.3 のまま `E_TERRITORY`）。
+   - `handReviewFiles(root, characterId)` → `{character, files: [{path, size, owner}]}`。上のパスのうち、いまあるファイル（シンボリックリンクは見ない）。パスの順。`owner` は、そのパスの縄張りを持つキャラクター（地図の順で最初）。承認のマスにいないときは `files: []`。
+   - `readHandFile` は、承認のマスでは、上のパスも読み、`readonly: true` をつけて返す（無ければ `exists: false`。書けるファイルには `readonly` をつけない。§67.3 のまま）。`writeHandFile` は今までどおり（読むだけのファイルは `E_TERRITORY`）。守られた場所は読むだけでも `E_SEALED`。
+2. **伝令**（`S14`）: `GET /api/hand` に `review`（1 の `handReviewFiles` の `files`）を足す。`GET /api/file` は `readonly` をそのまま返す。
 3. **盤面**（`B21`）:
    - `review` があれば `#hand-review`（`li[data-path]`。字「読むだけのファイル」）。押すと中身を書き込み欄に出し、`#hand-content` は `readOnly`、`#hand-save` は押せない、`#hand-readonly`（「読むだけ（書けません）」）を出す。自分のファイルや見本を開けば、また書ける。
    - `#hand-path` の例（`placeholder`）は、見本があれば最初の見本のパス、無ければ縄張りの最初の glob から作る（`human/**` なら `human/` で始まる）。`ai/hello.txt` の決め打ちをやめる。

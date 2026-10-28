@@ -5,7 +5,7 @@ import { cpSync } from 'node:fs';
 import { join } from 'node:path';
 import { ROOT, tmp, masume, getJson, startGridhub, postJson, pathWith } from '../helpers8.mjs';
 
-test('§74.2 GET /api/hand の review（人間が承認のマスにいるとき、縄張りのファイル）と、GET /api/file の readonly。読むだけのファイルには書けない', { timeout: 60000 }, async () => {
+test('§74.2 GET /api/hand の review（人間が承認のマスにいるとき、指令書と判定に書かれたファイル）と、GET /api/file の readonly。読むだけのファイルには書けない', { timeout: 60000 }, async () => {
   const dir = tmp('gridhub-s14-');
   cpSync(join(ROOT, 'quests', 'tutorial'), dir, { recursive: true });
   assert.equal(masume(['new', 'tutorial.map.json'], { cwd: dir }).code, 0);
