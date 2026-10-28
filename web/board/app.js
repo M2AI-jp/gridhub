@@ -873,7 +873,24 @@ window.__masume = {
   },
 };
 
+/** アプリの起動役から開いたとき（?home=）は、はじめの画面へのリンクを出す。手元（127.0.0.1・localhost）の http だけ（§70.5） */
+function setupHomeLink() {
+  const link = $('#home-link');
+  const home = params.get('home');
+  if (!link || !home) return;
+  let url;
+  try {
+    url = new URL(home);
+  } catch {
+    return;
+  }
+  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || !url.port) return;
+  link.href = url.href;
+  link.hidden = false;
+}
+
 (async () => {
+  setupHomeLink();
   book = new Book(svg, $('#view-board'), { onChange: updatePageNav });
   setupCamera();
   setupInteractions();

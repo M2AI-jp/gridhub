@@ -1084,3 +1084,57 @@ body.in-lobby #stage { min-height: 70vh; }
 #git-guide li[data-done='true'] .git-step-mark { color: #2f6b3a; font-weight: 700; }
 .git-step-mark { display: inline-block; width: 1.2em; }
 #git-guide code { display: block; margin: 2px 0 0 1.2em; user-select: all; }
+
+/* ---------- はじめの画面（§70）: 机の上に置いた、方眼ノートの1ページ ---------- */
+body.start-page { overflow: auto; min-height: 100%; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px 56px; }
+.start-sheet {
+  width: min(760px, 100%);
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid-strong) 1px, transparent 1px), linear-gradient(90deg, var(--grid-strong) 1px, transparent 1px);
+  background-size: 19px 19px;
+  background-position: -1px -1px;
+  border-radius: 4px 10px 10px 4px;
+  box-shadow: inset 34px 0 0 -32px var(--red), 0 2px 0 rgba(60, 40, 10, 0.2), 0 22px 40px -18px rgba(50, 30, 5, 0.65);
+  padding: 34px 44px 28px 58px;
+  font-family: var(--hand);
+}
+.start-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 22px; }
+.start-head .logo { font-size: 30px; margin: 0; }
+.start-tagline { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.start-actions { display: grid; gap: 14px; }
+.start-card { background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 16px 18px 12px; box-shadow: 2px 3px 0 rgba(29, 43, 92, 0.25); }
+.tutorial-card { transform: rotate(-0.4deg); }
+.start-btn {
+  font-family: var(--marker); font-size: 20px; color: var(--ink); cursor: pointer;
+  background: linear-gradient(transparent 52%, var(--sticky) 52%, var(--sticky) 88%, transparent 88%);
+  border: none; border-bottom: 2px solid var(--ink); padding: 2px 6px;
+}
+.start-btn.primary { font-size: 24px; background: linear-gradient(transparent 46%, #ffe45c 46%, #ffe45c 90%, transparent 90%); }
+.start-btn.small { font-size: 15px; }
+.start-btn:hover:not(:disabled) { transform: rotate(-1deg); }
+.start-btn:disabled { opacity: 0.55; cursor: progress; }
+.start-btn:focus-visible, .open-recent:focus-visible, .forget:focus-visible { outline: 2.5px solid var(--ink); outline-offset: 3px; }
+.start-hint { margin: 8px 0 0; color: var(--ink-soft); font-size: 13px; line-height: 1.7; }
+.folder-form[hidden], .start-error[hidden], #recent-empty[hidden] { display: none; }
+.folder-form { margin-top: 10px; display: grid; gap: 6px; font-size: 13px; }
+.folder-row { display: flex; gap: 8px; }
+.folder-row input { flex: 1; min-width: 0; font: inherit; font-family: var(--mono); font-size: 13px; padding: 6px 8px; border: 1.4px solid var(--ink); border-radius: 6px; background: #fff; color: var(--ink); }
+.start-error { margin: 0; padding: 8px 12px; background: #ffe1dc; border-left: 4px solid var(--red); color: var(--ink); font-size: 13.5px; }
+.start-recent { margin-top: 26px; }
+.start-recent h2 { font-family: var(--marker); font-size: 18px; margin: 0 0 8px; }
+.recent-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.recent-list li { display: flex; align-items: stretch; gap: 8px; }
+.open-recent {
+  flex: 1; min-width: 0; display: grid; gap: 1px; text-align: left; cursor: pointer; font-family: var(--hand); color: var(--ink);
+  background: rgba(255, 254, 250, 0.92); border: 1.2px dashed rgba(29, 43, 92, 0.55); border-radius: 6px; padding: 7px 10px;
+}
+.open-recent:hover:not(:disabled) { background: #fff8cf; border-style: solid; }
+.open-recent:disabled { opacity: 0.55; cursor: not-allowed; }
+.recent-name { font-weight: 600; font-size: 15px; }
+.recent-sub { font-size: 12px; color: var(--ink-soft); }
+.recent-dir { font-size: 11.5px; background: none; padding: 0; color: var(--pencil-ink); }
+.forget { font-family: var(--hand); font-size: 12px; color: var(--ink-soft); background: none; border: none; cursor: pointer; text-decoration: underline dotted; }
+.start-env { margin-top: 26px; display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-soft); }
+#env-claude[data-found="false"] { color: var(--ink); background: linear-gradient(transparent 60%, rgba(255, 143, 199, 0.45) 60%); }
+.home-link { text-decoration: none; white-space: nowrap; }
+.home-link[hidden] { display: none; }
