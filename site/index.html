@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GridHub — テスト1件が1マスの、方眼ノートのすごろく</title>
+  <meta name="description" content="GridHub は、テストを1件ずつ通して開発を進める進行管理ツールです。タスクの E2E テストが道のマスになり、AI エージェントと人間が、5mm方眼ノートのすごろくの上で同じ盤面を見て進めます。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="GridHub — テスト1件が1マス">
+  <meta property="og:description" content="5mm方眼ノートのすごろくで、AI エージェントと人間の開発を進める。Mac のアプリ・5分のチュートリアル・自分のアイデアで。">
+  <meta property="og:url" content="https://gridhub.matsunai.com/">
+  <meta property="og:image" content="https://gridhub.matsunai.com/img/board.png">
+  <meta name="theme-color" content="#fdfaf0">
+  <link rel="icon" href="img/icon.png" type="image/png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#what">本文へ</a>
+  <header class="top">
+    <a class="brand" href="#top" id="top"><img src="img/icon.png" alt="" width="40" height="40"><span>GridHub</span></a>
+    <nav aria-label="このページの中">
+      <a href="#what">GridHub とは</a>
+      <a href="#play">遊び方</a>
+      <a href="#install">入れる</a>
+      <a href="https://github.com/M2AI-jp/gridhub">GitHub</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <p class="kicker">開発の進行管理 × JRPG のすごろく</p>
+      <h1 id="hero-title"><span class="mark">テスト1件が1マス。</span><br>方眼ノートのすごろくで、<wbr>開発を進める。</h1>
+      <p class="lead">GridHub は、テストを1件ずつ通して開発を進める進行管理ツールです。タスクの E2E テストが道のマスになり、通すたびに駒が1マス進みます。自己申告では1マスも進みません。AI エージェントと人間が、同じ盤面を見て進めます。</p>
+      <p class="actions">
+        <a class="btn primary" href="#install">入れて遊ぶ</a>
+        <a class="btn" href="https://github.com/M2AI-jp/gridhub">GitHub で見る</a>
+      </p>
+      <figure class="photo tilt-l">
+        <img src="img/board.png" width="1440" height="900" alt="GridHub の盤面。5mm方眼ノートの見開きに、キャラクターごとの道とマス、町・中ボスの砦・魔王の城が描かれている">
+        <figcaption>盤面: キャラクターごとの道が、結合テストの砦で合流する（GridHub 自身の冒険）</figcaption>
+      </figure>
+    </section>
+
+    <section id="what" class="sheet" aria-labelledby="what-title">
+      <h2 id="what-title"><span class="mark">GridHub とは</span></h2>
+      <p>字は開発の言葉が先で、ゲームの言葉は添え書きです。ルールは Node.js の標準ライブラリだけで書かれていて、外部パッケージはありません。</p>
+      <dl class="terms">
+        <div class="term">
+          <dt><img src="img/slime.svg" alt="" width="48" height="48"><span>テスト1件 ＝ 1マス</span></dt>
+          <dd>タスクの判定（E2E テスト）に書いたテスト1件ずつが、道のマス（雑魚モンスター）になります。<code>gridhub step</code> は、いちばん手前の落ちているテストだけを走らせて、1マスずつ歩きます。何度歩いても罰はありません。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/map.svg" alt="" width="48" height="48"><span>タスク ＝ ダンジョン</span></dt>
+          <dd>全部のテストを倒したら、出口で宣言します（<code>gridhub check</code>）。町から今までの判定をまとめて走らせ、落ちたら Lv が1つ下がって、町からやり直しです。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/inn.svg" alt="" width="48" height="48"><span>町 ＝ Git のコミット</span></dt>
+          <dd>町に着くと、担当のファイルだけをコミットします（セーブ）。宣言に負けたら町のコミットに戻り、戻す前の変更は <code>git stash</code>（墓）に残ります。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/hero.svg" alt="" width="48" height="48"><span>キャラクター ＝ AI と人間</span></dt>
+          <dd>モジュールの担当ごとに1人。AI エージェント（Claude Code・Codex）も人間も駒になります。縄張り（ファイルの範囲）の外は書けません。エージェントには作戦を出して出撃させます。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/maou.svg" alt="" width="48" height="48"><span>中ボス・魔王 ＝ 結合テスト</span></dt>
+          <dd>担当ごとに分かれた道が、結合テストの砦で合流します。仲間がそろうとボス戦が始まり、章のあがりの結合 E2E が魔王の城です。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/crown.svg" alt="" width="48" height="48"><span>王様の城 ＝ 人間のハンコ</span></dt>
+          <dd>承認・契約・鍵のように、人間にしか決められないマスは、人間がハンコを押して進めます。エージェントは代わりに押せません。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/bubble.svg" alt="" width="48" height="48"><span>余白のマス</span></dt>
+          <dd>道には、別の担当との会話・町の住人との雑談・作っている製品の瓦版を置きます。仕事のマスのあいだにある、開発に関係する良い余白です。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/scroll.svg" alt="" width="48" height="48"><span>冒険の書 ＝ ハッシュの鎖</span></dt>
+          <dd>進み具合は、ハッシュでつないだ記録（<code>.masume/log.jsonl</code>）に残ります。判定のファイルは封印され、書き換えると記録に残ります。会話が途切れても、<code>gridhub brief</code> を読めば誰でも続きから始められます。</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section id="play" class="sheet" aria-labelledby="play-title">
+      <h2 id="play-title"><span class="mark">遊び方は3つ</span></h2>
+      <div class="ways">
+        <article class="way sticky tilt-l" id="way-mac">
+          <h3><span class="num">1</span>Mac のアプリで</h3>
+          <p><b>GridHub.app</b> をダブルクリックして、フォルダを選ぶだけです。冒険の書があれば盤面が、無ければ願いを書く入口が開きます。冒険づくり・出撃・ハンコ・ボス戦は、窓の中のボタンでできます。</p>
+          <p class="small">窓を閉じれば、盤面のサーバーも止まります。</p>
+        </article>
+        <article class="way sticky tilt-r" id="way-tutorial">
+          <h3><span class="num">2</span>5分のチュートリアルで</h3>
+          <p>勇者（あなた）と見習いAI の2人で、名前入りのあいさつカードを作ります。キャラクターの「手で進める」で、見本を写す → 保存 → 歩く → 宣言判定・ハンコ。</p>
+          <p class="small">claude が無くても、最後まであがれます。</p>
+        </article>
+        <article class="way sticky tilt-l" id="way-idea">
+          <h3><span class="num">3</span>自分のアイデアで、Claude と</h3>
+          <p>「メモのアプリを作りたい」と願いを書くと、GM（Claude）が地図と、タスクごとの E2E テストを書いて封印します。キャラクターごとに Claude Code を出撃させ、あなたは盤面でハンコを押します。</p>
+          <pre><code>gridhub quest "メモのアプリを作りたい"
+gridhub party --agent claude</code></pre>
+        </article>
+      </div>
+    </section>
+
+    <section id="shots" class="sheet" aria-labelledby="shots-title">
+      <h2 id="shots-title"><span class="mark">画面</span></h2>
+      <div class="shots">
+        <figure class="photo tilt-r">
+          <img src="img/start.png" width="1440" height="900" loading="lazy" alt="はじめの画面。方眼ノートの1ページに、フォルダを選ぶ・最近のフォルダ・チュートリアルで遊ぶのボタンが並ぶ">
+          <figcaption>はじめの画面: フォルダを選ぶ・最近のフォルダ・チュートリアル</figcaption>
+        </figure>
+        <figure class="photo tilt-l">
+          <img src="img/hand.png" width="1440" height="900" loading="lazy" alt="手で進める。キャラクターの指令書・縄張りのファイル・見本を写す・歩くと宣言判定のボタンが、盤面の横に開いている">
+          <figcaption>手で進める: 指令書を読み、縄張りのファイルを書いて、歩く・宣言判定</figcaption>
+        </figure>
+        <figure class="photo tilt-r">
+          <img src="img/ending.png" width="1440" height="900" loading="lazy" alt="あがり。チュートリアルの冒険を全員があがり、章のエンディングが出ている">
+          <figcaption>あがり: 全員の結合 E2E が通ると、記録から毎回違うエンディング</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section id="install" class="sheet" aria-labelledby="install-title">
+      <h2 id="install-title"><span class="mark">入れる</span></h2>
+      <p>ソースは GitHub にあります: <a href="https://github.com/M2AI-jp/gridhub">github.com/M2AI-jp/gridhub</a>（MIT ライセンス）。</p>
+
+      <h3>Mac のアプリ</h3>
+      <p>要るもの: macOS 13 以上・Node.js 22 以上・Command Line Tools（<code>xcode-select --install</code>）。Xcode は要りません。ターミナルを使うのは、最初に組み立てる1回だけです。</p>
+      <pre><code>git clone https://github.com/M2AI-jp/gridhub.git &amp;&amp; cd gridhub
+npm run mac        # dist/GridHub.app ができる</code></pre>
+      <p><code>dist/GridHub.app</code> を「アプリケーション」フォルダに入れて開きます。署名していないので、はじめて開くときは右クリックして「開く」を選んでください。</p>
+
+      <h3>コマンドで</h3>
+      <p>要るもの: Node.js 22 以上と Git。版 0.3.0 を GitHub から入れます（npm にはまだ出していません）。</p>
+      <pre><code>npm install -g github:M2AI-jp/gridhub#v0.3.0
+gridhub --version  # gridhub 0.3.0 (rules 1)</code></pre>
+      <p>遊び方は、GitHub の README の「5分で始める」と、チュートリアル（<code>quests/tutorial/README.md</code>）にあります。</p>
+
+      <h3>Claude Code</h3>
+      <p>願いから冒険を作る・エージェントを出撃させるときに使います。チュートリアルには要りません。</p>
+      <pre><code>npm install -g @anthropic-ai/claude-code</code></pre>
+    </section>
+
+    <section id="made" class="sheet" aria-labelledby="made-title">
+      <h2 id="made-title"><span class="mark">GridHub は GridHub で作っています</span></h2>
+      <p>このリポジトリ自体が、GridHub の冒険です。書記・伝令・賢者クロード・地図職人・大工などのキャラクターが、自分の縄張りのファイルだけを書き、封印された判定を通して、第1章から1マスずつ進めてきました。どのマスを、いつ、どのコミットで抜けたかは、冒険の書（<code>gridhub log</code>）に全部残っています。</p>
+    </section>
+  </main>
+
+  <footer class="bottom">
+    <p><a href="https://github.com/M2AI-jp/gridhub">GitHub: M2AI-jp/gridhub</a> ・ MIT License ・ © 2026 M2AI-jp</p>
+    <p class="small">このページは、外のサイトからスクリプト・字・解析を読み込みません。</p>
+  </footer>
+</body>
+</html>

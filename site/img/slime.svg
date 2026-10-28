@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>スライム</title>
+  <desc>しずくの形のスライム。にっこり笑って、頭のてっぺんがぴょこんと立つ。</desc>
+  <ellipse cx="32" cy="56" rx="20" ry="3.5" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M32 9Q36 15 41 20Q55 31 53 44Q51 55 32 55Q13 55 11 44Q9 31 23 20Q28 15 32 9Z" fill="var(--monster, #ffffff)"/>
+    <path d="M20 28Q22 22 27 19" stroke="#ffffff" stroke-width="3"/>
+    <ellipse cx="24.5" cy="36" rx="3" ry="4" fill="#1d2b5c"/>
+    <ellipse cx="39.5" cy="36" rx="3" ry="4" fill="#1d2b5c"/>
+    <circle cx="25.5" cy="34.5" r="1" fill="#ffffff" stroke="none"/>
+    <circle cx="40.5" cy="34.5" r="1" fill="#ffffff" stroke="none"/>
+    <path d="M26 44Q32 50 38 44Q32 46 26 44Z" fill="#d94a3a"/>
+    <path d="M15 42L18 42M46 42L49 42" stroke="#d94a3a" stroke-width="1.6"/>
+  </g>
+</svg>
