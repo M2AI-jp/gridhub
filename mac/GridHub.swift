@@ -245,12 +245,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         stopServer()
         stopping = false
         showMessage(title: "GridHub をひらいています…", body: "<p>盤面を配る GridHub（Node.js）を起こしています。</p>", retry: false)
-        DispatchQueue.global(qos: .userInitiated).async {
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let path = Lookup.loginPath()
             let node = Lookup.find("node", in: path)
             let version = node.flatMap { Lookup.nodeVersion($0, path: path) }
             let found = Found(path: path, node: node, version: version)
-            Task { @MainActor [weak self] in
+            Task { @MainActor in
                 self?.launch(found)
             }
         }
@@ -334,8 +334,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         lifeline = nil
         homeURL = nil
         if stopping { return }
-        let tail = lines.suffix(20).map(escape).joined(separator: "\n")
-        showMessage(title: "盤面のサーバーが止まりました", body: "<p>終了コード \(status)。</p><pre>\(tail)</pre>", retry: true)
+        // 使う人に見せるのは、理由の1行（[E_…] の行があればそれ）と最後の数行だけ。残りは「くわしく」で畳む
+        let shown = lines.filter { !$0.trimmingCharacters(in: .whitespaces).isEmpty }
+        let reason = shown.first { $0.hasPrefix("[E_") } ?? shown.last ?? "（何も出力されませんでした）"
+        let last = shown.suffix(4).map(escape).joined(separator: "\n")
+        let all = shown.suffix(40).map(escape).joined(separator: "\n")
+        let body = """
+        <p>終了コード \(status)。理由: <code>\(escape(reason))</code></p>
+        <pre>\(last)</pre>
+        <details><summary>くわしく（最後の出力）</summary><pre>\(all)</pre></details>
+        <p>アプリを組み立て直す（<code>npm run mac</code>）か、下の「もう一度さがす」を押してください。</p>
+        """
+        showMessage(title: "盤面のサーバーが止まりました", body: body, retry: true)
     }
 
     private func stopServer() {
@@ -375,7 +385,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
           background-image: linear-gradient(#a6d2e4 1px, transparent 1px), linear-gradient(90deg, #a6d2e4 1px, transparent 1px);
           background-size: 20px 20px; border-radius: 6px; box-shadow: 0 10px 30px rgba(60, 38, 14, .35); line-height: 1.8; }
         h1 { font-size: 22px; margin: 0 0 12px; } code { background: rgba(29, 43, 92, .08); padding: 1px 5px; border-radius: 4px; }
-        pre { white-space: pre-wrap; font-size: 12px; background: rgba(255, 255, 255, .7); padding: 8px; }
+        pre { white-space: pre-wrap; font-size: 12px; background: rgba(255, 255, 255, .7); padding: 8px; max-height: 40vh; overflow: auto; }
+        details { margin: 8px 0; } summary { cursor: pointer; }
         button { font: inherit; padding: 6px 18px; border: 2px solid #1d2b5c; border-radius: 8px; background: #ffe45c; color: #1d2b5c; cursor: pointer; }
         a { color: #1d2b5c; }
         </style></head><body><main><h1>\(escape(title))</h1>\(body)\(button)</main></body></html>
