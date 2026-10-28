@@ -79,10 +79,13 @@ test('§75.1 site/index.html は日本語の1ページ（lang="ja"・utf-8・vie
   assert.doesNotMatch(text, /\d+(\.\d+)?\s*倍/u, '「生産性が○倍」のような、記録で確かめられない数を書かない');
 });
 
-test('§75.2 1画面目（#hero）は困りごとから: 最初の依頼の原文・自己申告では進まない・この14日間の記録へ。仕組みの言葉は出さない', () => {
+test('§75.2 1画面目（#hero）は困りごとから: 最初の依頼の原文・自己申告では進まない・盤面でわかること3つ・この14日間の記録へ。仕組みの言葉は出さない', () => {
   const hero = part('hero');
   const t = textOf(hero);
-  assert.match(t, /いま、どこまで/u, '読む人の言葉の困りごと');
+  assert.match(t.replace(/\s+/gu, ''), /いま、どこまで/u, '読む人の言葉の困りごと');
+  const gains = [...hero.matchAll(/<ul class="gains"[^>]*>([\s\S]*?)<\/ul>/gu)].flatMap((m) => [...m[1].matchAll(/<li>([\s\S]*?)<\/li>/gu)]);
+  assert.equal(gains.length, 3, '盤面でわかることを3つ');
+  for (const [, li] of gains) assert.match(li, /href="#day-\d+"/u, `実録のマスにつながる: ${textOf(li)}`);
   assert.ok(t.includes('『セーブデータ』が失われたり') && t.includes('コンテキストは有限'), '最初の依頼の芯の一節');
   assert.match(t, /自己申告では/u);
   assert.match(t, /14日間/u);
@@ -207,7 +210,7 @@ test('§75.2 遊び方は3つ（#play）と、入れ方（#install）', () => {
     `git clone ${GITHUB}.git`,
     'npm run mac',
     'dist/GridHub.app',
-    '右クリック',
+    '「開けません」と出たら、右クリックして「開く」',
     'npm install -g github:M2AI-jp/gridhub#v0.3.0',
     'npm には出していません',
     'Node.js 22 以上',

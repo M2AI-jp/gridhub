@@ -65,3 +65,29 @@ test('§75.4 スマホの縦（幅 320）でも、字は 13px 以上、上の帯
     await srv.close();
   }
 });
+
+test('§75.2 スマホの縦（幅 320・375）でも、1画面目の見出しは句のまとまり（h1 .ph）で折れ、句の途中で折れない', { timeout: 120000 }, async () => {
+  const srv = await serveStatic(SITE);
+  try {
+    for (const width of [320, 375]) {
+      const page = await openBrowser({ width, height: 700 });
+      try {
+        await page.goto(`${srv.url}/`);
+        const r = await page.eval(`(() => {
+          const h1 = document.querySelector('h1');
+          const line = parseFloat(getComputedStyle(h1).lineHeight);
+          const phs = [...h1.querySelectorAll('.ph')];
+          const loose = [...h1.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).map((n) => n.textContent.trim());
+          return { count: phs.length, broken: phs.filter((p) => p.getBoundingClientRect().height > line * 1.3).map((p) => p.textContent), loose, line };
+        })()`);
+        assert.ok(r.count >= 4, `幅 ${width}: 見出しの句 ${r.count}`);
+        assert.deepEqual(r.loose, [], `幅 ${width}: 句で包んでいない字`);
+        assert.deepEqual(r.broken, [], `幅 ${width}: 途中で折れた句（行の高さ ${r.line}px）`);
+      } finally {
+        await page.close();
+      }
+    }
+  } finally {
+    await srv.close();
+  }
+});
