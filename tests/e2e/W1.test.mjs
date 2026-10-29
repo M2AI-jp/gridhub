@@ -37,7 +37,7 @@ test('§75.1 site/index.html は日本語の1ページ（lang="ja"・utf-8・vie
   assert.ok(!tags.some((t) => Object.keys(t.attrs).some((k) => k.startsWith('on'))), 'onclick などを使わない');
   assert.equal(tags.filter((t) => t.tag === 'h1').length, 1, '見出し h1 は1つ');
   const nav = tagsOf(/<nav[\s\S]*?<\/nav>/u.exec(body)?.[0] ?? '').filter((t) => t.tag === 'a').map((t) => t.attrs.href);
-  assert.deepEqual(nav, ['#features', '#how', '#start', GITHUB], 'ヘッダー: 特長・遊び方・はじめる・GitHub');
+  assert.deepEqual(nav, ['#features', '#map', '#how', '#start', GITHUB], 'ヘッダー: 特長・地図・遊び方・はじめる・GitHub');
 });
 
 test('§75.2 ファーストビュー（#hero）は文字が少なく、絵が主役: ラベル・見出し2行・説明1つ・ボタン2つ、盤面の写真と駒やモンスターの絵', () => {
@@ -74,15 +74,18 @@ test('§75.2 開発の記録を載せない（seq・発言の引用・コミッ�
   assert.match(tool, /examples', 'memo'/u, '盤面はサンプル（examples/memo）で撮る');
 });
 
-test('§75.2 リポジトリの中だけの言い回しは、ゲームの言葉と開発の言葉の表（#words）の外では使わない', () => {
-  const words = sectionOf(body, 'words') ?? '';
-  const text = textOf(body.replace(words, ''));
-  for (const w of ['包み', '版', '入れる', '縄張り', '宣言判定', 'あがり', '封印', '指令書', '出撃', '申し送り', '手で演じる']) {
+test('§75.2 リポジトリの中だけの言い回しと、ほかのゲームの作品名・決まった言い回しを使わない', () => {
+  const text = textOf(body);
+  for (const w of ['包み', '入れる', '縄張り', '宣言判定', 'あがり', '封印', '指令書', '出撃', '申し送り', '手で演じる']) {
     assert.ok(!text.includes(w), `「${w}」を使わない`);
+  }
+  assert.doesNotMatch(text, /(?<!瓦)版/u, '「版」を使わない（瓦版は、ゲームの言葉としてよい）');
+  for (const w of ['ドラゴンクエスト', 'ドラクエ', 'ファイナルファンタジー', 'ロマンシング', 'サ・ガ', '聖剣伝説', 'クロノ', 'いのちだいじに', 'ガンガンいこうぜ', 'バッチリがんばれ', '伝承法', '閃き', 'DQ', 'FF']) {
+    assert.ok(!text.includes(w), `「${w}」を出さない`);
   }
 });
 
-test('§75.2 こんな悩み（#pain）3つと、つなぎの1文。特長（#features）6つ', () => {
+test('§75.2 こんな悩み（#pain）3つと、つなぎの1文。特長（#features）4つ（テストは具体的な例で）', () => {
   const pain = part('pain');
   const pains = [...pain.matchAll(/<li class="pain">([\s\S]*?)<\/li>/gu)].map((m) => m[1]);
   assert.equal(pains.length, 3);
@@ -94,24 +97,70 @@ test('§75.2 こんな悩み（#pain）3つと、つなぎの1文。特長（#fe
   ]);
   assert.equal(textOf(/<p class="bridge">([\s\S]*?)<\/p>/u.exec(pain)?.[1] ?? ''), 'GridHub は、開発の進み具合をすごろくの盤面にします。見ればすぐ分かって、進むのが楽しくなります。');
   const features = [...part('features').matchAll(/<article class="feature">([\s\S]*?)<\/article>/gu)].map((m) => m[1]);
-  assert.equal(features.length, 6);
+  assert.equal(features.length, 4);
   const titles = features.map((f) => flat(textOf(/<h3>([\s\S]*?)<\/h3>/u.exec(f)?.[1] ?? '')));
-  assert.deepEqual(titles, ['進み具合が、ひと目で分かる', 'テストに通ったぶんだけ進める', 'AIとパーティを組める', 'ボス戦で、みんなの仕事を確かめる', '途中で止まっても、セーブした場所から', '寄り道も、開発の一部']);
+  assert.deepEqual(titles, ['進み具合が、ひと目で分かる', '合格したぶんだけ進める', 'AIとパーティを組める', '途中で止まっても、セーブした場所から']);
   for (const f of features) assert.match(f, /<img src="img\/[a-z]+\.svg"/u, '特長は絵つき');
   const all = textOf(part('features'));
-  for (const w of ['Claude Code や Codex', '結合テストのボス戦', '「冒険の書」に自動でセーブ', '続きのマスから再開できます', '「できたつもり」が起きません']) assert.ok(all.includes(w), `#features に「${w}」`);
+  for (const w of ['マスの1つ1つは、「1,200円の食費を記録すると、一覧に出てくる」のような小さなテストです。', '「できたつもり」が起きません', 'Claude Code や Codex', '「冒険の書」に自動でセーブ', '続きのマスから再開できます']) assert.ok(all.includes(w), `#features に「${w}」`);
 });
 
-test('§75.2 ゲームの言葉と開発の言葉（#words）・遊び方（#how）3ステップとチュートリアル・画面（#screens）3枚', () => {
-  const rows = [...part('words').matchAll(/<tr><th scope="row">([\s\S]*?)<\/th><td>([\s\S]*?)<\/td><\/tr>/gu)].map((m) => [textOf(m[1]), textOf(m[2])]);
-  assert.deepEqual(rows, [
-    ['マス', 'テスト1件'],
-    ['ダンジョン', 'タスク'],
-    ['町', 'Git のコミット（セーブ）'],
-    ['ボス戦', '結合テスト'],
-    ['王様の城', 'あなたの承認（ハンコ）'],
-    ['冒険の書', '進み具合の記録'],
+test('§75.2 地図のつくり（#map）: AI の得意・不得意に合わせた大きさの凡例7段と、「テストは、あなたが書かなくて大丈夫」。目安はルールのとおり', () => {
+  const map = part('map');
+  assert.equal(flat(textOf(sectionOf(map, 'map-title'))), 'AIがいちばん力を出せる大きさで、地図ができています');
+  assert.equal(textOf(/<p class="map-lead">([\s\S]*?)<\/p>/u.exec(map)?.[1] ?? ''), 'AI は、小さくてはっきりした仕事が得意です。いっぽうで、長い会話では前のことを忘れやすく、頼んでいない所まで手を広げがちです。GridHub の地図は、その性質に合わせて、1マスから大ボスまでの大きさが決めてあります。');
+  assert.deepEqual([...(/<p class="scale"[^>]*>([\s\S]*?)<\/p>/u.exec(map)?.[1] ?? '').matchAll(/<span>([^<]+)<\/span>/gu)].map((m) => m[1]), ['数分', '30〜90分', '数時間', '数日'], '目盛り');
+  const rows = [...map.matchAll(/<li class="row s\d">\s*<img src="img\/[a-z]+\.svg"[^>]*>([\s\S]*?)<\/li>/gu)].map((m) => ({
+    title: flat(textOf(/<h3>([\s\S]*?)<\/h3>/u.exec(m[1])?.[1] ?? '')),
+    dev: textOf(/<span class="dev">([\s\S]*?)<\/span>/u.exec(m[1])?.[1] ?? ''),
+    size: textOf(/<span class="size">([\s\S]*?)<\/span>/u.exec(m[1])?.[1] ?? ''),
+    ex: textOf(/<p class="ex">([\s\S]*?)<\/p>/u.exec(m[1])?.[1] ?? ''),
+  }));
+  assert.deepEqual(rows.map((r) => [r.title, r.dev, r.size]), [
+    ['マス（モンスター）', 'テスト1件', '数分'],
+    ['ダンジョン', 'タスク', '30〜90分（マス2〜6個）'],
+    ['町（宿屋）', 'セーブ（Git のコミット）', 'ダンジョン2〜3つごと'],
+    ['中ボス', '結合テスト', '数時間に1回'],
+    ['王様の城', 'あなたのハンコ', '大ボスの前に必ず1つ'],
+    ['大ボス（魔王の城）', '章の最後の結合テスト', '数日に1回'],
+    ['イベント（寄り道）', '開発に関係するおしゃべり', '道の途中'],
+  ], '小さいものから大きいものへ');
+  for (const i of [0, 1, 3, 5]) assert.match(rows[i].ex, /^例:「/u, `${rows[i].title} の例は「例」として書く`);
+  const not = textOf(/<aside class="nottest"[\s\S]*?<\/aside>/u.exec(map)?.[0] ?? '');
+  assert.ok(flat(not).startsWith('テストは、あなたが書かなくて大丈夫'), '囲みの見出し');
+  for (const w of ['「こう動いたら合格」を確かめる小さなプログラムです。', '画面やコマンドを外から動かして確かめます。', 'AI のゲームマスターが、地図といっしょに用意します。', 'AI の仲間がテストを都合よく書き換えると、すぐに分かるようになっています。']) assert.ok(not.includes(w), `囲みに「${w}」`);
+  // 目安と仕組みは、ルールのとおり（GAME_DESIGN・GM_GUIDE・盤面の余白のマス）
+  const design = readFileSync(join(ROOT, 'docs', 'GAME_DESIGN.md'), 'utf8');
+  const guide = readFileSync(join(ROOT, 'docs', 'GM_GUIDE.md'), 'utf8');
+  for (const w of ['1マス（数分）', 'ダンジョン（タスク）は 2〜6 マス', '町は 2〜3 ダンジョンごと', '地方（数時間）', '大陸（数日）', 'あがりの手前には必ず1つ', '余白のマスは進みを止めない']) assert.ok(design.includes(w), `GAME_DESIGN に「${w}」`);
+  assert.match(guide, /目安 30〜90分/u, 'GM_GUIDE の目安');
+  assert.match(guide, /`check` は \*\*E2E\*\*（外から叩く）/u, 'テストは外から確かめる');
+  assert.match(readFileSync(join(ROOT, 'src', 'engine', 'margins.js'), 'utf8'), /テスト \$\{passed\} 件、通ってきたね/u, '宿屋の主人のせりふ');
+});
+
+test('§75.2 ゲームとして、ここが楽しい（#fun）: 絵つきのカード6〜8枚・1枚2文まで。書いてある仕組みはルールのとおり', () => {
+  const fun = part('fun');
+  assert.equal(flat(textOf(sectionOf(fun, 'fun-title'))), 'ゲームとして、ここが楽しい');
+  const cards = [...fun.matchAll(/<article class="fun">([\s\S]*?)<\/article>/gu)].map((m) => m[1]);
+  assert.ok(cards.length >= 6 && cards.length <= 8, `カード ${cards.length}`);
+  for (const c of cards) {
+    assert.match(c, /<img src="img\/[a-z]+\.svg"/u, '絵つき');
+    const p = textOf(/<p>([\s\S]*?)<\/p>/u.exec(c)?.[1] ?? '');
+    assert.ok((p.match(/。/gu) ?? []).length <= 2, `1枚2文まで: ${p}`);
+  }
+  assert.deepEqual(cards.map((c) => flat(textOf(/<h3>([\s\S]*?)<\/h3>/u.exec(c)?.[1] ?? ''))), [
+    '練習は何度でも、本番は一発勝負', '倒したモンスターが、仲間になる', '仲間がそろうと、ボス戦が始まる', 'あなたは、作戦を出す指揮官',
+    '信頼が増えるほど、先が見えてくる', '代がかわっても、技は受け継がれる', '集めて、眺めて、また遊びたくなる', '方眼ノートの手ざわり',
   ]);
+  // 仕組みは、ルールと盤面のとおり
+  const design = readFileSync(join(ROOT, 'docs', 'GAME_DESIGN.md'), 'utf8');
+  for (const w of ['普通のマスで負けても罰がない', '出口で負けると Lv−1・町からやり直し', '累積判定', '**復活**', '責任のある仲間だけ、町からやり直し', '1マスずつ `step` で確かめる', '次の町まで、ダンジョンを続けて進んでよい', '`視界 = min(Lv−1, 4)`', '「◯代目」', '**技**', 'ちいさなメダル', 'モンスター図鑑', '**宝**', '記録が違えば文も違う', '縦の5mm方眼ノート（B5）']) {
+    assert.ok(design.includes(w), `GAME_DESIGN に「${w}」`);
+  }
+  assert.match(readFileSync(join(ROOT, 'web', 'board', 'app.js'), 'utf8'), /book\.turnTo\(last\.page \+ 1\)/u, '駒が次のページへ進むと、ノートがめくれる');
+});
+
+test('§75.2 遊び方（#how）3ステップとチュートリアル・画面（#screens）3枚', () => {
   const how = part('how');
   const steps = [...how.matchAll(/<li class="step">([\s\S]*?)<\/li>/gu)].map((m) => m[1]);
   assert.equal(steps.length, 3);

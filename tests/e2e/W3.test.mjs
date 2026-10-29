@@ -94,7 +94,7 @@ test('§75.2 見出し（h1・h2・h3）は、幅 320・375・1280 で句のま�
   }
 });
 
-test('§75.2 スマホの縦（375×812）でも、1画面目に盤面の写真と駒やモンスターの絵が入る', { timeout: 120000 }, async () => {
+test('§75.2 スマホの縦（375×812）でも、1画面目に盤面の写真と駒やモンスターの絵が入り、ヘッダーのリンクは1行に収まる', { timeout: 120000 }, async () => {
   const srv = await serveStatic(SITE);
   const page = await openBrowser({ width: 375, height: 812 });
   try {
@@ -109,6 +109,8 @@ test('§75.2 スマホの縦（375×812）でも、1画面目に盤面の写真�
     assert.ok(r.title < 200, `見出しが上のほうに（${r.title}px）`);
     assert.ok(r.photo >= 150, `盤面の写真が1画面目に ${r.photo}px 見える`);
     assert.ok(r.decos >= 4, `駒やモンスターの絵が1画面目に ${r.decos} つ`);
+    const tops = await page.eval(`[...document.querySelectorAll('.top nav a')].map((a) => Math.round(a.getBoundingClientRect().top))`);
+    assert.ok(tops.length >= 5 && new Set(tops).size === 1, `ヘッダーのリンクは1行に（${tops.join(', ')}）`);
   } finally {
     await page.close();
     await srv.close();
