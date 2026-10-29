@@ -1,5 +1,5 @@
 // W2「壊れたリンク・外から読むものが無い」— 看板屋（第17章）。CONTRACTS §75.3。
-// site/ だけで動き（index.html が入口）、リンクと画像が壊れておらず、外のサイトから何も読み込まない。
+// site/ だけで動き（index.html が入口。エンジニアの方へ engineers.html とタブで行き来する）、リンクと画像が壊れておらず、外のサイトから何も読み込まない。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -36,8 +36,10 @@ function refsOf(file) {
 const refs = files.flatMap(refsOf);
 const ids = Object.fromEntries(pages.map((p) => [p, new Set(tagsOf(readSite(p)).map((t) => t.attrs.id).filter(Boolean))]));
 
-test('§75.3 site/ の中は HTML・CSS・画像だけ（スクリプト・Web フォントなし）。入口は site/index.html', () => {
+test('§75.3 site/ の中は HTML・CSS・画像だけ（スクリプト・Web フォントなし）。入口は site/index.html、もう1つのページは site/engineers.html', () => {
   assert.ok(files.includes('index.html'), 'site/index.html');
+  assert.ok(files.includes('engineers.html'), 'site/engineers.html');
+  for (const p of pages) assert.ok(tagsOf(readSite(p)).some((t) => t.tag === 'link' && t.attrs.rel === 'stylesheet' && t.attrs.href === 'site.css'), `site/${p} は site.css を使う（2ページで共有）`);
   for (const f of files) assert.ok(KINDS.has(extname(f).toLowerCase()), `site/${f} は HTML・CSS・画像`);
   for (const f of files.filter((x) => x.endsWith('.svg'))) assert.doesNotMatch(readSite(f), /<script|<foreignObject|\son[a-z]+\s*=/iu, `site/${f} にスクリプトが無い`);
   for (const f of sheets) {
@@ -75,11 +77,20 @@ test('§75.3 リンクと画像が壊れていない: site/ の中のファイ�
   }
 });
 
-test('§75.3 Chrome で開くと、読み込むのは同じ場所のものだけ。画像は全部読めて、コンソールにエラーが無い（http でも file でも）', { timeout: 120000 }, async () => {
+test('§75.3 タブで行き来できる: どちらのページのタブも、もう1つのページを指す（相対パス）', () => {
+  const tabs = (p) => tagsOf(/<nav class="tabs"[^>]*>[\s\S]*?<\/nav>/u.exec(readSite(p))?.[0] ?? '').filter((t) => t.tag === 'a');
+  for (const [from, to] of [['index.html', 'engineers.html'], ['engineers.html', 'index.html']]) {
+    const links = tabs(from);
+    assert.ok(links.some((a) => a.attrs.href === to && a.attrs['aria-current'] !== 'page'), `site/${from} のタブから ${to} へ`);
+    assert.ok(links.some((a) => a.attrs.href === from && a.attrs['aria-current'] === 'page'), `site/${from} のタブに、いまのページの印`);
+  }
+});
+
+test('§75.3 Chrome で開くと、読み込むのは同じ場所のものだけ。画像は全部読めて、コンソールにエラーが無い（http でも file でも、2ページとも）', { timeout: 180000 }, async () => {
   const srv = await serveStatic(SITE);
   const page = await openBrowser({ width: 1280, height: 800 });
   try {
-    for (const url of [`${srv.url}/`, pathToFileURL(join(SITE, 'index.html')).href]) {
+    for (const url of pages.flatMap((p) => [`${srv.url}/${p === 'index.html' ? '' : p}`, pathToFileURL(join(SITE, p)).href])) {
       await page.goto(url);
       // 遅れて読む画像（loading="lazy"）も、いま読ませる（ヘッドレスの Chrome は、見えていないページでは遅れて読まない）
       await page.eval(`document.querySelectorAll('img[loading="lazy"]').forEach((i) => { i.loading = 'eager'; })`);
@@ -95,6 +106,24 @@ test('§75.3 Chrome で開くと、読み込むのは同じ場所のものだけ
       assert.deepEqual(r.broken, [], `${url}: 読めない画像`);
       for (const name of r.loaded) assert.ok(name.startsWith(origin), `${url}: 外から読んだ ${name}`);
       assert.ok(r.sheets.length >= 1 && r.sheets.every((h) => h && h.startsWith(origin)), `${url}: スタイルシートは手元の site.css`);
+    }
+    assert.deepEqual(exceptions(page), [], 'コンソールにエラーが無い');
+  } finally {
+    await page.close();
+    await srv.close();
+  }
+});
+
+test('§75.3 Chrome でタブを押すと、もう1つのページが開き、またタブで戻れる（http でも file でも）', { timeout: 120000 }, async () => {
+  const srv = await serveStatic(SITE);
+  const page = await openBrowser({ width: 375, height: 812 });
+  try {
+    for (const start of [`${srv.url}/`, pathToFileURL(join(SITE, 'index.html')).href]) {
+      await page.goto(start);
+      for (const [to, title] of [['engineers.html', 'テスト1件が'], ['index.html', '1マス進むたび']]) {
+        await page.eval(`setTimeout(() => document.querySelector('.tabs a[href="${to}"]').click(), 0), true`);
+        await page.waitFor(`location.pathname.endsWith('/${to}') && document.readyState === 'complete' && document.querySelector('.tabs a[aria-current="page"]')?.getAttribute('href') === '${to}' && document.querySelector('h1').textContent.includes('${title}')`, { timeout: 15000, message: `タブで ${to} へ` });
+      }
     }
     assert.deepEqual(exceptions(page), [], 'コンソールにエラーが無い');
   } finally {

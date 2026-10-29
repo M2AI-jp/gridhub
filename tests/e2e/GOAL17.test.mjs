@@ -42,7 +42,7 @@ test('すべての冒険の書が正常。地図と package.json は第17章（�
   assert.doesNotMatch(pkg.scripts.test, /GOAL/);
 });
 
-test('§75.5 紹介ページは包みに入らない。README に紹介ページ（site/・gridhub.matsunai.com）、CHANGELOG に第17章', () => {
+test('§75.5 紹介ページは包みに入らない。README に紹介ページ（site/ の2ページ・gridhub.matsunai.com）、CHANGELOG に第17章', () => {
   const r = spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: ROOT, encoding: 'utf8', env: { ...process.env, npm_config_loglevel: 'silent' } });
   assert.equal(r.status, 0, r.stderr);
   const files = JSON.parse(r.stdout)[0].files.map((f) => f.path);
@@ -51,6 +51,8 @@ test('§75.5 紹介ページは包みに入らない。README に紹介ページ
   const readme = read('README.md');
   assert.match(readme, /紹介ページ/u);
   assert.match(readme, /site\//u);
+  assert.match(readme, /site\/index\.html/u);
+  assert.match(readme, /site\/engineers\.html/u, 'エンジニアの方へのページ');
   assert.match(readme, /gridhub\.matsunai\.com/u);
   assert.match(read('CHANGELOG.md'), /第17章/u);
 });
