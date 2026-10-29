@@ -8,7 +8,7 @@
 - **結合テスト = 中ボス。** モジュールの担当（キャラクター）ごとに道が分かれ、結合テストで合流します。
 - **人間とエージェントが同じ盤面を見ます。** エージェント（Claude Code・Codex）に**作戦**を出して任せ、人間はハンコ（承認）を押します。コンテキストが切れても、`gridhub brief` を読めば誰でも再開できます。
 
-![GridHub の盤面（縦の5mm方眼ノートの見開き）](docs/board.png)
+![GridHub の盤面（縦の5mm方眼ノートの見開き）](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board.png)
 
 動かすのに要るのは Node.js 22 以上と Git だけです（外部パッケージはありません。macOS と Linux で動きます。Windows は WSL で）。
 願いから冒険をつくる（`gridhub quest`）とエージェントの出撃（`gridhub party`）には、手元に [Claude Code](https://claude.com/claude-code) か [Codex CLI](https://github.com/openai/codex) が入っていてログイン済みであることも要ります（下の「0. 入れる」）。
@@ -85,7 +85,7 @@ GM の LLM（手元の `claude` か `codex`）が、作りたいものを地図�
 ### 2. 盤面を開く（`gridhub serve`）
 
 ```sh
-gridhub serve         # http://127.0.0.1:5005/ を開く（動かしたままにするので、続きは別のターミナルで）
+gridhub serve         # 盤面 http://127.0.0.1:5005/ をブラウザで開く（動かしたままにするので、続きは別のターミナルで。--no-open で URL を出すだけ）
 ```
 
 盤面の入口（「どんなアプリを作りたい？」）から、手順 1 の願いを書いて始めることもできます。
@@ -110,6 +110,8 @@ gridhub step engine           # 歩く: いまのタスクの判定だけを走�
 gridhub check engine          # 宣言: 全部のテストが通ったら出口で判定する（一発勝負）
 gridhub note engine "TTL は秒ではなくミリ秒。テストの名前に単位を書くと迷わない"   # 次の自分への申し送り
 ```
+
+`--as <ID>` を付けなくても、渡したキャラクターID（ここでは `engine`）の記録になります。別の人として記録したいときだけ `--as` を付けます（エージェントが出撃したときは、軍師が付けて打っています）。
 
 `gridhub step` の出力:
 
@@ -177,6 +179,8 @@ gridhub note engine "TTL は秒ではなくミリ秒。テストの名前に単�
 
 - コミットするのは**担当のファイルだけ**です。あなたのほかの変更やステージ（`git add` したもの）には触れません。push はしません。フックは走りません。
 - `gridhub quest` が置く GM の作業ファイル（依頼書の控え `quest-prompt-*.txt` と GM の出力 `quest.log`）は `.gitignore` に入れるので、コミットには入りません。
+- **冒険の書（`.masume/log.jsonl`）と判定の出力（`.masume/outputs/`）は Git に入れます**（冒険の歴史そのもので、`gridhub verify` は出力のハッシュも確かめます。`gridhub quest` の最初のコミットに入ります）。町のセーブは担当のファイルだけなので、遊んでいるあいだ `git status` には ` M .masume/log.jsonl` と `.masume/outputs/` が出たままになります。壊れているのではありません。章の区切りなど、好きなときに `git add .masume && git commit -m "gridhub: 冒険の書"` で入れてください（このリポジトリ自身もそうしています）。
+- `gridhub quest` が `git init` するときのブランチは `main` です（GitHub の既定と同じ）。
 - 墓から変更を取り出すには、指令書に出るコマンドを打ちます: `git stash apply <stash>`。
 - `quest.save` が無い地図では、GridHub は Git に触りません。
 
@@ -244,7 +248,7 @@ GitHub のリポジトリのページに出る「Compare & pull request」を押
 - いまの記録は、記録の番号（seq）と Git のコミットで言います: `記録: seq 42 / Git: commit a1b2c3d`（`gridhub status` の最後の行。`gridhub brief` と盤面の見出しにも出ます）。seq は盤面の時点、commit はそのとき判定が見ていたコードの時点です。日誌・コミットメッセージ・PR・Linear のコメントには、この1行を貼れば「その時点」を指せます。
 - `gridhub verify` は、鎖・地図・判定の出力の改ざんを見つけます。`gridhub repair` は、壊れた所から後ろを退避して鎖を直します。
 - `gridhub load <seq>` か `gridhub load <commit>` で、その時点の盤面に戻れます。commit で指すと、そのコミットが冒険の書に初めて記録された時点（町の看板の `commit a1b2c3d` なら、その町でセーブした時点）に戻ります。戻したことも記録されます。コードは Git で戻します（`git checkout a1b2c3d`、墓は `git stash apply <stash>`）。
-- `gridhub log` で、何が起きたかを最初から読めます。
+- `gridhub log` で、何が起きたかを最初から人の読める文で読めます（盤面の「冒険の書」と同じ言い方。時刻はこの機械のローカル時刻）。`--tail` で最後の 20 件、`--tail 100` で 100 件、`--json` で生のイベント。
 
 ---
 
@@ -283,7 +287,7 @@ claude mcp add gridhub -- node /path/to/gridhub/bin/gridhub.js mcp --dir /path/t
 - ノートは縦です。横長の画面では見開き、**縦長の画面（スマホや、縦に置いたタブレット・モニター）では1ページずつ**縦に見せます。画面の向きを変えると切り替わります。
 - 札・吹き出し・瓦版の切り抜きは重ならないように置かれ、字は切れません（長い字は短くして、全文はマウスを乗せると出ます）。
 - 道のマスはテスト1件ずつで、テストの名前は拡大すると読めます。タスクの札には `POST /api/memos` のような題と `テスト 3/5`、町の看板には `commit a1b2c3d` が書いてあります。
-- 右の欄はエンジニア向けです: なかま（何代目・テストの数・メダル）、冒険の書（ログ）、モンスター図鑑（テストの一覧と成否）。
+- 右の欄はエンジニア向けです: なかま（何代目・テストの数・メダル）、冒険の書（ログ）、モンスター図鑑（テストの一覧と成否）。見出しの「一覧」は、マスを Linear 風の表にしたもの（台帳）です。
 - 道には、開発に関係する**余白のマス**もあります。進みは止めません（判定も罰もない）。駒が通ると、合流の前には別の担当との会話（それぞれの最新の日誌から）、町では住人との雑談（通したテストの数・セーブの commit）、ほかでは瓦版（「号外: 伝令 が S2 を抜けた」と、作っている製品の分野の話題 `quest.news`）が起きます。どれも冒険の書と地図に本当にあることからだけ作ります。
 - 「ノートに書き出す」で、ノート全体（すべてのページ）を1目 = 5mm の実寸の SVG にして保存できます。印刷すると、そのまま方眼ノートのすごろくになります。
 - 盤面はネットが無くても手元の書体ですぐ描かれます（Google Fonts の手書きの書体は、届いたら差し替わります）。
@@ -291,17 +295,17 @@ claude mcp add gridhub -- node /path/to/gridhub/bin/gridhub.js mcp --dir /path/t
 
 | 前（第10章: タスク1つ = 1マスの表） | 後（第11章: テスト1件 = 1マスの世界地図） |
 | --- | --- |
-| ![第10章の盤面](docs/board-ch10.png) | ![第11章の盤面](docs/board.png) |
+| ![第10章の盤面](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-ch10.png) | ![第11章の盤面](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board.png) |
 
 | ページをめくる | エンディング |
 | --- | --- |
-| ![ページをめくる](docs/board-flip.png) | ![エンディング](docs/board-ending.png) |
+| ![ページをめくる](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-flip.png) | ![エンディング](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-ending.png) |
 
 縦長の画面（ここでは縦に置いたタブレット、1024×1366）では、ノートを1ページずつ見せます。
 
-![縦長の画面では1ページずつ](docs/board-portrait.png)
+![縦長の画面では1ページずつ](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-portrait.png)
 
-スクリーンショットの撮り方は [docs/shots/README.md](docs/shots/README.md) にあります。
+スクリーンショットの撮り方は [docs/shots/README.md](https://github.com/M2AI-jp/gridhub/blob/main/docs/shots/README.md) にあります（写真は npm の包みには入れず、GitHub から読み込みます）。
 
 ---
 
@@ -338,7 +342,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | コマンド | すること |
 | --- | --- |
 | `gridhub quest "<願い>" [--gm claude\|codex]` | 願いから GM の LLM が地図と判定を書き、冒険を始める（`git init` も） |
-| `gridhub serve [--port 5005]` | 盤面を開く |
+| `gridhub serve [--port 5005] [--no-open]` | 盤面を開く（ターミナルから打てば、ブラウザも開く） |
 | `gridhub app [--port 0]` | はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）を開く。Mac のアプリはこれを起こす |
 | `gridhub party [--agent claude\|codex] [--tactic careful\|balanced\|bold] [--parallel N]` | キャラクターごとにエージェントを出撃させ、結合テストを指揮する |
 | `gridhub brief <id>` | 指令書 |
@@ -346,7 +350,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | `gridhub check <id\|gate>` | 宣言（町から今までの累積判定） |
 | `gridhub note <id> "<text>"` | 日誌（強敵を倒した直後は技になる） |
 | `gridhub stamp <node> --as <human>` | ハンコ |
-| `gridhub status` / `gridhub log` | 盤面の要約 / 冒険の書 |
+| `gridhub status` / `gridhub log [--tail [N]]` | 盤面の要約 / 冒険の書（人の読める文。`--json` で生のイベント） |
 | `gridhub verify` / `gridhub repair` | 改ざんの検証 / 修復 |
 | `gridhub load <seq\|commit>` | 過去の時点の盤面に戻る（記録の番号か Git のコミットで指す） |
 | `gridhub remote [--auto-push on\|off]` / `gridhub push` | GitHub につなぐ手引きと、送っていないセーブの数（町でセーブしたら送る設定） / いまのブランチを GitHub に送る（force push はしない） |

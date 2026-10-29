@@ -47,7 +47,7 @@ canonical(v):
 | `seq` | 0 から 1 ずつ増える整数 |
 | `ts` | ISO 8601 UTC（`new Date().toISOString()`） |
 | `type` | 下の表のどれか |
-| `actor` | 書いた人（`--as` > `MASUME_ACTOR` > `"gm"`） |
+| `actor` | 書いた人（`--as` > `MASUME_ACTOR` > コマンドに渡したキャラクターID（`step`・`check <characterId>`・`note`）> `"gm"`） |
 | `data` | 型ごとの中身（オブジェクト） |
 | `prev` | 1つ前の `hash`。seq 0 は `"0"` を64個 |
 | `hash` | 上の式 |

@@ -17,7 +17,7 @@ const COMMANDS = {
   stamp: ['書記', '人間のマスにハンコを押す', 'stamp <nodeId> --as <humanId>'],
   status: ['書記', '盤面の状態', 'status [--json]'],
   brief: ['書記', '指令書（いまやること・見えている範囲）', 'brief <characterId> [--json]'],
-  log: ['書記', '冒険の書を読む', 'log [--tail N] [--json]'],
+  log: ['書記', '冒険の書を読む（人の読める文。--json で生のイベント）', 'log [--tail [N]] [--json]'],
   verify: ['書記', '冒険の書のハッシュの鎖を検証する（改ざんを見つける）', 'verify [--json]'],
   repair: ['書記', '呪われたセーブデータを修復する', 'repair'],
   note: ['書記', '日誌を書く（次の自分への申し送り）', 'note <characterId> <text>'],
@@ -31,7 +31,7 @@ const COMMANDS = {
   quest: ['語り部', '「xxxのようなアプリを作りたい」から冒険をつくる', 'quest "<願い>" [--gm claude|codex] [--allow-listen]'],
   party: ['軍師', 'キャラクターごとにエージェントを出撃させる', 'party [--agent claude|codex] [--tactic careful|balanced|bold] [--allow-listen]'],
   init: ['語り部', 'よそのプロジェクトに GridHub の支度をする（AGENTS.md ほか）', 'init [--agent claude|codex] [--allow-listen]'],
-  serve: ['伝令', '盤面（5mm方眼ノート）を開く', 'serve [--port 5005] [--host 127.0.0.1] [--dir D] [--lifeline]'],
+  serve: ['伝令', '盤面（5mm方眼ノート）を開く', 'serve [--port 5005] [--host 127.0.0.1] [--dir D] [--no-open] [--lifeline]'],
   app: ['伝令', 'アプリの起動役（はじめの画面・フォルダを開く・チュートリアル）', 'app [--port 0] [--home D] [--play D] [--lifeline]'],
   mcp: ['伝令', 'LLM の道具箱（MCP サーバー、標準入出力）', 'mcp [--dir D]'],
   export: ['地図職人', 'Linear形式で書き出す', 'export linear [--format csv|json] [--out file]'],
@@ -51,7 +51,8 @@ const SELF_HELP = new Set(['quest', 'party', 'init', 'app']);
 // 書記のコマンドに共通のオプション（src/engine/cli.js の parseArgs）
 const COMMON = [
   '  --dir <場所>   冒険の書（.masume/）のあるフォルダ。省略すると、今いる場所から上へ探す（環境変数 MASUME_DIR も見る）',
-  '  --as <ID>      だれとして記録するか（キャラクターID）。省略すると環境変数 MASUME_ACTOR か gm',
+  '  --as <ID>      だれとして記録するか（キャラクターID）。省略すると環境変数 MASUME_ACTOR。それも無ければ、',
+  '                 step・check・note はコマンドに渡したキャラクターID、それ以外（seal・amend・load など）は gm',
   '  --json         結果を JSON で出す',
 ];
 const DIR_JSON = [COMMON[0], COMMON[2]];
@@ -60,7 +61,9 @@ const OPTIONS = {
   serve: [
     '  --port N       待ち受けるポート（既定 5005。0 なら空いているポート）',
     '  --host H       待ち受けるホスト名（既定 127.0.0.1）',
-    '  --dir D        冒険の書のあるフォルダ（無ければ入口を開く。省略すると、今いる場所から上へ探す）',
+    '  --dir D        冒険の書のあるフォルダ（無ければ入口を開く。省略すると、今いる場所から上へ探す。フォルダ自体が無ければ止まる）',
+    '  --open         ブラウザで盤面を開く（ターミナルから打ったときは、言わなくても開く）',
+    '  --no-open      ブラウザを開かない（URL を出すだけ）',
     '  --lifeline     標準入力が閉じたら止まる（アプリから起こすとき用。アプリが落ちてもサーバーを残さない）',
   ],
   mcp: ['  --dir D        冒険の書のあるフォルダ（省略すると環境変数 MASUME_DIR か、今いる場所から上へ探す）'],
@@ -89,7 +92,7 @@ const DETAIL = {
   stamp: ['人間のマス（check.kind: stamp）にハンコを押す。--as には、そのマスの check.by（人間のID）を書く。'],
   status: ['冒険の題・各キャラクターの場所と状態・レベル・いまの記録（seq と Git のコミット）。'],
   brief: ['指令書: 現在のマス・テスト1件ずつの成否・いま戦うテスト・受け継いだ技・仲間の位置・自分の日誌。'],
-  log: ['冒険の書（.masume/log.jsonl）を最初から読む。--tail N で最後の N 件だけ。'],
+  log: ['冒険の書（.masume/log.jsonl）を、最初から人の読める文で出す（盤面の「冒険の書」と同じ言い方。時刻はこの機械のローカル時刻）。', '--tail で最後の 20 件、--tail N で最後の N 件。--json は生のイベント（seq・ts・actor・type・data）。'],
   verify: ['ハッシュの鎖・地図・判定の出力の改ざんを見つける。壊れていれば「呪われています」（終了コード 3）。'],
   repair: ['壊れた所から後ろを退避して、鎖を直す。'],
   note: ['日誌（次の自分への申し送り）。強敵を倒した直後の日誌は技になり、次の代に受け継がれる。'],
@@ -100,7 +103,7 @@ const DETAIL = {
   sortie: ['（軍師が使う）エージェントの出撃を冒険の書に記録する。ふつうは gridhub party が打つ。'],
   return: ['（軍師が使う）出撃の帰還を記録する。止まったままの出撃を閉じるときにも使う。'],
   wish: ['（語り部が使う）冒険の始まりの願いを記録する。ふつうは gridhub quest が打つ。'],
-  serve: ['盤面を http://127.0.0.1:5005/ で配る。URL を表示するので、ブラウザで開いてください（動かしたままにする）。', '冒険の書が無ければ入口（願いを書く所）を開く。'],
+  serve: ['盤面を http://127.0.0.1:5005/ で配る（動かしたままにする）。ターミナルから打てばブラウザも開く（--no-open で開かない。パイプの先やアプリからは開かない）。', '冒険の書が無ければ入口（願いを書く所）を開く。'],
   mcp: ['標準入出力の MCP サーバー。道具は masume_brief / masume_step / masume_check / masume_note / masume_stamp ほか。', '例: claude mcp add gridhub -- node <このファイル> mcp --dir <プロジェクト>'],
   export: ['盤面の状態を Linear 形式（issue の一覧）に書き出す。task にテストのチェックリストが付く。'],
   import: ['Linear の CSV（書き出したもの）から、地図の下書きをつくる。'],
@@ -139,13 +142,15 @@ function usage() {
     'つかいかた: gridhub <command> [options]   共通: --dir <冒険の書のある場所> --as <あなたのID> --json',
     '',
   ];
-  for (const [name, [who, what, how]] of Object.entries(COMMANDS)) {
-    lines.push(`  ${how.padEnd(44)} ${what}（担当: ${who}）`);
+  const width = Math.max(...Object.values(COMMANDS).map(([, , how]) => how.length)) + 2;
+  for (const [, [who, what, how]] of Object.entries(COMMANDS)) {
+    lines.push(`  ${how.padEnd(width)}${what}（担当: ${who}）`);
   }
   lines.push('', '--allow-listen: 判定が 127.0.0.1 にサーバーを立てられるよう、Codex の箱（サンドボックス）のソケットを開ける。',
     '  ゲームはローカルのまま。ただし Codex の設定は localhost だけに絞れないので、その出撃中はインターネットにも出られる。',
     'くわしくは gridhub <command> --help');
-  lines.push('', 'ルールブック: docs/RULEBOOK.md');
+  lines.push('', 'ルールブック: docs/RULEBOOK.md',
+    '版: gridhub --version（`gridhub 0.3.0 (rules 1)` の rules は、冒険の書と地図の形式の版。同じ rules なら、ほかの版の gridhub でも同じ冒険の書を読める）');
   return lines.join('\n');
 }
 
@@ -156,7 +161,8 @@ export async function main(bin) {
     console.log(usage());
     return 0;
   }
-  if (cmd === '--version' || cmd === '-v') {
+  if (cmd === '--version' || cmd === '-v' || cmd === '-V' || cmd === 'version') {
+    // `gridhub <版> (rules 1)` の1行だけ（道具と判定が全文を読む）。rules の意味は --help の末尾に
     console.log(`gridhub ${version()} (rules 1)`);
     return 0;
   }

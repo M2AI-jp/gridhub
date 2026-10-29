@@ -8,7 +8,7 @@ export const AGENT_KINDS = ['claude', 'codex'];
 const PARALLEL = 3;
 const IGNORE_LINES = ['.masume/lock', '.masume/state.json', '.masume/party.log'];
 const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 第15章まで書いていた見出し。前に書いた .gitignore に見出しを2つ並べないために覚えておく
-const IGNORE_HEADING_NOW = '# GridHub（旧名マスメ）の一時ファイル（セーブデータ本体 .masume/log.jsonl は残す）';
+const IGNORE_HEADING_NOW = '# GridHub（旧名マスメ）の一時ファイル（冒険の書 .masume/log.jsonl と判定の出力 .masume/outputs/ は残す）';
 
 const CLAUDE_MD = `このプロジェクトは GridHub（旧名マスメ）で進めています。AGENTS.md を読んでください。
 

@@ -58,9 +58,12 @@ export function renderParty(view, sprites, selectedChar, { app = false } = {}) {
 /** すごろくの帯: キャラごとの道のり（マス1つ = 点1つ）。進み具合のばらつきがひと目で分かる */
 function renderTrack(view) {
   const W = 268;
-  const L = 58;
   const rowH = 19;
   const goal = view.quest?.goal;
+  // 名前の欄は、いちばん長い名前（7字まで）に合わせる。それより長い名前は 6字と …（全文は <title>）
+  const NAME_MAX = 7;
+  const longest = Math.min(NAME_MAX, Math.max(0, ...view.characters.map((c) => [...c.name].length)));
+  const L = 8 + longest * 11 + 6;
   let rows = '';
   view.characters.forEach((c, i) => {
     const n = c.path.length;
@@ -81,8 +84,9 @@ function renderTrack(view) {
     });
     const px = pos >= n ? xOf(n - 1) : xOf(pos);
     dots += `<circle cx="${px.toFixed(1)}" cy="${y}" r="6" fill="${color}" class="tr-me"/>`;
-    const name = [...c.name].slice(0, 4).join('');
-    rows += `<g class="tr-row" data-char="${esc(c.id)}"><text x="4" y="${y + 4}" class="tr-name">${esc(name)}</text>${dots}</g>`;
+    const chars = [...c.name];
+    const name = chars.length > NAME_MAX ? `${chars.slice(0, NAME_MAX - 1).join('')}…` : c.name;
+    rows += `<g class="tr-row" data-char="${esc(c.id)}"><text x="4" y="${y + 4}" class="tr-name"><title>${esc(c.name)}</title>${esc(name)}</text>${dots}</g>`;
   });
   const h = 12 + view.characters.length * rowH;
   return `<div class="track" aria-label="道のり（すごろくの帯）"><svg viewBox="0 0 ${W} ${h}" width="100%" role="img">${rows}</svg></div>`;
@@ -324,8 +328,8 @@ export function renderLedger(view, sprites) {
     )
     .join('');
   return `<div class="ledger-head">
-      <h2>台帳 <small>Linear でいうと、こう見える</small></h2>
-      <p>マスの状態は、そのまま Linear のステータスになります（<code>gridhub export linear</code> で書き出せます）。行をクリックすると盤面のマスを開きます。</p>
+      <h2>一覧 <small>台帳: Linear でいうと、こう見える</small></h2>
+      <p>マスを表にしたものです。マスの状態は、そのまま Linear のステータスになります（<code>gridhub export linear</code> で書き出せます）。行をクリックすると盤面のマスを開きます。</p>
     </div>
     <table class="ledger"><thead><tr><th></th><th>ID</th><th>タイトル</th><th>マイルストーン（次のゲート）</th><th>担当</th><th>見積</th></tr></thead>${sections}</table>`;
 }

@@ -23,14 +23,14 @@
     </div>
     <nav class="tabs" role="tablist" aria-label="表示">
       <button role="tab" data-view="board" aria-selected="true">盤面</button>
-      <button role="tab" data-view="list" aria-selected="false">台帳</button>
+      <button role="tab" data-view="list" aria-selected="false">一覧</button>
       <button role="tab" data-view="rules" aria-selected="false">ルール</button>
     </nav>
     <div class="save">
       <div class="record-box" title="いまの記録の番号（seq）と、その記録が見ていた Git のコミット。gridhub load &lt;seq&gt; か gridhub load &lt;commit&gt; でこの時点の盤面に戻せる">
         <span class="rec-label">記録</span>
         <span id="record" class="record" data-seq="" data-commit=""><span class="rec-seq">seq —</span></span>
-        <button id="copy-record" class="mini-btn" title="「記録: seq N / Git: commit xxxxxxx」を写す（日誌・コミットメッセージ・PR でその時点を指す）">写す</button>
+        <button id="copy-record" class="mini-btn" type="button" aria-label="いまの記録の目印をコピー" title="「記録: seq N / Git: commit xxxxxxx」をクリップボードにコピー（日誌・コミットメッセージ・PR に貼ると、その時点を指せる）">コピー</button>
       </div>
       <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
       <span id="live" class="pill live" data-mode="off">…</span>
@@ -98,7 +98,7 @@
           <p class="lobby-lead">「○○のようなアプリを作りたい」と書くと、GM の LLM が、開発のロードマップ全体を5mm方眼ノートの世界地図にします。テスト1件が1マス。モジュールごとのキャラクター（エージェント）の道が、中ボス（結合テスト）で合流します。</p>
           <form id="lobby-form">
             <label class="field"><span>願い</span>
-              <textarea id="wish" rows="4" maxlength="2000" placeholder="例: ことづけのような、電話の用件をAIが聞いてメールで届けるアプリを作りたい"></textarea>
+              <textarea id="wish" rows="4" maxlength="2000" placeholder="例: 買い物リストのような、品物を足して買ったら消せるアプリを作りたい"></textarea>
             </label>
             <div class="examples">
               <button type="button" class="chip-btn" data-wish-example="おみくじを引けるコマンドラインのアプリを作りたい">おみくじCLI</button>
