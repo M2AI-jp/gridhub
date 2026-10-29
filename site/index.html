@@ -20,6 +20,7 @@
     <a class="brand" href="#top" id="top"><img src="img/icon.png" alt="" width="40" height="40"><span>GridHub</span></a>
     <nav aria-label="ページの中">
       <a href="#features">特長</a>
+      <a href="#map">地図</a>
       <a href="#how">遊び方</a>
       <a href="#start">はじめる</a>
       <a href="https://github.com/M2AI-jp/gridhub">GitHub</a>
@@ -72,8 +73,8 @@
         </article>
         <article class="feature">
           <img src="img/slime.svg" alt="" width="56" height="56">
-          <h3><span class="ph">テストに通ったぶんだけ</span><span class="ph">進める</span></h3>
-          <p>マスの1つ1つが、テスト1件です。テストに通らないと先へ進めないので、「できたつもり」が起きません。</p>
+          <h3><span class="ph">合格したぶんだけ</span><span class="ph">進める</span></h3>
+          <p>マスの1つ1つは、「1,200円の食費を記録すると、一覧に出てくる」のような小さなテストです。合格しないと先へ進めないので、「できたつもり」が起きません。</p>
         </article>
         <article class="feature">
           <span class="party"><img src="img/mage.svg" alt="" width="44" height="44"><img src="img/hero.svg" alt="" width="44" height="44"><img src="img/warrior.svg" alt="" width="44" height="44"></span>
@@ -81,37 +82,132 @@
           <p>Claude Code や Codex が、担当ごとのキャラクターになって冒険に出発します。あなたも勇者として、同じ盤面で遊べます。</p>
         </article>
         <article class="feature">
-          <img src="img/maou.svg" alt="" width="56" height="56">
-          <h3><span class="ph">ボス戦で、</span><span class="ph">みんなの仕事を</span><span class="ph">確かめる</span></h3>
-          <p>担当ごとの道は、結合テストのボス戦で合流します。全員そろって勝てば、その先へ進めます。</p>
-        </article>
-        <article class="feature">
           <img src="img/inn.svg" alt="" width="56" height="56">
           <h3><span class="ph">途中で止まっても、</span><span class="ph">セーブした場所から</span></h3>
           <p>進み具合は「冒険の書」に自動でセーブされます。AI との会話が途切れても、続きのマスから再開できます。</p>
         </article>
-        <article class="feature">
-          <img src="img/bubble.svg" alt="" width="56" height="56">
-          <h3><span class="ph">寄り道も、</span><span class="ph">開発の一部</span></h3>
-          <p>道の途中では、仲間との会話や町の人とのおしゃべり、作っている製品のニュースが起きます。ただのタスク管理にはない、ちょっとした楽しみです。</p>
-        </article>
       </div>
     </section>
 
-    <section id="words" class="sheet" aria-labelledby="words-title">
-      <h2 id="words-title"><span class="ph mark">ゲームの中身は、</span><span class="ph mark">いつもの開発です</span></h2>
-      <p>見た目はすごろくでも、中で動いているのはふだんの開発の道具です。</p>
-      <table class="words">
-        <thead><tr><th scope="col">ゲームの言葉</th><th scope="col">開発の言葉</th></tr></thead>
-        <tbody>
-          <tr><th scope="row"><img src="img/slime.svg" alt="" width="28" height="28">マス</th><td>テスト1件</td></tr>
-          <tr><th scope="row"><img src="img/map.svg" alt="" width="28" height="28">ダンジョン</th><td>タスク</td></tr>
-          <tr><th scope="row"><img src="img/inn.svg" alt="" width="28" height="28">町</th><td>Git のコミット（セーブ）</td></tr>
-          <tr><th scope="row"><img src="img/maou.svg" alt="" width="28" height="28">ボス戦</th><td>結合テスト</td></tr>
-          <tr><th scope="row"><img src="img/crown.svg" alt="" width="28" height="28">王様の城</th><td>あなたの承認（ハンコ）</td></tr>
-          <tr><th scope="row"><img src="img/scroll.svg" alt="" width="28" height="28">冒険の書</th><td>進み具合の記録</td></tr>
-        </tbody>
-      </table>
+    <section id="map" class="sheet" aria-labelledby="map-title">
+      <h2 id="map-title"><span class="ph mark">AI がいちばん力を出せる</span><span class="ph mark">大きさで、</span><span class="ph mark">地図ができています</span></h2>
+      <p class="map-lead">AI は、小さくてはっきりした仕事が得意です。いっぽうで、長い会話では前のことを忘れやすく、頼んでいない所まで手を広げがちです。GridHub の地図は、その性質に合わせて、1マスから大ボスまでの大きさが決めてあります。</p>
+      <p class="scale" aria-hidden="true"><span>数分</span><span>30〜90分</span><span>数時間</span><span>数日</span></p>
+      <ol class="legend">
+        <li class="row s1">
+          <img src="img/slime.svg" alt="" width="40" height="40">
+          <div>
+            <h3><span class="ph">マス（モンスター）</span></h3>
+            <p class="kind"><span class="dev">テスト1件</span><span class="size">数分</span></p>
+            <p>1回に1つのことだけ直して、確かめます。小さいので、AI が迷いません。</p>
+            <p class="ex">例:「1,200円の食費を記録すると、一覧に出てくる」</p>
+          </div>
+        </li>
+        <li class="row s2">
+          <img src="img/map.svg" alt="" width="48" height="48">
+          <div>
+            <h3><span class="ph">ダンジョン</span></h3>
+            <p class="kind"><span class="dev">タスク</span><span class="size">30〜90分（マス2〜6個）</span></p>
+            <p>AI が1回の会話で終えられる量です。出口では、それまでのマスをまとめて確かめ直します。</p>
+            <p class="ex">例:「支出を保存して、読み直す」</p>
+          </div>
+        </li>
+        <li class="row s3">
+          <img src="img/inn.svg" alt="" width="52" height="52">
+          <div>
+            <h3><span class="ph">町（宿屋）</span></h3>
+            <p class="kind"><span class="dev">セーブ（Git のコミット）</span><span class="size">ダンジョン2〜3つごと</span></p>
+            <p>着くと自動でセーブします。負けても、ここからやり直せます。</p>
+          </div>
+        </li>
+        <li class="row s4">
+          <img src="img/golem.svg" alt="" width="58" height="58">
+          <div>
+            <h3><span class="ph">中ボス</span></h3>
+            <p class="kind"><span class="dev">結合テスト</span><span class="size">数時間に1回</span></p>
+            <p>担当どうしの仕事が、はじめてつながる所です。仲間がそろうと、戦いが始まります。</p>
+            <p class="ex">例:「保存した支出を、月ごとに集計する」（保存の担当と集計の担当が合流）</p>
+          </div>
+        </li>
+        <li class="row s5">
+          <img src="img/crown.svg" alt="" width="58" height="58">
+          <div>
+            <h3><span class="ph">王様の城</span></h3>
+            <p class="kind"><span class="dev">あなたのハンコ</span><span class="size">大ボスの前に必ず1つ</span></p>
+            <p>デザインの承認や本番の鍵など、あなたにしか決められないことだけが、ここに来ます。</p>
+          </div>
+        </li>
+        <li class="row s6">
+          <img src="img/maou.svg" alt="" width="68" height="68">
+          <div>
+            <h3><span class="ph">大ボス（魔王の城）</span></h3>
+            <p class="kind"><span class="dev">章の最後の結合テスト</span><span class="size">数日に1回</span></p>
+            <p>作りたかったものが本当にできた、と言える場面を外から確かめます。勝つとエンディングです。</p>
+            <p class="ex">例:「支出を記録して、月ごとに振り返れる」</p>
+          </div>
+        </li>
+        <li class="row s7">
+          <img src="img/bubble.svg" alt="" width="48" height="48">
+          <div>
+            <h3><span class="ph">イベント（寄り道）</span></h3>
+            <p class="kind"><span class="dev">開発に関係するおしゃべり</span><span class="size">道の途中</span></p>
+            <p>進むのを止めない、ひと息のマスです。中ボスの前で別の担当と日誌を見せ合ったり、宿屋の主人に「テスト12件、通ってきたね」と声をかけられたり、作っている製品の瓦版が届いたりします。</p>
+          </div>
+        </li>
+      </ol>
+      <aside class="nottest" aria-labelledby="nottest-title">
+        <img src="img/key.svg" alt="" width="48" height="48">
+        <div>
+          <h3 id="nottest-title"><span class="ph">テストは、</span><span class="ph">あなたが書かなくて大丈夫</span></h3>
+          <p>テストは「こう動いたら合格」を確かめる小さなプログラムです。画面やコマンドを外から動かして確かめます。AI のゲームマスターが、地図といっしょに用意します。AI の仲間がテストを都合よく書き換えると、すぐに分かるようになっています。</p>
+        </div>
+      </aside>
+    </section>
+
+    <section id="fun" class="sheet" aria-labelledby="fun-title">
+      <h2 id="fun-title"><span class="ph mark">ゲームとして、</span><span class="ph mark">ここが楽しい</span></h2>
+      <div class="funs">
+        <article class="fun">
+          <img src="img/sword.svg" alt="" width="48" height="48">
+          <h3><span class="ph">練習は何度でも、</span><span class="ph">本番は一発勝負</span></h3>
+          <p>マスでの戦いは、何度負けてもペナルティがありません。ダンジョンの出口だけは一発勝負で、負けるとレベルが下がり、町まで戻されます。</p>
+        </article>
+        <article class="fun">
+          <img src="img/slime.svg" alt="" width="48" height="48">
+          <h3><span class="ph">倒したモンスターが、</span><span class="ph">仲間になる</span></h3>
+          <p>一度合格したテストは、そのあともずっと一緒に戦ってくれます。あとの変更で壊れると、モンスターが復活して、すぐに分かります。</p>
+        </article>
+        <article class="fun">
+          <img src="img/golem.svg" alt="" width="48" height="48">
+          <h3><span class="ph">仲間がそろうと、</span><span class="ph">ボス戦が始まる</span></h3>
+          <p>それぞれの道を進んだ仲間が、中ボスの砦で合流します。原因の分かる負け方なら、やり直すのはその担当だけです。</p>
+        </article>
+        <article class="fun">
+          <img src="img/horn.svg" alt="" width="48" height="48">
+          <h3><span class="ph">あなたは、</span><span class="ph">作戦を出す指揮官</span></h3>
+          <p>「1マスずつ慎重に」から「次の町まで一気に」まで、AI の仲間に作戦を出せます。動くのは AI、決めるのはあなたです。</p>
+        </article>
+        <article class="fun">
+          <img src="img/lantern.svg" alt="" width="48" height="48">
+          <h3><span class="ph">信頼が増えるほど、</span><span class="ph">先が見えてくる</span></h3>
+          <p>あなたには地図の全部が見えています。AI の仲間には、レベルに合わせた少し先までしか見せないので、頼んでいない先の仕事に手を出しません。</p>
+        </article>
+        <article class="fun">
+          <img src="img/hourglass.svg" alt="" width="48" height="48">
+          <h3><span class="ph">代がかわっても、</span><span class="ph">技は受け継がれる</span></h3>
+          <p>AI の会話が途切れても、次の代のキャラクターが、先代の日誌と苦労して覚えた技を受け継ぎます。盤面には「3代目」のように出ます。</p>
+        </article>
+        <article class="fun">
+          <img src="img/chest.svg" alt="" width="48" height="48">
+          <h3><span class="ph">集めて、眺めて、</span><span class="ph">また遊びたくなる</span></h3>
+          <p>一発合格のメダル、合格したテストのモンスター図鑑、テストのまちがいを見つけたときの宝箱。章の最後には、その冒険の記録から毎回ちがうエンディングが流れます。</p>
+        </article>
+        <article class="fun">
+          <img src="img/map.svg" alt="" width="48" height="48">
+          <h3><span class="ph">方眼ノートの</span><span class="ph">手ざわり</span></h3>
+          <p>盤面は、B5 の縦の5mm方眼ノートに手で描いたすごろくです。駒が次のページへ進むと、ノートがめくれます。</p>
+        </article>
+      </div>
     </section>
 
     <section id="how" class="sheet" aria-labelledby="how-title">

@@ -123,7 +123,7 @@ h3 { font-size: clamp(17px, 2.4vw, 20px); margin: 10px 0 6px; }
 .bridge { margin: 22px 0 0; font-size: clamp(17px, 2.2vw, 20px); font-family: var(--hand); font-weight: 700; max-width: 38em; }
 
 /* 特長 */
-.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 18px; }
+.features { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 18px; }
 .feature { background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 16px 18px 18px; min-width: 0; }
 .feature:nth-child(even) { border-radius: var(--wobbly-2); }
 .feature > img { width: 52px; height: 52px; }
@@ -131,13 +131,41 @@ h3 { font-size: clamp(17px, 2.4vw, 20px); margin: 10px 0 6px; }
 .party { display: flex; gap: 2px; height: 52px; align-items: flex-end; }
 .party img { width: 44px; height: 44px; }
 
-/* ゲームの言葉と開発の言葉 */
-.words { width: 100%; max-width: 640px; border-collapse: separate; border-spacing: 0 8px; }
-.words th, .words td { padding: 8px 14px; text-align: left; vertical-align: middle; }
-.words thead th { font-size: 14px; color: var(--ink-soft); padding-bottom: 0; }
-.words tbody th { font-family: var(--hand); font-size: 18px; background: var(--sticky); border-radius: 8px 0 0 8px; white-space: nowrap; }
-.words tbody th img { width: 28px; height: 28px; vertical-align: middle; margin-right: 8px; }
-.words tbody td { background: var(--card); border: 1.5px solid var(--ink); border-left: none; border-radius: 0 8px 8px 0; font-size: 16px; }
+/* 地図のつくり: 小さいものから大きいものへ（RPG の説明書の凡例） */
+.map-lead { max-width: 44em; margin: 0 0 18px; }
+.scale { display: flex; justify-content: space-between; max-width: 760px; margin: 0 0 10px; padding: 6px 12px; font-family: var(--hand); font-weight: 700; font-size: 14px; color: var(--ink-soft); background: linear-gradient(90deg, rgba(255, 228, 92, 0.25), rgba(217, 74, 58, 0.25)); border-radius: 999px; }
+.scale span:not(:last-child)::after { content: ' →'; color: var(--red); }
+.legend { list-style: none; margin: 0; padding: 0 0 0 22px; max-width: 760px; position: relative; display: grid; gap: 10px; }
+.legend::before { content: ''; position: absolute; left: 6px; top: 10px; bottom: 10px; width: 6px; border-radius: 3px; background: linear-gradient(var(--sticky), var(--red)); }
+.row { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 4px 14px; align-items: start; background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 12px 16px; }
+.row:nth-child(even) { border-radius: var(--wobbly-2); }
+.row > img { justify-self: center; align-self: center; }
+.row.s1 > img { width: 34px; height: 34px; }
+.row.s2 > img { width: 42px; height: 42px; }
+.row.s3 > img { width: 48px; height: 48px; }
+.row.s4 > img { width: 56px; height: 56px; }
+.row.s5 > img { width: 58px; height: 58px; }
+.row.s6 > img { width: 70px; height: 70px; }
+.row.s7 { background: rgba(255, 255, 255, 0.7); border-style: dashed; }
+.row.s7 > img { width: 44px; height: 44px; }
+.row h3 { margin: 0; }
+.row p { margin: 2px 0 0; font-size: 15.5px; }
+.kind { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 4px !important; }
+.kind .dev { font-weight: 700; }
+.kind .size { font-size: 13.5px; padding: 0 10px; border-radius: 999px; background: var(--sticky); color: var(--ink); }
+.ex { font-size: 14px !important; color: var(--ink-soft); }
+.nottest { display: flex; gap: 14px; align-items: flex-start; max-width: 760px; margin: 22px 0 0; padding: 14px 18px; background: var(--sticky); box-shadow: 0 8px 14px -8px rgba(29, 43, 92, 0.45); }
+.nottest img { flex: none; width: 46px; height: 46px; }
+.nottest h3 { margin: 0 0 4px; }
+.nottest p { margin: 0; font-size: 15.5px; }
+
+/* ゲームとして、ここが楽しい */
+.funs { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 236px), 1fr)); gap: 16px; }
+.fun { background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 14px 16px 16px; min-width: 0; }
+.fun:nth-child(even) { border-radius: var(--wobbly-2); }
+.fun img { width: 46px; height: 46px; }
+.fun h3 { margin: 6px 0 4px; }
+.fun p { margin: 0; font-size: 15px; }
 
 /* 遊び方 */
 .steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 18px; }
@@ -190,4 +218,10 @@ pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre
   .d2, .d4, .d5, .d6, .d7, .d8 { width: 34px; }
   .photo { padding: 6px 6px 4px; }
   .tilt-l, .tilt-r, .step { transform: none !important; }
+  .legend { padding-left: 16px; }
+  .legend::before { left: 3px; width: 5px; }
+  .row { grid-template-columns: 48px minmax(0, 1fr); padding: 10px 12px; gap: 4px 10px; }
+  .row > img { max-width: 48px; }
+  .scale { font-size: 13px; padding: 6px 10px; }
+  .scale span:not(:last-child)::after { content: ''; }
 }
