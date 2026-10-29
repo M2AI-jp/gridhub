@@ -7,7 +7,8 @@ import { MasumeError } from '../engine/index.js';
 export const AGENT_KINDS = ['claude', 'codex'];
 const PARALLEL = 3;
 const IGNORE_LINES = ['.masume/lock', '.masume/state.json', '.masume/party.log'];
-const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 名前を変えると、前に書いた .gitignore に見出しが2つ並ぶので変えない
+const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 第15章まで書いていた見出し。前に書いた .gitignore に見出しを2つ並べないために覚えておく
+const IGNORE_HEADING_NOW = '# GridHub（旧名マスメ）の一時ファイル（セーブデータ本体 .masume/log.jsonl は残す）';
 
 const CLAUDE_MD = `このプロジェクトは GridHub（旧名マスメ）で進めています。AGENTS.md を読んでください。
 
@@ -138,16 +139,16 @@ function writeNew(target, text, force) {
   return true;
 }
 
-/** .gitignore に足りない行だけを足す。足した行を返す（無ければ空） */
-function ensureIgnore(target) {
+/** .gitignore に足りない行だけを足す。足した行を返す（無ければ空）。lines は足したい行（既定は IGNORE_LINES） */
+function ensureIgnore(target, lines = IGNORE_LINES) {
   const before = target.exists ? readFileSync(target.path, 'utf8') : '';
   const have = new Set(before.split(/\r?\n/u).map((l) => l.trim()));
-  const missing = IGNORE_LINES.filter((l) => !have.has(l));
+  const missing = lines.filter((l) => !have.has(l));
   if (missing.length === 0) return [];
   const eol = before.includes('\r\n') ? '\r\n' : '\n';
   const lead = before === '' || before.endsWith('\n') ? '' : eol;
   const gap = before.trim() === '' ? '' : eol;
-  const heading = have.has(IGNORE_HEADING) ? [] : [IGNORE_HEADING];
+  const heading = have.has(IGNORE_HEADING) || have.has(IGNORE_HEADING_NOW) ? [] : [IGNORE_HEADING_NOW];
   const text = `${before}${lead}${gap}${[...heading, ...missing].join(eol)}${eol}`;
   if (target.exists) writeFileSync(target.path, text);
   else writeFileSync(target.path, text, { flag: 'wx' });
@@ -180,12 +181,13 @@ const sameFile = (a, b) => {
 };
 
 /**
- * opts: { root, agent, force, allowListen }   ctx: { bin, root（リポジトリ） }
+ * opts: { root, agent, force, allowListen, ignore }   ctx: { bin, root（リポジトリ） }
+ * ignore: .gitignore に IGNORE_LINES のほかに足す行（quest が GM の作業ファイルを足す。§21）
  * allowListen: true なら party.json に `"allow_listen": true` も書く（agent があって、party.json を書くときだけ。§31）
  * 戻り値: { root, files: [{ file, written, note, reason }] }（file は root からの相対パス）
  * reason があるファイルは「書きません」（symlink が外を指す・ぶら下がっている・AGENTS.md と同じ実体 など）
  */
-export function setupProject({ root, agent, force = false, allowListen = false }, ctx) {
+export function setupProject({ root, agent, force = false, allowListen = false, ignore = [] }, ctx) {
   if (agent !== undefined && agent !== null && !AGENT_KINDS.includes(agent)) {
     throw new MasumeError('E_USAGE', `--agent は ${AGENT_KINDS.join(' / ')} のどちらかです（受け取った値: ${agent}）`);
   }
@@ -223,7 +225,7 @@ export function setupProject({ root, agent, force = false, allowListen = false }
   const ignoreTarget = writableTarget(root, rootReal, '.gitignore');
   if (ignoreTarget.reason) refuse('.gitignore', ignoreTarget.reason);
   else {
-    const added = ensureIgnore(ignoreTarget);
+    const added = ensureIgnore(ignoreTarget, [...IGNORE_LINES, ...ignore]);
     files.push({ file: '.gitignore', written: added.length > 0, note: added.length > 0 ? `（足した行: ${added.join(' ')}）` : '（必要な行はもうあります）' });
   }
 

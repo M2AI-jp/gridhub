@@ -150,7 +150,7 @@ export function serveMcp({ root, bin, repo, cwd, env, version = '0.1.0', input =
     } catch (error) {
       if (inflight.get(key)?.cancelled) return null;
       if (error instanceof RpcError) return fail(id, error.rpcCode, error.message);
-      log(`masume mcp: ${method} の処理で想定外のエラー: ${error?.stack ?? error}`);
+      log(`gridhub mcp: ${method} の処理で想定外のエラー: ${error?.stack ?? error}`);
       return fail(id, ERR.internal, `内部エラー: ${error?.message ?? error}`);
     } finally {
       inflight.delete(key);
@@ -179,7 +179,7 @@ export function serveMcp({ root, bin, repo, cwd, env, version = '0.1.0', input =
   rl.on('line', (line) => {
     const text = line.trim();
     if (!text) return;
-    const work = handleLine(text).catch((error) => log(`masume mcp: ${error?.stack ?? error}`));
+    const work = handleLine(text).catch((error) => log(`gridhub mcp: ${error?.stack ?? error}`));
     pending.add(work);
     work.finally(() => pending.delete(work));
   });

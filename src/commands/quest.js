@@ -3,7 +3,7 @@ import { MasumeError } from '../engine/index.js';
 import { questHelp, wantsHelp } from '../quest/help.js';
 import { runQuest } from '../quest/index.js';
 
-const USAGE = '使い方: masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--allow-listen] [--dry-run] [--json]';
+const USAGE = '使い方: gridhub quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--allow-listen] [--dry-run] [--json]';
 
 export async function run(argv, ctx) {
   // --help は何より先に答える。ほかの引数があっても、何も書かず GM も呼ばない（§32.2）
@@ -35,7 +35,7 @@ export async function run(argv, ctx) {
   const { values, positionals } = parsed;
 
   const wish = positionals.join(' ').trim();
-  if (!wish) throw new MasumeError('E_USAGE', `願いを書いてください（例: masume quest "メモアプリのようなアプリを作りたい"）\n${USAGE}`);
+  if (!wish) throw new MasumeError('E_USAGE', `願いを書いてください（例: gridhub quest "メモアプリのようなアプリを作りたい"）\n${USAGE}`);
   for (const key of ['gm', 'model', 'dir', 'as']) {
     if (values[key] !== undefined && !values[key].trim()) throw new MasumeError('E_USAGE', `--${key} に空文字は指定できません`);
   }

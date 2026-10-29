@@ -316,7 +316,7 @@ export function renderLedger(view, sprites) {
     .join('');
   return `<div class="ledger-head">
       <h2>台帳 <small>Linear でいうと、こう見える</small></h2>
-      <p>マスの状態は、そのまま Linear のステータスになります（<code>masume export linear</code> で書き出せます）。行をクリックすると盤面のマスを開きます。</p>
+      <p>マスの状態は、そのまま Linear のステータスになります（<code>gridhub export linear</code> で書き出せます）。行をクリックすると盤面のマスを開きます。</p>
     </div>
     <table class="ledger"><thead><tr><th></th><th>ID</th><th>タイトル</th><th>マイルストーン（次のゲート）</th><th>担当</th><th>見積</th></tr></thead>${sections}</table>`;
 }

@@ -124,6 +124,13 @@ export function hideLobby() {
   questTimer = null;
 }
 
+/** GM のログの、いちばん後ろの `[E_…] …` の行（無ければ最後の行）。見出しに添える理由 */
+function lastErrorLine(log) {
+  const lines = String(log || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const err = [...lines].reverse().find((l) => /^\[E_[A-Z_]+\]/.test(l));
+  return (err ?? lines.at(-1) ?? '').replace(/^\[E_[A-Z_]+\]\s*/, '').slice(0, 160);
+}
+
 async function pollQuest() {
   clearTimeout(questTimer);
   if ($('#lobby').hidden) return;
@@ -135,8 +142,15 @@ async function pollQuest() {
     if (q.running || q.log) {
       box.hidden = false;
       $('#quest-log').textContent = (q.log || '').split('\n').slice(-14).join('\n');
-      $('#quest-phase').textContent = q.running ? 'GM が地図を描いています…' : q.code === 0 ? '地図ができました' : `GM が地図を描けませんでした（終了コード ${q.code}）`;
-      box.dataset.state = q.running ? 'running' : q.code === 0 ? 'done' : 'failed';
+      const next = q.running ? 'running' : q.code === 0 ? 'done' : 'failed';
+      // 失敗したら、見出しに理由（ログの最後の [E_…] の行）を添える。「終了コード 2」だけでは、claude が入っていないのか分からない
+      const why = next === 'failed' ? lastErrorLine(q.log) : '';
+      $('#quest-phase').textContent = q.running ? 'GM が地図を描いています…' : q.code === 0 ? '地図ができました' : `GM が地図を描けませんでした（終了コード ${q.code}）${why ? `: ${why}` : ''}`;
+      if (box.dataset.state !== next) {
+        box.dataset.state = next;
+        // 様子の欄はカードの下にあるので、変わったときは見える所まで送る
+        box.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+      }
       if (!q.running && q.code !== 0 && q.code !== null) $('#start-quest').disabled = !$('#wish').value.trim();
     }
     // 終わったら読み直す（失敗で終わっても、冒険の書が生まれていれば盤面にする）

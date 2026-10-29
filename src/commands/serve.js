@@ -21,7 +21,7 @@ export async function run(argv, ctx) {
       allowPositionals: false,
     }));
   } catch {
-    throw usageError('引数が不正です。使い方: masume serve [--port N] [--host H] [--dir D]');
+    throw usageError('引数が不正です。使い方: gridhub serve [--port N] [--host H] [--dir D]');
   }
 
   const port = Number(values.port);
