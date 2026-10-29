@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GridHub — 退屈な開発を、楽しいゲームに。</title>
-  <meta name="description" content="テストが1つ通るたびに、キャラクターが1マス進む。AI エージェントとパーティを組んで、ゲーム感覚で開発を進める、方眼ノートのすごろくです。">
+  <title>GridHub — 1マス進むたび、アプリができていく。</title>
+  <meta name="description" content="作りたいものを書けば、AI の仲間が開発を方眼ノートのすごろくにして、1マスずつ進めていきます。テストに1つ合格するたびに、キャラクターが1マス進みます。">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="GridHub — 退屈な開発を、楽しいゲームに。">
-  <meta property="og:description" content="テストが1つ通るたびに、キャラクターが1マス進む。AI エージェントとパーティを組んで、ゲーム感覚で開発を進める、方眼ノートのすごろくです。">
+  <meta property="og:title" content="GridHub — 1マス進むたび、アプリができていく。">
+  <meta property="og:description" content="作りたいものを書けば、AI の仲間が開発を方眼ノートのすごろくにして、1マスずつ進めていきます。テストに1つ合格するたびに、キャラクターが1マス進みます。">
   <meta property="og:url" content="https://gridhub.matsunai.com/">
   <meta property="og:image" content="https://gridhub.matsunai.com/img/board.png">
   <meta name="theme-color" content="#fdfaf0">
@@ -26,13 +26,17 @@
       <a href="https://github.com/M2AI-jp/gridhub">GitHub</a>
     </nav>
   </header>
+  <nav class="tabs" aria-label="ページの切り替え">
+    <a class="tab" href="index.html" aria-current="page"><img src="img/hero.svg" alt="" width="28" height="28"><span>はじめての方へ</span></a>
+    <a class="tab" href="engineers.html"><img src="img/scribe.svg" alt="" width="28" height="28"><span>エンジニアの方へ</span></a>
+  </nav>
 
   <main>
     <section id="hero" class="hero" aria-labelledby="hero-title">
       <div class="hero-text">
         <p class="badge">無料・オープンソース</p>
-        <h1 id="hero-title"><span class="ph mark">退屈な開発を、</span><br><span class="ph mark">楽しいゲームに。</span></h1>
-        <p class="hero-lead">テストが1つ通るたびに、キャラクターが1マス進む。AI エージェントとパーティを組んで、ゲーム感覚で開発を進めよう。</p>
+        <h1 id="hero-title"><span class="ph mark">1マス</span><span class="ph mark">進むたび、</span><br><span class="ph mark">アプリが</span><span class="ph mark">できていく。</span></h1>
+        <p class="hero-lead">作りたいものを書けば、AI の仲間が開発を方眼ノートのすごろくにして、1マスずつ進めていきます。</p>
         <p class="actions">
           <a class="btn primary" href="#start">Mac で遊んでみる</a>
           <a class="btn" href="https://github.com/M2AI-jp/gridhub">GitHub を見る</a>
@@ -74,17 +78,17 @@
         <article class="feature">
           <img src="img/slime.svg" alt="" width="56" height="56">
           <h3><span class="ph">合格したぶんだけ</span><span class="ph">進める</span></h3>
-          <p>マスの1つ1つは、「1,200円の食費を記録すると、一覧に出てくる」のような小さなテストです。合格しないと先へ進めないので、「できたつもり」が起きません。</p>
+          <p>マスの1つ1つは、「メモを1件書くと、一覧のいちばん上に出てくる」のような小さなテストです。合格しないと先へ進めないので、「できたつもり」が起きません。</p>
         </article>
         <article class="feature">
           <span class="party"><img src="img/mage.svg" alt="" width="44" height="44"><img src="img/hero.svg" alt="" width="44" height="44"><img src="img/warrior.svg" alt="" width="44" height="44"></span>
           <h3><span class="ph">AI と</span><span class="ph">パーティを組める</span></h3>
-          <p>Claude Code や Codex が、担当ごとのキャラクターになって冒険に出発します。あなたも勇者として、同じ盤面で遊べます。</p>
+          <p>Claude Code（Anthropic）か Codex（OpenAI）が、担当ごとのキャラクターになって冒険に出発します。あなたも勇者として、同じ盤面で遊べます。</p>
         </article>
         <article class="feature">
           <img src="img/inn.svg" alt="" width="56" height="56">
           <h3><span class="ph">途中で止まっても、</span><span class="ph">セーブした場所から</span></h3>
-          <p>進み具合は「冒険の書」に自動でセーブされます。AI との会話が途切れても、続きのマスから再開できます。</p>
+          <p>進み具合は「冒険の書」に、作ったファイルは Git に、自動でセーブされます。AI との会話が途切れても、続きのマスから再開できます。セーブは GitHub に送っておくこともできます。</p>
         </article>
       </div>
     </section>
@@ -100,7 +104,7 @@
             <h3><span class="ph">マス（モンスター）</span></h3>
             <p class="kind"><span class="dev">テスト1件</span><span class="size">数分</span></p>
             <p>1回に1つのことだけ直して、確かめます。小さいので、AI が迷いません。</p>
-            <p class="ex">例:「1,200円の食費を記録すると、一覧に出てくる」</p>
+            <p class="ex">例:「メモを1件書くと、一覧のいちばん上に出てくる」</p>
           </div>
         </li>
         <li class="row s2">
@@ -109,7 +113,7 @@
             <h3><span class="ph">ダンジョン</span></h3>
             <p class="kind"><span class="dev">タスク</span><span class="size">30〜90分（マス2〜6個）</span></p>
             <p>AI が1回の会話で終えられる量です。出口では、それまでのマスをまとめて確かめ直します。</p>
-            <p class="ex">例:「支出を保存して、読み直す」</p>
+            <p class="ex">例:「メモを保存して、一覧に出す」</p>
           </div>
         </li>
         <li class="row s3">
@@ -126,7 +130,7 @@
             <h3><span class="ph">中ボス</span></h3>
             <p class="kind"><span class="dev">結合テスト</span><span class="size">数時間に1回</span></p>
             <p>担当どうしの仕事が、はじめてつながる所です。仲間がそろうと、戦いが始まります。</p>
-            <p class="ex">例:「保存した支出を、月ごとに集計する」（保存の担当と集計の担当が合流）</p>
+            <p class="ex">例:「アプリを止めて動かし直しても、メモが消えていない」（保存の担当と、サーバーの担当が合流）</p>
           </div>
         </li>
         <li class="row s5">
@@ -135,6 +139,7 @@
             <h3><span class="ph">王様の城</span></h3>
             <p class="kind"><span class="dev">あなたのハンコ</span><span class="size">大ボスの前に必ず1つ</span></p>
             <p>デザインの承認や本番の鍵など、あなたにしか決められないことだけが、ここに来ます。</p>
+            <p class="ex">例:「ブラウザで実際に触ってみて、よければハンコ」</p>
           </div>
         </li>
         <li class="row s6">
@@ -143,7 +148,7 @@
             <h3><span class="ph">大ボス（魔王の城）</span></h3>
             <p class="kind"><span class="dev">章の最後の結合テスト</span><span class="size">数日に1回</span></p>
             <p>作りたかったものが本当にできた、と言える場面を外から確かめます。勝つとエンディングです。</p>
-            <p class="ex">例:「支出を記録して、月ごとに振り返れる」</p>
+            <p class="ex">例:「メモを書いて、一覧で見られる。探す・直す・消すもできる」</p>
           </div>
         </li>
         <li class="row s7">
@@ -159,7 +164,7 @@
         <img src="img/key.svg" alt="" width="48" height="48">
         <div>
           <h3 id="nottest-title"><span class="ph">テストは、</span><span class="ph">あなたが書かなくて大丈夫</span></h3>
-          <p>テストは「こう動いたら合格」を確かめる小さなプログラムです。画面やコマンドを外から動かして確かめます。AI のゲームマスターが、地図といっしょに用意します。AI の仲間がテストを都合よく書き換えると、すぐに分かるようになっています。</p>
+          <p>テストは「こう動いたら合格」を確かめる小さなプログラムです。画面やコマンドを外から動かして確かめます。AI のゲームマスター（Claude Code か Codex）が、地図といっしょに用意します。AI の仲間がテストを都合よく書き換えると、すぐに分かるようになっています。</p>
         </div>
       </aside>
     </section>
@@ -217,13 +222,13 @@
           <span class="num">1</span>
           <img src="img/scribe.svg" alt="" width="64" height="64">
           <h3><span class="ph">作りたいものを書く</span></h3>
-          <p>「家計簿アプリを作りたい」のように、作りたいものを一文で書きます。</p>
+          <p>「メモアプリを作りたい」のように、作りたいものを一文で書きます。</p>
         </li>
         <li class="step">
           <span class="num">2</span>
           <img src="img/map.svg" alt="" width="64" height="64">
           <h3><span class="ph">地図ができる</span></h3>
-          <p>AI がゲームマスターになって、作業を担当ごとに分け、テストのマスを並べた地図を作ります。</p>
+          <p>AI（Claude Code か Codex）がゲームマスターになって、作業を担当ごとに分け、テストのマスを並べた地図を作ります。</p>
         </li>
         <li class="step">
           <span class="num">3</span>
@@ -255,10 +260,28 @@
 
     <section id="start" class="sheet" aria-labelledby="start-title">
       <h2 id="start-title"><span class="ph mark">はじめる</span></h2>
+      <div class="needs" aria-labelledby="needs-title">
+        <h3 id="needs-title"><img src="img/chest.svg" alt="" width="40" height="40"><span class="ph">必要なもの</span></h3>
+        <ul class="needs-list">
+          <li><b>Mac</b>（macOS 13 以上）</li>
+          <li><b>Node.js 22 以上</b>（https://nodejs.org/）</li>
+          <li><b>Command Line Tools</b>（Git が入っています。ターミナルで <code><span class="nb">xcode-select</span> <span class="nb">--install</span></code>）</li>
+          <li>
+            <p><b>Claude Code</b>（Anthropic）か <b>Codex</b>（OpenAI）のどちらか1つ。それぞれのアカウントか API キーでログインして使います。AI の利用料は、Anthropic か OpenAI にかかります。GridHub 自体は無料です。（5分のチュートリアルだけなら要りません）</p>
+            <dl class="install">
+              <dt>Claude Code の入れ方</dt>
+              <dd><pre><code>npm install -g @anthropic-ai/claude-code</code></pre></dd>
+              <dt>Codex の入れ方</dt>
+              <dd><pre><code>npm install -g @openai/codex</code></pre></dd>
+            </dl>
+          </li>
+          <li class="opt"><b>GitHub</b> … GridHub は GitHub からダウンロードします。セーブを GitHub に送ることもできます（送らなくても遊べます）。</li>
+          <li class="opt"><b>Linear</b> や <b>Jira</b> を使っているチームは、進み具合をそちらにも映せます（任意。それぞれの API キーを使います）。</li>
+        </ul>
+      </div>
       <div class="starts">
         <div class="start-box">
           <h3><img src="img/hero.svg" alt="" width="40" height="40"><span class="ph">Mac アプリで遊ぶ</span></h3>
-          <p class="needs">必要なもの: macOS 13 以上・Node.js 22 以上・Command Line Tools</p>
           <ol class="howto">
             <li>
               <p>ターミナルで次のコマンドを実行します（最初の1回だけです）。</p>
@@ -274,7 +297,7 @@ npm run mac</code></pre>
           <h3><img src="img/mage.svg" alt="" width="40" height="40"><span class="ph">コマンドラインで遊ぶ</span></h3>
           <pre><code>npm install -g github:M2AI-jp/gridhub#v0.3.0
 gridhub --help</code></pre>
-          <p>AI といっしょに遊ぶときは、Claude Code か Codex を用意しておきます。</p>
+          <p>コマンドやしくみのくわしい話は、<a href="engineers.html">エンジニアの方へ</a>のページにあります。</p>
         </div>
       </div>
     </section>

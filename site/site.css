@@ -1,4 +1,4 @@
-/* GridHub の紹介ページ（CONTRACTS §75）。看板屋の縄張り。
+/* GridHub の紹介ページ（CONTRACTS §75）。看板屋の縄張り。はじめての方へ（index.html）とエンジニアの方へ（engineers.html）で共有する。
    5mm方眼ノートの見た目。字は手元にあるものだけ（外の字は読み込まない）。スマホの縦（幅 320px）でもはみ出さない。 */
 :root {
   color-scheme: light;
@@ -61,6 +61,28 @@ code { font-family: var(--mono); font-size: 0.92em; background: rgba(255, 255, 2
 .top nav a { text-decoration: none; border-bottom: 2px solid transparent; }
 .top nav a:hover { border-bottom-color: var(--red); }
 
+/* ---- 2ページのタブ（方眼ノートのインデックスシール）。いまのページのシールは手前に出て、下の線を隠す ---- */
+.tabs {
+  display: flex; align-items: flex-end; gap: 10px;
+  max-width: 1120px; margin: 0 auto; padding: 2px var(--gutter) 0;
+  background: linear-gradient(var(--ink), var(--ink)) bottom center / calc(100% - 2 * var(--gutter)) 2px no-repeat;
+}
+.tab {
+  --tab: #fff3a3; --tab-pale: #fffbe0;
+  position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  min-height: 44px; margin-bottom: 2px; padding: 6px 18px 6px 14px;
+  font-family: var(--hand); font-weight: 700; font-size: 16px; line-height: 1.3; text-decoration: none; white-space: nowrap;
+  background: var(--tab-pale); border: 2px solid var(--ink); border-bottom: 0; border-radius: 10px 10px 0 0;
+  box-shadow: inset 0 -7px 8px -7px rgba(29, 43, 92, 0.3);
+}
+.tab + .tab { --tab: #cfe8f3; --tab-pale: #eef7fb; }
+.tab::before { content: ''; position: absolute; inset: 4px 5px 0; border: 1.5px dashed rgba(29, 43, 92, 0.22); border-bottom: 0; border-radius: 7px 7px 0 0; pointer-events: none; }
+.tab img { flex: none; width: 26px; height: 26px; }
+.tab:hover { color: var(--ink); background: var(--tab); }
+.tab[aria-current="page"] { z-index: 1; min-height: 50px; margin-bottom: 0; padding-bottom: 8px; background: var(--tab); box-shadow: none; }
+.tab[aria-current="page"]::after { content: ''; position: absolute; left: 12px; right: 14px; bottom: 5px; height: 3px; border-radius: 2px; background: var(--red); opacity: 0.75; }
+.tab:focus-visible { outline: 3px solid var(--red); outline-offset: 2px; }
+
 main { max-width: 1120px; margin: 0 auto; padding: 0 var(--gutter); }
 
 h1, h2, h3 { font-family: var(--hand); line-height: 1.45; font-weight: 700; }
@@ -71,8 +93,8 @@ h1 .ph.mark, h2 .ph.mark { padding: 0; }
 
 /* ---- ファーストビュー: 文字は少なく、絵が主役 ---- */
 .hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 24px 40px; align-items: center; padding: 18px 0 30px; }
-.badge { display: inline-block; margin: 0; padding: 2px 12px; font-family: var(--hand); font-weight: 700; font-size: 14px; background: var(--card); border: 1.5px solid var(--ink); border-radius: 999px; }
-h1 { font-size: clamp(30px, 4.3vw, 52px); line-height: 1.3; margin: 14px 0 14px; letter-spacing: 0.02em; }
+.badge { display: inline-block; margin: 0; padding: 2px 12px; font-family: var(--hand); font-weight: 700; font-size: 14px; background: var(--card); border: 1.5px solid var(--ink); border-radius: 14px; }
+h1 { font-size: clamp(30px, 3.3vw, 42px); line-height: 1.3; margin: 14px 0 14px; letter-spacing: 0.02em; }
 .hero-lead { font-size: clamp(16px, 1.9vw, 18px); margin: 0; max-width: 30em; }
 .actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 0; }
 .btn {
@@ -198,18 +220,166 @@ pre {
 }
 pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre; }
 
+/* 必要なもの（持ち物リスト。点線の箱は、無くても遊べるもの） */
+.needs { max-width: 860px; margin: 0 0 22px; padding: 12px 18px 14px; background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); }
+.needs h3 { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
+.needs h3 img { width: 40px; height: 40px; }
+.needs-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.needs-list > li { position: relative; padding-left: 30px; font-size: 15.5px; min-width: 0; }
+.needs-list > li::before { content: ''; position: absolute; left: 2px; top: 0.4em; width: 15px; height: 15px; border: 2px solid var(--ink); border-radius: 3px; background: #fff; }
+.needs-list > li.opt::before { border-style: dashed; border-color: var(--ink-soft); }
+.needs-list p { margin: 0; }
+.install { display: grid; grid-template-columns: max-content minmax(0, 1fr); align-items: center; gap: 0 12px; margin: 6px 0 0; }
+.install dt { font-size: 14px; color: var(--ink-soft); }
+.install dd { margin: 0; min-width: 0; }
+.install pre { margin: 4px 0; }
+
+/* ---- エンジニアの方へ ---- */
+.hero-eng { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.hero-eng h1 { font-size: clamp(28px, 2.9vw, 36px); }
+.hero-eng .stage { padding-bottom: 160px; }
+.nb { white-space: nowrap; }
+
+/* 盤面の写真に重ねる、ターミナルのカード（gridhub step の出力の例） */
+.shell {
+  position: absolute; right: 0; bottom: 4px; z-index: 2; width: 88%; margin: 0; overflow: hidden;
+  color: #f4f1e4; background: #1f2b52; border-radius: 10px; box-shadow: 0 12px 22px -6px rgba(29, 43, 92, 0.5); transform: rotate(1deg);
+}
+.shell figcaption { display: flex; align-items: center; gap: 8px; padding: 5px 12px; font-size: 13px; color: #c9cfe6; background: rgba(255, 255, 255, 0.08); }
+.shell figcaption code { background: none; color: inherit; padding: 0; }
+.dots { display: inline-flex; gap: 5px; }
+.dots i { width: 9px; height: 9px; border-radius: 50%; background: #ff8b7b; }
+.dots i + i { background: #ffd65c; }
+.dots i + i + i { background: #8fe3a0; }
+.shell pre { margin: 0; padding: 8px 14px 10px; color: inherit; background: none; border: 0; border-radius: 0; font-size: 12px; line-height: 1.55; }
+.shell pre code { white-space: pre-wrap; overflow-wrap: anywhere; }
+.shell .pr { color: #ffe45c; }
+.shell .ok { color: #8fe3a0; }
+.shell .ng { color: #ff9d8f; }
+.shell .dim { color: #95a0c4; }
+@media (prefers-reduced-motion: reduce) { .shell { transform: none; } }
+
+/* 表（つかう技術・作戦・コマンド）。狭い画面では1行ずつのカードになる */
+table { width: 100%; max-width: 1000px; border-collapse: separate; border-spacing: 0; font-size: 15px; background: var(--card); border: 1.6px solid var(--ink); border-radius: 12px; overflow: hidden; }
+th, td { text-align: left; vertical-align: top; padding: 10px 14px; border-top: 1px dashed rgba(29, 43, 92, 0.3); }
+thead th { border-top: 0; background: var(--sticky); font-family: var(--hand); font-size: 15px; }
+tbody th { font-weight: 700; }
+.stack tbody th { width: 13em; font-family: var(--hand); font-size: 16px; }
+.stack td:last-child { width: 12.5em; }
+.need { display: inline-block; padding: 0 10px; border-radius: 12px; font-size: 13.5px; line-height: 1.7; background: #e3f1f8; }
+.need.must { background: var(--sticky); font-weight: 700; }
+.tactics tbody th { width: 11.5em; }
+.tactics td:last-child { width: 15em; }
+.commands tbody th { width: 46%; font-weight: 400; }
+.commands tbody th code { background: none; padding: 0; font-weight: 700; }
+
+/* ゲームの言葉と、実際に起きること（左にゲームの言葉、右に実際の動き） */
+.terms { margin: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 500px), 1fr)); gap: 12px; }
+.terms .term { display: grid; grid-template-columns: 10.5em minmax(0, 1fr); gap: 4px 14px; align-items: start; background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 12px 16px; min-width: 0; }
+.terms .term:nth-child(4n+2), .terms .term:nth-child(4n+3) { border-radius: var(--wobbly-2); }
+.terms dt { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; font-family: var(--hand); font-weight: 700; font-size: 17px; line-height: 1.4; min-width: 0; }
+.terms dt img { width: 36px; height: 36px; }
+.terms .size { font-family: var(--ui); font-weight: 400; font-size: 13px; padding: 0 8px; border-radius: 999px; background: var(--sticky); }
+.terms .size code { background: none; padding: 0; }
+.terms dd { margin: 0; font-size: 15px; }
+
+/* 例: メモアプリの地図 */
+.lead { max-width: 44em; margin: 0 0 14px; }
+.cast { list-style: none; margin: 0 0 16px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 10px; }
+.cast li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: var(--card); border: 1.5px solid var(--ink); border-radius: 12px; min-width: 0; }
+.cast img { flex: none; width: 44px; height: 44px; }
+.cast p { margin: 0; font-size: 14.5px; line-height: 1.55; }
+.cast b { display: block; font-family: var(--hand); font-size: 17px; }
+
+/* 道の図: 横に道（パソコン）、縦に道（スマホ）。中ボスと大ボスは、通る仲間の道をまたぐ */
+.roads {
+  display: grid; grid-template-columns: 6.5em repeat(9, minmax(0, 1fr)); grid-template-rows: repeat(4, 58px); gap: 6px 4px;
+  max-width: 1000px; margin: 0 0 18px; padding: 14px 12px; background: rgba(255, 255, 255, 0.78); border: 1.6px dashed var(--ink-soft); border-radius: 12px;
+}
+.roads > * { grid-row: var(--who); }
+.who { grid-column: 1; display: flex; align-items: center; gap: 6px; font-family: var(--hand); font-weight: 700; font-size: 15px; line-height: 1.2; }
+.who img { flex: none; width: 32px; height: 32px; }
+.lane { grid-column: 2 / -1; align-self: center; height: 12px; border-radius: 6px; }
+.lane.yellow { background: rgba(255, 220, 70, 0.8); }
+.lane.blue { background: rgba(120, 186, 222, 0.75); }
+.lane.pink { background: rgba(240, 150, 186, 0.7); }
+.lane.green { background: rgba(140, 206, 130, 0.75); }
+.sq {
+  grid-column: var(--at); z-index: 1; justify-self: center; align-self: center;
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center; min-width: 46px; height: 46px; padding: 0 6px;
+  font-family: var(--mono); font-weight: 700; font-size: 13.5px; line-height: 1.15; background: #fff; border: 2px solid var(--ink); border-radius: 6px;
+}
+.sq img { width: 20px; height: 20px; }
+.sq.camp { border-style: dashed; font-family: var(--hand); }
+.sq.stamp { border-color: #b08a1e; background: #fff8dc; }
+.sq.gate, .sq.goal { align-self: stretch; justify-self: stretch; height: auto; margin: 2px 6px; background: #fff7e8; border-width: 2.5px; border-radius: 10px; }
+.sq.gate img { width: 28px; height: 28px; }
+.sq.goal { color: var(--red); background: #ffece6; border-color: var(--red); }
+.sq.goal img { width: 32px; height: 32px; }
+.bosses { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 14px; }
+.boss { background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 10px 16px 14px; min-width: 0; }
+.boss:nth-child(even) { border-radius: var(--wobbly-2); }
+.boss h3 { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; margin: 2px 0 4px; }
+.boss h3 img { width: 40px; height: 40px; }
+.boss p { margin: 0; font-size: 15px; }
+
+/* エージェントの1ターン（付箋を順に貼る） */
+.turn { list-style: none; counter-reset: turn; margin: 0 0 22px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 190px), 1fr)); gap: 14px; }
+.turn li { counter-increment: turn; position: relative; padding: 40px 14px 12px; background: var(--sticky); box-shadow: 0 8px 14px -8px rgba(29, 43, 92, 0.45); min-width: 0; }
+.turn li:nth-child(odd) { transform: rotate(-0.5deg); }
+.turn li:nth-child(even) { transform: rotate(0.5deg); }
+.turn li::before { content: counter(turn); position: absolute; left: 12px; top: 8px; display: grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--ink); border-radius: 50%; background: var(--card); font-family: var(--hand); font-weight: 700; font-size: 16px; line-height: 1; }
+.turn code, .turn .no-code { display: block; font-size: 14px; font-weight: 700; padding: 3px 6px; background: rgba(255, 255, 255, 0.85); }
+.turn .no-code { font-family: var(--hand); background: none; padding: 3px 0; }
+.turn p { margin: 6px 0 0; font-size: 14.5px; }
+@media (prefers-reduced-motion: reduce) { .turn li { transform: none; } }
+
+/* はじめる（エンジニアの方へ）: 番号つきの手順 */
+.setup { list-style: none; counter-reset: setup; margin: 0 0 22px; padding: 0; display: grid; gap: 12px; max-width: 860px; }
+.setup > li { counter-increment: setup; position: relative; padding: 10px 16px 12px 56px; background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); min-width: 0; }
+.setup > li:nth-child(even) { border-radius: var(--wobbly-2); }
+.setup > li::before { content: counter(setup); position: absolute; left: 14px; top: 12px; display: grid; place-items: center; width: 30px; height: 30px; border: 2px solid var(--ink); border-radius: 50%; background: var(--sticky); font-family: var(--hand); font-weight: 700; line-height: 1; }
+.setup h3 { margin: 2px 0 4px; }
+.setup p { margin: 4px 0 0; font-size: 15px; }
+.start-box p { font-size: 15.5px; }
+
 /* ---- 下の帯 ---- */
 .bottom { max-width: 1120px; margin: 48px auto 0; padding: 18px var(--gutter) 40px; border-top: 2px solid var(--ink); font-size: 15px; }
 .bottom p { margin: 0; }
 
 @media (max-width: 860px) {
-  .hero { grid-template-columns: minmax(0, 1fr); gap: 4px; padding-top: 8px; }
+  .hero { grid-template-columns: minmax(0, 1fr); gap: 4px; padding-top: 14px; }
   .stage { padding: 34px 22px 32px; }
+  .hero-eng .stage { padding-bottom: 28px; }
+  .shell { position: relative; right: auto; bottom: auto; width: auto; margin: -34px 0 0 12%; }
+}
+@media (max-width: 720px) {
+  /* 道の図を縦に（キャラクターが列、道は上から下へ） */
+  .roads { grid-template-columns: repeat(4, minmax(0, 1fr)); grid-template-rows: auto repeat(9, 46px); gap: 4px 6px; padding: 10px 8px; }
+  .roads > * { grid-row: auto; grid-column: var(--who); }
+  .who { grid-row: 1; flex-direction: column; gap: 0; font-size: 14px; text-align: center; }
+  .lane { grid-row: 2 / -1; justify-self: center; align-self: stretch; width: 12px; height: auto; }
+  .sq { grid-row: var(--at); }
+  .sq.gate, .sq.goal { flex-direction: row; gap: 4px; align-self: center; justify-self: stretch; height: 42px; margin: 0 4px; }
+  .sq.gate img, .sq.goal img { width: 24px; height: 24px; }
+  .terms .term { grid-template-columns: minmax(0, 1fr); }
+  .terms dt { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+}
+@media (max-width: 640px) {
+  /* 表を1行ずつのカードに */
+  table, thead, tbody, tr, th, td { display: block; }
+  table { border: 0; border-radius: 0; background: none; overflow: visible; }
+  thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  tbody tr { margin: 0 0 10px; padding: 10px 14px; background: var(--card); border: 1.6px solid var(--ink); border-radius: 12px; }
+  th, td { padding: 0; border: 0; width: auto !important; }
+  td { margin-top: 4px; }
+  td[data-label]::before { content: attr(data-label) ": "; font-weight: 700; }
 }
 @media (max-width: 520px) {
   body { font-size: 15.5px; }
-  .top { padding-top: 10px; }
+  .top { padding-top: 8px; padding-bottom: 4px; gap: 2px 16px; }
   .brand { font-size: 21px; }
+  .brand img { width: 34px; height: 34px; }
   .top nav { gap: 2px 16px; font-size: 14px; }
   .actions { margin-top: 16px; }
   .stage { padding: 30px 14px 30px; }
@@ -224,4 +394,14 @@ pre code { background: none; padding: 0; overflow-wrap: normal; white-space: pre
   .row > img { max-width: 48px; }
   .scale { font-size: 13px; padding: 6px 10px; }
   .scale span:not(:last-child)::after { content: ''; }
+  .tabs { gap: 6px; }
+  .tab { flex: 1 1 0; min-width: 0; gap: 4px; padding: 6px 6px; font-size: 15px; }
+  .tab img { width: 22px; height: 22px; }
+  .install { grid-template-columns: minmax(0, 1fr); }
+  .shell { margin-left: 4px; }
+  .setup > li { padding: 46px 14px 12px; }
+  .setup > li::before { top: 10px; }
+}
+@media (max-width: 360px) {
+  .tab img { display: none; }
 }
