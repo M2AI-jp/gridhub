@@ -4,7 +4,7 @@ import { MasumeError } from '../engine/index.js';
 import { initHelp, wantsHelp } from '../quest/help.js';
 import { fileEntry, printSetup, setupProject } from '../quest/setup.js';
 
-const USAGE = '使い方: masume init [--dir D] [--agent claude|codex [--allow-listen]] [--force] [--json]';
+const USAGE = '使い方: gridhub init [--dir D] [--agent claude|codex [--allow-listen]] [--force] [--json]';
 
 export async function run(argv, ctx) {
   // --help は何より先に答える。ほかの引数があっても、何も書かない（§32.2）

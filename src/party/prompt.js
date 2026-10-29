@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { brief } from '../engine/index.js';
 import { DEFAULT_TACTIC, TACTICS } from './tactics.js';
 
-/** `masume brief <id>` のテキスト全文。CLI が使えなければ JSON から最低限を組み立てる。 */
+/** `gridhub brief <id>` のテキスト全文。CLI が使えなければ JSON から最低限を組み立てる。 */
 function briefText(root, bin, id, report) {
   const r = spawnSync(process.execPath, [bin, 'brief', id, '--dir', root], {
     encoding: 'utf8',
@@ -64,7 +64,7 @@ export function buildPrompt({ root, bin, view, characterId, tactic = TACTICS[DEF
     '',
     '## 指令書',
     '',
-    `次は \`masume brief ${id}\` の出力です。現在のマス・判定・視界・仲間・自分の前の日誌が書いてあります。`,
+    `次は \`gridhub brief ${id}\` の出力です。現在のマス・判定・視界・仲間・自分の前の日誌が書いてあります。`,
     '',
     text,
     '',

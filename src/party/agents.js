@@ -102,10 +102,17 @@ class Capture {
   }
 }
 
+/** 起動できなかった理由（人に見せる1行）。ENOENT は「コマンドが見つかりません」 */
+function launchWhy(agent, error) {
+  if (error?.code === 'ENOENT') return `${agent.file} コマンドが見つかりません（インストールされていますか）`;
+  return `${agent.file} — ${error?.code ?? error?.message ?? error}`;
+}
+
 /**
  * エージェントを起動する。プロンプトは stdin に流す。
  * 戻り値の done は、終了・タイムアウト・中断のどれでも必ず解決する { code, output(Buffer) }。
  *   code … エージェントの終了コード / 124 = タイムアウト / 130 = 中断 / 127 = 起動できない
+ *   launchError … 起動そのものに失敗したときだけ { file, code, why }（それ以外は null）
  * stop(why) … 'timeout' | 'interrupt'。プロセスグループごと止める。force=true で即 SIGKILL。
  */
 export function launch({ agent, root, env, prompt, timeoutMs }) {
@@ -156,7 +163,7 @@ export function launch({ agent, root, env, prompt, timeoutMs }) {
     else code = 128 + (constants.signals[exitInfo?.signal] ?? 0);
     const notes = [];
     if (launchError) {
-      notes.push(`（エージェントを起動できませんでした: ${agent.file} — ${launchError.code ?? launchError.message}）`);
+      notes.push(`（エージェントを起動できませんでした: ${launchWhy(agent, launchError)}）`);
     }
     if (stopReason === 'timeout') notes.push(`（制限時間 ${Math.round(timeoutMs / 1000)} 秒を超えたので止めました）`);
     if (stopReason === 'interrupt') notes.push('（パーティが中断したので止めました）');
@@ -167,7 +174,12 @@ export function launch({ agent, root, env, prompt, timeoutMs }) {
     // パイプを握ったままの孫が残っていないように
     child?.stdout?.destroy();
     child?.stderr?.destroy();
-    resolveDone({ code, output: Buffer.concat([body, tailNote]) });
+    resolveDone({
+      code,
+      output: Buffer.concat([body, tailNote]),
+      // 起動そのものに失敗したとき（コマンドが無い など）。軍師はこれを見て、迷子にせず、理由を出して止まる
+      launchError: launchError ? { file: agent.file, code: launchError.code ?? null, why: launchWhy(agent, launchError) } : null,
+    });
   };
 
   try {

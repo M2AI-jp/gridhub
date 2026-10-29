@@ -36,6 +36,7 @@
       </div>
       <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
       <span id="live" class="pill live" data-mode="off">…</span>
+      <button id="ending-open" class="mini-btn" type="button" hidden title="この章のエンディングをもう一度読む">🏁 エンディング</button>
       <!-- ことばの切り替え（§75）: 1つのボタン。字はいまの言い方、押すともう一方へ。選んだほうは localStorage と ?words= に残る -->
       <button id="words-toggle" class="mini-btn words-toggle" type="button" aria-pressed="false">🗡 冒険のことば</button>
       <button id="sound" class="mini-btn" aria-pressed="false">♪ 音なし</button>
@@ -150,6 +151,8 @@
             <button id="start-quest" class="act quest" type="submit" disabled><span data-say="game">冒険をはじめる</span><span data-say="dev">地図を作る</span></button>
             <p class="hint" data-say="game">GM は地図と最初の判定（テスト）を書くだけで、アプリは作りません。作るのは、このあと出撃させるキャラクターたちです。</p>
             <p class="hint" data-say="dev">GM は地図（quest.map.json）と最初の E2E テストを書くだけで、実装はしません。実装するのは、このあと起動するエージェントです。</p>
+            <p class="hint" data-say="game">GM には、手元の Claude Code（<code>claude</code>）か Codex CLI（<code>codex</code>）を使います。どちらも<b>確認なしにファイルを読み書きし、コマンドを実行する</b>設定で動きます。本物の AI を呼ぶので、数分の時間と利用料がかかります。</p>
+            <p class="hint" data-say="dev">GM には手元の Claude Code（<code>claude</code>）か Codex CLI（<code>codex</code>）を使います。どちらも<b>確認なしにファイルを読み書きし、コマンドを実行する</b>設定で起動します（<code>claude -p --permission-mode bypassPermissions</code> / <code>codex exec -s workspace-write</code>）。本物の LLM を呼ぶので、数分の時間と利用料がかかります。</p>
           </form>
           <div id="quest-progress" hidden data-state="idle">
             <p id="quest-phase" class="quest-phase"></p>
@@ -227,8 +230,8 @@
   <dialog id="sortie-modal" aria-labelledby="sortie-title">
     <form id="sortie-form" method="dialog">
       <h2 id="sortie-title" data-t="sortie.title">出撃させる</h2>
-      <p class="hint" data-say="game">選んだキャラクターごとに、AI エージェントを1人ずつ出撃させます。エージェントは指令書を読み、いちばん手前のモンスター（落ちているテスト）から1体ずつ倒して進みます。どこまで進むかは<b>作戦</b>で決まります。中ボスの砦では、仲間がそろうと自動でボス戦が始まります。<b>本物の AI を呼ぶので、時間と利用料がかかります。</b></p>
-      <p class="hint" data-say="dev">選んだ担当ごとに、エージェント（LLM）を1つずつ起動します。エージェントは brief を読み、最初に落ちているテストから順に通していきます。1回の起動でどこまで進むかは<b>作戦</b>で決まります。結合テストは、メンバーがそろうと自動で走ります。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b></p>
+      <p class="hint" data-say="game">選んだキャラクターごとに、AI エージェントを1人ずつ出撃させます。エージェントは指令書を読み、いちばん手前のモンスター（落ちているテスト）から1体ずつ倒して進みます。どこまで進むかは<b>作戦</b>で決まります。中ボスの砦では、仲間がそろうと自動でボス戦が始まります。<b>本物の AI を呼ぶので、時間と利用料がかかります。</b> エージェントは、<b>確認なしにファイルを読み書きし、コマンドを実行する</b>設定で動きます。</p>
+      <p class="hint" data-say="dev">選んだ担当ごとに、エージェント（LLM）を1つずつ起動します。エージェントは brief を読み、最初に落ちているテストから順に通していきます。1回の起動でどこまで進むかは<b>作戦</b>で決まります。結合テストは、メンバーがそろうと自動で走ります。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b> エージェントは、<b>確認なしにファイルを読み書きし、コマンドを実行する</b>設定で起動します（Claude は <code>--permission-mode bypassPermissions</code>、Codex は <code>-s workspace-write</code> の箱）。</p>
       <div class="field-row">
         <label class="field"><span>エージェント</span>
           <select id="sortie-agent"><option value="claude">Claude</option><option value="codex">Codex</option></select>

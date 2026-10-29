@@ -10,7 +10,8 @@
 
 ![GridHub の盤面（縦の5mm方眼ノートの見開き）](docs/board.png)
 
-Node.js 22 以上と Git だけで動きます（外部パッケージはありません）。
+動かすのに要るのは Node.js 22 以上と Git だけです（外部パッケージはありません。macOS と Linux で動きます。Windows は WSL で）。
+願いから冒険をつくる（`gridhub quest`）とエージェントの出撃（`gridhub party`）には、手元に [Claude Code](https://claude.com/claude-code) か [Codex CLI](https://github.com/openai/codex) が入っていてログイン済みであることも要ります（下の「0. 入れる」）。
 
 ## Mac アプリで遊ぶ（ターミナルなし）
 
@@ -54,6 +55,23 @@ npm pack                                # gridhub-0.3.0.tgz ができる（動�
 npm install -g ./gridhub-0.3.0.tgz      # gridhub と masume が使えるようになる
 ```
 
+#### GM とエージェントに使う LLM のコマンド（`gridhub quest`・`gridhub party` に要る）
+
+GridHub 自身は LLM を呼びません。GM（地図と判定を書く）とキャラクター（実装する）は、手元に入っている **Claude Code**（`claude` コマンド）か **Codex CLI**（`codex` コマンド）を起動して動かします。どちらか1つを入れて、ログインしておきます。
+
+| | 入れる | ログイン |
+| --- | --- | --- |
+| Claude Code | https://claude.com/claude-code の手順で（`npm install -g @anthropic-ai/claude-code` など） | `claude` を一度起動して、画面のとおりにログイン |
+| Codex CLI | https://github.com/openai/codex の手順で（`npm install -g @openai/codex` など） | `codex login` |
+
+入っていないと、`[E_GM] GM を起動できませんでした: claude コマンドが見つかりません` のように止まります（盤面の入口も同じ理由を出します）。
+
+知っておくこと:
+
+- **権限**: GM もエージェントも、**確認なしにファイルを読み書きしてコマンドを実行する**設定で起動します。Claude Code は `claude -p --permission-mode bypassPermissions`（箱はありません。あなたと同じ権限で動きます）、Codex は `codex exec -s workspace-write`（箱の中で、書けるのはそのフォルダだけ）です。大事なファイルが置いてあるフォルダでは遊ばず、新しいフォルダか、Git で管理しているフォルダで始めてください。
+- **時間と利用料**: 本物の LLM を呼ぶので、`gridhub quest` は数分かかり、出撃のたびに利用料がかかります（作戦で、1回の出撃の長さが変わります）。
+- GM やエージェントをほかのコマンドにするには `--gm cmd:<command>` / `--agent cmd:<command>`（プロンプトは標準入力に流れます）。
+
 ### 1. 願いから冒険をつくる（`gridhub quest`）
 
 ```sh
@@ -61,7 +79,7 @@ mkdir ~/memo && cd ~/memo
 gridhub quest "メモを書いて一覧できるアプリを作りたい" --gm claude
 ```
 
-GM の LLM（Claude か Codex）が、作りたいものを地図（`quest.map.json`）にし、タスクごとの判定（E2E テスト）を書いて封印します。
+GM の LLM（手元の `claude` か `codex`）が、作りたいものを地図（`quest.map.json`）にし、タスクごとの判定（E2E テスト）を書いて封印します（数分かかり、利用料がかかります）。
 フォルダが Git の作業ツリーでなければ、GridHub が `git init` して、最初のコミット `gridhub: 冒険のはじまり` を作ります。
 
 ### 2. 盤面を開く（`gridhub serve`）
@@ -158,6 +176,7 @@ gridhub note engine "TTL は秒ではなくミリ秒。テストの名前に単�
 | 宣言・結合テストに負けたとき | 担当のファイルを `git stash` に残して（墓）、最後のセーブのコミットに戻す | （stash: `gridhub grave: <ID> <マス> seq <N>`） |
 
 - コミットするのは**担当のファイルだけ**です。あなたのほかの変更やステージ（`git add` したもの）には触れません。push はしません。フックは走りません。
+- `gridhub quest` が置く GM の作業ファイル（依頼書の控え `quest-prompt-*.txt` と GM の出力 `quest.log`）は `.gitignore` に入れるので、コミットには入りません。
 - 墓から変更を取り出すには、指令書に出るコマンドを打ちます: `git stash apply <stash>`。
 - `quest.save` が無い地図では、GridHub は Git に触りません。
 

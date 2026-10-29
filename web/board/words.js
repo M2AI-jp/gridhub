@@ -459,7 +459,7 @@ const T = {
   // 入口
   'lobby.phase.running': { game: 'GM が地図を描いています…', dev: 'GM（LLM）が地図とテストを書いています…' },
   'lobby.phase.done': { game: '地図ができました', dev: '地図ができました' },
-  'lobby.phase.failed': { game: (code) => `GM が地図を描けませんでした（終了コード ${code}）`, dev: (code) => `GM が地図を書けませんでした（終了コード ${code}）` },
+  'lobby.phase.failed': { game: (code, why) => `GM が地図を描けませんでした（終了コード ${code}）${why ? `: ${why}` : ''}`, dev: (code, why) => `GM が地図を書けませんでした（終了コード ${code}）${why ? `: ${why}` : ''}` },
 
   // はじめの画面
   'start.unreachable': { game: 'GridHub に届きません。アプリを開き直してください', dev: 'GridHub に届きません。アプリを開き直してください' },

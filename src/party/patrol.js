@@ -46,6 +46,7 @@ export class Party {
     this.bossBlocked = new Map(); // gateId → 理由
     this.busyHits = new Map(); // characterId → E_BUSY を受けた回数（ほかの指揮役がすでに出撃させている）
     this.fight = null; // いま動いているボス戦
+    this.unlaunchable = null; // エージェントを起動できなかった理由 { file, code, why }。分かったら迷子にせず、理由を出して止まる
     this.promptCount = 0;
     this.launched = 0;
     this.returned = 0;
@@ -143,7 +144,7 @@ export class Party {
     return true;
   }
 
-  async finishSortie(c, entry, { code, output }) {
+  async finishSortie(c, entry, { code, output, launchError = null }) {
     let event;
     try {
       event = recordReturn(this.root, c.id, { actor: ACTOR, sortie: entry.seq, code, log: output });
@@ -155,8 +156,11 @@ export class Party {
     }
     this.returned++;
     const { node_before: before, node_after: after, advanced } = event.data;
+    // 起動できない（コマンドが無い・sh が 127 で終わった）のはキャラクターのせいではない。迷子に数えず、巡回を止める
+    if (launchError) this.unlaunchable ??= launchError;
+    else if (code === 127) this.unlaunchable ??= { file: this.agent.file, code: null, why: `終了コード 127（コマンドが見つかりません）: ${this.agent.display}` };
     if (advanced) this.misses.set(c.id, 0);
-    else {
+    else if (!this.unlaunchable) {
       const n = (this.misses.get(c.id) ?? 0) + 1;
       this.misses.set(c.id, n);
       if (n >= LOST_AFTER) this.lost.add(c.id);
@@ -284,6 +288,13 @@ export class Party {
         candidates.push(c);
       }
 
+      // エージェントを起動できないと分かったら、これ以上は出撃させず、出撃中の帰還を待って理由を出して止まる
+      if (this.unlaunchable) {
+        await Promise.allSettled([...this.active.values()].map((e) => e.promise));
+        if (this.fatal) throw this.fatal;
+        return this.stop(view, { stamps, foreign, unsealed, exhausted: false, unlaunchable: this.unlaunchable });
+      }
+
       // 5. 出撃中が parallel 未満の間、1人ずつ出撃させる
       const wanted = candidates.length > 0;
       let retry = false;
@@ -311,8 +322,14 @@ export class Party {
     return 130;
   }
 
-  stop(view, { stamps, foreign, unsealed, exhausted }) {
+  stop(view, { stamps, foreign, unsealed, exhausted, unlaunchable = null }) {
     const reasons = [];
+    if (unlaunchable) {
+      const hint = unlaunchable.code === 'ENOENT'
+        ? `${unlaunchable.file === 'claude' ? 'Claude Code' : unlaunchable.file === 'codex' ? 'Codex CLI' : unlaunchable.file} を入れてログインしてから、もう一度 gridhub party を打ってください（別のエージェントなら --agent claude|codex|cmd:<command>）`
+        : 'コマンドを確かめてから、もう一度 gridhub party を打ってください';
+      reasons.push(`エージェントを起動できません: ${unlaunchable.why}。${hint}`);
+    }
     if (stamps.length) {
       reasons.push(`ハンコ待ち: ${[...new Set(stamps)].join('、')}`);
     }
@@ -340,7 +357,7 @@ export class Party {
     }
     if (unsealed.size) {
       const ids = [...unsealed].join(' ');
-      this.out(`  封印の案内（GM の仕事です）: masume seal ${ids} — node ${sq(this.bin)} seal ${ids} --dir ${sq(this.root)}`);
+      this.out(`  封印の案内（GM の仕事です）: gridhub seal ${ids} — node ${sq(this.bin)} seal ${ids} --dir ${sq(this.root)}`);
     }
     return 2;
   }
