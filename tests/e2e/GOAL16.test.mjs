@@ -43,10 +43,10 @@ test('すべての冒険の書が正常。地図と package.json は第16章（s
   assert.doesNotMatch(pkg.scripts.test, /GOAL/);
 });
 
-test('§64.1・§77.2 配るものに旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章', { timeout: 240000 }, () => {
-  const { paths } = distPaths(); // 配るもの（§77.2）。sh mac/build.sh が詰めた中身
-  assert.ok(paths.includes('web/start.html'), 'はじめの画面も配るものに入る');
-  assert.ok(!paths.some((f) => f.startsWith('mac/')), 'mac/ は配るものに入れない');
+test('§64.1・§62.4 アプリの中身に旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章', { timeout: 240000 }, () => {
+  const { paths } = distPaths(); // アプリの中身（§62.4）。sh mac/build.sh が詰めた中身
+  assert.ok(paths.includes('web/start.html'), 'はじめの画面もアプリの中身に入る');
+  assert.ok(!paths.some((f) => f.startsWith('mac/')), 'mac/ はアプリの中身に入れない');
   const TEXT = new Set(['.md', '.js', '.mjs', '.json', '.html', '.css', '.svg', '.txt', '']);
   const skipFile = new Set(['docs/CONTRACTS.md']);
   const skipLine = { 'src/quest/setup.js': (t) => /^const IGNORE_HEADING = /.test(t), 'web/board/board.css': (t) => /^\/\*.*\*\/\s*$/.test(t) };

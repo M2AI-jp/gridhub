@@ -28,7 +28,7 @@ trap 'rm -rf "$TMP"' EXIT INT TERM
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-# 1. GridHub 本体: 動くのに要るもの（CONTRACTS §77.2 の「配るもの」）を Contents/Resources/gridhub に写す。
+# 1. GridHub 本体: 動くのに要るもの（CONTRACTS §62.4）を Contents/Resources/gridhub に写す。
 #    パッケージの道具は使わない（git clone したこのフォルダから、そのまま写す）
 echo "GridHub $VERSION の中身を詰めています…"
 GH="$APP/Contents/Resources/gridhub"
@@ -73,7 +73,7 @@ else
   echo "[mac/build.sh] sips か iconutil が無いので、アイコンを入れずに組み立てます。" >&2
 fi
 
-# 5. アドホック署名（配らないので、だれの名前でもない署名）
+# 5. アドホック署名（手元で組んで使うだけなので、だれの名前でもない署名）
 need codesign "macOS の codesign が要ります。"
 codesign --force --deep --sign - "$APP"
 

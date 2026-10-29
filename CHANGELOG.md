@@ -4,10 +4,10 @@ GridHub（旧名マスメ）の変わったところ。新しい版が上です�
 
 ## 次の版（まだ公開していません）
 
-### 配り方（監督の決めごと）
+### GitHub から使う（監督の決めごと）
 
-- GridHub は **git clone したフォルダから `node` で動かすもの**です。パッケージの登録・インストールの道具（包みを作る・登録する・入れる）は使わず、その支度も作りません。README の「0. 入れる」は、リンク（`ln -s`）か alias で `gridhub` と打てるようにする手順にしました。
-- Mac のアプリ（`sh mac/build.sh`）は、動くのに要るファイル（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG・`package.json`）を、このフォルダからそのまま写して詰めます。`package.json` から、配るための項目（`files`・`bin`）を消しました。
+- GridHub は、GitHub から git clone したフォルダで `node` で動かします。配ることは、いまは考えません。パッケージの登録・インストールの支度は作らず、`package.json` の `files`・`bin` と README の包みの手順を消しました。README の「0. 入れる」は、リンク（`ln -s`）か alias で `gridhub` と打てるようにする手順です。
+- Mac のアプリ（`sh mac/build.sh`）は、動くのに要るファイル（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG・`package.json`）を、このフォルダからそのまま写して組みます。
 
 ### 盤面のことば（冒険 / 開発の切り替え）
 
@@ -29,9 +29,9 @@ GridHub（旧名マスメ）の変わったところ。新しい版が上です�
 - 命綱: `gridhub app --lifeline` と `gridhub serve --lifeline` は、標準入力が閉じたら止まります。アプリを閉じても、落ちても、盤面のサーバーは残りません。
 - アプリは、Finder から開いてもログインシェルの PATH で `node` と `claude` を探し、Node.js 22 以上が無ければ入れ方を日本語で出します。
 
-### 配る前の点検（使う人の目線で）
+### 使う人の目線での点検
 
-配る前に、使う人の目線で README・CLI・チュートリアル・盤面・入口を実際に動かして点検し、初回の体験で必ず当たるものを直しました。
+使う人の目線で README・CLI・チュートリアル・盤面・入口を実際に動かして点検し、初回の体験で必ず当たるものを直しました。
 
 - **`gridhub <command> --help`** が、すべてのコマンドで出ます（受付係が答えます。`quest`・`party`・`init` は今までどおり、もっとくわしい説明）。
 - **README に前提条件**: `gridhub quest`・`gridhub party` には Claude Code か Codex CLI（ログイン済み）が要ること、GM とエージェントが確認なしでファイルを読み書きする設定で起動すること、時間と利用料、対応 OS（macOS・Linux。Windows は WSL）。盤面の入口と出撃の窓にも、権限と利用料の一言を足しました。
@@ -42,7 +42,7 @@ GridHub（旧名マスメ）の変わったところ。新しい版が上です�
 
 ## 0.3.0（2026-10-28。GitHub で公開）
 
-第11章〜第13章で入ったものと、第14章・第15章の配る支度です。`package.json` の版は第11章の途中で `0.2.0` にしましたが、`0.2.0` は配っていないので、この `0.3.0` にまとめました。
+第11章〜第13章で入ったものと、第14章・第15章のリリースの支度です。`package.json` の版は第11章の途中で `0.2.0` にしましたが、`0.2.0` は配っていないので、この `0.3.0` にまとめました。
 
 ### 動かす環境
 
@@ -75,15 +75,15 @@ GridHub（旧名マスメ）の変わったところ。新しい版が上です�
 
 - 最大レベルは `Lv9（最大）` と出し、経験値の分数を出しません（status・brief・盤面）。
 
-### 配る支度（第14章）
+### リリースの支度（第14章）
 
 - `LICENSE`（MIT）を置きました。
-- 配るもの（動くのに要るファイル）を、`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・この CHANGELOG・README・LICENSE に決めました。このリポジトリ自身の冒険の書（`.masume/`）・判定（`tests/`）・`examples/`・`demos/`・docs の写真は入りません。
+- 動くのに要るファイル（Mac のアプリに入るもの）を、`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・この CHANGELOG・README・LICENSE に決めました。このリポジトリ自身の冒険の書（`.masume/`）・判定（`tests/`）・`examples/`・`demos/`・docs の写真は入りません。
 - `gridhub --version` は、版を `package.json` から読みます。
 
 ### 名前をそろえる（第15章）
 
-- 配る包みの中の、使う人の目に入る旧名を GridHub にそろえました。チュートリアルは「はじめての GridHub」で、手順のコマンドも `gridhub` です。MCP の資料の名前（GridHub ルールブック・GridHub GM ガイド・GridHub 契約書）、`gridhub init --help` の説明、絵帳も GridHub です。
+- 使う人の目に入る旧名を GridHub にそろえました。チュートリアルは「はじめての GridHub」で、手順のコマンドも `gridhub` です。MCP の資料の名前（GridHub ルールブック・GridHub GM ガイド・GridHub 契約書）、`gridhub init --help` の説明、絵帳も GridHub です。
 - 旧名は「旧名マスメ」と分かる書き方でだけ残っています（互換のための `.masume/` などは、上の「名前」のとおり）。
 
 ### 前の版から変わったこと（互換）

@@ -418,8 +418,8 @@ GM は地図を描いてテストを書くだけで、実装しません。担�
 | 第11章 | **GridHub**: テスト1件が1マス・`gridhub step`・Git のセーブと墓・作戦・伝承と技・エンディング・縦の方眼ノートの世界地図 |
 | 第12章 | 仕上げ: 瓦版は作っている製品の話題・札と吹き出しが重ならない・盤面から GitHub につなぐ（`gridhub remote`・`gridhub push`・「GitHub に送る」ボタン）・縦長の画面では1ページずつ |
 | 第13章 | 町でセーブしたら GitHub に送る設定（`gridhub remote --auto-push on`・盤面の切り替え。初めはオフ）・最大レベルは「Lv9（最大）」と出す |
-| 第14章 | リリースの支度: `LICENSE`（MIT）・配るもの（動くのに要るファイル）を決める・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上。GitHub Release にはまだ出していません |
-| 第15章 | 配る前に名前をそろえる: 配るものの中の、使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
+| 第14章 | リリースの支度: `LICENSE`（MIT）・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上 |
+| 第15章 | 名前をそろえる: 使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
 | 第16章 | **Mac のアプリ**（`sh mac/build.sh` → `GridHub.app`）: はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）・盤面の「手で進める」（縄張りの中だけのファイル・歩く・宣言判定）・閉じたら止まる命綱。新しい仲間の大工（`mac/`）。最後に王様の城（ユーザーが自分の Mac のアプリでハンコを押す） |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
@@ -428,11 +428,11 @@ GM は地図を描いてテストを書くだけで、実装しません。担�
 
 ```sh
 node --test tests/e2e/[ABDEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs   # すべてのマスとゲートの判定を1回ずつ
-node --test tests/e2e/GOAL16.test.mjs                                   # いまのあがり（GOAL16）: 第1章〜第16章の全部の判定をまとめて＋冒険の書・配るものの中の名前・Mac のアプリの手順の確認
+node --test tests/e2e/GOAL16.test.mjs                                   # いまのあがり（GOAL16）: 第1章〜第16章の全部の判定をまとめて＋冒険の書・アプリの中身の名前・Mac のアプリの手順の確認
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
-Linux のコンテナで root として走らせるときは、Chrome の箱（サンドボックス）が起動しないので、`--no-sandbox` を足す小さな包みを渡します。
+Linux のコンテナで root として走らせるときは、Chrome の箱（サンドボックス）が起動しないので、`--no-sandbox` を足す小さなスクリプトを渡します。
 
 ```sh
 printf '#!/bin/sh\nexec /path/to/chrome --no-sandbox --disable-dev-shm-usage "$@"\n' > /tmp/chrome && chmod +x /tmp/chrome
@@ -457,6 +457,6 @@ CHANGELOG.md             リリースノート（版ごとの変わったとこ�
 LICENSE                  MIT License
 ```
 
-配るもの（Mac のアプリに詰める中身。`sh mac/build.sh` が写す）は、動くのに要るもの（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG・`package.json`）だけです。このリポジトリ自身の冒険の書（`.masume/`）・判定・examples・demos・docs の写真は入りません。パッケージの登録・インストールの道具は使いません（git clone したフォルダから `node` で動きます）。
+GridHub は、GitHub から git clone したフォルダで `node` で動きます。Mac のアプリ（`sh mac/build.sh`）に入るのは、動くのに要るもの（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG・`package.json`）だけで、このリポジトリ自身の冒険の書（`.masume/`）・判定・examples・demos・docs の写真は入りません。
 
 ライセンス: MIT（[LICENSE](LICENSE)）。変わったところは [CHANGELOG.md](CHANGELOG.md)。

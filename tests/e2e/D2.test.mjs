@@ -45,7 +45,7 @@ test('§72.2 mac/Info.plist: 実行ファイル・ID・版の置き場・アイ�
   assert.equal(plistValue(ats, 'NSAllowsArbitraryLoads'), undefined, 'どこへでも、は許さない');
 });
 
-test('§72.3・§72.5・§77.3 mac/build.sh は swiftc で組み（xcodebuild は使わない）、配るものは cp で写す（パッケージの道具は呼ばない）、sips・iconutil でアイコン、アドホック署名。scripts.mac と .gitignore の dist/', () => {
+test('§72.3・§72.5・§77 mac/build.sh は swiftc で組み（xcodebuild は使わない）、動くのに要るファイルは cp で写す（パッケージの道具は呼ばない）、sips・iconutil でアイコン、アドホック署名。scripts.mac と .gitignore の dist/', () => {
   const sh = read('mac/build.sh');
   assert.match(sh, /^#!\/bin\/sh\n/);
   assert.equal(spawnSync('sh', ['-n', join(ROOT, 'mac', 'build.sh')]).status, 0, 'sh として読める');
@@ -54,7 +54,7 @@ test('§72.3・§72.5・§77.3 mac/build.sh は swiftc で組み（xcodebuild �
   assert.match(body, /\bswiftc\b/, 'swiftc');
   assert.doesNotMatch(body, /\bxcodebuild\b/, 'xcodebuild は使わない');
   assert.doesNotMatch(body, /\bnpm\b|\byarn\b|\bpnpm\b/, 'パッケージの道具は呼ばない（§77）');
-  assert.match(body, /\bcp -R bin src web\b/, '配るものをこのフォルダから写す');
+  assert.match(body, /\bcp -R bin src web\b/, '動くのに要るファイルをこのフォルダから写す');
   assert.match(body, /cp docs\/\*\.md/, 'docs の md');
   assert.match(body, /quests\/tutorial/, 'チュートリアル');
   assert.match(body, /\bsips\b/, 'sips');
@@ -67,7 +67,7 @@ test('§72.3・§72.5・§77.3 mac/build.sh は swiftc で組み（xcodebuild �
   assert.match(read('.gitignore'), /^\/?dist\/?$/m, 'dist/ は Git に入れない');
 });
 
-test('§72.3・§77.3 GRIDHUB_SKIP_SWIFT=1 で組むと、GridHub.app に配るもの（§77.2）と、版の入った Info.plist が入り、中の gridhub が動く', { timeout: 180000 }, () => {
+test('§72.3・§62.4 GRIDHUB_SKIP_SWIFT=1 で組むと、GridHub.app に動くのに要るファイルと、版の入った Info.plist が入り、中の gridhub が動く', { timeout: 180000 }, () => {
   const dist = tmp('gridhub-d2-');
   const r = spawnSync('sh', [join(ROOT, 'mac', 'build.sh')], { cwd: ROOT, env: cleanEnv({ GRIDHUB_SKIP_SWIFT: '1', GRIDHUB_DIST: dist }), encoding: 'utf8', timeout: 170000 });
   assert.equal(r.status, 0, (r.stdout || '') + (r.stderr || ''));

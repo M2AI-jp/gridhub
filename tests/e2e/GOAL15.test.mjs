@@ -1,4 +1,4 @@
-// GOAL15「あがり（第15章）: 配る前に名前をそろえる」— CONTRACTS §64・§65。公開（タグ・Release）はしない。
+// GOAL15「あがり（第15章）: 名前をそろえる」— CONTRACTS §64・§65。公開（タグ・Release）はしない。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -38,8 +38,8 @@ test('すべての冒険の書が正常。地図と package.json は第15章（�
   assert.doesNotMatch(pkg.scripts.test, /GOAL/);
 });
 
-test('§64.1・§77.2 配るものに入るすべての文字のファイルで、旧名を名前として使っていない。README と CHANGELOG に第15章', { timeout: 240000 }, () => {
-  const { paths } = distPaths(); // 配るもの（§77.2）。sh mac/build.sh が詰めた中身
+test('§64.1・§62.4 アプリの中身に入るすべての文字のファイルで、旧名を名前として使っていない。README と CHANGELOG に第15章', { timeout: 240000 }, () => {
+  const { paths } = distPaths(); // アプリの中身（§62.4）。sh mac/build.sh が詰めた中身
   const TEXT = new Set(['.md', '.js', '.mjs', '.json', '.html', '.css', '.svg', '.txt', '']);
   // §64.1 の例外: 契約書（経緯とユーザーの言葉の記録）、.gitignore の見出し（互換）、盤面の CSS の先頭のコメント
   const skipFile = new Set(['docs/CONTRACTS.md']);

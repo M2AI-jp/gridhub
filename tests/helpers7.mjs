@@ -17,7 +17,7 @@ export function showHits(file, hits) {
   return hits.map((h) => `${file}:${h.line} ${h.text.trim().slice(0, 120)}`).join('\n');
 }
 
-// ---- 配るもの（CONTRACTS §77.2）: sh mac/build.sh を GRIDHUB_SKIP_SWIFT=1 で走らせ、GridHub.app に詰めた中身を読む ----
+// ---- アプリの中身（CONTRACTS §62.4）: sh mac/build.sh を GRIDHUB_SKIP_SWIFT=1 で走らせ、GridHub.app に詰めた中身（動くのに要るファイル）を読む ----
 import { spawnSync as spawnSyncDist } from 'node:child_process';
 import { readdirSync as readdirSyncDist, statSync as statSyncDist } from 'node:fs';
 import { delimiter as delimiterDist, dirname as dirnameDist, join as joinDist, relative as relativeDist } from 'node:path';
@@ -33,7 +33,7 @@ export function distEnv(extra = {}) {
 }
 
 let distCache = null;
-/** { root, paths, bytes }: 配るものを詰めたフォルダと、その中の相対パス（/ 区切り。並び順）と、合計のバイト数。1回だけ組む */
+/** { root, paths, bytes }: アプリの中身を詰めたフォルダと、その中の相対パス（/ 区切り。並び順）と、合計のバイト数。1回だけ組む */
 export function distPaths() {
   if (distCache) return distCache;
   const dist = tmpDist('gridhub-dist-');
