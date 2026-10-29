@@ -7,6 +7,7 @@ import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDra
 import { Sound } from './sound.js';
 import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit } from './command.js';
 import { own } from './sketch.js';
+import { initHand } from './hand.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
 // （字が届くたび・届かないと分かるたびに、ノート全体の字を組み直すので、最初の描画とは重ねない）
@@ -30,6 +31,9 @@ const safeName = (s) => (s != null && SAFE_NAME.test(s) ? s : null);
 const FIXTURE = safeName(params.get('fixture'));
 const SCRIPT = safeName(params.get('script'));
 const LIVE = !params.has('fixture');
+// アプリの起動役から開いたとき（?home= が手元の http）。CLI の言い方をボタンの名前に言い換える（§74.3）
+const HOME = homeUrl();
+const APP = HOME !== null;
 
 const $ = (sel) => document.querySelector(sel);
 const svg = $('#board');
@@ -71,6 +75,7 @@ async function loadArt(dir, key) {
 // ---- 描画 ----
 let pawns;
 let book;
+let hand = { open() {}, refresh() {} };
 function ensureSvg() {
   if (svg.dataset.init) return;
   svg.innerHTML = `${defs(state.monsters)}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="margin-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
@@ -187,7 +192,7 @@ function render(input) {
   updatePageNav();
   effects(prev, view, lay, sameQuest);
 
-  setLayer('#party-list-wrap', renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null));
+  setLayer('#party-list-wrap', renderParty(view, state.sprites, state.selected?.kind === 'char' ? state.selected.id : null, { app: APP }));
   setLayer('#bestiary', renderBestiary(view, state.monsters));
   setLayer('#log', renderLog(view, prev ? seqOf(prev) : -1));
   const news = renderNews(view);
@@ -303,9 +308,9 @@ function renderDrawer() {
     return;
   }
   const html =
-    sel.kind === 'node' ? renderNodeDrawer(state.view, sel.id, { live: LIVE })
+    sel.kind === 'node' ? renderNodeDrawer(state.view, sel.id, { live: LIVE, app: APP })
     : sel.kind === 'margin' ? renderMarginDrawer(state.view, sel.id)
-    : renderCharDrawer(state.view, sel.id, state.sprites);
+    : renderCharDrawer(state.view, sel.id, state.sprites, { live: LIVE, app: APP });
   if (!html) {
     state.selected = null;
     drawer.hidden = true;
@@ -511,7 +516,7 @@ function select(kind, id, { focus = false } = {}) {
   if (state.view) {
     patchLayer('#node-layer', nodeItems(state.view, state.lay, state.monsters, { selected: kind === 'node' ? id : null }));
     patchLayer('#margin-layer', marginItems(state.view, state.lay, state.sprites, { selected: kind === 'margin' ? id : null }));
-    setLayer('#party-list-wrap', renderParty(state.view, state.sprites, kind === 'char' ? id : null));
+    setLayer('#party-list-wrap', renderParty(state.view, state.sprites, kind === 'char' ? id : null, { app: APP }));
   }
   renderDrawer();
   if (focus && state.lay) {
@@ -560,7 +565,7 @@ async function post(path, body) {
 
 function setupInteractions() {
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-close],[data-stamp],[data-battle],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-record,#sound,#ending-close,#ending-open');
+    const t = e.target.closest('[data-close],[data-stamp],[data-battle],[data-hand],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-record,#sound,#ending-close,#ending-open');
     const inBoard = e.target.closest('#board');
     if (inBoard && svg.dataset.justDragged) return;
     if (!t && inBoard) {
@@ -589,6 +594,10 @@ function setupInteractions() {
     if (t.matches('tr[data-node], .step[data-node], .log-entry[data-node]')) {
       setView('board');
       return select('node', t.dataset.node, { focus: true });
+    }
+    if (t.matches('[data-hand]')) {
+      hand.open(t.dataset.hand);
+      return;
     }
     if (t.matches('[data-stamp]')) {
       t.disabled = true;
@@ -755,6 +764,7 @@ async function liveRefresh() {
   window.__masume.lobby = false;
   render(body);
   refreshGit(); // セーブ（町のコミット）が増えたかもしれない（§56.4）
+  hand.refresh(); // 手で進める欄が開いていれば、指令書だけ読み直す（書きかけは消さない。§71）
   if (!partyWatched) {
     partyWatched = true;
     pollParty();
@@ -910,11 +920,35 @@ window.__masume = {
   },
 };
 
+/** ?home= のはじめの画面。手元（127.0.0.1・localhost）の http だけ。ほかは null（§70.5） */
+function homeUrl() {
+  const home = params.get('home');
+  if (!home) return null;
+  let url;
+  try {
+    url = new URL(home);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost'].includes(url.hostname) || !url.port) return null;
+  return url;
+}
+
+/** アプリの起動役から開いたとき（?home=）は、はじめの画面へのリンクを出す（§70.5） */
+function setupHomeLink() {
+  const link = $('#home-link');
+  if (!link || !HOME) return;
+  link.href = HOME.href;
+  link.hidden = false;
+}
+
 (async () => {
+  setupHomeLink();
   book = new Book(svg, $('#view-board'), { onChange: updatePageNav });
   setupCamera();
   setupInteractions();
   initCommand({ live: LIVE, post, refresh: liveRefresh, toast, getView: () => state.view });
+  hand = initHand({ live: LIVE, post, toast, app: APP });
   $('#export-notebook').addEventListener('click', downloadNotebook);
   [state.sprites, state.monsters] = await Promise.all([loadArt('sprites', 'jobs'), loadArt('monsters', 'monsters')]);
   if (params.get('view')) setView(params.get('view'));

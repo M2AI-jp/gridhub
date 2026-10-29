@@ -1,0 +1,13 @@
+=== E18: node --test --test-reporter=spec tests/e2e/E18.test.mjs ===
+✔ §74.1 人間が承認のマスにいるとき、handReviewFiles は指令書とすぐ次のゲートの説明に書かれた、だれかの縄張りの守られていないファイルを返す。ほかのときは空 (151.822946ms)
+✔ §74.1 readHandFile は読むだけのファイルに readonly: true をつけ、writeHandFile は書かない（E_TERRITORY）。守られた場所は E_SEALED (177.284597ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 416.873063
+
+(exit 0, 472ms)

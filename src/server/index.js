@@ -1,6 +1,6 @@
 import { createServer as createHttpServer } from 'node:http';
 import { execFile } from 'node:child_process';
-import { existsSync, mkdirSync, watchFile as watchPath, unwatchFile } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, watchFile as watchPath, unwatchFile } from 'node:fs';
 import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,8 +18,9 @@ const MIME = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
-const MAX_POST_BYTES = 64 * 1024;
-const SECURITY_HEADERS = {
+export const MAX_POST_BYTES = 64 * 1024;
+const HAND_FILE_POST_BYTES = 2 * 1024 * 1024; // 手で書くファイル（§67.4 の 1MiB と、JSON の包み）
+export const SECURITY_HEADERS = {
   'X-Frame-Options': 'DENY',
   'Content-Security-Policy': "frame-ancestors 'none'",
   'X-Content-Type-Options': 'nosniff',
@@ -31,15 +32,15 @@ function send(response, status, body, contentType, headers = {}) {
   response.end(body);
 }
 
-function sendText(response, status, text, headers) {
+export function sendText(response, status, text, headers) {
   send(response, status, text, 'text/plain; charset=utf-8', headers);
 }
 
-function sendJson(response, status, value, headers) {
+export function sendJson(response, status, value, headers) {
   send(response, status, JSON.stringify(value), 'application/json; charset=utf-8', headers);
 }
 
-function sendError(response, status, error) {
+export function sendError(response, status, error) {
   sendJson(response, status, {
     ok: false,
     code: typeof error?.code === 'string' ? error.code : 'E_INTERNAL',
@@ -47,18 +48,18 @@ function sendError(response, status, error) {
   });
 }
 
-function apiError(code, message, status) {
+export function apiError(code, message, status) {
   return Object.assign(new Error(message), status === undefined ? { code } : { code, status });
 }
 
 const badRequest = (message) => apiError('E_USAGE', message, 400);
 
-function rejectLargeBody(request, response) {
+export function rejectLargeBody(request, response, limit = MAX_POST_BYTES) {
   // 本文の残りを待たずに応答し、413 を送ってから接続を閉じる。
   request.pause();
   response.setHeader('Connection', 'close');
   response.once('finish', () => request.destroy());
-  sendError(response, 413, apiError('E_TOO_LARGE', 'POST の本文は 64KB までです'));
+  sendError(response, 413, apiError('E_TOO_LARGE', `POST の本文は ${Math.round(limit / 1024)}KB までです`));
 }
 
 const TACTICS = ['careful', 'balanced', 'bold']; // 作戦（§45・§47）
@@ -66,7 +67,7 @@ const GMS = ['claude', 'codex']; // HTTP から cmd: は受け付けない（任
 const MODEL_PATTERN = /^[A-Za-z0-9][\w.:@/+[\]-]{0,99}$/u;
 const CHARACTER_PATTERN = /^[a-z][a-z0-9-]{0,23}$/u;
 
-function isObject(value) {
+export function isObject(value) {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
 }
 
@@ -139,7 +140,7 @@ async function readPartyDefaults(root) {
   };
 }
 
-function allowedOrigin(request) {
+export function allowedOrigin(request) {
   if (request.headers.origin === undefined) return true;
   try {
     const origin = new URL(request.headers.origin);
@@ -158,7 +159,7 @@ const LOOPBACK_HOST = /^(localhost|[^.]+\.localhost|127\.\d+\.\d+\.\d+|\[::1\])$
  * 外のページが自分のドメインをこの端末の 127.0.0.1 に向けても、Host がそのドメインなので弾ける。
  * LAN に公開した（--host 0.0.0.0 など）ときは、公開した本人の選択なので確認しない。
  */
-function allowedHost(request) {
+export function allowedHost(request) {
   const local = request.socket.localAddress;
   if (typeof local !== 'string' || !LOOPBACK_ADDRESS.test(local)) return true;
   const host = request.headers.host;
@@ -175,7 +176,7 @@ function isWithin(root, file) {
   return path !== '..' && !path.startsWith(`..${sep}`) && !isAbsolute(path);
 }
 
-async function serveStatic(response, root, pathname) {
+export async function serveStatic(response, root, pathname) {
   const name = pathname.endsWith('/') ? `${pathname}index.html` : pathname;
   const file = resolve(root, `.${name}`);
   if (!isWithin(root, file)) {
@@ -213,6 +214,7 @@ export function createServer({
   webRoot, getView, watchFile, onStamp, onBattle, outputFor,
   onQuest, getQuest, onSortie, getParty, onPartyStop,
   getGit, onPush, onAutoPush,
+  getHand, getFile, onFile, onStep, onCheck,
 }) {
   const root = resolve(webRoot);
   const watchedPath = watchFile == null ? null : resolve(watchFile);
@@ -309,7 +311,35 @@ export function createServer({
       status: 200,
     };
   }
+  // 手で演じる窓口（§69）
+  const characterOf = (body) => {
+    if (typeof body.character !== 'string' || !CHARACTER_PATTERN.test(body.character)) throw badRequest('character をキャラクターIDで指定してください');
+    return body.character;
+  };
+  if (typeof onFile === 'function') {
+    postRoutes['/api/file'] = {
+      parse(body) {
+        const character = characterOf(body);
+        if (typeof body.path !== 'string') throw badRequest('path を文字列で指定してください');
+        if (typeof body.content !== 'string') throw badRequest('content を文字列で指定してください');
+        return { character, path: body.path, content: body.content };
+      },
+      call: (value) => onFile(value),
+      status: 200,
+      maxBytes: HAND_FILE_POST_BYTES,
+    };
+  }
+  if (typeof onStep === 'function') {
+    postRoutes['/api/step'] = { parse: (body) => ({ character: characterOf(body) }), call: (value) => onStep(value), status: 200 };
+  }
+  if (typeof onCheck === 'function') {
+    postRoutes['/api/check'] = { parse: (body) => ({ character: characterOf(body) }), call: (value) => onCheck(value), status: 200 };
+  }
+  const postLimit = (pathname) => (Object.hasOwn(postRoutes, pathname) ? postRoutes[pathname].maxBytes : undefined) ?? MAX_POST_BYTES;
+
   const getRoutes = {};
+  if (typeof getHand === 'function') getRoutes['/api/hand'] = getHand;
+  if (typeof getFile === 'function') getRoutes['/api/file'] = getFile;
   if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
   if (typeof getParty === 'function') getRoutes['/api/party'] = getParty;
   if (typeof getGit === 'function') getRoutes['/api/git'] = getGit;
@@ -331,10 +361,11 @@ export function createServer({
       const chunks = [];
       let size = 0;
       // 上限で抜けても、413 を送り終わる前にソケットを壊さない。
+      const limit = postLimit(pathname);
       for await (const chunk of request.iterator({ destroyOnReturn: false })) {
         size += chunk.length;
-        if (size > MAX_POST_BYTES) {
-          rejectLargeBody(request, response);
+        if (size > limit) {
+          rejectLargeBody(request, response, limit);
           return;
         }
         chunks.push(chunk);
@@ -412,7 +443,15 @@ export function createServer({
     }
     if (Object.hasOwn(getRoutes, pathname)) {
       response.setHeader('Cache-Control', 'no-store');
-      sendJson(response, 200, await getRoutes[pathname]());
+      let value;
+      try {
+        value = await getRoutes[pathname](new URL(request.url, 'http://localhost').searchParams);
+      } catch (error) {
+        if (typeof error?.code !== 'string') throw error;
+        sendError(response, error.status ?? 409, error);
+        return;
+      }
+      sendJson(response, 200, value);
       return;
     }
     if (pathname === '/api/health') {
@@ -440,9 +479,12 @@ export function createServer({
 
   const server = createHttpServer((request, response) => {
     for (const [name, value] of Object.entries(SECURITY_HEADERS)) response.setHeader(name, value);
-    if (request.method === 'POST' && Number(request.headers['content-length']) > MAX_POST_BYTES) {
-      rejectLargeBody(request, response);
-      return;
+    if (request.method === 'POST') {
+      const limit = postLimit(String(request.url).split('?', 1)[0]);
+      if (Number(request.headers['content-length']) > limit) {
+        rejectLargeBody(request, response, limit);
+        return;
+      }
     }
     handleRequest(request, response).catch((error) => {
       sendError(response, 500, error);
@@ -543,6 +585,72 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     }
   }
 
+  // ---- 手で演じる窓口（§69）----
+  const handBusy = new Set();
+  // 書記のエラーのコードを、HTTP の状態に
+  const HAND_STATUS = { E_USAGE: 400, E_NO_GAME: 404, E_UNKNOWN: 404, E_SEALED: 403, E_TERRITORY: 403 };
+  const handError = (error) => (typeof error?.code === 'string'
+    ? apiError(error.code, error.message, HAND_STATUS[error.code] ?? 409) : error);
+  const handCall = (fn) => {
+    try {
+      return fn();
+    } catch (error) {
+      throw handError(error);
+    }
+  };
+  const characterParam = (params) => {
+    const character = params.get('character');
+    if (!character || !CHARACTER_PATTERN.test(character)) throw apiError('E_USAGE', 'character をキャラクターIDで指定してください', 400);
+    return character;
+  };
+  /** ルートの SOLUTIONS.json（チュートリアルの解答）の、いまのマスの分のうち書いてよいもの */
+  const solutionsFor = (character, node) => {
+    if (node == null) return [];
+    let all;
+    try {
+      all = JSON.parse(readFileSync(join(gameRoot, 'SOLUTIONS.json'), 'utf8'));
+    } catch {
+      return [];
+    }
+    const list = isObject(all) && Array.isArray(all[node]) ? all[node] : [];
+    return list.filter((item) => isObject(item) && typeof item.path === 'string' && typeof item.content === 'string'
+      && engine.handPathProblem(gameRoot, character, item.path) === null)
+      .map(({ path, content }) => ({ path, content }));
+  };
+  /** gridhub <args…> --json を子で走らせる。{ code, result }。JSON が出なければ [E_…] を投げる */
+  const runJson = (args) => new Promise((done, fail) => {
+    execFile(process.execPath, [bin, ...args], {
+      cwd: gameRoot, encoding: 'utf8', timeout: 30 * 60 * 1000, maxBuffer: 64 * 1024 * 1024,
+      env: Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'NODE_TEST_CONTEXT')),
+    }, (error, stdout, stderr) => {
+      const code = error ? (typeof error.code === 'number' ? error.code : -1) : 0;
+      let result = null;
+      try {
+        result = JSON.parse(stdout);
+      } catch {
+        result = null;
+      }
+      if (result && (code === 0 || code === 1)) {
+        done({ code, result });
+        return;
+      }
+      const failure = String(stderr || stdout).trim().match(/^\[(E_[A-Z_]+)\]\s*([\s\S]*)$/u);
+      if (failure) fail(apiError(failure[1], failure[2], failure[1] === 'E_NO_GAME' || failure[1] === 'E_UNKNOWN' ? 404 : 409));
+      else fail(apiError('E_SPAWN', `gridhub ${args[0]} が失敗しました（終了コード ${code}）`, 500));
+    });
+  });
+  const handJob = async (character, task) => {
+    requireOpen();
+    requireGame();
+    if (handBusy.has(character)) throw apiError('E_BUSY', `${character} はいま判定を走らせています`);
+    handBusy.add(character);
+    try {
+      return await task();
+    } finally {
+      handBusy.delete(character);
+    }
+  };
+
   const job = (running, code, file) => async () => ({
     ok: true,
     running: running(),
@@ -587,6 +695,50 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       await startBattle(gate);
       return { ok: true, ready: gate };
     },
+
+    // ---- 手で演じる窓口（§69）----
+    getHand: (params) => {
+      const character = characterParam(params);
+      requireGame();
+      return handCall(() => {
+        const brief = engine.brief(gameRoot, character);
+        const { territory, files } = engine.handFiles(gameRoot, character);
+        // 承認のマスで、指令書と判定に書かれた仲間のファイル（読むだけ。§74.2）
+        const review = engine.handReviewFiles(gameRoot, character).files;
+        return { ok: true, brief, territory, files, solutions: solutionsFor(character, brief.current?.id), review };
+      });
+    },
+    getFile: (params) => {
+      const character = characterParam(params);
+      const path = params.get('path') ?? '';
+      requireGame();
+      return { ok: true, ...handCall(() => engine.readHandFile(gameRoot, character, path)) };
+    },
+    onFile: ({ character, path, content }) => {
+      requireOpen();
+      requireGame();
+      return { ok: true, ...handCall(() => engine.writeHandFile(gameRoot, character, path, content)) };
+    },
+    onStep: ({ character }) => handJob(character, async () => {
+      const { code, result } = await runJson(['step', '--dir', gameRoot, '--as', character, '--json', '--', character]);
+      const event = result.events?.[0];
+      const node = event?.data?.node ?? null;
+      return { ok: true, exit: code, node, cases: event?.data?.cases?.[node] ?? [], seq: event?.seq ?? null };
+    }),
+    onCheck: ({ character }) => handJob(character, async () => {
+      const { code, result } = await runJson(['check', '--dir', gameRoot, '--as', character, '--no-boss', '--json', '--', character]);
+      const passed = code === 0 && (result.events ?? []).some((event) => event.type === 'check_passed');
+      // 宣言のあと、このキャラクターが待つゲートに仲間がそろったか（ビューで確かめる）
+      let ready = null;
+      if (passed) {
+        const view = engine.buildView(gameRoot);
+        const me = view.characters.find((c) => c.id === character);
+        if (me?.status === 'waiting' && view.nodes[me.at]?.state === 'ready') ready = me.at;
+      }
+      // 仲間がそろったら、ハンコと同じくボス戦を別に始める（もう始まっていれば、それを待つ）
+      if (ready !== null && !battles.has(ready)) await startBattle(ready);
+      return { ok: true, passed, exit: code, ready };
+    }),
 
     // ---- 入口（語り部）----
     onQuest: async ({ wish, gm, model, allow_listen }) => {

@@ -1087,3 +1087,110 @@ body.in-lobby #stage { min-height: 70vh; }
 #git-guide li[data-done='true'] .git-step-mark { color: #2f6b3a; font-weight: 700; }
 .git-step-mark { display: inline-block; width: 1.2em; }
 #git-guide code { display: block; margin: 2px 0 0 1.2em; user-select: all; }
+
+/* ---------- はじめの画面（§70）: 机の上に置いた、方眼ノートの1ページ ---------- */
+body.start-page { overflow: auto; min-height: 100%; display: flex; align-items: flex-start; justify-content: center; padding: 40px 16px 56px; }
+.start-sheet {
+  width: min(760px, 100%);
+  background-color: var(--paper);
+  background-image: linear-gradient(var(--grid-strong) 1px, transparent 1px), linear-gradient(90deg, var(--grid-strong) 1px, transparent 1px);
+  background-size: 19px 19px;
+  background-position: -1px -1px;
+  border-radius: 4px 10px 10px 4px;
+  box-shadow: inset 34px 0 0 -32px var(--red), 0 2px 0 rgba(60, 40, 10, 0.2), 0 22px 40px -18px rgba(50, 30, 5, 0.65);
+  padding: 34px 44px 28px 58px;
+  font-family: var(--hand);
+}
+.start-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 22px; }
+.start-head .logo { font-size: 30px; margin: 0; }
+.start-tagline { margin: 0; color: var(--ink-soft); font-size: 14px; }
+.start-actions { display: grid; gap: 14px; }
+.start-card { background: var(--card); border: 1.6px solid var(--ink); border-radius: var(--wobbly); padding: 16px 18px 12px; box-shadow: 2px 3px 0 rgba(29, 43, 92, 0.25); }
+.tutorial-card { transform: rotate(-0.4deg); }
+.start-btn {
+  font-family: var(--marker); font-size: 20px; color: var(--ink); cursor: pointer;
+  background: linear-gradient(transparent 52%, var(--sticky) 52%, var(--sticky) 88%, transparent 88%);
+  border: none; border-bottom: 2px solid var(--ink); padding: 2px 6px;
+}
+.start-btn.primary { font-size: 24px; background: linear-gradient(transparent 46%, #ffe45c 46%, #ffe45c 90%, transparent 90%); }
+.start-btn.small { font-size: 15px; }
+.start-btn:hover:not(:disabled) { transform: rotate(-1deg); }
+.start-btn:disabled { opacity: 0.55; cursor: progress; }
+.start-btn:focus-visible, .open-recent:focus-visible, .forget:focus-visible { outline: 2.5px solid var(--ink); outline-offset: 3px; }
+.start-hint { margin: 8px 0 0; color: var(--ink-soft); font-size: 13px; line-height: 1.7; }
+.folder-form[hidden], .start-error[hidden], #recent-empty[hidden] { display: none; }
+.folder-form { margin-top: 10px; display: grid; gap: 6px; font-size: 13px; }
+.folder-row { display: flex; gap: 8px; }
+.folder-row input { flex: 1; min-width: 0; font: inherit; font-family: var(--mono); font-size: 13px; padding: 6px 8px; border: 1.4px solid var(--ink); border-radius: 6px; background: #fff; color: var(--ink); }
+.start-error { margin: 0; padding: 8px 12px; background: #ffe1dc; border-left: 4px solid var(--red); color: var(--ink); font-size: 13.5px; }
+.start-recent { margin-top: 26px; }
+.start-recent h2 { font-family: var(--marker); font-size: 18px; margin: 0 0 8px; }
+.recent-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.recent-list li { display: flex; align-items: stretch; gap: 8px; }
+.open-recent {
+  flex: 1; min-width: 0; display: grid; gap: 1px; text-align: left; cursor: pointer; font-family: var(--hand); color: var(--ink);
+  background: rgba(255, 254, 250, 0.92); border: 1.2px dashed rgba(29, 43, 92, 0.55); border-radius: 6px; padding: 7px 10px;
+}
+.open-recent:hover:not(:disabled) { background: #fff8cf; border-style: solid; }
+.open-recent:disabled { opacity: 0.55; cursor: not-allowed; }
+.recent-name { font-weight: 600; font-size: 15px; }
+.recent-sub { font-size: 12px; color: var(--ink-soft); }
+.recent-dir { font-size: 11.5px; background: none; padding: 0; color: var(--pencil-ink); }
+.forget { font-family: var(--hand); font-size: 12px; color: var(--ink-soft); background: none; border: none; cursor: pointer; text-decoration: underline dotted; }
+.start-env { margin-top: 26px; display: grid; gap: 4px; font-size: 12.5px; color: var(--ink-soft); }
+#env-claude[data-found="false"] { color: var(--ink); background: linear-gradient(transparent 60%, rgba(255, 143, 199, 0.45) 60%); }
+.home-link { text-decoration: none; white-space: nowrap; }
+.home-link[hidden] { display: none; }
+
+/* ---------- 手で進める（§71）: 盤面の上に置いた、指令書とファイルの付箋 ---------- */
+.hand-panel {
+  position: fixed; z-index: 20;
+  top: calc(var(--head-h) + 12px); left: calc(var(--party-w) + 22px);
+  width: min(430px, calc(100vw - var(--party-w) - var(--side-w) - 44px)); min-width: 300px;
+  max-height: calc(100vh - var(--head-h) - 28px); overflow: auto;
+  background-color: #fffefa;
+  background-image: linear-gradient(90deg, transparent 30px, rgba(217, 74, 58, 0.45) 30px, rgba(217, 74, 58, 0.45) 31.5px, transparent 31.5px);
+  border: 1.6px solid var(--ink); border-radius: var(--wobbly-2);
+  box-shadow: 3px 5px 0 rgba(29, 43, 92, 0.25), 0 18px 34px -16px rgba(50, 30, 5, 0.6);
+  padding: 0 16px 16px 44px; font-family: var(--hand);
+}
+.hand-panel[hidden] { display: none; }
+.hand-panel[data-busy="true"] { cursor: progress; }
+.hand-head { display: flex; align-items: center; gap: 8px; position: sticky; top: 0; background: #fffefa; padding: 12px 0 8px; border-bottom: 1.5px solid rgba(29, 43, 92, 0.4); z-index: 1; }
+.hand-head h3 { margin: 0; flex: 1; font-family: var(--marker); font-size: 17px; }
+.hand-brief { font-size: 13px; line-height: 1.7; }
+.hand-brief .hand-node { margin: 10px 0 4px; font-size: 15px; }
+.hand-brief .hand-detail { margin: 0 0 6px; }
+.hand-brief .hand-cases { margin: 4px 0; padding-left: 20px; color: var(--ink-soft); }
+.hand-brief .hand-wait { background: linear-gradient(transparent 60%, var(--sticky) 60%); display: inline; }
+.hand-brief .hand-run, .hand-brief .hand-territory, .hand-brief .hand-who { margin: 4px 0; color: var(--ink-soft); }
+.hand-actions .act[hidden] { display: none; }
+.hand-msg { margin: 6px 0; padding: 7px 10px; border-left: 4px solid var(--ink); background: rgba(255, 228, 92, 0.35); font-size: 13px; }
+.hand-msg[data-ok="false"] { border-left-color: var(--red); background: #ffe1dc; }
+.hand-msg[hidden] { display: none; }
+.hand-result { margin: 4px 0 8px; padding-left: 4px; list-style: none; font-size: 13px; }
+.hand-result li.ok { color: #1d6b2a; }
+.hand-result li.ng { color: var(--red); }
+.hand-edit[hidden] { display: none; }
+.hand-edit h4 { margin: 14px 0 4px; font-family: var(--marker); font-size: 14px; }
+.hand-files { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 3px; }
+.hand-files li { cursor: pointer; padding: 2px 6px; border-radius: 4px; }
+.hand-files li:hover, .hand-files li:focus-visible { background: #fff8cf; outline: none; }
+#hand-files-empty[hidden] { display: none; }
+.hand-samples { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.hand-edit label { display: block; font-size: 12px; color: var(--ink-soft); margin-top: 6px; }
+#hand-path, #hand-content { width: 100%; font-family: var(--mono); font-size: 12.5px; color: var(--ink); background: #fff; border: 1.3px solid var(--ink); border-radius: 6px; padding: 6px 8px; }
+#hand-content { margin-top: 6px; resize: vertical; min-height: 120px; }
+/* 承認のマスの、読むだけのファイル（§74.3） */
+.hand-review[hidden], .hand-readonly[hidden] { display: none; }
+.hand-review .hint { margin: 0 0 4px; }
+.hand-readonly { display: inline-block; margin: 6px 0 0; padding: 1px 8px; font-size: 12px; color: var(--ink-soft); border: 1.3px dashed var(--ink-soft); border-radius: 4px; }
+#hand-path:read-only, #hand-content:read-only { background: #f4f1e6; color: var(--ink-soft); }
+.act.hand-open { margin-top: 10px; }
+/* アプリの中では、CLI の指示を「ターミナルでは」に畳む（§74.3） */
+details.cli { margin: 10px 0; font-size: 12.5px; color: var(--ink-soft); }
+details.cli summary { cursor: pointer; width: fit-content; }
+details.cli .hint { margin: 4px 0 0; }
+@media (max-width: 900px) {
+  .hand-panel { left: 8px; right: 8px; width: auto; min-width: 0; top: auto; bottom: 8px; max-height: 70vh; }
+}

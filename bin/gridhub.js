@@ -31,7 +31,8 @@ const COMMANDS = {
   quest: ['語り部', '「xxxのようなアプリを作りたい」から冒険をつくる', 'quest "<願い>" [--gm claude|codex] [--allow-listen]'],
   party: ['軍師', 'キャラクターごとにエージェントを出撃させる', 'party [--agent claude|codex] [--tactic careful|balanced|bold] [--allow-listen]'],
   init: ['語り部', 'よそのプロジェクトに GridHub の支度をする（AGENTS.md ほか）', 'init [--agent claude|codex] [--allow-listen]'],
-  serve: ['伝令', '盤面（5mm方眼ノート）を開く', 'serve [--port 5005] [--host 127.0.0.1] [--dir D]'],
+  serve: ['伝令', '盤面（5mm方眼ノート）を開く', 'serve [--port 5005] [--host 127.0.0.1] [--dir D] [--lifeline]'],
+  app: ['伝令', 'アプリの起動役（はじめの画面・フォルダを開く・チュートリアル）', 'app [--port 0] [--home D] [--play D] [--lifeline]'],
   mcp: ['伝令', 'LLM の道具箱（MCP サーバー、標準入出力）', 'mcp [--dir D]'],
   export: ['地図職人', 'Linear形式で書き出す', 'export linear [--format csv|json] [--out file]'],
   import: ['地図職人', 'Linear CSVから地図の下書きをつくる', 'import linear <file.csv> --out <map.json> [--quest-id KEY] [--title T]'],
@@ -44,8 +45,8 @@ function version() {
   return JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).version;
 }
 
-// ---- 各コマンドの --help / -h（受付係が答える。quest・party・init は、自分でもっとくわしい説明を出す） ----
-const SELF_HELP = new Set(['quest', 'party', 'init']);
+// ---- 各コマンドの --help / -h（受付係が答える。quest・party・init・app は、自分でもっとくわしい説明を出す） ----
+const SELF_HELP = new Set(['quest', 'party', 'init', 'app']);
 
 // 書記のコマンドに共通のオプション（src/engine/cli.js の parseArgs）
 const COMMON = [
@@ -60,6 +61,7 @@ const OPTIONS = {
     '  --port N       待ち受けるポート（既定 5005。0 なら空いているポート）',
     '  --host H       待ち受けるホスト名（既定 127.0.0.1）',
     '  --dir D        冒険の書のあるフォルダ（無ければ入口を開く。省略すると、今いる場所から上へ探す）',
+    '  --lifeline     標準入力が閉じたら止まる（アプリから起こすとき用。アプリが落ちてもサーバーを残さない）',
   ],
   mcp: ['  --dir D        冒険の書のあるフォルダ（省略すると環境変数 MASUME_DIR か、今いる場所から上へ探す）'],
   export: ['  --format json|csv  書き出す形（既定 json）', '  --out <file>       出力先（省略すると標準出力）', ...DIR_JSON],

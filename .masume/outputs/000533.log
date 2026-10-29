@@ -1,0 +1,12 @@
+=== G12: node --test --test-reporter=spec tests/e2e/G12.test.mjs ===
+✔ はじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけであがり、標準入力を閉じると全部止まる（書記 × 伝令 × 盤面 × 地図職人） (4987.243427ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 1
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 25064.888638
+
+(exit 0, 25110ms)
