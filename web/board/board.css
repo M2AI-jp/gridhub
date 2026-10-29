@@ -211,7 +211,7 @@ body.drawer-open #rail > #party { display: none; }
 .party-card.selected { box-shadow: 0 0 0 3px var(--hl), 0 10px 14px -8px rgba(60, 40, 10, 0.55); }
 .party-card .mini { flex: none; background: color-mix(in srgb, var(--hl) 28%, #fff); border-radius: 6px; }
 .pc-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.pc-top { display: flex; align-items: baseline; gap: 6px; }
+.pc-top { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .pc-gen { font-family: var(--hand); font-size: 11px; font-weight: 600; color: #6a3fb0; }
 .pc-medal { color: #b58500; font-weight: 700; }
 .pc-strong { color: #b25b00; font-weight: 700; }
@@ -219,7 +219,7 @@ body.drawer-open #rail > #party { display: none; }
 .pc-fight { font-family: var(--mono); font-size: 10.5px; color: #8a2b1e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-tests { color: var(--ink); font-family: var(--mono); font-size: 10.5px; }
 .pc-tests.all { color: var(--red); }
-.pc-name { font-family: var(--marker); font-size: 14px; width: fit-content; padding: 0 2px; background: linear-gradient(transparent 55%, color-mix(in srgb, var(--hl) 75%, transparent) 55% 92%, transparent 92%); }
+.pc-name { font-family: var(--marker); font-size: 14px; width: fit-content; max-width: 100%; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: linear-gradient(transparent 55%, color-mix(in srgb, var(--hl) 75%, transparent) 55% 92%, transparent 92%); }
 .pc-meta { font-size: 11px; color: var(--ink-soft); font-family: var(--hand); margin-top: 3px; }
 .pc-meta b { color: var(--ink); }
 .pc-xp, .pc-progress, .trip-bar { height: 6px; background: transparent; border: 1.2px solid rgba(29, 43, 92, 0.45); border-radius: var(--wobbly); overflow: hidden; }
@@ -738,6 +738,9 @@ body.in-lobby #curse { display: none; }
 @media (max-width: 1100px) {
   :root { --side-w: 270px; }
   .tagline { display: none; }
+  /* 見出しの右の欄（記録・コピー・セーブ正常・音）が 1024px で横にはみ出さないように詰める（§57） */
+  .save { gap: 6px; margin-left: 8px; }
+  .rec-label { display: none; }
 }
 @media (max-width: 860px) {
   body { overflow: auto; }
@@ -1071,8 +1074,8 @@ body.in-lobby #stage { min-height: 70vh; }
 .git-head small { font-size: 10.5px; font-weight: 400; color: #4f5a6e; }
 .git-mark { font-family: var(--mono); font-size: 12px; color: #fffdf6; background: var(--ink); padding: 0 6px 1px; border-radius: 2px; }
 #git-remote { margin: 0 0 3px; font-family: var(--mono); font-size: 10.5px; color: #4f5a6e; word-break: break-all; }
-.git-row { display: flex; align-items: center; gap: 8px; }
-#git-ahead { margin: 0; flex: 1; font-weight: 600; }
+.git-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#git-ahead { margin: 0; flex: 1; font-weight: 600; word-break: keep-all; min-width: 12em; }
 #git-panel[data-state='synced'] #git-ahead { color: #2f6b3a; font-weight: 400; }
 .git-push { font-weight: 600; }
 .git-auto { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 12.5px; cursor: pointer; }

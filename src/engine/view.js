@@ -23,7 +23,8 @@ function nodeState(node, progress, members, characters) {
   return 'fog';
 }
 
-function logEntry(event, map) {
+/** 冒険の書の1行を、人の読める文に（盤面のログと `gridhub log` が使う）。map は characters（name）を引く地図 */
+export function logEntry(event, map) {
   const data = event.data ?? {};
   const character = data.character ?? null;
   const node = data.gate ?? data.node ?? data.node_before ?? null;

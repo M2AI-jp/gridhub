@@ -51,13 +51,22 @@ export function brief(root, characterId) {
     save: view.quest.save ?? null,
     margin: latestMargin(view.margins, characterId),
     notes,
-    rules: [
-      '1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる',
-      '現在のマスだけをやる',
-      '自分の縄張りの中だけを編集する',
-      '判定ファイルと地図を変更しない',
-      '判定コマンドを自分で走らせ、結果を確認する',
-      '宣言判定と日誌で進行を冒険の書に記録する',
-    ],
+    rules: rulesFor(current),
   };
+}
+
+/** 守ること。ダンジョン（判定のあるマス）・ハンコのマス・ゲートで待っているとき・あがりで、言うことが違う */
+function rulesFor(node) {
+  const common = ['現在のマスだけをやる', '自分の縄張りの中だけを編集する', '判定ファイルと地図を変更しない'];
+  if (node === null) return ['あがり。この地図でやることは、もうない'];
+  if (node.type === 'gate') return ['仲間がそろうとボス戦（結合テスト）が自動で始まる。待っているあいだ、縄張りのファイルを変えない', ...common.slice(1)];
+  if (node.type === 'task' && node.check?.kind === 'stamp') {
+    return [...common, 'ファイルの中身を自分の目で確かめてからハンコを押す（ハンコは判定ではなく、人間の判断の記録）', '日誌で進行を冒険の書に記録する'];
+  }
+  return [
+    '1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる',
+    ...common,
+    '判定コマンドを自分で走らせ、結果を確認する',
+    '宣言判定と日誌で進行を冒険の書に記録する',
+  ];
 }
