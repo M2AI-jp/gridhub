@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GridHub — テスト1件が1マスの、AI エージェント開発の進行管理</title>
+  <meta name="description" content="Claude Code や Codex に任せた開発を、E2E テストと Git で1マスずつ進める、すごろく型の進行管理ツール。Node.js 22 以上、外部パッケージなし、MIT ライセンス。">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="GridHub — テスト1件が1マスの、AI エージェント開発の進行管理">
+  <meta property="og:description" content="Claude Code や Codex に任せた開発を、E2E テストと Git で1マスずつ進める、すごろく型の進行管理ツール。Node.js 22 以上、外部パッケージなし、MIT ライセンス。">
+  <meta property="og:url" content="https://gridhub.matsunai.com/engineers.html">
+  <meta property="og:image" content="https://gridhub.matsunai.com/img/board.png">
+  <meta name="theme-color" content="#fdfaf0">
+  <link rel="icon" href="img/icon.png" type="image/png">
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip" href="#stack">本文へ</a>
+  <header class="top">
+    <a class="brand" href="#top" id="top"><img src="img/icon.png" alt="" width="40" height="40"><span>GridHub</span></a>
+    <nav aria-label="ページの中">
+      <a href="#stack">技術</a>
+      <a href="#mechanics">しくみ</a>
+      <a href="#example">地図の例</a>
+      <a href="#start">はじめる</a>
+      <a href="https://github.com/M2AI-jp/gridhub">GitHub</a>
+    </nav>
+  </header>
+  <nav class="tabs" aria-label="ページの切り替え">
+    <a class="tab" href="index.html"><img src="img/hero.svg" alt="" width="28" height="28"><span>はじめての方へ</span></a>
+    <a class="tab" href="engineers.html" aria-current="page"><img src="img/scribe.svg" alt="" width="28" height="28"><span>エンジニアの方へ</span></a>
+  </nav>
+
+  <main>
+    <section id="hero" class="hero hero-eng" aria-labelledby="hero-title">
+      <div class="hero-text">
+        <p class="badge"><span class="nb">MIT ライセンス</span>・<span class="nb">Node.js 22 以上</span>・<span class="nb">外部パッケージなし</span></p>
+        <h1 id="hero-title"><span class="ph mark">テスト1件が、</span><span class="ph mark">1マス。</span><br><span class="ph mark">Git の</span><span class="ph mark">コミットが、</span><span class="ph mark">セーブ。</span></h1>
+        <p class="hero-lead">Claude Code や Codex に任せた開発を、E2E テストと Git で1マスずつ進める、すごろく型の進行管理ツールです。</p>
+        <p class="actions">
+          <a class="btn primary" href="#start">はじめる</a>
+          <a class="btn" href="https://github.com/M2AI-jp/gridhub">GitHub を見る</a>
+        </p>
+      </div>
+      <div class="stage">
+        <figure class="photo hero-photo">
+          <img src="img/board.png" width="1440" height="900" alt="GridHub の盤面。方眼ノートの見開きに、メモアプリを作る4人のキャラクターの道が描かれ、テストに通ったマスに斜線が引かれている">
+        </figure>
+        <figure class="shell">
+          <figcaption><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>例: <code>gridhub step</code> の出力</figcaption>
+          <pre><code><span class="pr">$</span> gridhub step store
+歩いた: store S1 テスト 3/5
+  <span class="ok">✔</span> create が memo を返す
+  <span class="ok">✔</span> list は新しい順
+  <span class="ok">✔</span> 作業フォルダが無くても作られ、memos.json に保存される
+  <span class="ng">✖</span> 作り直したストアにも残っている
+  <span class="ng">✖</span> 同時に10件作っても取りこぼさない
+いちばん手前のモンスター: 作り直したストアにも残っている
+<span class="dim">--- 判定の出力（末尾） ---
+…</span></code></pre>
+        </figure>
+        <img class="deco d3" src="img/maou.svg" alt="" width="64" height="64">
+        <img class="deco d4" src="img/crown.svg" alt="" width="52" height="52">
+        <img class="deco d5" src="img/merchant.svg" alt="" width="56" height="56">
+        <img class="deco d7" src="img/golem.svg" alt="" width="48" height="48">
+        <img class="deco d2" src="img/slime.svg" alt="" width="56" height="56">
+      </div>
+    </section>
+
+    <section id="stack" class="sheet" aria-labelledby="stack-title">
+      <h2 id="stack-title"><span class="ph mark">つかう技術</span></h2>
+      <table class="stack">
+        <thead>
+          <tr><th scope="col">名前</th><th scope="col">役目</th><th scope="col">要るか</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <th scope="row">Node.js 22 以上</th>
+            <td>GridHub 本体です（ESM。外部パッケージは0）。</td>
+            <td><span class="need must">必須</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Git</th>
+            <td>町でのセーブです。担当のファイルだけを <code>git commit</code> し、負けたら <code>git stash</code> に退避して、町のコミットへ戻します。</td>
+            <td><span class="need must">必須</span></td>
+          </tr>
+          <tr>
+            <th scope="row"><span class="nb">Claude Code</span>（Anthropic）<br><span class="nb">Codex</span>（OpenAI）</th>
+            <td>GM（地図と E2E テストを書く）と、キャラクター（実装する）です。<code>gridhub quest <span class="nb">--gm</span> claude</code> か <code>codex</code>、<code>gridhub party <span class="nb">--agent</span> claude</code> か <code>codex</code> で選びます。それぞれのアカウントか API キーで使います。</td>
+            <td><span class="need must">AI と遊ぶなら必須</span></td>
+          </tr>
+          <tr>
+            <th scope="row">GitHub</th>
+            <td>入手元です（<code>git clone</code>）。<code>gridhub push</code> と「町でセーブしたら push」（<code>gridhub remote <span class="nb">--auto-push</span> on</code>）で、セーブを送ります（force push はしません）。<code>gh</code> があれば、つなぐ手順も案内します。</td>
+            <td><span class="need">任意</span></td>
+          </tr>
+          <tr>
+            <th scope="row">MCP</th>
+            <td><code>gridhub mcp</code> で、Claude Code・Codex などから GridHub を道具として呼べます（標準入出力）。</td>
+            <td><span class="need">任意</span></td>
+          </tr>
+          <tr>
+            <th scope="row">Linear・Jira</th>
+            <td>盤面の状態を issue に映します（<code>LINEAR_API_KEY</code>。Jira は <code>JIRA_BASE_URL</code>・<code>JIRA_EMAIL</code>・<code>JIRA_API_TOKEN</code>）。Linear の CSV の書き出し・読み込みもできます。</td>
+            <td><span class="need">任意</span></td>
+          </tr>
+          <tr>
+            <th scope="row">macOS 13 以上・Command Line Tools</th>
+            <td>Mac アプリ <code>GridHub.app</code> を手元で組みます（<code>swiftc</code>・アドホック署名）。</td>
+            <td><span class="need">Mac アプリを使うときだけ</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="mechanics" class="sheet" aria-labelledby="mechanics-title">
+      <h2 id="mechanics-title"><span class="ph mark">ゲームの言葉と、</span><span class="ph mark">実際に起きること</span></h2>
+      <dl class="terms">
+        <div class="term">
+          <dt><img src="img/slime.svg" alt="" width="40" height="40"><span class="word">マス</span><span class="size">数分</span></dt>
+          <dd>テスト1件です。判定はシェルのコマンドで、終了コード 0 が合格です。<code>node <span class="nb">--test</span></code> や TAP などの出力から、1件ずつの成否を読みます。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/map.svg" alt="" width="40" height="40"><span class="word">ダンジョン</span><span class="size">30〜90分・2〜6マス</span></dt>
+          <dd>タスクです。エージェント1回分のコンテキストで終わる大きさにします。<code>gridhub step</code> は何度でも走らせられ、<code>gridhub check</code> は一発勝負です。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/sword.svg" alt="" width="40" height="40"><span class="word">出口の判定</span><span class="size"><code>gridhub check</code></span></dt>
+          <dd>直近のセーブ以降の、自分の道のタスクの判定を、古い順にすべて走らせ直します。前にできていたことを壊していても落ちます。落ちるとレベルが1つ下がり、町のコミットからやり直します。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/inn.svg" alt="" width="40" height="40"><span class="word">町</span><span class="size">タスク2〜3つごと</span></dt>
+          <dd><code>quest.save</code> が <code>"git"</code> の冒険で、担当の glob（<code>territory</code>）に入るファイルだけをコミットします。フックは走りません。push は、自動で送る設定（<code>gridhub remote <span class="nb">--auto-push</span> on</code>）のときだけです。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/golem.svg" alt="" width="40" height="40"><span class="word">中ボス</span><span class="size">数時間に1回</span></dt>
+          <dd>結合 E2E（<code>gate</code>）です。メンバーがそろうと自動で走ります。判定が <code>MASUME_BLAME: &lt;id&gt;</code> を出せば、その担当だけを町のコミットへ戻します。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/maou.svg" alt="" width="40" height="40"><span class="word">大ボス</span><span class="size">数日に1回</span></dt>
+          <dd><code>quest.goal</code> です。願いが叶った一場面を外から確かめる、章の最後の E2E です。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/crown.svg" alt="" width="40" height="40"><span class="word">王様の城</span><span class="size">大ボスの前に必ず1つ</span></dt>
+          <dd>人間の承認です。<code>gridhub stamp &lt;マスID&gt; <span class="nb">--as</span> &lt;人間のID&gt;</code> か、盤面のボタンで通ります。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/scroll.svg" alt="" width="40" height="40"><span class="word">冒険の書</span><span class="size"><code>.masume/log.jsonl</code></span></dt>
+          <dd>追記専用で、各行が前の行の SHA-256 を持つハッシュの鎖です。<code>gridhub verify</code> で改ざんを見つけ、<code>gridhub load &lt;seq|commit&gt;</code> でその時点の盤面に戻ります。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/key.svg" alt="" width="40" height="40"><span class="word"><span class="nb">判定ファイルの固定</span><span class="nb">（封印）</span></span></dt>
+          <dd>GM が、判定ファイルの SHA-256 を記録します。書き換えると判定できなくなり、そのことが記録に残ります。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/lantern.svg" alt="" width="40" height="40"><span class="word">視界</span></dt>
+          <dd>エージェントに渡す指示（<code>gridhub brief</code>）には、レベルに応じて <code>min(Lv−1, 4)</code> マス先までしか出しません。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/flag.svg" alt="" width="40" height="40"><span class="word"><span class="nb">担当の範囲</span><span class="nb">（縄張り）</span></span></dt>
+          <dd>キャラクターごとに重ならない glob です。共有ファイルは GM が持ちます。</dd>
+        </div>
+        <div class="term">
+          <dt><img src="img/bubble.svg" alt="" width="40" height="40"><span class="word">イベント</span></dt>
+          <dd>判定のない余白のマスです。担当どうしの会話（日誌から）・宿屋の主人・瓦版（製品の分野の話題と、通過の号外）が出ます。</dd>
+        </div>
+      </dl>
+    </section>
+
+    <section id="example" class="sheet" aria-labelledby="example-title">
+      <h2 id="example-title"><span class="ph mark">例: メモアプリの地図</span></h2>
+      <p class="lead">サンプルの冒険 <code>examples/memo</code> の地図です。願いは「メモを書いて一覧できる、ブラウザで動くメモアプリ」です。</p>
+      <ul class="cast">
+        <li><img src="img/merchant.svg" alt="" width="44" height="44"><p><b>倉庫番</b>メモの保存<br><code>src/store/**</code>・<span class="nb">Claude Code</span></p></li>
+        <li><img src="img/herald.svg" alt="" width="44" height="44"><p><b>伝令</b>HTTP サーバーと API<br><code>src/server/**</code>・<span class="nb">Claude Code</span></p></li>
+        <li><img src="img/painter.svg" alt="" width="44" height="44"><p><b>絵師</b>ブラウザの画面<br><code>web/**</code>・<span class="nb">Claude Code</span></p></li>
+        <li><img src="img/hero.svg" alt="" width="44" height="44"><p><b>勇者</b>承認と最終確認<br>人間（あなた）</p></li>
+      </ul>
+      <div class="roads" role="img" aria-label="道の図。倉庫番は S1、S2、S3、G1、GOAL。伝令は A1、A2、町、A3、G1、G2、GOAL。絵師は U1、U2、町、U3、U4、G2、GOAL。勇者は H1、G2、H2、GOAL。G1 で倉庫番と伝令が、G2 で伝令と絵師と勇者が合流し、GOAL で全員がそろう。">
+        <span class="who" style="--who: 1"><img src="img/merchant.svg" alt="" width="32" height="32">倉庫番</span>
+        <span class="who" style="--who: 2"><img src="img/herald.svg" alt="" width="32" height="32">伝令</span>
+        <span class="who" style="--who: 3"><img src="img/painter.svg" alt="" width="32" height="32">絵師</span>
+        <span class="who" style="--who: 4"><img src="img/hero.svg" alt="" width="32" height="32">勇者</span>
+        <span class="lane yellow" style="--who: 1"></span>
+        <span class="lane blue" style="--who: 2"></span>
+        <span class="lane pink" style="--who: 3"></span>
+        <span class="lane green" style="--who: 4"></span>
+        <span class="sq" style="--who: 1; --at: 2" title="メモを保存して一覧する">S1</span>
+        <span class="sq" style="--who: 1; --at: 3" title="メモを取得・更新・削除する">S2</span>
+        <span class="sq" style="--who: 1; --at: 4" title="入力検査と検索を付ける">S3</span>
+        <span class="sq" style="--who: 2; --at: 2" title="サーバーを起動して画面を配る">A1</span>
+        <span class="sq" style="--who: 2; --at: 3" title="メモの CRUD API を公開する">A2</span>
+        <span class="sq camp" style="--who: 2; --at: 4" title="宿屋（API）"><img src="img/inn.svg" alt="" width="20" height="20">町</span>
+        <span class="sq" style="--who: 2; --at: 5" title="エラーと検索を整える">A3</span>
+        <span class="sq" style="--who: 3; --at: 2" title="画面の骨組みを作る">U1</span>
+        <span class="sq" style="--who: 3; --at: 3" title="メモ一覧の描画関数を作る">U2</span>
+        <span class="sq camp" style="--who: 3; --at: 4" title="宿屋（画面）"><img src="img/inn.svg" alt="" width="20" height="20">町</span>
+        <span class="sq" style="--who: 3; --at: 5" title="API クライアントを作る">U3</span>
+        <span class="sq" style="--who: 3; --at: 6" title="画面の動きをつなぐ">U4</span>
+        <span class="sq stamp" style="--who: 4; --at: 2" title="画面の見た目の方針を承認"><img src="img/crown.svg" alt="" width="20" height="20">H1</span>
+        <span class="sq stamp" style="--who: 4; --at: 9" title="ブラウザで触って承認"><img src="img/crown.svg" alt="" width="20" height="20">H2</span>
+        <span class="sq gate" style="--who: 1 / 3; --at: 7" title="メモが再起動後も残る"><img src="img/golem.svg" alt="" width="28" height="28">G1</span>
+        <span class="sq gate" style="--who: 2 / 5; --at: 8" title="画面部品が API とつながる"><img src="img/golem.svg" alt="" width="28" height="28">G2</span>
+        <span class="sq goal" style="--who: 1 / 5; --at: 10" title="メモを書いて一覧できる"><img src="img/maou.svg" alt="" width="32" height="32">GOAL</span>
+      </div>
+      <div class="bosses">
+        <article class="boss">
+          <h3><img src="img/golem.svg" alt="" width="40" height="40"><span class="ph">中ボス G1</span><span class="ph">「メモが再起動後も残る」</span></h3>
+          <p>本物のストアと本物のサーバーをつなぎます。SIGTERM で止めて起動し直しても、メモが残っていることを確かめます。</p>
+        </article>
+        <article class="boss">
+          <h3><img src="img/golem.svg" alt="" width="40" height="40"><span class="ph">中ボス G2</span><span class="ph">「画面部品が API とつながる」</span></h3>
+          <p>本物の <code>web/</code> を配るサーバーに、画面の部品（API クライアント・コントローラー・一覧の描画）から、作成・一覧・検索・更新・削除をして確かめます。</p>
+        </article>
+        <article class="boss">
+          <h3><img src="img/maou.svg" alt="" width="40" height="40"><span class="ph">大ボス GOAL</span><span class="ph">「メモを書いて一覧できる」</span></h3>
+          <p>書く → 新しい順に並ぶ → 検索 → 編集 → 削除 → 再起動しても残る、を外から確かめます。</p>
+        </article>
+        <article class="boss">
+          <h3><img src="img/crown.svg" alt="" width="40" height="40"><span class="ph">王様の城</span><span class="ph">H1・H2</span></h3>
+          <p>H1「画面の見た目の方針を承認」と、H2「ブラウザで触って承認」です。勇者（人間）がハンコを押します。</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="turn" class="sheet" aria-labelledby="turn-title">
+      <h2 id="turn-title"><span class="ph mark">エージェントの1ターン</span></h2>
+      <ol class="turn">
+        <li><code>gridhub brief &lt;ID&gt;</code><p>いまのタスクと、テスト1件ずつの成否を読みます。</p></li>
+        <li><span class="no-code">コードを直す</span><p>いちばん手前の落ちているテストだけを通します。</p></li>
+        <li><code>gridhub step &lt;ID&gt;</code><p>いまのタスクの判定だけを走らせます。何度でも、罰はありません。</p></li>
+        <li><code>gridhub check &lt;ID&gt;</code><p>全部通ったら、出口の判定を受けます。</p></li>
+        <li><code>gridhub note &lt;ID&gt; "次の自分への申し送り"</code><p>次の代のエージェントへ、日誌を残します。</p></li>
+      </ol>
+      <h3><span class="ph">作戦</span><span class="ph">（<code>gridhub party <span class="nb">--tactic</span></code>）</span></h3>
+      <p>作戦で変わるのは、エージェントの止まる所と、1回の実行（出撃）の長さ（利用料）です。ルールは変わりません。</p>
+      <table class="tactics">
+        <thead>
+          <tr><th scope="col">作戦</th><th scope="col">動き方</th><th scope="col">止まる所</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row"><code>careful</code></th><td>1マスずつ <code>gridhub step</code> で確かめ、全部通るまで <code>check</code> しません。</td><td data-label="止まる所">タスクを1つ抜けたら</td></tr>
+          <tr><th scope="row"><code>balanced</code>（既定）</th><td>小さく変えて <code>step</code> を回し、全部通ったら <code>check</code> します。</td><td data-label="止まる所">タスクを1つ抜けたら</td></tr>
+          <tr><th scope="row"><code>bold</code></th><td>次の町まで、タスクを続けて進みます。</td><td data-label="止まる所">町でセーブしたら・中ボスで待つことになったら</td></tr>
+        </tbody>
+      </table>
+      <p class="small">どの作戦でも、<code>check</code> に2回落ちたら止まって知らせます。</p>
+    </section>
+
+    <section id="commands" class="sheet" aria-labelledby="commands-title">
+      <h2 id="commands-title"><span class="ph mark">主なコマンド</span></h2>
+      <table class="commands">
+        <thead>
+          <tr><th scope="col">コマンド</th><th scope="col">すること</th></tr>
+        </thead>
+        <tbody>
+          <tr><th scope="row"><code>gridhub quest "&lt;願い&gt;" <span class="nb">--gm</span> claude|codex</code></th><td>願いから GM の LLM が地図と判定を書き、冒険を始めます（<code>git init</code> も）。</td></tr>
+          <tr><th scope="row"><code>gridhub serve</code></th><td>盤面を開きます（<code>http://127.0.0.1:5005/</code>）。</td></tr>
+          <tr><th scope="row"><code>gridhub app</code></th><td>はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）を開きます。Mac アプリは、これを起こします。</td></tr>
+          <tr><th scope="row"><code>gridhub party <span class="nb">--agent</span> claude|codex <span class="nb">--tactic</span> …</code></th><td>キャラクターごとにエージェントを走らせ、結合テストを指揮します。</td></tr>
+          <tr><th scope="row"><code>gridhub brief &lt;id&gt;</code></th><td>エージェントに渡す指示（いまのタスク・テストの成否・見えている先）を出します。</td></tr>
+          <tr><th scope="row"><code>gridhub step &lt;id&gt;</code></th><td>いまのタスクの判定だけを走らせます（何度でも・罰なし）。</td></tr>
+          <tr><th scope="row"><code>gridhub check &lt;id|gate&gt;</code></th><td>出口の判定です（町からの累積判定）。</td></tr>
+          <tr><th scope="row"><code>gridhub note &lt;id&gt; "&lt;text&gt;"</code></th><td>日誌を書きます（強敵を倒した直後は、技になります）。</td></tr>
+          <tr><th scope="row"><code>gridhub stamp &lt;node&gt; <span class="nb">--as</span> &lt;human&gt;</code></th><td>人間の承認（ハンコ）です。</td></tr>
+          <tr><th scope="row"><code>gridhub status</code></th><td>盤面の要約を出します。</td></tr>
+          <tr><th scope="row"><code>gridhub verify</code></th><td>冒険の書のハッシュの鎖を検証して、改ざんを見つけます。</td></tr>
+          <tr><th scope="row"><code>gridhub load &lt;seq|commit&gt;</code></th><td>過去の時点の盤面に戻ります（記録の番号か Git のコミットで指します）。</td></tr>
+          <tr><th scope="row"><code>gridhub remote</code>・<code>gridhub push</code></th><td>GitHub につなぐ手順と、送っていないセーブの数を出します。<code>push</code> は、いまのブランチを GitHub に送ります（force push はしません）。</td></tr>
+          <tr><th scope="row"><code>gridhub mcp</code></th><td>MCP サーバーです（標準入出力）。</td></tr>
+          <tr><th scope="row"><code>gridhub export linear</code>・<code>gridhub import linear</code></th><td>Linear 形式（CSV・JSON）で書き出します。Linear の CSV から、地図の下書きを作ります。</td></tr>
+          <tr><th scope="row"><code>gridhub linear push</code>・<code>gridhub jira push</code></th><td>盤面の状態を、Linear・Jira に送ります。</td></tr>
+        </tbody>
+      </table>
+      <p class="small"><code>gridhub &lt;command&gt; <span class="nb">--help</span></code> で、各コマンドの説明が出ます。</p>
+    </section>
+
+    <section id="start" class="sheet" aria-labelledby="start-title">
+      <h2 id="start-title"><span class="ph mark">はじめる</span></h2>
+      <ol class="setup">
+        <li>
+          <h3><span class="ph">GridHub を手元に置く</span></h3>
+          <pre><code>git clone https://github.com/M2AI-jp/gridhub.git &amp;&amp; cd gridhub &amp;&amp; npm link</code></pre>
+          <p>または <code>npm install <span class="nb">-g</span> <span class="nb">github:M2AI-jp/gridhub#v0.3.0</span></code> でも使えます。</p>
+        </li>
+        <li>
+          <h3><span class="ph">Claude Code か</span> <span class="ph">Codex を用意する</span></h3>
+          <pre><code>npm install -g @anthropic-ai/claude-code</code></pre>
+          <p>Codex なら <code>npm install <span class="nb">-g</span> @openai/codex</code> です。どちらも、それぞれのアカウントか API キーでログインします。</p>
+        </li>
+        <li>
+          <h3><span class="ph">願いから冒険を作り、</span><span class="ph">盤面を開く</span></h3>
+          <pre><code>mkdir ~/memo &amp;&amp; cd ~/memo
+gridhub quest "メモを書いて一覧できるアプリを作りたい" --gm claude
+gridhub serve</code></pre>
+          <p><code>gridhub serve</code> は動かしたままにします。続きは別のターミナルで打ちます。</p>
+        </li>
+        <li>
+          <h3><span class="ph">エージェントを走らせる</span></h3>
+          <pre><code>gridhub party --agent claude --tactic careful</code></pre>
+        </li>
+      </ol>
+      <div class="starts">
+        <div class="start-box">
+          <h3><img src="img/hero.svg" alt="" width="40" height="40"><span class="ph">Mac アプリ</span></h3>
+          <p><code>npm run mac</code> で <code>dist/GridHub.app</code> ができます（macOS 13 以上・Command Line Tools。<code>swiftc</code> で組み、アドホック署名します）。</p>
+        </div>
+        <div class="start-box">
+          <h3><img src="img/key.svg" alt="" width="40" height="40"><span class="ph">チュートリアル</span></h3>
+          <p>エージェントなしで、手で最後まで遊べるチュートリアル（約5分）があります（<code>quests/tutorial/README.md</code>）。Mac アプリのはじめの画面からも遊べます。</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bottom">
+    <p><span>GridHub</span> ・ <span>MIT ライセンス</span> ・ <a href="https://github.com/M2AI-jp/gridhub">GitHub</a></p>
+  </footer>
+</body>
+</html>

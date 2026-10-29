@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>魔法使い</title>
+  <desc>曲がったとんがり帽子の魔法使い。長いローブを着て、先がくるりと巻いた杖を持つ。</desc>
+  <path d="M15 58C17 54 44 55 47 58C48 62 14 62 15 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 50L22 56Q18 59 29 58L30 51M33 51L34 58Q45 59 39 55L38 50" fill="#1d2b5c"/>
+    <path d="M24 35Q30 33 36 35Q39 43 43 53Q31 57 17 53Q21 43 24 35Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 36Q17 37 13 44L21 48L26 40M36 36Q43 35 47 41L43 47L35 42" fill="var(--pawn, #ffe45c)"/>
+    <path d="M15 44Q12 47 16 49Q19 50 21 47Z" fill="#ffffff"/>
+    <path d="M29 38Q26 45 25 51M30 35L33 40L36 35" fill="#ffffff"/>
+    <path d="M19 21Q22 15 33 18Q43 20 40 29Q39 37 29 37Q18 36 18 27Z" fill="#ffffff"/>
+    <path d="M17 23Q21 12 28 4Q34 8 35 13L40 24Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M19 19Q28 16 37 20L39 24Q29 21 17 23Z" fill="#d94a3a" stroke="none"/>
+    <path d="M12 23C20 20 36 20 43 24Q47 28 30 28Q14 28 11 25Q10 24 12 23Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M24 30L24 31M34 30L34 31M28 34Q30 35 32 33"/>
+    <path d="M51 55Q49 40 52 25C45 23 44 14 50 11C57 7 61 14 57 19Q53 22 50 18" stroke-width="2.5"/>
+    <path d="M46 40Q49 38 52 41L51 45Q47 47 44 44Z" fill="#ffffff"/>
+  </g>
+</svg>

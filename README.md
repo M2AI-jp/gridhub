@@ -47,7 +47,7 @@ npm link              # gridhub コマンドが使えるようになる（使わ
 gridhub --version     # gridhub 0.3.0 (rules 1)
 ```
 
-包み（tgz）から入れることもできます。npm にはまだ出していないので、手元で包みを作ります。
+包み（tgz）から入れることもできます。npm には出していないので、手元で包みを作ります。
 
 ```sh
 npm pack                                # gridhub-0.3.0.tgz ができる（動くのに要るものだけ）
@@ -361,6 +361,8 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 | 語り部 | 願いから冒険（`src/quest`） |
 | 軍師 | 出撃と作戦（`src/party`） |
 | 地図職人 | チュートリアル・Linear・Jira（`src/linear`・`src/jira`） |
+| 大工 | Mac のアプリ（`mac/`） |
+| 看板屋 | 紹介ページ（`site/`） |
 | 勇者 | 遊んで確かめて、ハンコ（人間。GM が代理で押したこともある） |
 
 `examples/` には、本物の願いから本物のエージェントがあがった冒険が残っています（`examples/omikuji`・`examples/kakeibo`・`examples/memo`）。`demos/mcp-tutorial` は、本物の Codex が MCP の道具だけで1マス進めた記録です。
@@ -385,6 +387,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 | 第14章 | リリースの支度: `LICENSE`（MIT）・包み（`npm pack`）の中身を動くのに要るものだけに・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上。npm や GitHub Release にはまだ出していません |
 | 第15章 | 配る前に名前をそろえる: 包みの中の、使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
 | 第16章 | **Mac のアプリ**（`npm run mac` → `GridHub.app`）: はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）・盤面の「手で進める」（縄張りの中だけのファイル・歩く・宣言判定）・閉じたら止まる命綱。新しい仲間の大工（`mac/`）。最後に王様の城（ユーザーが自分の Mac のアプリでハンコを押す） |
+| 第17章 | **紹介ページ**（`site/`。gridhub.matsunai.com に置く）: タブで行き来する2ページ。はじめての方へ（こんな悩み・特長・AI の得意に合わせた地図のつくり・ゲームとしての楽しさ・遊び方・画面・はじめる）と、エンジニアの方へ（つかう技術・ゲームの言葉と実際に起きること・メモアプリの地図・エージェントの1ターン・主なコマンド・はじめる）。例はサンプルのメモアプリ（`examples/memo`）。HTML・CSS・画像だけで、外から何も読み込まず、スマホの縦でもはみ出さない。新しい仲間の看板屋 |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
 
@@ -403,6 +406,17 @@ printf '#!/bin/sh\nexec /path/to/chrome --no-sandbox --disable-dev-shm-usage "$@
 MASUME_CHROME=/tmp/chrome npm test
 ```
 
+## 紹介ページ（`site/`）
+
+`site/` は、`gridhub.matsunai.com` に置く紹介ページです。はじめての方へ（入口 `site/index.html`）とエンジニアの方へ（`site/engineers.html`）の2ページを、タブで行き来します。HTML・CSS・画像だけで、組み立ての手順はありません。外のサイトから、スクリプト・字・解析を読み込みません。`site/` のフォルダをそのまま置けば動きます（`site/index.html` をブラウザで直に開いても見られます）。
+
+スクリーンショット（`site/img/` の `board`・`start`・`hand`・`ending`）とページの印（`icon`）は、判定の Chrome で撮り直せます。盤面の写真は、サンプルの冒険（`examples/memo`）を一時フォルダに作り直して撮ります。このリポジトリの冒険の書は使いません。
+
+```sh
+MASUME_CHROME=/path/to/chrome node tools/site-shots.mjs          # 全部
+MASUME_CHROME=/path/to/chrome node tools/site-shots.mjs board    # 盤面だけ
+```
+
 ## ファイル
 
 ```
@@ -414,6 +428,7 @@ src/party/               出撃と作戦（軍師）
 src/linear/ src/jira/    Linear・Jira（地図職人）
 web/                     盤面（賢者クロード）、web/assets/ は絵（絵師）、web/start.html ははじめの画面
 mac/                     Mac のアプリ（大工）: GridHub.swift・Info.plist・build.sh（npm run mac）・アイコン
+site/                    紹介ページ（看板屋）: index.html・engineers.html・site.css・img/。tools/site-shots.mjs で写真を撮り直す
 quests/                  地図: masume（このリポジトリ自身）・kotozuke・tutorial
 tests/e2e/               判定（GM が書いて封印）
 docs/                    GAME_DESIGN / RULEBOOK / CONTRACTS / GM_GUIDE / SAVE_FORMAT
@@ -421,6 +436,6 @@ CHANGELOG.md             リリースノート（版ごとの変わったとこ�
 LICENSE                  MIT License
 ```
 
-包み（`npm pack`）に入るのは、動くのに要るもの（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG）だけです。このリポジトリ自身の冒険の書（`.masume/`）・判定・examples・demos・docs の写真は入りません。
+包み（`npm pack`）に入るのは、動くのに要るもの（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG）だけです。このリポジトリ自身の冒険の書（`.masume/`）・判定・examples・demos・docs の写真・紹介ページ（`site/`・`tools/`）は入りません。
 
 ライセンス: MIT（[LICENSE](LICENSE)）。変わったところは [CHANGELOG.md](CHANGELOG.md)。

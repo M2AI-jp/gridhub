@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>剣</title>
+  <desc>右上を向いた両刃の剣。白い刃に紺の筋、黄色い鍔と握りがついている。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M23 36Q32 24 43 13L55 8L51 21Q41 32 29 42Z" fill="#ffffff"/>
+    <path d="M28 37Q39 25 49 15" stroke-width="2"/>
+    <path d="M22 41L27 46L16 57Q12 59 9 55Q7 53 10 50Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M14 48L20 53M18 44L24 49" stroke-width="2"/>
+    <path d="M16 35Q17 32 20 34L35 47Q37 50 34 52Q31 50 27 45L20 40Q15 38 16 35Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M10 51Q15 51 17 56Q14 60 10 57Q7 55 10 51Z" fill="#d94a3a"/>
+  </g>
+</svg>

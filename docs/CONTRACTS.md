@@ -16,6 +16,7 @@
 | --- | --- |
 | `docs/**` `tests/**` `schema/**` `bin/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` `LICENSE` `CHANGELOG.md` | GM（判定と契約。キャラクターは編集禁止） |
 | `mac/**`（Mac のアプリ。第16章） | 大工 `mac` |
+| `site/**`・`tools/site-shots.mjs`（紹介ページ。第17章） | 看板屋 `site` |
 | `src/engine/**`、`src/commands/{new,validate,seal,check,stamp,status,brief,log,verify,repair,note,amend,load,step}.js` | 書記 `engine` |
 | `src/server/**`、`src/commands/serve.js`、`src/commands/app.js`（第16章） | 伝令 `server` |
 | `src/linear/**`、`src/commands/{export,import}.js`、`quests/kotozuke.*`、`quests/tutorial/**` | 地図職人 `gmkit` |
@@ -1427,3 +1428,56 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - `#hand-path` の例（`placeholder`）は、見本があれば最初の見本のパス、無ければ縄張りの最初の glob から作る（`human/**` なら `human/` で始まる）。`ai/hello.txt` の決め打ちをやめる。
    - いまのマスが変わったら（進んだ・戻された）、`#hand-path` と `#hand-content` を空にする。
    - アプリの中（`?home=` が手元。§70.5）では、手で進める欄の指令書・マスの説明（`#drawer`）・仲間の欄に、CLI の言い方を出さない。`gridhub`（`masume`）の `stamp …`・`check …`・`step …`・`brief …` は、ボタンの名前（「ハンコを押す」・「宣言判定」・「歩く」・「手で進める」）に言い換える。キャラクターシートの CLI の指示は `details.cli`（字「ターミナルでは」。初めは閉じている）に畳む。アプリの外（`?home=` が無い）は今までどおり。
+
+## 75. 紹介ページ（第17章）
+
+監督から（ユーザーの言葉「完成したらさ、Grithubをmatsunai.comのサブドメインで取得していいから、ゲーム紹介用のページも作っておいて。」）。`gridhub.matsunai.com` に置く、GridHub を紹介するページを作る。ページを置く（Cloudflare・DNS）のは監督で、このリポジトリからは公開しない。
+
+1. **看板屋**（`site`。新しいキャラクター。縄張りは `site/**` と `tools/site-shots.mjs`）:
+   - `site/` だけで動く静的なページ。ページは2つで、タブで行き来する: **はじめての方へ**（入口 `site/index.html`）と **エンジニアの方へ**（`site/engineers.html`）。見た目は2ページで共有する `site/site.css`、絵とスクリーンショットも共有する `site/img/`。HTML・CSS・画像（PNG・SVG）だけで、スクリプトは使わない。組み立ての手順・外部パッケージ・CDN・外の字（Web フォント）・解析は使わない。`site/` の外を指さない（`../` を使わない）。
+   - 方眼ノートの見た目（5mm方眼の紙・付箋・貼った写真）。字は手元にある字だけ（`Klee One`・ヒラギノ丸ゴなどの名前を並べ、無ければ OS の字）。日本語（`<html lang="ja">`）。
+   - スクリーンショットは `tools/site-shots.mjs`（テストの Chrome。`MASUME_CHROME=… node tools/site-shots.mjs`）で撮り直せる。冒険はすべて一時フォルダに作り、このリポジトリの冒険の書は使わない（開発の記録を写さない）。盤面の1枚は、サンプルの冒険（`examples/memo`）を作り直して途中まで進めたもの（砦で待つ仲間・道の途中の仲間・ハンコのマスの勇者）。
+2. **中身**（`W1`）。第17章の途中で4度直した（4度目は、ユーザーの言葉「技術者向けの内容と、そうでない人向けの内容で2ページ作ろうか。（タブ切り替えできる感じで）」から、2ページとタブ・例をメモアプリに・技術の固有名詞を省略しない・見出しを監督の言葉に）。言い回しは監督の原稿のとおり。
+   - **2ページ共通**:
+     - ふつうのサービス紹介の日本語（です・ます調。1文を短く、1段落は2〜3文まで）。
+     - 開発の記録は載せない: GridHub を作ったときの記録（seq・ユーザーの発言の引用・最初の依頼・GM の裁定・コミット番号・開発の日付・体制・数字の欄・全滅の話）と、GridHub 自身の冒険を撮った写真。「このリポジトリ自身も GridHub で作った」のようなメタな話も載せない。メールアドレス・手元のパス・確かめられない数（「○倍」など）も出さない。
+     - 例は、サンプルの冒険 `examples/memo` のメモアプリ（盤面の写真と同じ冒険）。家計簿の例は出さない。
+     - ユーザーが「こういう方向の言い方」として挙げた例の言い回し（「退屈な開発を、楽しいゲームに」「ゲーム感覚で」）は、どこにも使わない（`<head>` の中も）。
+     - 使う道具は、名前をそのまま書く（Claude Code（Anthropic）・Codex（OpenAI）・Git・GitHub・Node.js・API キー・Linear・Jira）。AI と遊ぶなら Claude Code か Codex のどちらかが要ることを、ぼかさずに書く（5分のチュートリアルだけなら要らない）。
+     - ほかのゲームの作品名や、決まった言い回し（作戦の名前・伝承法・閃きなど）を出さない。
+     - `<head>`: `meta charset="utf-8"`・`viewport`・`<title>`・`description`・OGP（`og:url` はそのページの `https://gridhub.matsunai.com/…`・`og:image` はその下の、`site/` にある画像）・アイコン（`<link rel="icon" href="img/icon.png">`）。見出し `h1` は1つ。
+     - ヘッダーのすぐ下に、2ページで同じタブ（`nav.tabs`）。タブは2つ「はじめての方へ」（`index.html`）・「エンジニアの方へ」（`engineers.html`）で、リンクは相対パス。いまのページのタブに `aria-current="page"`。方眼ノートのインデックスシールの見た目。
+     - ヘッダーの目次は、そのページの節へ（はじめての方へ: 特長 `#features`・地図 `#map`・遊び方 `#how`・はじめる `#start`・GitHub。エンジニアの方へ: 技術 `#stack`・しくみ `#mechanics`・地図の例 `#example`・はじめる `#start`・GitHub）。
+     - フッター: GridHub ・ MIT ライセンス ・ GitHub だけ。
+   - **はじめての方へ**（`site/index.html`）:
+     - リポジトリの中だけの言い回し（包み・版・入れる・縄張り・宣言判定・あがり・封印・指令書・出撃・申し送り・手で演じる）は使わない（「瓦版」はゲームの言葉としてよい）。
+     - `<title>`「GridHub — 1マス進むたび、アプリができていく。」・`description`「作りたいものを書けば、AI の仲間が開発を方眼ノートのすごろくにして、1マスずつ進めていきます。テストに1つ合格するたびに、キャラクターが1マス進みます。」
+     - `#hero`（ファーストビュー）: 文字は、ラベル「無料・オープンソース」・見出し2行「1マス進むたび、／アプリができていく。」・説明1つ「作りたいものを書けば、AI の仲間が開発を方眼ノートのすごろくにして、1マスずつ進めていきます。」・ボタン2つ（「Mac で遊んでみる」→ `#start`・「GitHub を見る」）だけ。主役は絵: 盤面の写真を大きく置き、まわりに駒やモンスター・王冠などの絵（`img.deco`）を5つ以上散らす。
+     - `#pain`（こんな悩み、ありませんか？）: 絵つきのカード3枚と、つなぎの1文。
+     - `#features`（GridHub の特長）: 絵つきの4枚（進み具合が、ひと目で分かる・合格したぶんだけ進める・AI とパーティを組める・途中で止まっても、セーブした場所から）。テストは「メモを1件書くと、一覧のいちばん上に出てくる」のような具体的な例で言う。AI は Claude Code（Anthropic）か Codex（OpenAI）。セーブは冒険の書と Git に自動で、GitHub に送ることもできる。
+     - `#map`（AI がいちばん力を出せる大きさで、地図ができています）: AI の得意・不得意（小さくてはっきりした仕事が得意・長い会話では忘れやすい・頼んでいない所まで手を広げがち）に合わせた大きさを、RPG の説明書の凡例のように、小さいものから大きいものへ7段（マス・ダンジョン・町・中ボス・王様の城・大ボス・イベント）。各段に絵・ゲームの言葉・開発の言葉・大きさの目安（数分・30〜90分（マス2〜6個）・ダンジョン2〜3つごと・数時間に1回・大ボスの前に必ず1つ・数日に1回・道の途中）・説明。メモアプリの例（マス・ダンジョン・中ボス・王様の城・大ボス）は「例」として書く。目盛り（数分 → 30〜90分 → 数時間 → 数日）を添える。目安は GAME_DESIGN §4・§6 と GM_GUIDE のとおり。
+     - `aside.nottest`（テストは、あなたが書かなくて大丈夫）: テストは「こう動いたら合格」を確かめる小さなプログラムで、外から動かして確かめる。AI のゲームマスター（Claude Code か Codex）が地図といっしょに用意し、AI の仲間が都合よく書き換えるとすぐ分かる。
+     - `#fun`（ゲームとして、ここが楽しい）: 絵つきのカード6〜8枚（1枚2文まで）。練習は何度でも・本番は一発勝負／倒したモンスターが、仲間になる／仲間がそろうと、ボス戦／作戦を出す指揮官／信頼が増えるほど、先が見えてくる／代がかわっても、技は受け継がれる／集めて、眺めて／方眼ノートの手ざわり。どれも GAME_DESIGN と盤面のとおり。
+     - `#how`（遊び方）: 番号と絵つきの3ステップ（作りたいものを書く（「メモアプリを作りたい」）・地図ができる（AI（Claude Code か Codex）がゲームマスター）・冒険に出発）と、「まずは5分のチュートリアルから。AI がなくても、最後まで遊べます。」
+     - `#screens`（画面）: はじめの画面・手で進める・エンディングの写真3枚と短い説明。
+     - `#start`（はじめる）: 頭に「必要なもの」（`.needs`）を名前つきで並べる: Mac（macOS 13 以上）・Node.js 22 以上（https://nodejs.org/）・Command Line Tools（Git が入っている。`xcode-select --install`）・Claude Code（Anthropic）か Codex（OpenAI）のどちらか1つ（それぞれのアカウントか API キーでログイン。利用料は Anthropic か OpenAI にかかり、GridHub 自体は無料。5分のチュートリアルだけなら要らない。入れ方 `npm install -g @anthropic-ai/claude-code`・`npm install -g @openai/codex`）・GitHub（ダウンロード元。セーブを送ることもできる）・Linear や Jira（任意。それぞれの API キー）。続けて、Mac アプリ（`git clone https://github.com/M2AI-jp/gridhub.git`・`cd gridhub`・`npm run mac`。`dist/GridHub.app` をダブルクリック。「開けません」と表示されたときは右クリックして「開く」）と、コマンドライン（`npm install -g github:M2AI-jp/gridhub#v0.3.0`・`gridhub --help`）。
+   - **エンジニアの方へ**（`site/engineers.html`）:
+     - 技術の言葉が先で、ゲームの言葉は添え書き。コマンド・ファイル名・環境変数は、コードの字（`code`）でそのまま書く。リポジトリの中だけの和語（封印・縄張り・出撃）は、技術の意味を先に書いてかっこで添える形（「判定ファイルの固定（封印）」）でだけ使う（コードの中の例文は除く）。ほかの和語（包み・版・入れる・宣言判定・あがり・指令書・申し送り・手で演じる）は、コードの外では使わない。
+     - `<title>`「GridHub — テスト1件が1マスの、AI エージェント開発の進行管理」・`description`「Claude Code や Codex に任せた開発を、E2E テストと Git で1マスずつ進める、すごろく型の進行管理ツール。Node.js 22 以上、外部パッケージなし、MIT ライセンス。」
+     - `#hero`: ラベル「MIT ライセンス・Node.js 22 以上・外部パッケージなし」・見出し2行「テスト1件が、1マス。／Git のコミットが、セーブ。」・説明1つ・ボタン2つ（「はじめる」→ `#start`・「GitHub を見る」）。絵: 盤面の写真に、`gridhub step` の出力の例のカード（`figure.shell`。「例」と書く）を重ねる。出力は `src/commands/step.js` のいまの形（`歩いた: <id> <マス> テスト n/m`・1件ずつの `✔`／`✖`・`いちばん手前のモンスター: …`・落ちていれば `--- 判定の出力（末尾） ---`）で、テストの名前は `examples/memo` の判定のとおり。駒やモンスターの絵（`img.deco`）を4つ以上。
+     - `#stack`（つかう技術）: 表（名前・役目・要るか）7行。Node.js 22 以上（本体。ESM・外部パッケージ0。必須）・Git（町でのセーブ。`git commit`・`git stash`。必須）・Claude Code（Anthropic）／Codex（OpenAI）（GM とキャラクター。`--gm`・`--agent`。アカウントか API キー。AI と遊ぶなら必須）・GitHub（入手元・`gridhub push`・`gridhub remote --auto-push on`。force push はしない。任意）・MCP（`gridhub mcp`。任意）・Linear・Jira（`LINEAR_API_KEY`・`JIRA_BASE_URL`・`JIRA_EMAIL`・`JIRA_API_TOKEN`。任意）・macOS 13 以上・Command Line Tools（Mac アプリ。`swiftc`・アドホック署名。Mac アプリを使うときだけ）。
+     - `#mechanics`（ゲームの言葉と、実際に起きること）: 左にゲームの言葉、右に実際の動き（`dl.terms`）。マス・ダンジョン・出口の判定（`gridhub check`）・町・中ボス・大ボス・王様の城・冒険の書・判定ファイルの固定（封印）・視界・担当の範囲（縄張り）・イベントの12。目安の大きさも。RULEBOOK・GM_GUIDE・src のとおり（終了コード 0・累積判定・`territory` の glob だけをコミットしフックは走らない・`MASUME_BLAME`・SHA-256 のハッシュの鎖・`min(Lv−1, 4)`・重ならない glob）。
+     - `#example`（例: メモアプリの地図）: `examples/memo` の願い・キャラクター（倉庫番・伝令・絵師と勇者。縄張りとエージェント）・道の図（`.roads`。地図の `path` のとおり、町は「町」。375px では縦並び）・中ボス G1・G2・大ボス GOAL・王様の城 H1・H2（地図の題のとおり）。
+     - `#turn`（エージェントの1ターン）: `gridhub brief` → いちばん手前の落ちているテストだけを通す → `gridhub step` → `gridhub check` → `gridhub note` と、作戦（`gridhub party --tactic careful`・`balanced`・`bold`）。
+     - `#commands`（主なコマンド）: quest・serve・app・party・brief・step・check・note・stamp・status・verify・load・remote と push・mcp・export と import linear・linear と jira の push。どれも `gridhub --help` にある。
+     - `#start`（はじめる）: `git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub && npm link`（または `npm install -g github:M2AI-jp/gridhub#v0.3.0`）・`npm install -g @anthropic-ai/claude-code`（Codex なら `npm install -g @openai/codex`）・`mkdir ~/memo && cd ~/memo`・`gridhub quest "メモを書いて一覧できるアプリを作りたい" --gm claude`・`gridhub serve`・`gridhub party --agent claude --tactic careful`。Mac アプリ（`npm run mac` で `dist/GridHub.app`）と、エージェントなしで遊べるチュートリアル（約5分）。
+     - 書いた事実（コマンド・オプション・環境変数・パッケージ名・ファイル名・目安）は、README・RULEBOOK・CONTRACTS・src と合う。
+   - スクリーンショット4枚: `img/board.png`・`img/start.png`・`img/hand.png`・`img/ending.png`（盤面の写真は2ページで使う）。PNG・幅 1000px 以上。`<img>` には `alt` と、本当の大きさの `width`・`height`。
+3. **リンクと読み込み**（`W2`）: 2ページとも。
+   - `site/` の中は HTML・CSS・画像だけ。SVG にもスクリプトが無い。CSS に `@import`・`@font-face` が無い。
+   - `href`・`src`・`srcset`・CSS の `url()` は、`site/` の中にあるファイル（相対）・ページの中の `#id`（その `id` がある）・GitHub（`https://github.com/M2AI-jp/gridhub` とその下）への `<a href>` のリンクだけ。`og:url`・`og:image` は `https://gridhub.matsunai.com/` の下で、`site/` にあるもの。
+   - タブで行き来できる: どちらのページのタブも、もう1つのページを指す。Chrome でタブを押すと、もう1つのページが開く。
+   - Chrome で `http://` と `file://` の両方で開いて、読み込んだもの（`performance` の resource）がすべて同じ場所から。画像はすべて読める。コンソールにエラーが無い。
+4. **スマホ**（`W3`）: 2ページとも、幅 320・375・390（スマホの縦）・768・1280 で、ページが横にはみ出さない（`scrollWidth` が画面の幅に収まり、画面の外にはみ出す要素が無い）。コードの箱（`pre`）は画面に収まり、箱の中で横に動かせる（`overflow-x: auto`）。幅 320 でも字は 13px 以上、上の帯の目次とボタンは 24px 以上、タブは高さ 44px 以上。見出し（h1・h2・h3）は句のまとまり（`.ph`）で包み、幅 320・375・1280 で句の途中で折れない。375×812 でも、1画面目に盤面の写真と駒やモンスターの絵が入り（見出しはタブの下の、上のほう（240px より上））、ヘッダーのリンクは1行に、タブの2つも1行に収まる。
+5. **あがり**（`GOAL17`）: 第1章〜第17章のすべての判定がまとめて通り、すべての冒険の書が正常で、地図の `quest.goal` が `GOAL17`、看板屋の縄張りが `site/**`、すべての道が `GOAL17` で終わり、`package.json` の `test` に `W*`・`test:goal` が `GOAL17`。`site/` と `tools/` は包みに入らない。README に紹介ページ（`site/` の2ページ `site/index.html`・`site/engineers.html`・`gridhub.matsunai.com`）、CHANGELOG に第17章。
+6. **冒険の書の順番**: 冒険の書はハッシュの鎖なので、2本に分かれると取り込めない。勇者（ユーザー）が自分の Mac で H4 のハンコを押して、GOAL16 のボス戦の記録が main に入ってから、第17章の地図（第24版。看板屋の道 `W1`→`W2`→`W3`→`GOAL17`、ほかの全員は `GOAL16` のあとに `GOAL17`）に改訂し、封印して、宣言判定をする。それまでは、`quests/masume.map.json` と `package.json` の `test:goal` は第16章のまま（GOAL16 の判定が地図と `test:goal` を確かめるため）。
