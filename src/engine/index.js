@@ -7,6 +7,7 @@ export { appendEvent, headOf, outputFile, readEvents, readMap, repair, verify } 
 export { check, stamp, step } from './checks.js';
 export { buildView } from './view.js';
 export { brief } from './brief.js';
+export { handFiles, handPathProblem, handReviewFiles, readHandFile, writeHandFile } from './hand.js';
 export { recordLine } from './record.js';
 export { autoPush, ghStatus, ghStatusAsync, gitSettings, gitStatus, gitSteps, push, remoteInfo, remoteInfoAsync, safeUrl, setAutoPush } from './remote.js';
 export { recordReturn, recordSortie, recordWish } from './sortie.js';

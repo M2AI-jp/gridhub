@@ -12,6 +12,29 @@
 
 Node.js 22 以上と Git だけで動きます（外部パッケージはありません）。
 
+## Mac アプリで遊ぶ（ターミナルなし）
+
+Mac なら、GridHub をアプリ（`GridHub.app`）にして、Finder からダブルクリックで遊べます。フォルダを選ぶと、そのフォルダの盤面が窓に開きます（冒険の書がまだ無ければ、作りたいものの願いを書く入口が開きます）。そのあとの冒険づくり・出撃・ハンコ・ボス戦は、窓の中のボタンでできます。
+
+1. **アプリを作る**（最初の1回だけ、ターミナルを使います。要るのは macOS 13 以上・Node.js 22 以上・Command Line Tools（`xcode-select --install`）で、Xcode は要りません）:
+
+   ```sh
+   git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub
+   npm run mac          # dist/GridHub.app ができる（swiftc で組み、アドホック署名する）
+   ```
+
+2. **開く**: Finder で `dist/GridHub.app` を「アプリケーション」フォルダに入れて、ダブルクリックします。署名していないので、はじめて開くときに「開けません」と出たら、`GridHub.app` を右クリックして「開く」を選んでください。
+3. **はじめの画面**（方眼ノートの1ページ）:
+   - **フォルダを選ぶ**: Mac のいつものダイアログで選びます。「新規フォルダ」で、その場でフォルダも作れます。
+   - **最近のフォルダ**: 前に開いたフォルダに、押すだけで戻れます。
+   - **チュートリアルで遊ぶ**: `~/GridHub/チュートリアル` に冒険を作って開きます。盤面のキャラクター（勇者・見習いAI）を押して「手で進める」を開き、「見本を写す」→「保存」→「ハンコを押す」か「宣言判定」で、ターミナルもエディタも使わずにあがれます。
+
+- 「手で進める」では、そのキャラクターの縄張りの中のファイルだけを書けます。封印された判定・地図・冒険の書には書けません。
+- アプリは、Finder から開いても、ログインシェルの PATH（`.zprofile`・`.zshrc` など）で `node` と `claude` を探します。Node.js 22 以上が無いときは、窓に入れ方が出ます。
+- `claude`（Claude Code）が無くても、チュートリアルは遊べます。願いから冒険を作る（GM）・出撃させるときは `npm install -g @anthropic-ai/claude-code` で入れます。
+- 窓を閉じるとアプリが終わり、盤面のサーバーも止まります（アプリが落ちても、サーバーは残りません）。
+- ターミナルから同じ画面を開くなら `gridhub app`（出てきた URL をブラウザで開く）。
+
 ---
 
 ## 5分で始める
@@ -297,6 +320,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | --- | --- |
 | `gridhub quest "<願い>" [--gm claude\|codex]` | 願いから GM の LLM が地図と判定を書き、冒険を始める（`git init` も） |
 | `gridhub serve [--port 5005]` | 盤面を開く |
+| `gridhub app [--port 0]` | はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）を開く。Mac のアプリはこれを起こす |
 | `gridhub party [--agent claude\|codex] [--tactic careful\|balanced\|bold] [--parallel N]` | キャラクターごとにエージェントを出撃させ、結合テストを指揮する |
 | `gridhub brief <id>` | 指令書 |
 | `gridhub step <id>` | 歩く（いまのタスクの判定だけ・何度でも・罰なし） |
@@ -360,6 +384,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 | 第13章 | 町でセーブしたら GitHub に送る設定（`gridhub remote --auto-push on`・盤面の切り替え。初めはオフ）・最大レベルは「Lv9（最大）」と出す |
 | 第14章 | リリースの支度: `LICENSE`（MIT）・包み（`npm pack`）の中身を動くのに要るものだけに・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上。npm や GitHub Release にはまだ出していません |
 | 第15章 | 配る前に名前をそろえる: 包みの中の、使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
+| 第16章 | **Mac のアプリ**（`npm run mac` → `GridHub.app`）: はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）・盤面の「手で進める」（縄張りの中だけのファイル・歩く・宣言判定）・閉じたら止まる命綱。新しい仲間の大工（`mac/`）。最後に王様の城（ユーザーが自分の Mac のアプリでハンコを押す） |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
 
@@ -367,7 +392,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 
 ```sh
 npm test              # すべてのマスとゲートの判定を1回ずつ
-npm run test:goal     # いまのあがり（GOAL15）: 第1章〜第15章の全部の判定をまとめて＋冒険の書と包みの中の名前の確認
+npm run test:goal     # いまのあがり（GOAL16）: 第1章〜第16章の全部の判定をまとめて＋冒険の書・包みの中の名前・Mac のアプリの手順の確認
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
@@ -387,7 +412,8 @@ src/server/ src/mcp/     盤面のサーバー・MCP（伝令）
 src/quest/               願いから冒険（語り部）
 src/party/               出撃と作戦（軍師）
 src/linear/ src/jira/    Linear・Jira（地図職人）
-web/                     盤面（賢者クロード）、web/assets/ は絵（絵師）
+web/                     盤面（賢者クロード）、web/assets/ は絵（絵師）、web/start.html ははじめの画面
+mac/                     Mac のアプリ（大工）: GridHub.swift・Info.plist・build.sh（npm run mac）・アイコン
 quests/                  地図: masume（このリポジトリ自身）・kotozuke・tutorial
 tests/e2e/               判定（GM が書いて封印）
 docs/                    GAME_DESIGN / RULEBOOK / CONTRACTS / GM_GUIDE / SAVE_FORMAT

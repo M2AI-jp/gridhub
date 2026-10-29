@@ -1,0 +1,16 @@
+=== D1: node --test --test-reporter=spec tests/e2e/D1.test.mjs ===
+✔ §72.1 mac/GridHub.swift は1ファイルで、AppKit・WebKit・Foundation だけを使い、@main がある (3.39454ms)
+✔ §72.1 フォルダのダイアログ（NSOpenPanel。新しいフォルダも作れる）と、スクリプトの窓口 gridhub・folderChosen (0.839241ms)
+✔ §72.1 ログインシェルの PATH で node を探し、22 以上でなければ日本語で入れ方を出す (1.771887ms)
+✔ §72.1 node で gridhub app --port 0 --lifeline を起こし、標準入力は Pipe。窓を閉じると終わり、終わるときにサーバーを止める (0.936342ms)
+✔ §72.1 編集メニュー・終了・alert と confirm・手元でない URL は既定のブラウザで開く (0.985904ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 71.592683
+
+(exit 0, 118ms)

@@ -3,8 +3,8 @@
   "quest": {
     "id": "MSM",
     "title": "GridHub — GridHub で GridHub をつくる（旧名 マスメ）",
-    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。 第13章で、町でセーブしたら自動で GitHub に送る設定（初めはオフ）と、最大レベルの表示を足す。 第14章で、配る支度をする（LICENSE・包みの中身・版 0.3.0 とリリースノート・Node.js 22 以上）。公開はユーザーに聞いてから。 第15章で、配る前に、包みの中の使う人の目に入る旧名を GridHub にそろえる（チュートリアルは gridhub コマンドに）。",
-    "goal": "GOAL15",
+    "pitch": "5mm方眼ノートのすごろくで、Linearのようなタスク管理に「盤面・駒・セーブデータ」を持たせるゲームを、このゲーム自身のルールで作る。第1章でルールと盤面、第2章で「xxxのようなアプリを作りたい」からエージェントたちがあがるまでの流れをつくる。 第3章で、どの LLM のクライアントからでも（MCP）遊べるようにし、Jira とも同期する。 第4章で、独立した点検役5人の報告をもとに、再発防止の判定つきで総点検の修理をする。 第5章で、判定が手元（127.0.0.1）にサーバーを立てられるよう、Codex エージェントの箱（サンドボックス）のソケットを開ける選択肢を製品の機能にし、第6章でその名前と説明を誤解のないものに改める。 第7章で、盤面だけで遊ぶ人も入口と出撃の窓からソケットを開けられるようにし、盤面だけで本物の冒険（家計簿）を1本あがる。 第8章で最終確認をし、チュートリアルを書いてあるとおりに貼って動かすと盤面のサーバーが残る不具合を直す。 第9章で、盤面を「方眼ノートにマス目を引いて遊んだすごろく」に近づける（端と綴じのあるページ・筆記具の描き分け・手書きの字・貼った物・ペンで描かれていく線）。 第10章で、外の字（Google Fonts）が返ってこなくても盤面が描かれるようにし、判定の Chrome の揺れも直す。 第11章で名前を GridHub に変え、テスト1件を1マス（モンスター）にし、gridhub step で1マスずつ歩き、町 = Git のコミット・作戦・代と技・縦の5mm方眼ノートの世界地図を入れ、ふっかつのじゅもんをやめて記録の番号（seq）と Git のコミットで時点を指す。 道には、開発に関係する良い余白（別の担当との会話・町の住人との雑談・作っている製品の瓦版）のマスも置く。 第12章で仕上げる: 瓦版は作っている製品の話題にし、札と吹き出しが重ならないようにし、盤面から GitHub につなげて送れるようにし、縦長の画面では1ページずつ見せる。 第13章で、町でセーブしたら自動で GitHub に送る設定（初めはオフ）と、最大レベルの表示を足す。 第14章で、配る支度をする（LICENSE・包みの中身・版 0.3.0 とリリースノート・Node.js 22 以上）。公開はユーザーに聞いてから。 第15章で、配る前に、包みの中の使う人の目に入る旧名を GridHub にそろえる（チュートリアルは gridhub コマンドに）。 第16章で、Mac のアプリにして、ターミナルなしでフォルダを選んで遊べるようにする（はじめの画面・手で進める・チュートリアル）。",
+    "goal": "GOAL16",
     "news": [
       "課題管理ツールでは、課題を Todo・In Progress・Done の列に並べて、進み具合を一目で見る使い方が多い",
       "課題の説明にチェックリストを書いて、終わったと言える条件をはっきりさせる使い方がよく使われる",
@@ -69,7 +69,12 @@
         "GOAL13",
         "G11",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "B19",
+        "B20",
+        "G12",
+        "B21",
+        "GOAL16"
       ]
     },
     {
@@ -126,7 +131,11 @@
         "GOAL13",
         "G11",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "E17",
+        "G12",
+        "E18",
+        "GOAL16"
       ]
     },
     {
@@ -141,7 +150,8 @@
         "src/server/**",
         "src/commands/serve.js",
         "src/mcp/**",
-        "src/commands/mcp.js"
+        "src/commands/mcp.js",
+        "src/commands/app.js"
       ],
       "path": [
         "S1",
@@ -177,7 +187,12 @@
         "G11",
         "GOAL14",
         "S11",
-        "GOAL15"
+        "GOAL15",
+        "S12",
+        "S13",
+        "G12",
+        "S14",
+        "GOAL16"
       ]
     },
     {
@@ -219,7 +234,8 @@
         "G11",
         "GOAL14",
         "Q8",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -257,7 +273,8 @@
         "GOAL12",
         "GOAL13",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -302,7 +319,9 @@
         "G11",
         "GOAL14",
         "M10",
-        "GOAL15"
+        "GOAL15",
+        "G12",
+        "GOAL16"
       ]
     },
     {
@@ -341,7 +360,8 @@
         "GOAL13",
         "GOAL14",
         "A5",
-        "GOAL15"
+        "GOAL15",
+        "GOAL16"
       ]
     },
     {
@@ -370,7 +390,27 @@
         "GOAL12",
         "GOAL13",
         "GOAL14",
-        "GOAL15"
+        "GOAL15",
+        "H4",
+        "GOAL16"
+      ]
+    },
+    {
+      "id": "mac",
+      "name": "大工",
+      "kind": "agent",
+      "agent": "claude",
+      "job": "villager",
+      "color": "orange",
+      "module": "Mac のアプリ（Swift・AppKit・WebKit の窓に盤面を映す。フォルダのダイアログ・命綱・組み立て）",
+      "territory": [
+        "mac/**"
+      ],
+      "path": [
+        "D1",
+        "D2",
+        "D3",
+        "GOAL16"
       ]
     }
   ],
@@ -2514,6 +2554,343 @@
           "第1章〜第15章のすべての判定が、まとめて本当に通る",
           "すべての冒険の書が正常。地図と package.json は第15章（版は 0.3.0 のまま）",
           "§64.1 包み（npm pack）に入るすべての文字のファイルで、旧名を名前として使っていない。README と CHANGELOG に第15章"
+        ]
+      }
+    },
+    "D1": {
+      "type": "task",
+      "title": "Mac のアプリの骨組み",
+      "detail": "CONTRACTS §72.1: mac/GridHub.swift（1ファイル。AppKit と WebKit だけ）。WKWebView の窓・フォルダのダイアログ（新しいフォルダも作れる）・ログインシェルの PATH で node を探す・gridhub app --port 0 --lifeline を標準入力の Pipe つきで起こす・窓を閉じたら終わる。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/D1.test.mjs",
+        "seal": [
+          "tests/e2e/D1.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§72.1 mac/GridHub.swift は1ファイルで、AppKit・WebKit・Foundation だけを使い、@main がある",
+          "§72.1 フォルダのダイアログ（NSOpenPanel。新しいフォルダも作れる）と、スクリプトの窓口 gridhub・folderChosen",
+          "§72.1 ログインシェルの PATH で node を探し、22 以上でなければ日本語で入れ方を出す",
+          "§72.1 node で gridhub app --port 0 --lifeline を起こし、標準入力は Pipe。窓を閉じると終わり、終わるときにサーバーを止める",
+          "§72.1 編集メニュー・終了・alert と confirm・手元でない URL は既定のブラウザで開く"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "mac",
+        "app"
+      ]
+    },
+    "D2": {
+      "type": "task",
+      "title": "アプリを組み立てる",
+      "detail": "CONTRACTS §72.2・§72.3・§72.5: mac/Info.plist（127.0.0.1 への通信を許す）と mac/build.sh（swiftc だけ。npm pack と同じ中身を入れる・アイコン・アドホック署名）。npm run mac。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/D2.test.mjs",
+        "seal": [
+          "tests/e2e/D2.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§72.2 mac/Info.plist: 実行ファイル・ID・版の置き場・アイコン・127.0.0.1 への通信（NSAllowsLocalNetworking）",
+          "§72.3・§72.5 mac/build.sh は swiftc で組み（xcodebuild は使わない）、sips・iconutil でアイコン、アドホック署名。npm run mac と .gitignore の dist/",
+          "§72.3 GRIDHUB_SKIP_SWIFT=1 で組むと、GridHub.app に包みと同じ中身と、版の入った Info.plist が入り、中の gridhub が動く"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "mac",
+        "build"
+      ]
+    },
+    "D3": {
+      "type": "task",
+      "title": "今の絵からアイコンを作る",
+      "detail": "CONTRACTS §72.4: web/assets の勇者と方眼の紙から mac/icon.mjs で mac/AppIcon.png（1024×1024）を作り、組み立てで AppIcon.icns にする。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/D3.test.mjs",
+        "seal": [
+          "tests/e2e/D3.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§72.4 mac/AppIcon.png は 1024×1024 の透明つき PNG で、今の絵（web/assets の勇者と方眼の紙）から mac/icon.mjs で作る",
+          "§72.2・§72.4 アイコンの名前が Info.plist（CFBundleIconFile）と組み立て（AppIcon.icns）でそろう"
+        ]
+      },
+      "estimate": 1,
+      "labels": [
+        "mac",
+        "icon"
+      ]
+    },
+    "H4": {
+      "type": "task",
+      "title": "王様の城: Mac のアプリでハンコを押す",
+      "detail": "CONTRACTS §73: 勇者（ユーザー）が、自分の Mac で npm run mac で作った GridHub.app を Finder から開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。ターミナルは組み立てのときだけ。",
+      "check": {
+        "kind": "stamp",
+        "by": "player"
+      },
+      "labels": [
+        "human",
+        "mac"
+      ]
+    },
+    "E18": {
+      "type": "task",
+      "title": "承認のマスで、仲間のファイルを読むだけで見せる",
+      "detail": "CONTRACTS §74.1: handReviewFiles（人間が自分のハンコのマスにいるとき、指令書と、すぐ次のゲートの説明に書かれた、だれかの縄張りの守られていないファイル）と、readHandFile の readonly。説明に書かれていないファイルと、読むだけのファイルへの書き込みは E_TERRITORY。冒険の書には記録しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E18.test.mjs",
+        "seal": [
+          "tests/e2e/E18.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§74.1 人間が承認のマスにいるとき、handReviewFiles は指令書とすぐ次のゲートの説明に書かれた、だれかの縄張りの守られていないファイルを返す。ほかのときは空",
+          "§74.1 readHandFile は読むだけのファイルに readonly: true をつけ、writeHandFile は書かない（E_TERRITORY）。守られた場所は E_SEALED"
+        ]
+      }
+    },
+    "S14": {
+      "type": "task",
+      "title": "承認のマスの、読むだけのファイル",
+      "detail": "CONTRACTS §74.2: GET /api/hand に review、GET /api/file は readonly をそのまま返す。読むだけのファイルへの POST は 403 E_TERRITORY。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S14.test.mjs",
+        "seal": [
+          "tests/e2e/S14.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "§74.2 GET /api/hand の review（人間が承認のマスにいるとき、指令書と判定に書かれたファイル）と、GET /api/file の readonly。読むだけのファイルには書けない"
+        ]
+      }
+    },
+    "B21": {
+      "type": "task",
+      "title": "手で進めるの手直し",
+      "detail": "CONTRACTS §74.3: 承認のマスの読むだけのファイル（#hand-review・#hand-readonly）、ファイル名の例は見本か縄張りから、進んだら欄を空に、アプリの中では CLI の言い方をボタンの名前に言い換え、キャラクターシートの CLI は「ターミナルでは」に畳む。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B21.test.mjs",
+        "seal": [
+          "tests/e2e/B21.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§74.3 承認のマスでは、読むだけのファイル（#hand-review）を押すと中身を出し、書き込み欄は読むだけ（保存できない）。自分のファイルを開けばまた書ける",
+          "§74.3 ファイル名の欄の例は、見本があれば見本のパス、無ければ縄張りから（ai/hello.txt の決め打ちをしない）",
+          "§74.3 次のマスに進んだら、ファイル名と中身の欄を空にする",
+          "§74.3 アプリの中（?home= が手元）では、指令書・マスの説明・キャラクターシートに CLI の言い方を出さない（ボタンの名前に言い換え、CLI は「ターミナルでは」で畳む）"
+        ]
+      }
+    },
+    "GOAL16": {
+      "type": "gate",
+      "title": "あがり（第16章）: Mac のアプリで遊ぶ",
+      "detail": "第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く、package.json の scripts.mac と test:goal、README の「Mac アプリで遊ぶ」と CHANGELOG の第16章（§66〜§74）。公開はしない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/GOAL16.test.mjs",
+        "seal": [
+          "tests/e2e/GOAL16.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs"
+        ],
+        "cases": [
+          "第1章〜第16章のすべての判定が、まとめて本当に通る",
+          "すべての冒険の書が正常。地図と package.json は第16章（scripts.mac・test に大工の判定）",
+          "§64.1 包みに旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章"
+        ]
+      }
+    },
+    "S12": {
+      "type": "task",
+      "title": "アプリの起動役（gridhub app）",
+      "detail": "CONTRACTS §68: はじめの画面を配り、フォルダを開くとその盤面のサーバー（無ければ入口）を起こす。最近のフォルダ（recent.json）・チュートリアルを作って開く・命綱（--lifeline。標準入力が閉じたら、開いた盤面ごと止まる）。gridhub serve --lifeline も。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S12.test.mjs",
+        "seal": [
+          "tests/e2e/S12.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "§68.1・§68.3 startApp は web の start.html を / に配り、ほかは web から。gridhub app は1行目に URL を出す",
+          "§68.4 GET /api/app: 版・Node・claude（PATH の中）・in_app・home・play・最近のフォルダ（はじめは空）",
+          "§68.5 POST /api/app/open: X-Masume が要る・絶対パスでなければ 400・無いフォルダは 404。冒険の書が無ければ入口、あれば盤面。前の盤面は止まる",
+          "§68.5・§68.7 最近のフォルダ: 新しい順・同じ場所は1つ・最大10件・recent.json に残り、起こし直しても読める。forget で外す。消えたフォルダは missing",
+          "§68.6 POST /api/app/tutorial: play の下にチュートリアル（2回目は「チュートリアル 2」）を写し、冒険の書を作って盤面を開く",
+          "§68.2 命綱: --lifeline なら標準入力を閉じると止まり、開いていた盤面のサーバーも止まる。SIGTERM でも止まる。gridhub serve --lifeline も同じ"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "server",
+        "app"
+      ]
+    },
+    "B19": {
+      "type": "task",
+      "title": "はじめの画面（方眼ノート）",
+      "detail": "CONTRACTS §70: web/start.html。フォルダを選ぶ（アプリの中は Mac のダイアログ、ブラウザはパスの欄）・チュートリアルで遊ぶ・最近のフォルダ・Node.js と claude の様子。盤面の「はじめの画面」のリンク（?home= が手元のときだけ）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B19.test.mjs",
+        "seal": [
+          "tests/e2e/B19.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§70.1 はじめの画面: 方眼ノートの紙に、フォルダを選ぶ・チュートリアルで遊ぶ・最近のフォルダ・Node.js の版",
+          "§70.2 アプリの中では「フォルダを選ぶ」で postMessage({type: \"chooseFolder\"})、folderChosen で開いて移る",
+          "§70.2・§70.3 ブラウザでは #folder-form にパスを書いて開く。できなければ #start-error。チュートリアルは POST /api/app/tutorial。最近のフォルダから開く・外す",
+          "§70.4 claude が無ければ、入れ方と「チュートリアルは claude なしで遊べます」",
+          "§70.5 盤面の ?home= が手元（127.0.0.1・localhost）のときだけ「はじめの画面」のリンク"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "app"
+      ]
+    },
+    "E17": {
+      "type": "task",
+      "title": "手で演じる役のファイル（縄張りの中だけ）",
+      "detail": "CONTRACTS §67: src/engine/hand.js。handPathProblem・handFiles・readHandFile・writeHandFile。縄張りの外・封印された判定・地図・.masume/・.git/・シンボリックリンクには書かない。冒険の書には記録しない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/E17.test.mjs",
+        "seal": [
+          "tests/e2e/E17.test.mjs",
+          "tests/helpers.mjs"
+        ],
+        "cases": [
+          "§67.1 handPathProblem: 形のおかしいパスは E_USAGE、冒険の書が無ければ E_NO_GAME、いないキャラクターは E_UNKNOWN",
+          "§67.1 封印された判定・地図・.masume/・.git/ は縄張りの中でも E_SEALED、縄張りの外と縄張りの無いキャラクターは E_TERRITORY",
+          "§67.1 シンボリックリンクをたどる・本人がシンボリックリンクなら E_TERRITORY（ルートの外を書き換えない）",
+          "§67.2〜§67.4 handFiles・readHandFile・writeHandFile: 縄張りの中のファイルを一覧し、読み、書く（途中のフォルダを作る・1MiB まで）。冒険の書には何も記録しない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "engine",
+        "app"
+      ]
+    },
+    "S13": {
+      "type": "task",
+      "title": "手で演じる窓口",
+      "detail": "CONTRACTS §69: GET /api/hand（指令書・縄張り・書けるファイル・見本）・GET/POST /api/file・POST /api/step・POST /api/check（ボス戦は省き、仲間がそろえば別に始める）。同じキャラクターは同時に1つだけ。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/S13.test.mjs",
+        "seal": [
+          "tests/e2e/S13.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "§69.1 GET /api/hand: 指令書・縄張り・書けるファイル・見本（SOLUTIONS.json のいまのマスの分）",
+          "§69.2 GET・POST /api/file: 縄張りの中は読み書きでき、外は 403 E_TERRITORY、封印された判定は 403 E_SEALED、X-Masume が要る",
+          "§69.3 POST /api/step: いまのダンジョンの判定だけを走らせる（位置は変わらない）。ハンコのマスでは 409",
+          "§69.4 POST /api/check: 宣言判定（ボス戦は省く）。通れば passed: true で進み、仲間がそろえば ready を返して、ボス戦を別に始める",
+          "§69.5 同じキャラクターの step・check は同時に1つだけ（2つ目は 409 E_BUSY）"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "server",
+        "app"
+      ]
+    },
+    "B20": {
+      "type": "task",
+      "title": "手で進める",
+      "detail": "CONTRACTS §71: キャラクターシートの「手で進める」で #hand を開き、指令書・縄張りのファイル・見本を写す・保存・歩く・宣言判定・ハンコ・ボス戦。書きかけは盤面が新しくなっても消えない。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/B20.test.mjs",
+        "seal": [
+          "tests/e2e/B20.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs"
+        ],
+        "cases": [
+          "§71.1・§71.2 キャラクターシートの「手で進める」で、手で進める欄（#hand）を開き、指令書・縄張り・書けるファイル",
+          "§71.2 ファイルを押すと読み込み、書いて保存すると POST /api/file。見本を写すは欄に入れるだけ（保存しない）",
+          "§71.2 歩く・宣言判定の結果を、知らせ（#hand-msg）とテスト1件ずつ（#hand-result）に。動いたあとは読み直す",
+          "§71.2 ハンコのマスで本人が人間ならハンコのボタン（#hand-stamp）、ゲートで仲間がそろえばボス戦のボタン（#hand-battle）",
+          "§71.2・§71.3 書きかけは盤面が新しくなっても消えない（#drawer と別の欄）。見本の盤面では「手で進める」を出さない"
+        ]
+      },
+      "estimate": 2,
+      "labels": [
+        "ui",
+        "app"
+      ]
+    },
+    "G12": {
+      "type": "gate",
+      "title": "結合: アプリの中だけでチュートリアルをあがる",
+      "detail": "書記・伝令・盤面・地図職人。gridhub app のはじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけであがる（claude なし）。標準入力を閉じると、起動役も盤面のサーバーも止まる（§73）。",
+      "check": {
+        "kind": "cmd",
+        "run": "node --test --test-reporter=spec tests/e2e/G12.test.mjs",
+        "seal": [
+          "tests/e2e/G12.test.mjs",
+          "tests/helpers.mjs",
+          "tests/helpers2.mjs",
+          "tests/helpers3.mjs",
+          "tests/helpers4.mjs",
+          "tests/helpers5.mjs",
+          "tests/helpers6.mjs",
+          "tests/helpers7.mjs",
+          "tests/helpers8.mjs"
+        ],
+        "cases": [
+          "はじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけであがり、標準入力を閉じると全部止まる（書記 × 伝令 × 盤面 × 地図職人）"
         ]
       }
     }

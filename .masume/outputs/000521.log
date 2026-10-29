@@ -1,0 +1,16 @@
+=== B19: node --test --test-reporter=spec tests/e2e/B19.test.mjs ===
+✔ §70.1 はじめの画面: 方眼ノートの紙に、フォルダを選ぶ・チュートリアルで遊ぶ・最近のフォルダ・Node.js の版 (628.165689ms)
+✔ §70.2 アプリの中では「フォルダを選ぶ」で postMessage({type: "chooseFolder"})、folderChosen で開いて移る (735.183075ms)
+✔ §70.2・§70.3 ブラウザでは #folder-form にパスを書いて開く。できなければ #start-error。チュートリアルは POST /api/app/tutorial。最近のフォルダから開く・外す (1571.055408ms)
+✔ §70.4 claude が無ければ、入れ方と「チュートリアルは claude なしで遊べます」 (1273.299384ms)
+✔ §70.5 盤面の ?home= が手元（127.0.0.1・localhost）のときだけ「はじめの画面」のリンク (2721.672808ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 6995.500045
+
+(exit 0, 7033ms)

@@ -16,6 +16,7 @@
   <!-- 手元の書体の予熱: 日本語の代わりの書体を、大きな盤面を描く前に読み込ませる（書体が届くたびの描き直しを小さく済ませる） -->
   <div class="font-warm" aria-hidden="true"><span class="fw-hand">あ漢テ字ー。、？ GridHub 1/2 ✓✔✖・◎…—↓↑</span><span class="fw-marker">あ漢テ字ー。？</span><span class="fw-pencil">あ漢テ字ー。？</span><span class="fw-ui">あ漢テ字 ✓◎</span><span class="fw-mono">a1b2 ✔</span></div>
   <header class="cover">
+    <a id="home-link" class="mini-btn home-link" hidden title="はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）にもどる">← はじめの画面</a>
     <div class="brand">
       <span class="logo" aria-label="GridHub"><span class="lg-cell">G</span><span class="lg-cell">r</span><span class="lg-cell">i</span><span class="lg-cell">d</span><span class="lg-hub">Hub</span></span>
       <span class="tagline">テスト1件 = 1マス。通ったぶんだけ進む開発すごろく</span>
@@ -126,6 +127,38 @@
       </section>
       <div id="toast" aria-live="polite"></div>
     </section>
+
+    <aside id="hand" class="hand-panel" hidden aria-labelledby="hand-title" data-char="" data-loaded="false" data-busy="false">
+      <div class="hand-head">
+        <h3 id="hand-title">手で進める</h3>
+        <button id="hand-close" class="close" type="button" aria-label="閉じる">✕</button>
+      </div>
+      <section id="hand-brief" class="hand-brief" aria-label="指令書"></section>
+      <div class="hand-actions">
+        <button id="hand-step" class="act" type="button" hidden>歩く（このダンジョンのテストを走らせる）</button>
+        <button id="hand-check" class="act" type="button" hidden>宣言判定（通れば次のマスへ）</button>
+        <button id="hand-stamp" class="act stamp" type="button" hidden>ハンコを押す</button>
+        <button id="hand-battle" class="act battle" type="button" hidden>ボス戦を始める</button>
+      </div>
+      <p id="hand-msg" class="hand-msg" role="status" hidden></p>
+      <ol id="hand-result" class="hand-result" aria-label="テスト1件ずつ"></ol>
+      <section class="hand-edit" aria-label="縄張りのファイル">
+        <h4>縄張りのファイル</h4>
+        <ul id="hand-files" class="hand-files"></ul>
+        <p id="hand-files-empty" class="hint">まだありません。下の欄で書いて保存すると作れます。</p>
+        <div id="hand-samples" class="hand-samples"></div>
+        <div id="hand-review" class="hand-review" hidden>
+          <h4>読むだけのファイル</h4>
+          <p class="hint">指令書と判定に書かれた、仲間のファイルです。押すと下の欄に出します（書けません）。</p>
+          <ul id="hand-review-list" class="hand-files"></ul>
+        </div>
+        <label for="hand-path">ファイル（縄張りの中の相対パス）</label>
+        <input id="hand-path" type="text" spellcheck="false" autocomplete="off" placeholder="">
+        <p id="hand-readonly" class="hand-readonly" hidden>読むだけ（書けません）</p>
+        <textarea id="hand-content" rows="8" spellcheck="false" aria-label="ファイルの中身"></textarea>
+        <button id="hand-save" class="act" type="button">保存</button>
+      </section>
+    </aside>
 
     <div id="rail">
       <aside id="party" class="slip" aria-label="なかま">
