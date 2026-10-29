@@ -66,28 +66,51 @@ test('§75.4 スマホの縦（幅 320）でも、字は 13px 以上、上の帯
   }
 });
 
-test('§75.2 スマホの縦（幅 320・375）でも、1画面目の見出しは句のまとまり（h1 .ph）で折れ、句の途中で折れない', { timeout: 120000 }, async () => {
+test('§75.2 見出し（h1・h2・h3）は、幅 320・375・1280 で句のまとまり（.ph）で折れ、句の途中で折れない', { timeout: 120000 }, async () => {
   const srv = await serveStatic(SITE);
   try {
-    for (const width of [320, 375]) {
-      const page = await openBrowser({ width, height: 700 });
+    for (const width of [320, 375, 1280]) {
+      const page = await openBrowser({ width, height: 800 });
       try {
         await page.goto(`${srv.url}/`);
         const r = await page.eval(`(() => {
-          const h1 = document.querySelector('h1');
-          const line = parseFloat(getComputedStyle(h1).lineHeight);
-          const phs = [...h1.querySelectorAll('.ph')];
-          const loose = [...h1.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).map((n) => n.textContent.trim());
-          return { count: phs.length, broken: phs.filter((p) => p.getBoundingClientRect().height > line * 1.3).map((p) => p.textContent), loose, line };
+          const heads = [...document.querySelectorAll('h1, h2, h3')];
+          const loose = heads.flatMap((h) => [...h.childNodes].filter((n) => n.nodeType === 3 && n.textContent.trim()).map((n) => h.tagName + ': ' + n.textContent.trim()));
+          const broken = heads.flatMap((h) => {
+            const line = parseFloat(getComputedStyle(h).lineHeight);
+            return [...h.querySelectorAll('.ph')].filter((p) => p.getBoundingClientRect().height > line * 1.3).map((p) => h.tagName + ': ' + p.textContent);
+          });
+          return { heads: heads.length, phs: document.querySelectorAll('h1 .ph, h2 .ph, h3 .ph').length, loose, broken };
         })()`);
-        assert.ok(r.count >= 4, `幅 ${width}: 見出しの句 ${r.count}`);
-        assert.deepEqual(r.loose, [], `幅 ${width}: 句で包んでいない字`);
-        assert.deepEqual(r.broken, [], `幅 ${width}: 途中で折れた句（行の高さ ${r.line}px）`);
+        assert.ok(r.heads >= 10 && r.phs >= r.heads, `幅 ${width}: 見出し ${r.heads}・句 ${r.phs}`);
+        assert.deepEqual(r.loose, [], `幅 ${width}: 句で包んでいない見出しの字`);
+        assert.deepEqual(r.broken, [], `幅 ${width}: 途中で折れた句`);
       } finally {
         await page.close();
       }
     }
   } finally {
+    await srv.close();
+  }
+});
+
+test('§75.2 スマホの縦（375×812）でも、1画面目に盤面の写真と駒やモンスターの絵が入る', { timeout: 120000 }, async () => {
+  const srv = await serveStatic(SITE);
+  const page = await openBrowser({ width: 375, height: 812 });
+  try {
+    await page.goto(`${srv.url}/`);
+    await page.waitFor(`[...document.querySelectorAll('#hero img')].every((i) => i.complete)`, { timeout: 20000 });
+    const r = await page.eval(`(() => {
+      const h = innerHeight;
+      const seen = (el) => { const b = el.getBoundingClientRect(); return Math.max(0, Math.min(b.bottom, h) - Math.max(b.top, 0)); };
+      const photo = document.querySelector('#hero img[src="img/board.png"]');
+      return { h, photo: photo ? Math.round(seen(photo)) : 0, decos: [...document.querySelectorAll('#hero img.deco')].filter((i) => seen(i) >= 20).length, title: Math.round(document.querySelector('h1').getBoundingClientRect().top) };
+    })()`);
+    assert.ok(r.title < 200, `見出しが上のほうに（${r.title}px）`);
+    assert.ok(r.photo >= 150, `盤面の写真が1画面目に ${r.photo}px 見える`);
+    assert.ok(r.decos >= 4, `駒やモンスターの絵が1画面目に ${r.decos} つ`);
+  } finally {
+    await page.close();
     await srv.close();
   }
 });

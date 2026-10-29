@@ -387,7 +387,7 @@ GM は地図を描いて判定を書くだけで、実装しません。キャ�
 | 第14章 | リリースの支度: `LICENSE`（MIT）・包み（`npm pack`）の中身を動くのに要るものだけに・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上。npm や GitHub Release にはまだ出していません |
 | 第15章 | 配る前に名前をそろえる: 包みの中の、使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
 | 第16章 | **Mac のアプリ**（`npm run mac` → `GridHub.app`）: はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）・盤面の「手で進める」（縄張りの中だけのファイル・歩く・宣言判定）・閉じたら止まる命綱。新しい仲間の大工（`mac/`）。最後に王様の城（ユーザーが自分の Mac のアプリでハンコを押す） |
-| 第17章 | **紹介ページ**（`site/`。gridhub.matsunai.com に置く）: AI に任せた開発の「いま、どこまで？」という困りごとと、GridHub 自身を作った14日間の実録（人間のひと言・AI の失敗・入った仕組み）・体制と数字・入れ方。HTML・CSS・画像だけで、外から何も読み込まず、スマホの縦でもはみ出さない。新しい仲間の看板屋 |
+| 第17章 | **紹介ページ**（`site/`。gridhub.matsunai.com に置く）: 「退屈な開発を、楽しいゲームに。」ゲームとしての GridHub を紹介する1ページ（こんな悩み・特長・ゲームの言葉と開発の言葉・遊び方・画面・はじめる）。HTML・CSS・画像だけで、外から何も読み込まず、スマホの縦でもはみ出さない。新しい仲間の看板屋 |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
 
@@ -410,7 +410,7 @@ MASUME_CHROME=/tmp/chrome npm test
 
 `site/` は、`gridhub.matsunai.com` に置く紹介ページです（入口は `site/index.html`）。HTML・CSS・画像だけで、組み立ての手順はありません。外のサイトから、スクリプト・字・解析を読み込みません。`site/` のフォルダをそのまま置けば動きます（`site/index.html` をブラウザで直に開いても見られます）。
 
-スクリーンショット（`site/img/` の `board`・`start`・`hand`・`ending`）とページの印（`icon`）は、判定の Chrome で撮り直せます。冒険は一時フォルダに作るので、このリポジトリの冒険の書には書きません。
+スクリーンショット（`site/img/` の `board`・`start`・`hand`・`ending`）とページの印（`icon`）は、判定の Chrome で撮り直せます。盤面の写真は、サンプルの冒険（`examples/memo`）を一時フォルダに作り直して撮ります。このリポジトリの冒険の書は使いません。
 
 ```sh
 MASUME_CHROME=/path/to/chrome node tools/site-shots.mjs          # 全部
