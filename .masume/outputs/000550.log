@@ -1,0 +1,14 @@
+=== GOAL16: node --test --test-reporter=spec tests/e2e/GOAL16.test.mjs ===
+✔ 第1章〜第16章のすべての判定が、まとめて本当に通る (438406.997042ms)
+✔ すべての冒険の書が正常。地図と package.json は第16章（scripts.mac・test に大工の判定） (765.342625ms)
+✔ §64.1 包みに旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章 (852.802333ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 440187.276292
+
+(exit 0, 440352ms)
