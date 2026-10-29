@@ -1458,4 +1458,9 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 4. **軍師・語り部**: `gridhub party` の `--help`・巡回の知らせ（出撃／起動・帰還／終了・ボス戦／結合テスト・迷子など）・`--dry-run`・エージェントへのプロンプトの枠の文（`src/party/prompt.js`。既定の文は P6 が見ているので変えない）・作戦の動き方と止まる条件（`src/party/tactics.js` の `dev`。`tacticText()`）。`gridhub quest` の知らせ。`gridhub init`／`quest` が書く AGENTS.md は、いまのことばの版（`src/quest/setup.js` の `agentsMdGame`／`agentsMdDev`。守ることとコマンドは同じ）。
 5. **文書**: 文書ごとに言い方を1つに決める。`docs/RULEBOOK.md` は冒険のことばで、冒頭の「ことばの対応表」1つに開発のことばをまとめる（見出しは `GridHub ルールブック` のまま。§15.2）。`README.md` は開発のことばで、ゲームの言い方は「ゲームと開発の対応表」の節と、盤面の設定の名前（「町でセーブしたら GitHub に送る」など）にだけ出す。`docs/GAME_DESIGN.md` は対応づけの設計文書なので両方が並ぶ（柱 4 をこの方針に改めた）。`docs/GM_GUIDE.md` は地図のデータの名前で書く。判定が見ている語（§73 の README の節・`第N章`・対応表の行・チュートリアルの `gridhub` コマンド）は残す。
 6. 判定: `E19`（書記: `gridhub words`・`--words`・`GRIDHUB_WORDS`・`.masume/words.json`・開発のことばの `brief`／`step`／`status`／ログの文／エラー文）、`S15`（伝令: `GET/POST /api/words`・MCP の道具の説明）、`B22` に盤面と窓口の同期を足す。
+7. **大工**（`mac/GridHub.swift`。監督の指示「Mac アプリの文言も開発のことばに切り替わるように」）: アプリは選んだことばを `UserDefaults`（`GridHubWords`）に覚える。
+   - web → アプリ: 盤面・はじめの画面で切り替えると、スクリプトの窓口 `gridhub` に `postMessage({type: "words", words: "game"|"dev"})`（`web/board/words.js` の `tellApp`。アプリの外では何もしない。開いたときには送らない）。
+   - アプリ → web: ページを描く前に `WKUserScript`（document start）で `window.__gridhubWords = "game"|"dev"` を入れる。`board/boot.js` と `board/words.js` は、URL の `?words=` > `window.__gridhubWords` > ブラウザの選択 > 冒険の設定 > game の順で決める（`wordsSource()` は `app`）。アプリの中は `--port 0` で開くたびにポートが変わり `localStorage` が残らないので、アプリが覚えたことばが次の起動のはじめの画面と盤面の既定になる。
+   - アプリ自身の字: フォルダのダイアログの `prompt`（「このフォルダで遊ぶ」／「このフォルダを開く」）と `message`（「冒険の書のあるフォルダか…」／「セーブデータ（.masume）のあるフォルダか…」）、起動中の知らせ（「盤面を配る GridHub（Node.js）を起こしています」／「盤面のサーバー（Node.js）を起動しています」）、起動できなかったときの題。Node.js の入れ方・「もう一度さがす」・メニューの字はどちらでも同じ。
+   - 判定: `D4`（ソースの約束: `"words"` の窓口・`UserDefaults`・`WKUserScript` の `__gridhubWords`・両方の字）、`B22`（`window.__gridhubWords` を読む・切り替えで `postMessage({type: "words"})`・開いただけでは送らない）。
 

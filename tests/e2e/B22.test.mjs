@@ -216,3 +216,54 @@ test('§76.3 本物の盤面で切り替えると、X-Masume 付きで POST /api
     assert.deepEqual(posts.map((p) => p.body), [{ words: 'dev' }, { words: 'game' }]);
   });
 });
+
+// ---- §76.7 Mac のアプリの中（window.webkit の偽物。B19 と同じ）----
+import { openBrowserWith } from '../helpers4.mjs';
+const APP_SHIM = `window.__posted = []; window.webkit = { messageHandlers: { gridhub: { postMessage(m) { window.__posted.push(JSON.parse(JSON.stringify(m))); } } } };`;
+
+async function withApp(fn, { preload = APP_SHIM, path = '/?fixture=demo' } = {}) {
+  const srv = await serveStatic(WEB, {
+    'GET /api/app': (req, res) => { res.writeHead(200, { 'content-type': 'application/json' }); res.end(JSON.stringify({ ok: true, node: '22.0.0', version: '0.3.0', recent: [], claude: { found: true }, in_app: true })); },
+  });
+  const page = await openBrowserWith({ width: 1440, height: 900, preload });
+  try {
+    await page.goto(`${srv.url}${path}`);
+    await page.waitFor(path.startsWith('/start') ? 'window.__gridhubStart && window.__gridhubStart.ready' : READY, { timeout: 20000 });
+    await fn(page);
+    assert.deepEqual(exceptions(page), [], 'コンソールにエラーがない');
+  } finally {
+    await page.close();
+    await srv.close();
+  }
+}
+
+test('§76.7 アプリが覚えていることば（window.__gridhubWords）は、ブラウザの選択より優先し、URL の ?words= には負ける。開いただけではアプリに何も送らない', { timeout: 120000 }, async () => {
+  await withApp(async (page) => {
+    assert.equal(await page.eval(MODE), 'dev', 'window.__gridhubWords = dev が効く');
+    assert.match(await page.eval(text('nav.tabs')), /使い方/);
+    assert.deepEqual(await page.eval('window.__posted'), [], '開いただけでは postMessage しない');
+  }, { preload: `${APP_SHIM} window.__gridhubWords = 'dev'; try { localStorage.setItem('gridhub.words', 'game'); } catch (e) {}` });
+  await withApp(async (page) => {
+    assert.equal(await page.eval(MODE), 'game', '?words=game が勝つ');
+  }, { preload: `${APP_SHIM} window.__gridhubWords = 'dev';`, path: '/?fixture=demo&words=game' });
+  await withApp(async (page) => {
+    assert.equal(await page.eval(MODE), 'dev', 'はじめの画面でも効く');
+    assert.match(await page.eval(text('#start')), /セーブデータ/);
+  }, { preload: `${APP_SHIM} window.__gridhubWords = 'dev';`, path: '/start.html' });
+});
+
+test('§76.7 アプリの中で切り替えると postMessage({type: "words", words}) でアプリに知らせる。外（窓口が無い）では何も起きない', { timeout: 120000 }, async () => {
+  await withApp(async (page) => {
+    await page.eval(`${TOGGLE}.click()`);
+    await page.waitFor(`${MODE} === 'dev'`);
+    assert.deepEqual(await page.eval('window.__posted'), [{ type: 'words', words: 'dev' }]);
+    await page.eval(`${TOGGLE}.click()`);
+    await page.waitFor(`${MODE} === 'game'`);
+    assert.deepEqual(await page.eval('window.__posted'), [{ type: 'words', words: 'dev' }, { type: 'words', words: 'game' }]);
+  });
+  await withApp(async (page) => {
+    await page.eval(`${TOGGLE}.click()`);
+    await page.waitFor(`${MODE} === 'dev'`);
+    assert.equal(await page.eval('typeof window.webkit'), 'undefined');
+  }, { preload: '' });
+});

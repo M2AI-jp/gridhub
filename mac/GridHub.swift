@@ -132,6 +132,30 @@ struct Found: Sendable {
     let version: String?
 }
 
+// MARK: - ことば（冒険のことば / 開発のことば。CONTRACTS §76.7）
+// 盤面の右上のボタンで選んだことばを、web 側が postMessage({type: "words"}) で知らせてくる。アプリは UserDefaults に覚え、
+// 自分の窓の字（フォルダのダイアログ・起動中と失敗の知らせ）に使い、次に開くページには window.__gridhubWords で渡す。
+
+enum Words: String {
+    case game
+    case dev
+
+    static let key = "GridHubWords"
+
+    static func remembered() -> Words {
+        Words(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .game
+    }
+
+    func remember() {
+        UserDefaults.standard.set(rawValue, forKey: Words.key)
+    }
+
+    /// いまのことばの字。game は冒険のことば、dev は開発のことば
+    func say(_ game: String, _ dev: String) -> String {
+        self == .dev ? dev : game
+    }
+}
+
 // MARK: - アプリ
 
 @MainActor
@@ -145,6 +169,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private var lines: [String] = []
     private var homeURL: URL?
     private var stopping = false
+    /// いまのことば（§76.7）。web 側から知らされるたびに覚え直す
+    private var words = Words.remembered()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         buildMenu()
@@ -166,6 +192,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private func buildWindow() {
         let configuration = WKWebViewConfiguration()
         configuration.userContentController.add(self, name: "gridhub")
+        installWordsScript(configuration.userContentController)
         webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = self
         webView.uiDelegate = self
@@ -231,6 +258,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         NSApp.mainMenu = main
     }
 
+    /// ページを描く前に、覚えていることばを window.__gridhubWords に入れる（board/boot.js と board/words.js が読む。§76.7）
+    private func installWordsScript(_ controller: WKUserContentController) {
+        controller.removeAllUserScripts()
+        let script = WKUserScript(source: "window.__gridhubWords = '\(words.rawValue)';", injectionTime: .atDocumentStart, forMainFrameOnly: true)
+        controller.addUserScript(script)
+    }
+
+    /// web 側で選ばれたことばを覚え、自分の字と次のページに効かせる
+    private func wordsChanged(_ next: Words) {
+        guard next != words else { return }
+        words = next
+        words.remember()
+        installWordsScript(webView.configuration.userContentController)
+    }
+
     @objc private func goHome(_ sender: Any?) {
         if let homeURL { webView.load(URLRequest(url: homeURL)) }
     }
@@ -244,7 +286,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
     private func start() {
         stopServer()
         stopping = false
-        showMessage(title: "GridHub をひらいています…", body: "<p>盤面を配る GridHub（Node.js）を起こしています。</p>", retry: false)
+        showMessage(title: words.say("GridHub をひらいています…", "GridHub を起動しています…"),
+                    body: words.say("<p>盤面を配る GridHub（Node.js）を起こしています。</p>", "<p>盤面のサーバー（Node.js）を起動しています。</p>"), retry: false)
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let path = Lookup.loginPath()
             let node = Lookup.find("node", in: path)
@@ -302,7 +345,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         do {
             try process.run()
         } catch {
-            showMessage(title: "GridHub を起こせませんでした", body: "<p>\(escape(error.localizedDescription))</p>", retry: true)
+            showMessage(title: words.say("GridHub を起こせませんでした", "GridHub を起動できませんでした"), body: "<p>\(escape(error.localizedDescription))</p>", retry: true)
             return
         }
         server = process
@@ -415,6 +458,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
             chooseFolder()
         case "retry":
             start()
+        case "words":
+            // 盤面・はじめの画面で選んだことば（§76.7）
+            if let text = body["words"] as? String, let next = Words(rawValue: text) { wordsChanged(next) }
         case "openExternal":
             if let text = body["url"] as? String, let url = URL(string: text) { NSWorkspace.shared.open(url) }
         default:
@@ -428,8 +474,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
         panel.allowsMultipleSelection = false
-        panel.prompt = "このフォルダで遊ぶ"
-        panel.message = "冒険の書のあるフォルダか、新しく冒険をはじめるフォルダを選んでください（「新規フォルダ」で作れます）。"
+        panel.prompt = words.say("このフォルダで遊ぶ", "このフォルダを開く")
+        panel.message = words.say("冒険の書のあるフォルダか、新しく冒険をはじめるフォルダを選んでください（「新規フォルダ」で作れます）。",
+                                  "セーブデータ（.masume）のあるフォルダか、新しく始めるフォルダを選んでください（「新規フォルダ」で作れます）。")
         panel.beginSheetModal(for: window) { [weak self] response in
             guard response == .OK, let url = panel.url else { return }
             self?.folderChosen(url.path)

@@ -14,7 +14,7 @@
 const KEY = 'gridhub.words';
 export const MODES = ['game', 'dev'];
 
-// 何で決まったか: 'url' | 'local'（ブラウザに残した選択）| 'server'（冒険の設定 .masume/words.json）| 'default'
+// 何で決まったか: 'url' | 'app'（Mac のアプリが覚えていることば）| 'local'（ブラウザに残した選択）| 'server'（冒険の設定 .masume/words.json）| 'default'
 let source = 'default';
 function initialMode() {
   try {
@@ -25,6 +25,11 @@ function initialMode() {
     }
   } catch {
     /* URL が読めない所（書き出した SVG など）では既定 */
+  }
+  // Mac のアプリ（§76.7）: アプリが覚えていることばを、ページを描く前に window.__gridhubWords に入れてくる
+  if (MODES.includes(window.__gridhubWords)) {
+    source = 'app';
+    return window.__gridhubWords;
   }
   try {
     const s = localStorage.getItem(KEY);
@@ -42,15 +47,24 @@ let mode = initialMode();
 const listeners = new Set();
 let saveToServer = null; // 本物の盤面で、切り替えを冒険の設定にも書く（§76.3）。initWords({ post }) で入る
 
-/** 何で決まったか（'url' | 'local' | 'server' | 'default'） */
+/** 何で決まったか（'url' | 'app' | 'local' | 'server' | 'default'） */
 export const wordsSource = () => source;
+
+/** Mac のアプリの中なら、選んだことばをアプリに知らせる（アプリが覚えて、自分の字と次の起動に使う。§76.7）。外では何もしない */
+function tellApp(mode) {
+  try {
+    window.webkit?.messageHandlers?.gridhub?.postMessage({ type: 'words', words: mode });
+  } catch {
+    /* 窓口が無ければ何もしない */
+  }
+}
 
 /**
  * 本物の盤面（§76.3）: URL にもブラウザにも選択が無ければ、この冒険の設定（GET /api/words）を既定にする。
  * 変わったら描き直す。fetchJson は api/words の JSON を返す関数（取れなければ null）
  */
 export async function adoptServerWords(fetchJson) {
-  if (source === 'url' || source === 'local') return false;
+  if (source === 'url' || source === 'app' || source === 'local') return false;
   let got = null;
   try {
     got = await fetchJson();
@@ -95,6 +109,7 @@ export function setWordsMode(next) {
   }
   // 本物の盤面なら、この冒険の設定にも書く（CLI・MCP の字もそろう。§76.3）。届かなくても切り替えは効く
   if (saveToServer) Promise.resolve(saveToServer(mode)).catch(() => {});
+  tellApp(mode);
   try {
     const url = new URL(location.href);
     if (mode === 'game') url.searchParams.delete('words');
