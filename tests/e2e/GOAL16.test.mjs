@@ -1,10 +1,10 @@
-// GOAL16「あがり（第16章）: Mac のアプリで遊ぶ」— CONTRACTS §66〜§73。公開（npm publish・タグ・Release・アプリの zip）はしない。
+// GOAL16「あがり（第16章）: Mac のアプリで遊ぶ」— CONTRACTS §66〜§73。公開（タグ・Release・アプリの zip）はしない。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { delimiter, dirname, extname, join } from 'node:path';
-import { ROOT, masume, oldNameHits, showHits } from '../helpers7.mjs';
+import { ROOT, masume, oldNameHits, showHits, distPaths } from '../helpers7.mjs';
 
 // あがりの GOAL〜GOAL16 を除く、第1章〜第16章の判定
 const FILES = readdirSync(join(ROOT, 'tests', 'e2e')).filter((f) => f.endsWith('.test.mjs') && !f.startsWith('GOAL')).sort().map((f) => join('tests', 'e2e', f));
@@ -39,19 +39,14 @@ test('すべての冒険の書が正常。地図と package.json は第16章（s
   const pkg = JSON.parse(read('package.json'));
   assert.equal(pkg.scripts['test:goal'], 'node --test tests/e2e/GOAL16.test.mjs');
   assert.equal(pkg.scripts.mac, 'sh mac/build.sh');
-  assert.match(pkg.scripts.test, /tests\/e2e\/\[[A-Z]*D[A-Z]*\]\*\.test\.mjs/, 'npm test に大工の判定（D*）');
+  assert.match(pkg.scripts.test, /tests\/e2e\/\[[A-Z]*D[A-Z]*\]\*\.test\.mjs/, 'test の判定に大工の判定（D*）');
   assert.doesNotMatch(pkg.scripts.test, /GOAL/);
 });
 
-test('§64.1 包みに旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章', () => {
-  const env = { ...process.env };
-  for (const k of Object.keys(env)) if (k.startsWith('npm_') || k.startsWith('NPM_')) delete env[k];
-  env.PATH = [dirname(process.execPath), env.PATH].filter(Boolean).join(delimiter);
-  const r = spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: ROOT, env, encoding: 'utf8', timeout: 120000 });
-  assert.equal(r.status, 0, (r.stdout || '') + (r.stderr || ''));
-  const paths = JSON.parse(r.stdout)[0].files.map((f) => f.path);
-  assert.ok(paths.includes('web/start.html'), 'はじめの画面も包みに入る');
-  assert.ok(!paths.some((f) => f.startsWith('mac/')), 'mac/ は包みに入れない');
+test('§64.1・§77.2 配るものに旧名が無い。README に「Mac アプリで遊ぶ」、CHANGELOG に第16章', { timeout: 240000 }, () => {
+  const { paths } = distPaths(); // 配るもの（§77.2）。sh mac/build.sh が詰めた中身
+  assert.ok(paths.includes('web/start.html'), 'はじめの画面も配るものに入る');
+  assert.ok(!paths.some((f) => f.startsWith('mac/')), 'mac/ は配るものに入れない');
   const TEXT = new Set(['.md', '.js', '.mjs', '.json', '.html', '.css', '.svg', '.txt', '']);
   const skipFile = new Set(['docs/CONTRACTS.md']);
   const skipLine = { 'src/quest/setup.js': (t) => /^const IGNORE_HEADING = /.test(t), 'web/board/board.css': (t) => /^\/\*.*\*\/\s*$/.test(t) };
@@ -66,7 +61,7 @@ test('§64.1 包みに旧名が無い。README に「Mac アプリで遊ぶ」�
   const readme = read('README.md');
   const section = readme.match(/^## [^\n]*Mac アプリで遊ぶ[^\n]*\n([\s\S]*?)(?=^## )/m);
   assert.ok(section, 'README に「Mac アプリで遊ぶ」の節');
-  for (const w of ['npm run mac', 'dist/GridHub.app', '右クリック', '「開く」', 'Node.js 22 以上', 'claude', 'チュートリアル', 'フォルダを選ぶ']) {
+  for (const w of ['sh mac/build.sh', 'dist/GridHub.app', '右クリック', '「開く」', 'Node.js 22 以上', 'claude', 'チュートリアル', 'フォルダを選ぶ']) {
     assert.ok(section[1].includes(w), `「Mac アプリで遊ぶ」に ${w}`);
   }
   assert.match(read('CHANGELOG.md'), /第16章/);

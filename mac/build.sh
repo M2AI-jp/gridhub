@@ -1,7 +1,7 @@
 #!/bin/sh
 # GridHub の Mac のアプリを組み立てる（CONTRACTS §72.3）。大工の縄張り。Xcode は要らない（Command Line Tools の swiftc だけ）。
 #
-#   npm run mac                  # = sh mac/build.sh → dist/GridHub.app
+#   sh mac/build.sh              # → dist/GridHub.app
 #   GRIDHUB_DIST=<dir>           # 置き場所を変える（既定は dist）
 #   GRIDHUB_SKIP_SWIFT=1         # Swift・アイコン・署名を飛ばし、中身（GridHub 本体）だけを詰める（Mac でない所の判定のため）
 set -eu
@@ -20,7 +20,6 @@ need() {
 }
 
 need node "Node.js 22 以上を入れてください（https://nodejs.org または brew install node）。"
-need npm "Node.js に付いてくる npm が要ります。"
 VERSION=$(node -p "require('./package.json').version")
 
 TMP=$(mktemp -d "${TMPDIR:-/tmp}/gridhub-mac.XXXXXX")
@@ -29,11 +28,18 @@ trap 'rm -rf "$TMP"' EXIT INT TERM
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 
-# 1. GridHub 本体: npm pack と同じ中身（§62.4）を Contents/Resources/gridhub に
+# 1. GridHub 本体: 動くのに要るもの（CONTRACTS §77.2 の「配るもの」）を Contents/Resources/gridhub に写す。
+#    パッケージの道具は使わない（git clone したこのフォルダから、そのまま写す）
 echo "GridHub $VERSION の中身を詰めています…"
-npm pack --silent --ignore-scripts --pack-destination "$TMP" >/dev/null
-tar -xzf "$TMP"/gridhub-*.tgz -C "$TMP"
-mv "$TMP/package" "$APP/Contents/Resources/gridhub"
+GH="$APP/Contents/Resources/gridhub"
+mkdir -p "$GH/docs" "$GH/quests"
+cp -R bin src web "$GH/"
+cp -R quests/tutorial "$GH/quests/"
+cp docs/*.md "$GH/docs/"
+cp package.json README.md LICENSE CHANGELOG.md "$GH/"
+# 写した中に、残っていてはいけないもの（手元で作られた一時ファイル・隠しファイル）があれば消す
+find "$GH" -name '.DS_Store' -delete
+find "$GH" -name 'node_modules' -prune -exec rm -rf {} + 2>/dev/null || true
 
 # 2. Info.plist（版は package.json から）
 sed "s/__VERSION__/$VERSION/g" mac/Info.plist > "$APP/Contents/Info.plist"

@@ -311,7 +311,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         guard let resources = Bundle.main.resourceURL else { return }
         let gridhub = resources.appendingPathComponent("gridhub/bin/gridhub.js").path
         guard FileManager.default.fileExists(atPath: gridhub) else {
-            showMessage(title: "アプリの中身が足りません", body: "<p><code>\(escape(gridhub))</code> がありません。<code>npm run mac</code> で組み立て直してください。</p>", retry: false)
+            showMessage(title: "アプリの中身が足りません", body: "<p><code>\(escape(gridhub))</code> がありません。<code>sh mac/build.sh</code> で組み立て直してください。</p>", retry: false)
             return
         }
 
@@ -386,7 +386,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         <p>終了コード \(status)。理由: <code>\(escape(reason))</code></p>
         <pre>\(last)</pre>
         <details><summary>くわしく（最後の出力）</summary><pre>\(all)</pre></details>
-        <p>アプリを組み立て直す（<code>npm run mac</code>）か、下の「もう一度さがす」を押してください。</p>
+        <p>アプリを組み立て直す（<code>sh mac/build.sh</code>）か、下の「もう一度さがす」を押してください。</p>
         """
         showMessage(title: "盤面のサーバーが止まりました", body: body, retry: true)
     }

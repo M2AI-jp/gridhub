@@ -23,7 +23,7 @@ Mac なら、GridHub をアプリ（`GridHub.app`）にして、Finder からダ
 
    ```sh
    git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub
-   npm run mac          # dist/GridHub.app ができる（swiftc で組み、アドホック署名する）
+   sh mac/build.sh      # dist/GridHub.app ができる（swiftc で組み、アドホック署名する）
    ```
 
 2. **開く**: Finder で `dist/GridHub.app` を「アプリケーション」フォルダに入れて、ダブルクリックします。署名していないので、はじめて開くときに「開けません」と出たら、`GridHub.app` を右クリックして「開く」を選んでください。
@@ -35,7 +35,7 @@ Mac なら、GridHub をアプリ（`GridHub.app`）にして、Finder からダ
 - 「手で進める」では、そのキャラクターの縄張りの中のファイルだけを書けます。封印された判定・地図・冒険の書には書けません。
 - 盤面の右上のボタンでことば（冒険のことば / 開発のことば）を切り替えると、アプリがそれを覚えて、次に開くときのはじめの画面と盤面、アプリ自身のダイアログの字もそのことばになります。
 - アプリは、Finder から開いても、ログインシェルの PATH（`.zprofile`・`.zshrc` など）で `node` と `claude` を探します。Node.js 22 以上が無いときは、窓に入れ方が出ます。
-- `claude`（Claude Code）が無くても、チュートリアルは遊べます。願いから冒険を作る（GM）・出撃させるときは `npm install -g @anthropic-ai/claude-code` で入れます。
+- `claude`（Claude Code）が無くても、チュートリアルは遊べます。作りたいものから地図を作る（GM）・エージェントを起動するときは、[Claude Code](https://claude.com/claude-code) の手順で `claude` を入れてログインします。
 - 窓を閉じるとアプリが終わり、盤面のサーバーも止まります（アプリが落ちても、サーバーは残りません）。
 - ターミナルから同じ画面を開くなら `gridhub app`（出てきた URL をブラウザで開く）。
 
@@ -45,17 +45,12 @@ Mac なら、GridHub をアプリ（`GridHub.app`）にして、Finder からダ
 
 ### 0. 入れる
 
+GridHub は git clone したフォルダから、そのまま `node` で動きます（インストールの道具もパッケージの登録も使いません）。`gridhub` と打てるように、PATH の通った所にリンクを置きます。
+
 ```sh
 git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub
-npm link              # gridhub コマンドが使えるようになる（使わないなら node /path/to/gridhub/bin/gridhub.js）
+ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub   # ~/.local/bin が PATH に無ければ、alias gridhub="node $PWD/bin/gridhub.js" でも
 gridhub --version     # gridhub 0.3.0 (rules 1)
-```
-
-包み（tgz）から入れることもできます。npm にはまだ出していないので、手元で包みを作ります。
-
-```sh
-npm pack                                # gridhub-0.3.0.tgz ができる（動くのに要るものだけ）
-npm install -g ./gridhub-0.3.0.tgz      # gridhub と masume が使えるようになる
 ```
 
 #### GM とエージェントに使う LLM のコマンド（`gridhub quest`・`gridhub party` に要る）
@@ -64,8 +59,8 @@ GridHub 自身は LLM を呼びません。GM（地図と判定を書く）と�
 
 | | 入れる | ログイン |
 | --- | --- | --- |
-| Claude Code | https://claude.com/claude-code の手順で（`npm install -g @anthropic-ai/claude-code` など） | `claude` を一度起動して、画面のとおりにログイン |
-| Codex CLI | https://github.com/openai/codex の手順で（`npm install -g @openai/codex` など） | `codex login` |
+| Claude Code | https://claude.com/claude-code の手順で | `claude` を一度起動して、画面のとおりにログイン |
+| Codex CLI | https://github.com/openai/codex の手順で | `codex login` |
 
 入っていないと、`[E_GM] GM を起動できませんでした: claude コマンドが見つかりません` のように止まります（盤面の入口も同じ理由を出します）。
 
@@ -423,17 +418,17 @@ GM は地図を描いてテストを書くだけで、実装しません。担�
 | 第11章 | **GridHub**: テスト1件が1マス・`gridhub step`・Git のセーブと墓・作戦・伝承と技・エンディング・縦の方眼ノートの世界地図 |
 | 第12章 | 仕上げ: 瓦版は作っている製品の話題・札と吹き出しが重ならない・盤面から GitHub につなぐ（`gridhub remote`・`gridhub push`・「GitHub に送る」ボタン）・縦長の画面では1ページずつ |
 | 第13章 | 町でセーブしたら GitHub に送る設定（`gridhub remote --auto-push on`・盤面の切り替え。初めはオフ）・最大レベルは「Lv9（最大）」と出す |
-| 第14章 | リリースの支度: `LICENSE`（MIT）・包み（`npm pack`）の中身を動くのに要るものだけに・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上。npm や GitHub Release にはまだ出していません |
-| 第15章 | 配る前に名前をそろえる: 包みの中の、使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
-| 第16章 | **Mac のアプリ**（`npm run mac` → `GridHub.app`）: はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）・盤面の「手で進める」（縄張りの中だけのファイル・歩く・宣言判定）・閉じたら止まる命綱。新しい仲間の大工（`mac/`）。最後に王様の城（ユーザーが自分の Mac のアプリでハンコを押す） |
+| 第14章 | リリースの支度: `LICENSE`（MIT）・配るもの（動くのに要るファイル）を決める・版 0.3.0 とリリースノート（[CHANGELOG.md](CHANGELOG.md)）・Node.js 22 以上。GitHub Release にはまだ出していません |
+| 第15章 | 配る前に名前をそろえる: 配るものの中の、使う人の目に入る旧名を GridHub に（チュートリアル「はじめての GridHub」は `gridhub` コマンドで遊ぶ・MCP の資料の名前・支度の説明・絵帳） |
+| 第16章 | **Mac のアプリ**（`sh mac/build.sh` → `GridHub.app`）: はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）・盤面の「手で進める」（縄張りの中だけのファイル・歩く・宣言判定）・閉じたら止まる命綱。新しい仲間の大工（`mac/`）。最後に王様の城（ユーザーが自分の Mac のアプリでハンコを押す） |
 
 章ごとの経緯（GM の判定の誤り・全滅・やり直しを含む）は、冒険の書（`gridhub log`）と [docs/CONTRACTS.md](docs/CONTRACTS.md) に残っています。
 
 ### 判定を手元で走らせる
 
 ```sh
-npm test              # すべてのマスとゲートの判定を1回ずつ
-npm run test:goal     # いまのあがり（GOAL16）: 第1章〜第16章の全部の判定をまとめて＋冒険の書・包みの中の名前・Mac のアプリの手順の確認
+node --test tests/e2e/[ABDEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs   # すべてのマスとゲートの判定を1回ずつ
+node --test tests/e2e/GOAL16.test.mjs                                   # いまのあがり（GOAL16）: 第1章〜第16章の全部の判定をまとめて＋冒険の書・配るものの中の名前・Mac のアプリの手順の確認
 ```
 
 盤面の判定はヘッドレスの Chrome を使います。見つからなければ `MASUME_CHROME=/path/to/chrome` を渡します。
@@ -441,7 +436,7 @@ Linux のコンテナで root として走らせるときは、Chrome の箱（�
 
 ```sh
 printf '#!/bin/sh\nexec /path/to/chrome --no-sandbox --disable-dev-shm-usage "$@"\n' > /tmp/chrome && chmod +x /tmp/chrome
-MASUME_CHROME=/tmp/chrome npm test
+MASUME_CHROME=/tmp/chrome node --test tests/e2e/[ABDEMPQS]*.test.mjs tests/e2e/G[0-9]*.test.mjs
 ```
 
 ## ファイル
@@ -454,7 +449,7 @@ src/quest/               願いから冒険（語り部）
 src/party/               出撃と作戦（軍師）
 src/linear/ src/jira/    Linear・Jira（地図職人）
 web/                     盤面（賢者クロード）、web/assets/ は絵（絵師）、web/start.html ははじめの画面
-mac/                     Mac のアプリ（大工）: GridHub.swift・Info.plist・build.sh（npm run mac）・アイコン
+mac/                     Mac のアプリ（大工）: GridHub.swift・Info.plist・build.sh（sh mac/build.sh）・アイコン
 quests/                  地図: masume（このリポジトリ自身）・kotozuke・tutorial
 tests/e2e/               判定（GM が書いて封印）
 docs/                    GAME_DESIGN / RULEBOOK / CONTRACTS / GM_GUIDE / SAVE_FORMAT
@@ -462,6 +457,6 @@ CHANGELOG.md             リリースノート（版ごとの変わったとこ�
 LICENSE                  MIT License
 ```
 
-包み（`npm pack`）に入るのは、動くのに要るもの（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG）だけです。このリポジトリ自身の冒険の書（`.masume/`）・判定・examples・demos・docs の写真は入りません。
+配るもの（Mac のアプリに詰める中身。`sh mac/build.sh` が写す）は、動くのに要るもの（`bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・README・LICENSE・CHANGELOG・`package.json`）だけです。このリポジトリ自身の冒険の書（`.masume/`）・判定・examples・demos・docs の写真は入りません。パッケージの登録・インストールの道具は使いません（git clone したフォルダから `node` で動きます）。
 
 ライセンス: MIT（[LICENSE](LICENSE)）。変わったところは [CHANGELOG.md](CHANGELOG.md)。

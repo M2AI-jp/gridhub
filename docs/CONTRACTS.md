@@ -899,7 +899,7 @@ Codex の `-s workspace-write` の箱（サンドボックス）は、既定で�
 
 # 第10章: 外の字を待たない
 
-npm test の揺れを調べたところ、盤面が外の字（Google Fonts）の CSS を待って、描画もスクリプトも止めていた。
+判定をまとめて走らせたときの揺れを調べたところ、盤面が外の字（Google Fonts）の CSS を待って、描画もスクリプトも止めていた。
 返ってこない回線（オフラインに近い・詰まった Wi-Fi・社内のプロキシ）では、盤面が白いまま `window.__masume` も生まれない。
 「ゲームはローカルのまま」なのに、盤面だけが外を待っていた。判定の Chrome は外のホストを引けなくした（GM の縄張り）ので、盤面の約束としてここで守る。
 
@@ -1272,15 +1272,15 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 
 ## 62. リリースの支度（第14章・ユーザーの指示）
 
-ユーザーの指示「リリースの準備（LICENSE・package.json の files・バージョンとリリースノート・engines）を進めて。公開や npm への公開はそのあとで聞いて」。**公開に当たること（リポジトリを公開する・名前を変える・`npm publish`・タグ・GitHub Release）はしない。** ユーザーに聞いてから。
+ユーザーの指示「リリースの準備（LICENSE・バージョンとリリースノート・engines）を進めて。公開はそのあとで聞いて」。**公開に当たること（リポジトリを公開する・名前を変える・タグ・GitHub Release）はしない。** ユーザーに聞いてから。パッケージの登録・包み・インストールの道具で配る支度は、§77 のとおり作らない（この節の 4 はそのように改めた）。
 
 1. **LICENSE**: ルートに MIT License の本文を置く（`package.json` の `license` は `MIT`）。著作権者の行は `Copyright (c) 2026 M2AI-jp`（GitHub の持ち主。ユーザーに確かめる）。
 2. **版**: `package.json` の `version` は `0.3.0`。`gridhub --version`（`masume --version` も）は、版を `package.json` から読む（決め打ちしない。§38.3 の形 `gridhub <版> (rules 1)` は変えない）。README の `gridhub --version` の例も同じ版。
 3. **engines**: `"node": ">=22"`。Node 20 は 2026年4月にサポートが終わり、確かめているのは Node 22 と 26 だけなので。README・AGENTS.md・この契約書の冒頭・チュートリアルの README の「Node.js <n> 以上」も 22 にそろえる。
-4. **包み**（`npm pack`）: `package.json` の `files` で、動くのに要るものだけを入れる。
-   - 入れる: `bin/`・`src/`・`web/`（盤面。見本の `web/fixtures/` も）・`docs/*.md`（`gridhub quest` のプロンプト・MCP の資料・`gridhub init` の AGENTS.md が読む）・`quests/tutorial/`・`CHANGELOG.md`。npm がいつも入れる `package.json`・`README.md`・`LICENSE` も入る。
-   - 入れない: `.masume/`（このリポジトリ自身の冒険の書）・`tests/`・`examples/`・`demos/`・docs の写真と下書き（`docs/*.png`・`docs/shots/`・`docs/prototype/`）・`quests/masume.map.json`・`quests/kotozuke.*`・`AGENTS.md`。
-   - 包みを別のフォルダに `npm install` すると、`gridhub` と `masume` が動き、`--version` は包みの `package.json` の版、包みのチュートリアルで冒険を作って遊びきれ、`gridhub serve` の盤面が開き、MCP の資料と `gridhub init` の AGENTS.md が包みの中の docs を指す（結合ゲート `G11`）。
+4. **配るもの**（§77.2）: 動くのに要るものだけ。
+   - 入れる: `bin/`・`src/`・`web/`（盤面。見本の `web/fixtures/` も）・`docs/*.md`（`gridhub quest` のプロンプト・MCP の資料・`gridhub init` の AGENTS.md が読む）・`quests/tutorial/`・`CHANGELOG.md`・`package.json`・`README.md`・`LICENSE`。
+   - 入れない: `.masume/`（このリポジトリ自身の冒険の書）・`tests/`・`examples/`・`demos/`・docs の写真と下書き（`docs/*.png`・`docs/shots/`・`docs/prototype/`）・`quests/masume.map.json`・`quests/kotozuke.*`・`AGENTS.md`・`mac/`。
+   - 配るものを別のフォルダに写す（`sh mac/build.sh` の中身の詰め方と同じ）と、`node <そこ>/bin/gridhub.js` と `masume.js` が動き、`--version` はそこの `package.json` の版、そこのチュートリアルで冒険を作って遊びきれ、`gridhub serve` の盤面が開き、MCP の資料と `gridhub init` の AGENTS.md がそこの docs を指す（結合ゲート `G11`）。
 5. **リリースノート**: ルートの `CHANGELOG.md`。新しい版が上。
    - `## 0.3.0` に第11章〜第13章: GridHub への改名（`masume` は別名）・テスト1件が1マス（`gridhub step`）・町 = Git のコミット・ふっかつのじゅもんをやめた（seq と Git のコミットで時点を指す）・余白のマス・瓦版（作っている製品の話題）・GitHub につなぐ導線（`gridhub remote`・`gridhub push`）と町でセーブしたら自動で送る設定・縦のノート・最大レベルの表示。この版から Node.js 22 以上。
    - その下に、それより前（`0.1.0`。第1章〜第10章）をまとめる。`0.2.0` は第11章の途中で `package.json` に書いただけで配っていないので、`0.3.0` にまとめたと書く。
@@ -1307,7 +1307,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 
 ## 65. あがり（第15章）
 
-- `GOAL15`: 第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、包み（`npm pack --dry-run`）に入るすべての文字のファイルが §64.1 の決まりを守り、README と CHANGELOG に第15章（名前をそろえた）が書いてある。
+- `GOAL15`: 第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、配るもの（§77.2）に入るすべての文字のファイルが §64.1 の決まりを守り、README と CHANGELOG に第15章（名前をそろえた）が書いてある。
 - `package.json` の `test:goal` は `GOAL15` に向ける。版は `0.3.0` のまま。
 
 ## 66. Mac のアプリ（第16章・ユーザーの指示）
@@ -1324,7 +1324,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 6. Finder から開いたアプリは PATH が短いので、ログインシェルの PATH で node と claude を見つける。Node.js 22 以上が無い・claude が無いときは、何を入れればよいかを日本語で出す。claude が無くても、チュートリアルは遊べる。
 7. アイコンは今の絵（`web/assets`）から作る。
 
-作り: Swift の1ファイル（`mac/GridHub.swift`）で、Apple 標準の AppKit と WebKit だけを使う。ネイティブの窓（WKWebView）に、Node の GridHub（`gridhub app`。§68）が配る画面をそのまま映す。フォルダのダイアログだけを Swift が出す。Xcode は使わず、`swiftc` だけで組める（`mac/build.sh`・`npm run mac`。§72）。**公開に当たること（npm publish・タグ・GitHub Release・アプリの zip を配る）はしない。**
+作り: Swift の1ファイル（`mac/GridHub.swift`）で、Apple 標準の AppKit と WebKit だけを使う。ネイティブの窓（WKWebView）に、Node の GridHub（`gridhub app`。§68）が配る画面をそのまま映す。フォルダのダイアログだけを Swift が出す。Xcode は使わず、`swiftc` だけで組める（`sh mac/build.sh`。§72）。**公開に当たること（タグ・GitHub Release・アプリの zip を配る）はしない。**
 
 ## 67. 書記: 手で演じる役のファイル（第16章）
 
@@ -1373,7 +1373,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 1. `#choose-folder`（字「フォルダを選ぶ」）・`#tutorial`（字「チュートリアルで遊ぶ」）・`#recent`（最近のフォルダ。`li[data-dir]` に、開く `button.open-recent` と外す `button.forget`）・`#env`（`#env-node` に Node.js の版、`#env-claude[data-found=true|false]`）・`#start-error`。読み終えたら `window.__gridhubStart = {ready: true}`。
 2. アプリの中（`window.webkit.messageHandlers.gridhub` がある）では、`#choose-folder` を押すと `postMessage({type: 'chooseFolder'})` を送る。アプリは選ばれたフォルダで `window.gridhubApp.folderChosen(<絶対パス>)` を呼ぶ。ブラウザでは、`#choose-folder` を押すと `#folder-form`（`input#folder-path` と開くボタン）を出す。
 3. フォルダが決まったら `POST /api/app/open`、チュートリアルは `POST /api/app/tutorial`。返ってきた `url` に移る。できなければ `#start-error` に理由。
-4. `claude.found` が `false` なら、`#env-claude` に「claude（Claude Code）が見つかりません」と入れ方（`npm install -g @anthropic-ai/claude-code`）と、「チュートリアルは claude なしで遊べます」を出す。
+4. `claude.found` が `false` なら、`#env-claude` に「claude（Claude Code）が見つかりません」と入れ方（https://claude.com/claude-code へのリンク）と、「チュートリアルは claude なしで遊べます」を出す。
 5. 盤面（`web/index.html`）は、URL の `?home=` が手元（`http://127.0.0.1:<port>/` か `http://localhost:<port>/`）なら、`a#home-link`（字「はじめの画面」）をそこへのリンクとして出す。それ以外の `home` は無視する。
 
 ## 71. 盤面: 手で進める（第16章）
@@ -1398,19 +1398,19 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - 窓を閉じるとアプリも終わる（`applicationShouldTerminateAfterLastWindowClosed` が `true`）。終わるときは命綱を閉じてサーバーを止める（`applicationWillTerminate`）。
    - 「編集」メニュー（取り消す・カット・コピー・ペースト・すべてを選択）と、終了（⌘Q）。JavaScript の alert・confirm を出す。手元（127.0.0.1・localhost）でない URL と、新しい窓で開くリンクは、既定のブラウザで開く。
 2. `mac/Info.plist`: `CFBundleExecutable` は `GridHub`、`CFBundleIdentifier` は `jp.m2ai.gridhub`、`CFBundlePackageType` は `APPL`、`CFBundleShortVersionString` と `CFBundleVersion` は `__VERSION__`（組み立てで `package.json` の版に置き換える）、`CFBundleIconFile` は `AppIcon`、`LSMinimumSystemVersion`、`NSHighResolutionCapable`、`NSAppTransportSecurity` の `NSAllowsLocalNetworking` が `true`。
-3. `mac/build.sh`（`npm run mac`）: POSIX の sh。`dist/GridHub.app` を作る。
-   - `npm pack` と同じ中身（§62.4）を `Contents/Resources/gridhub/` に入れる（`npm pack` して開く）。`Info.plist` の `__VERSION__` を置き換えて `Contents/Info.plist` に。
+3. `mac/build.sh`（`sh mac/build.sh`）: POSIX の sh。`dist/GridHub.app` を作る。
+   - 配るもの（§77.2）を、このフォルダから `cp` で `Contents/Resources/gridhub/` に写す（パッケージの道具は使わない）。`Info.plist` の `__VERSION__` を置き換えて `Contents/Info.plist` に。
    - `swiftc`（Xcode の `xcodebuild` は使わない）で `Contents/MacOS/GridHub` を作る。`mac/AppIcon.png` から `sips` と `iconutil` で `Contents/Resources/AppIcon.icns` を作る。アドホック署名（`codesign --force --deep --sign -`）。
    - 環境変数 `GRIDHUB_SKIP_SWIFT=1` なら、Swift・アイコン・署名を飛ばし、中身だけを詰める（Mac でない所の判定のため）。
    - 終わりに、`dist/GridHub.app` の場所と「はじめて開くときは、右クリックして「開く」を選ぶ（署名していないため）」を出す。
 4. `mac/AppIcon.png`: 1024×1024 の PNG。今の絵（`web/assets/sprites/` の勇者と、方眼ノートの紙）から `mac/icon.mjs` で作る（ヘッドレスの Chrome で描く。作り直すときだけ使う）。
-5. `package.json` の `scripts.mac` は `sh mac/build.sh`。`mac/` は npm の包みに入れない（§62.4 のまま）。`dist/` は Git に入れない（`.gitignore`）。
+5. `package.json` の `scripts.mac` は `sh mac/build.sh`。`mac/` は配るものに入れない（§77.2）。`dist/` は Git に入れない（`.gitignore`）。
 
 ## 73. あがり（第16章）
 
 - `G12`（結合: アプリの中だけでチュートリアルをあがる）: 書記・伝令・盤面・地図職人。`gridhub app` を起こし、はじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけで（見本を写す → 保存 → ハンコ・宣言判定・ボス戦）チュートリアルをあがる。claude が PATH に無くても遊べ、はじめの画面がそれを知らせる。最後に標準入力を閉じると、起動役も盤面のサーバーも止まる。
-- `H4`（王様の城）: 勇者（ユーザー）が、自分の Mac で `npm run mac` で作った `GridHub.app` を開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。
-- `GOAL16`: 第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く（§64.1）、`package.json` の `scripts.mac`・`test:goal`、README の「Mac アプリで遊ぶ」（`npm run mac`・`dist/GridHub.app`・右クリックして「開く」・Node.js 22 以上・claude が無くてもチュートリアル）と、CHANGELOG の第16章。
+- `H4`（王様の城）: 勇者（ユーザー）が、自分の Mac で `sh mac/build.sh` で作った `GridHub.app` を開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。
+- `GOAL16`: 第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、配るものに旧名が無く（§64.1）、`package.json` の `scripts.mac`・`test:goal`、README の「Mac アプリで遊ぶ」（`sh mac/build.sh`・`dist/GridHub.app`・右クリックして「開く」・Node.js 22 以上・claude が無くてもチュートリアル）と、CHANGELOG の第16章。
 - `package.json` の `test:goal` は `GOAL16` に、`test` の判定に `D*`（大工）を足す。
 
 ## 74. 手で進めるの手直し（第16章・監督の確かめ）
@@ -1463,4 +1463,14 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - アプリ → web: ページを描く前に `WKUserScript`（document start）で `window.__gridhubWords = "game"|"dev"` を入れる。`board/boot.js` と `board/words.js` は、URL の `?words=` > `window.__gridhubWords` > ブラウザの選択 > 冒険の設定 > game の順で決める（`wordsSource()` は `app`）。アプリの中は `--port 0` で開くたびにポートが変わり `localStorage` が残らないので、アプリが覚えたことばが次の起動のはじめの画面と盤面の既定になる。
    - アプリ自身の字: フォルダのダイアログの `prompt`（「このフォルダで遊ぶ」／「このフォルダを開く」）と `message`（「冒険の書のあるフォルダか…」／「セーブデータ（.masume）のあるフォルダか…」）、起動中の知らせ（「盤面を配る GridHub（Node.js）を起こしています」／「盤面のサーバー（Node.js）を起動しています」）、起動できなかったときの題。Node.js の入れ方・「もう一度さがす」・メニューの字はどちらでも同じ。
    - 判定: `D4`（ソースの約束: `"words"` の窓口・`UserDefaults`・`WKUserScript` の `__gridhubWords`・両方の字）、`B22`（`window.__gridhubWords` を読む・切り替えで `postMessage({type: "words"})`・開いただけでは送らない）。
+
+## 77. 配り方: パッケージの道具は使わない（監督の決めごと）
+
+監督の指示「npm は実装しないの。SSoT 他、コンテキストから完全に削除するように」。前の章（§62・§65・§72・§73）で、配る支度をパッケージの登録・包み・インストールの道具（npm）に寄せていたのを改める。
+
+1. **決めごと**: GridHub は **git clone したフォルダから `node` で動かすもの**。パッケージの登録（publish）・包み（pack）・インストール（install -g・link）の支度は作らない。`package.json` は ESM（`"type": "module"`）・版・`engines`・`scripts` のためだけに置き、配るための項目（`files`・`bin`）は持たない。README・CHANGELOG・この契約書・AGENTS.md・判定・組み立ての道具から、その手順と語を消す（過去の章の記録である冒険の書・地図の `detail`・examples の控えは、歴史なので残す）。
+2. **配るもの**（動くのに要るファイル）: `bin/`・`src/`・`web/`・`docs/*.md`・`quests/tutorial/`・`CHANGELOG.md`・`README.md`・`LICENSE`・`package.json`。入れないもの: `.masume/`・`tests/`・`examples/`・`demos/`・`docs/*.png`・`docs/shots/`・`docs/prototype/`・`quests/masume.map.json`・`quests/kotozuke.*`・`AGENTS.md`・`mac/`。
+3. **Mac のアプリ**（`sh mac/build.sh`）は、2 をこのフォルダから `cp` で `Contents/Resources/gridhub/` に写して詰める（§72.3 を改めた）。`GRIDHUB_SKIP_SWIFT=1` なら Mac でなくても、中身の詰め方だけを走らせて確かめられる。
+4. **使う人の入れ方**（README「0. 入れる」）: `git clone` して、`ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub` か `alias gridhub="node $PWD/bin/gridhub.js"`。Claude Code・Codex CLI の入れ方は、それぞれの公式の手順を指す（コマンドは書かない）。
+5. **判定**: `G11` は「配るものから遊ぶ」に改める（`sh mac/build.sh` を `GRIDHUB_SKIP_SWIFT=1` で走らせ、詰めた中身を別のフォルダで `node` で動かす。入れ忘れ・入れすぎは `git ls-files` と 2 の決まりで見る）。`GOAL15`・`GOAL16` の「配るものに旧名が無い」も同じ中身を読む。`GOAL14` は `package.json` の `files` を見ない。`D2` は `mac/build.sh` がパッケージの道具を呼ばず `cp` で写すことを見る。`B19` ははじめの画面の claude の入れ方が公式の手順へのリンクであることを見る。判定ファイルを直したので、GM が封印し直す。
 

@@ -94,9 +94,12 @@ function renderEnv(info) {
     claude.textContent = t('start.claude.found');
     return;
   }
-  const code = document.createElement('code');
-  code.textContent = 'npm install -g @anthropic-ai/claude-code';
-  claude.append(t('start.claude.none1'), code, t('start.claude.none2'));
+  const link = document.createElement('a');
+  link.href = 'https://claude.com/claude-code';
+  link.target = '_blank';
+  link.rel = 'noopener';
+  link.textContent = 'https://claude.com/claude-code';
+  claude.append(t('start.claude.none1'), link, t('start.claude.none2'));
 }
 
 // アプリ（Swift）が、選ばれたフォルダで呼ぶ（§70.2）

@@ -1,10 +1,10 @@
-// GOAL15「あがり（第15章）: 配る前に名前をそろえる」— CONTRACTS §64・§65。公開（npm publish・タグ・Release）はしない。
+// GOAL15「あがり（第15章）: 配る前に名前をそろえる」— CONTRACTS §64・§65。公開（タグ・Release）はしない。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { delimiter, dirname, extname, join } from 'node:path';
-import { ROOT, masume, oldNameHits, showHits } from '../helpers7.mjs';
+import { ROOT, masume, oldNameHits, showHits, distPaths } from '../helpers7.mjs';
 
 // あがりの GOAL〜GOAL15 を除く、第1章〜第15章の判定
 const FILES = readdirSync(join(ROOT, 'tests', 'e2e')).filter((f) => f.endsWith('.test.mjs') && !f.startsWith('GOAL')).sort().map((f) => join('tests', 'e2e', f));
@@ -38,13 +38,8 @@ test('すべての冒険の書が正常。地図と package.json は第15章（�
   assert.doesNotMatch(pkg.scripts.test, /GOAL/);
 });
 
-test('§64.1 包み（npm pack）に入るすべての文字のファイルで、旧名を名前として使っていない。README と CHANGELOG に第15章', () => {
-  const env = { ...process.env };
-  for (const k of Object.keys(env)) if (k.startsWith('npm_') || k.startsWith('NPM_')) delete env[k];
-  env.PATH = [dirname(process.execPath), env.PATH].filter(Boolean).join(delimiter);
-  const r = spawnSync('npm', ['pack', '--dry-run', '--json', '--ignore-scripts'], { cwd: ROOT, env, encoding: 'utf8', timeout: 120000 });
-  assert.equal(r.status, 0, (r.stdout || '') + (r.stderr || ''));
-  const paths = JSON.parse(r.stdout)[0].files.map((f) => f.path);
+test('§64.1・§77.2 配るものに入るすべての文字のファイルで、旧名を名前として使っていない。README と CHANGELOG に第15章', { timeout: 240000 }, () => {
+  const { paths } = distPaths(); // 配るもの（§77.2）。sh mac/build.sh が詰めた中身
   const TEXT = new Set(['.md', '.js', '.mjs', '.json', '.html', '.css', '.svg', '.txt', '']);
   // §64.1 の例外: 契約書（経緯とユーザーの言葉の記録）、.gitignore の見出し（互換）、盤面の CSS の先頭のコメント
   const skipFile = new Set(['docs/CONTRACTS.md']);

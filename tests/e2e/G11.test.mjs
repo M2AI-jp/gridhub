@@ -1,61 +1,26 @@
-// G11「結合: 配る包みから遊ぶ」— 書記・伝令・盤面・語り部・地図職人の結合E2E（第14章）。CONTRACTS §62.4。
-// npm pack した包み（tgz）を、リポジトリの外のフォルダに npm install して、そこに入ったものだけで動かす。
-// 包みに入れ忘れたものがあれば、ここで落ちる（リポジトリの中のファイルには頼らない）。
+// G11「結合: 配るものから遊ぶ」— 書記・伝令・盤面・語り部・地図職人の結合E2E（第14章。§77 で改めた）。CONTRACTS §62.4・§77.2。
+// 配るもの（sh mac/build.sh が GridHub.app に詰める中身）を、リポジトリの外のフォルダに写し、そこに入ったものだけで動かす。
+// 入れ忘れたものがあれば、ここで落ちる（リポジトリの中のファイルには頼らない）。パッケージの道具は使わない。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
-import { delimiter, dirname, join } from 'node:path';
-import { ROOT, tmp, openBrowser, fakeGm, GIT_ENV } from '../helpers6.mjs';
+import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { ROOT, tmp, openBrowser, fakeGm, GIT_ENV, distPaths, distEnv } from '../helpers7.mjs';
 
 const PKG = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
 const READY = 'window.__masume && window.__masume.ready';
 
-// 判定を npm test から走らせても、npm の設定（npm_*）や冒険の書の場所（MASUME_*）を子に持ち込まない
-function cleanEnv(extra = {}) {
-  const env = { ...process.env };
-  for (const k of Object.keys(env)) {
-    if (k.startsWith('npm_') || k.startsWith('NPM_') || (k.startsWith('MASUME_') && k !== 'MASUME_CHROME')) delete env[k];
-  }
-  delete env.NODE_TEST_CONTEXT;
-  env.PATH = [dirname(process.execPath), env.PATH].filter(Boolean).join(delimiter);
-  return { ...env, NO_COLOR: '1', ...extra };
+/** 配るものを写した所。bin(name) は、その中の bin/<name>.js */
+function installed() {
+  const { root } = distPaths();
+  return { pkgDir: root, bin: (name) => join(root, 'bin', `${name}.js`) };
 }
 
-function npm(args, cwd) {
-  const r = spawnSync('npm', args, { cwd, env: cleanEnv(), encoding: 'utf8', timeout: 180000 });
-  return { code: r.status, out: r.stdout || '', all: (r.stdout || '') + (r.stderr || '') + (r.error ? String(r.error) : '') };
-}
-
-let packed;
-function pack() {
-  if (packed) return packed;
-  const out = tmp('gridhub-g11-pack-');
-  const r = npm(['pack', '--json', '--ignore-scripts', '--pack-destination', out], ROOT);
-  assert.equal(r.code, 0, r.all);
-  const [info] = JSON.parse(r.out);
-  packed = { ...info, tgz: join(out, info.filename), paths: info.files.map((f) => f.path) };
-  return packed;
-}
-
-let installed;
-function install() {
-  if (installed) return installed;
-  const { tgz } = pack();
-  const app = tmp('gridhub-g11-app-');
-  writeFileSync(join(app, 'package.json'), `${JSON.stringify({ name: 'g11-app', private: true })}\n`);
-  const r = npm(['install', '--offline', '--no-audit', '--no-fund', '--ignore-scripts', '--no-update-notifier', '--cache', join(app, '.npm-cache'), tgz], app);
-  assert.equal(r.code, 0, r.all);
-  const pkgDir = join(app, 'node_modules', 'gridhub');
-  assert.ok(existsSync(join(pkgDir, 'package.json')), 'node_modules/gridhub に入った');
-  installed = { app, pkgDir, bin: (name) => join(app, 'node_modules', '.bin', name) };
-  return installed;
-}
-
-/** 包みから入った gridhub（node_modules/.bin/gridhub）を、リポジトリの外で動かす */
+/** 配るものの中の gridhub を、リポジトリの外で動かす */
 function run(name, args, { cwd, env = {} } = {}) {
-  const { bin, app } = install();
-  const r = spawnSync(bin(name), args, { cwd: cwd ?? app, env: cleanEnv(env), encoding: 'utf8', timeout: 120000 });
+  const { bin } = installed();
+  const r = spawnSync(process.execPath, [bin(name), ...args], { cwd: cwd ?? tmp('gridhub-g11-cwd-'), env: distEnv(env), encoding: 'utf8', timeout: 120000 });
   return { code: r.status, out: r.stdout || '', all: (r.stdout || '') + (r.stderr || '') + (r.error ? String(r.error) : '') };
 }
 const gridhub = (args, opts) => run('gridhub', args, opts);
@@ -67,34 +32,35 @@ const viewOf = (dir) => {
 
 function tutorialCopy(prefix) {
   const dir = tmp(prefix);
-  cpSync(join(install().pkgDir, 'quests', 'tutorial'), dir, { recursive: true });
+  cpSync(join(installed().pkgDir, 'quests', 'tutorial'), dir, { recursive: true });
   return dir;
 }
 
-test('§62.4 npm pack の包みは、動くのに要るもの（bin・src・web・docs の md・チュートリアル・README・LICENSE・CHANGELOG）だけ', () => {
-  const p = pack();
+test('§77.2 配るものは、動くのに要るもの（bin・src・web・docs の md・チュートリアル・README・LICENSE・CHANGELOG・package.json）だけ', { timeout: 240000 }, () => {
+  const p = distPaths();
   const allowed = [/^bin\/[^/]+\.js$/, /^src\//, /^web\//, /^docs\/[^/]+\.md$/, /^quests\/tutorial\//, /^(package\.json|README\.md|LICENSE|CHANGELOG\.md)$/];
   const extra = p.paths.filter((f) => !allowed.some((re) => re.test(f)));
-  assert.deepEqual(extra, [], '包みに入れないもの');
-  for (const re of [/^\.masume\//, /^tests\//, /^examples\//, /^demos\//, /^docs\/.*\.png$/, /^docs\/(shots|prototype)\//, /^quests\/masume\.map\.json$/, /^quests\/kotozuke/, /^AGENTS\.md$/]) {
+  assert.deepEqual(extra, [], '配るものに入れないもの');
+  for (const re of [/^\.masume\//, /^tests\//, /^examples\//, /^demos\//, /^docs\/.*\.png$/, /^docs\/(shots|prototype)\//, /^quests\/masume\.map\.json$/, /^quests\/kotozuke/, /^AGENTS\.md$/, /^mac\//, /node_modules/, /\.DS_Store$/]) {
     assert.ok(!p.paths.some((f) => re.test(f)), `入れない: ${re}`);
   }
-  for (const f of ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'bin/gridhub.js', 'bin/masume.js', 'docs/RULEBOOK.md', 'docs/GM_GUIDE.md', 'docs/CONTRACTS.md', 'quests/tutorial/tutorial.map.json', 'quests/tutorial/SOLUTIONS.json', 'web/index.html']) {
+  for (const f of ['package.json', 'README.md', 'LICENSE', 'CHANGELOG.md', 'bin/gridhub.js', 'bin/masume.js', 'docs/RULEBOOK.md', 'docs/GM_GUIDE.md', 'docs/CONTRACTS.md', 'quests/tutorial/tutorial.map.json', 'quests/tutorial/SOLUTIONS.json', 'web/index.html', 'web/start.html']) {
     assert.ok(p.paths.includes(f), `入れる: ${f}`);
   }
-  // Git にある「動くのに要るもの」は、1つ残らず包みに入る
+  // Git にある「動くのに要るもの」は、1つ残らず配るものに入る
   const tracked = spawnSync('git', ['ls-files', '-z'], { cwd: ROOT, encoding: 'utf8' }).stdout.split('\0').filter(Boolean);
   const missing = tracked.filter((f) => allowed.some((re) => re.test(f)) && !p.paths.includes(f));
-  assert.deepEqual(missing, [], '包みに入れ忘れたもの');
-  assert.equal(p.version, PKG.version);
-  assert.ok(p.unpackedSize < 4 * 1024 * 1024, `展開した大きさ ${p.unpackedSize}`);
-  assert.ok(p.size < 1.5 * 1024 * 1024, `包みの大きさ ${p.size}`);
+  assert.deepEqual(missing, [], '配るものに入れ忘れたもの');
+  // 逆に、Git に無いもの（手元で作った一時ファイルなど）は配らない
+  const untracked = p.paths.filter((f) => !tracked.includes(f));
+  assert.deepEqual(untracked, [], 'Git に無いものを配っている');
+  assert.ok(p.bytes < 4 * 1024 * 1024, `配るものの大きさ ${p.bytes}`);
 });
 
-test('§62.2・§62.4 包みを別のフォルダに入れると gridhub と masume が動き、--version は包みの package.json の版', () => {
-  const { pkgDir, bin } = install();
+test('§62.2・§77.2 配るものを別のフォルダに写すと gridhub と masume が動き、--version はそこの package.json の版', () => {
+  const { pkgDir, bin } = installed();
   for (const name of ['gridhub', 'masume']) {
-    assert.equal(realpathSync(bin(name)), realpathSync(join(pkgDir, 'bin', `${name}.js`)), `node_modules/.bin/${name}`);
+    assert.ok(existsSync(bin(name)), `bin/${name}.js`);
     const v = run(name, ['--version']);
     assert.equal(v.code, 0, v.all);
     assert.equal(v.out.trim(), `gridhub ${PKG.version} (rules 1)`);
@@ -102,7 +68,7 @@ test('§62.2・§62.4 包みを別のフォルダに入れると gridhub と mas
     assert.equal(h.code, 0, h.all);
     assert.match(h.out.split('\n')[0], /GridHub/);
   }
-  // 版は決め打ちせず、包みの package.json から読む
+  // 版は決め打ちせず、配るものの package.json から読む
   const file = join(pkgDir, 'package.json');
   const original = readFileSync(file, 'utf8');
   try {
@@ -113,7 +79,7 @@ test('§62.2・§62.4 包みを別のフォルダに入れると gridhub と mas
   }
 });
 
-test('包みのチュートリアルで冒険を作り、SOLUTIONS を当てると判定が通ってあがる（書記 × 地図職人）', () => {
+test('配るもののチュートリアルで冒険を作り、SOLUTIONS を当てると判定が通ってあがる（書記 × 地図職人）', () => {
   const dir = tutorialCopy('gridhub-g11-tut-');
   const sol = JSON.parse(readFileSync(join(dir, 'SOLUTIONS.json'), 'utf8'));
   const apply = (id) => {
@@ -156,12 +122,12 @@ test('包みのチュートリアルで冒険を作り、SOLUTIONS を当てる�
   assert.equal(verify.code, 0, verify.all);
 });
 
-test('包みの gridhub serve で、盤面（包みの web）が開く（伝令 × 盤面）', { timeout: 120000 }, async () => {
+test('配るものの gridhub serve で、盤面（配るものの web）が開く（伝令 × 盤面）', { timeout: 120000 }, async () => {
   const dir = tutorialCopy('gridhub-g11-serve-');
   const n = gridhub(['new', 'tutorial.map.json', '--dir', dir], { cwd: dir });
   assert.equal(n.code, 0, n.all);
-  const { bin } = install();
-  const proc = spawn(bin('gridhub'), ['serve', '--port', '0', '--dir', dir], { cwd: dir, env: cleanEnv() });
+  const { bin } = installed();
+  const proc = spawn(process.execPath, [bin('gridhub'), 'serve', '--port', '0', '--dir', dir], { cwd: dir, env: distEnv() });
   let out = '';
   proc.stdout.on('data', (d) => (out += d));
   proc.stderr.on('data', (d) => (out += d));
@@ -202,13 +168,13 @@ test('包みの gridhub serve で、盤面（包みの web）が開く（伝令 
   }
 });
 
-test('包みの MCP の資料・gridhub init の AGENTS.md・gridhub quest のプロンプトは、包みの中の docs を読む（伝令 × 語り部）', { timeout: 120000 }, async () => {
-  const { pkgDir, bin } = install();
+test('配るものの MCP の資料・gridhub init の AGENTS.md・gridhub quest のプロンプトは、配るものの中の docs を読む（伝令 × 語り部）', { timeout: 120000 }, async () => {
+  const { pkgDir, bin } = installed();
   const dir = tutorialCopy('gridhub-g11-mcp-');
   assert.equal(gridhub(['new', 'tutorial.map.json', '--dir', dir], { cwd: dir }).code, 0);
 
-  // MCP: masume://docs/RULEBOOK.md が、包みの docs/RULEBOOK.md と同じ
-  const proc = spawn(bin('gridhub'), ['mcp', '--dir', dir], { cwd: dir, env: cleanEnv(), stdio: ['pipe', 'pipe', 'pipe'] });
+  // MCP: masume://docs/RULEBOOK.md が、配るものの docs/RULEBOOK.md と同じ
+  const proc = spawn(process.execPath, [bin('gridhub'), 'mcp', '--dir', dir], { cwd: dir, env: distEnv(), stdio: ['pipe', 'pipe', 'pipe'] });
   let buf = '';
   let stderr = '';
   const replies = new Map();
@@ -257,7 +223,7 @@ test('包みの MCP の資料・gridhub init の AGENTS.md・gridhub quest の�
     });
   }
 
-  // init: AGENTS.md のルールブックは、包みの中にある
+  // init: AGENTS.md のルールブックは、配るものの中にある
   const project = tmp('gridhub-g11-init-');
   const r = gridhub(['init', '--dir', project], { cwd: project });
   assert.equal(r.code, 0, r.all);
@@ -265,9 +231,9 @@ test('包みの MCP の資料・gridhub init の AGENTS.md・gridhub quest の�
   const rulebook = agents.match(/^ルールブック: (.+?)（/m)?.[1];
   assert.ok(rulebook, `AGENTS.md にルールブックの場所\n${agents.slice(0, 600)}`);
   assert.ok(existsSync(rulebook), `ルールブックがある: ${rulebook}`);
-  assert.equal(realpathSync(rulebook), realpathSync(join(pkgDir, 'docs', 'RULEBOOK.md')));
+  assert.equal(rulebook, join(pkgDir, 'docs', 'RULEBOOK.md'));
 
-  // quest: GM に渡すプロンプトの付録は、包みの docs から
+  // quest: GM に渡すプロンプトの付録は、配るものの docs から
   const root = tmp('gridhub-g11-quest-');
   const q = gridhub(['quest', 'メモ帳のようなアプリを作りたい', '--dir', root, '--gm', fakeGm('good')], { cwd: tmp('gridhub-g11-cwd-'), env: GIT_ENV });
   assert.equal(q.code, 0, q.all);

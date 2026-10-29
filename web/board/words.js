@@ -530,8 +530,8 @@ const T = {
   'start.forget': { game: '外す', dev: '外す' },
   'start.forget.title': { game: '最近のフォルダから外す（フォルダは消しません）', dev: '最近のフォルダから外す（フォルダは消しません）' },
   'start.claude.found': { game: 'claude（Claude Code）: 見つかりました。冒険づくり（GM）と出撃に使います。', dev: 'claude（Claude Code）: 見つかりました。地図づくり（GM）とエージェントの起動に使います。' },
-  'start.claude.none1': { game: 'claude（Claude Code）が見つかりません。冒険づくり（GM）と出撃に使います。入れるには、ターミナルで ', dev: 'claude（Claude Code）が見つかりません。地図づくり（GM）とエージェントの起動に使います。入れるには、ターミナルで ' },
-  'start.claude.none2': { game: '。チュートリアルは claude なしで遊べます。', dev: '。チュートリアルは claude なしで遊べます。' },
+  'start.claude.none1': { game: 'claude（Claude Code）が見つかりません。冒険づくり（GM）と出撃に使います。入れ方は ', dev: 'claude（Claude Code）が見つかりません。地図づくり（GM）とエージェントの起動に使います。入れ方は ' },
+  'start.claude.none2': { game: ' の手順で。チュートリアルは claude なしで遊べます。', dev: ' の手順で。チュートリアルは claude なしで遊べます。' },
 };
 
 /** いまの言い方の字。関数の項目は引数つきで呼ぶ。知らない key はそのまま返す */
