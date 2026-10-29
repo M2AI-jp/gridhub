@@ -11,29 +11,33 @@
   <!-- 外の字は描画を止めないよう、最初は読まない（disabled・print）。盤面を描いたあとで board/app.js が読みはじめ、届いたら全部の画面に効かせる（§37） -->
   <link id="hand-fonts" disabled href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Yomogi&family=Yusei+Magic&display=swap" rel="stylesheet" media="print">
   <link rel="stylesheet" href="board/board.css">
+  <!-- ことば（冒険 / 開発。§75）: 描く前に <html data-words> を決めて、2つの言い方のうち片方だけを見せる（board/boot.js。board/words.js と同じ決め方） -->
+  <script src="board/boot.js"></script>
 </head>
 <body data-view="board">
   <!-- 手元の書体の予熱: 日本語の代わりの書体を、大きな盤面を描く前に読み込ませる（書体が届くたびの描き直しを小さく済ませる） -->
   <div class="font-warm" aria-hidden="true"><span class="fw-hand">あ漢テ字ー。、？ GridHub 1/2 ✓✔✖・◎…—↓↑</span><span class="fw-marker">あ漢テ字ー。？</span><span class="fw-pencil">あ漢テ字ー。？</span><span class="fw-ui">あ漢テ字 ✓◎</span><span class="fw-mono">a1b2 ✔</span></div>
   <header class="cover">
-    <a id="home-link" class="mini-btn home-link" hidden title="はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）にもどる">← はじめの画面</a>
+    <a id="home-link" class="mini-btn home-link" hidden data-t="home.link" data-t-title="home.title">← はじめの画面</a>
     <div class="brand">
       <span class="logo" aria-label="GridHub"><span class="lg-cell">G</span><span class="lg-cell">r</span><span class="lg-cell">i</span><span class="lg-cell">d</span><span class="lg-hub">Hub</span></span>
-      <span class="tagline">テスト1件 = 1マス。通ったぶんだけ進む開発すごろく</span>
+      <span class="tagline" data-t="tagline">テストが通ったぶんだけ、駒が進む開発すごろく</span>
     </div>
     <nav class="tabs" role="tablist" aria-label="表示">
-      <button role="tab" data-view="board" aria-selected="true">盤面</button>
-      <button role="tab" data-view="list" aria-selected="false">台帳</button>
-      <button role="tab" data-view="rules" aria-selected="false">ルール</button>
+      <button role="tab" data-view="board" aria-selected="true" data-t="tab.board">盤面</button>
+      <button role="tab" data-view="list" aria-selected="false" data-t="tab.list">台帳</button>
+      <button role="tab" data-view="rules" aria-selected="false" data-t="tab.rules">あそびかた</button>
     </nav>
     <div class="save">
-      <div class="record-box" title="いまの記録の番号（seq）と、その記録が見ていた Git のコミット。gridhub load &lt;seq&gt; か gridhub load &lt;commit&gt; でこの時点の盤面に戻せる">
-        <span class="rec-label">記録</span>
+      <div class="record-box" data-t-title="record.title">
+        <span class="rec-label" data-t="node.record">記録</span>
         <span id="record" class="record" data-seq="" data-commit=""><span class="rec-seq">seq —</span></span>
-        <button id="copy-record" class="mini-btn" title="「記録: seq N / Git: commit xxxxxxx」を写す（日誌・コミットメッセージ・PR でその時点を指す）">写す</button>
+        <button id="copy-record" class="mini-btn" data-t="record.copy" data-t-title="record.copy.title">写す</button>
       </div>
       <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
       <span id="live" class="pill live" data-mode="off">…</span>
+      <!-- ことばの切り替え（§75）: 1つのボタン。字はいまの言い方、押すともう一方へ。選んだほうは localStorage と ?words= に残る -->
+      <button id="words-toggle" class="mini-btn words-toggle" type="button" aria-pressed="false">🗡 冒険のことば</button>
       <button id="sound" class="mini-btn" aria-pressed="false">♪ 音なし</button>
     </div>
   </header>
@@ -44,23 +48,23 @@
       <div id="view-board" class="view active">
         <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GridHub の世界地図（縦の5mm方眼ノートの見開き）"></svg>
         <nav class="pager" aria-label="ページをめくる">
-          <button id="page-prev" type="button" aria-label="前の見開き">◀ まえ</button>
+          <button id="page-prev" type="button" aria-label="前の見開き" data-t="page.prev">◀ まえ</button>
           <span id="page-no" aria-live="polite">— / —</span>
-          <button id="page-next" type="button" aria-label="次の見開き">つぎ ▶</button>
+          <button id="page-next" type="button" aria-label="次の見開き" data-t="page.next">つぎ ▶</button>
         </nav>
         <div class="zoom" role="group" aria-label="拡大縮小">
           <button data-zoom="in" aria-label="拡大">＋</button>
           <button data-zoom="out" aria-label="縮小">－</button>
-          <button data-zoom="fit">全体</button>
-          <button id="export-notebook" title="盤面全体を1枚の5mm方眼ノート（SVG）にして保存する">ノートに書き出す</button>
+          <button data-zoom="fit" data-t="zoom.fit">全体</button>
+          <button id="export-notebook" data-t="export" data-t-title="export.title">ノートに書き出す</button>
         </div>
         <div class="legend" aria-label="凡例">
-          <span title="道の上のマス1つが、テスト1件。通ると倒せる"><i class="lg-monster"></i>モンスター = テスト1件</span>
-          <span title="通ったテスト"><i class="lg-slain"></i>倒した</span>
-          <span title="一度通ったテストが、あとの変更で落ちた（リグレッション）"><i class="lg-revived"></i>復活</span>
-          <span title="ダンジョンの出口で宣言判定に通った"><i class="lg-hanamaru"></i>はなまる</span>
-          <span title="町に着くと、縄張りの変更を git commit する"><i class="lg-town">⌂</i>町 = commit</span>
-          <span title="視界の外。エージェントの指令書には出ない"><i class="lg-fog"></i>霧</span>
+          <span data-t-title="legend.monster.title"><i class="lg-monster"></i><span data-t="legend.monster">モンスター = テスト1件</span></span>
+          <span data-t-title="legend.slain.title"><i class="lg-slain"></i><span data-t="legend.slain">倒した</span></span>
+          <span data-t-title="legend.revived.title"><i class="lg-revived"></i><span data-t="legend.revived">復活</span></span>
+          <span data-t-title="legend.hanamaru.title"><i class="lg-hanamaru"></i><span data-t="legend.hanamaru">はなまる</span></span>
+          <span data-t-title="legend.town.title"><i class="lg-town">⌂</i><span data-t="legend.town">町 = セーブ</span></span>
+          <span data-t-title="legend.fog.title"><i class="lg-fog"></i><span data-t="legend.fog">霧</span></span>
         </div>
       </div>
 
@@ -68,35 +72,62 @@
 
       <div id="view-rules" class="view">
         <article id="rules" class="rules">
-          <h2>あそびかた</h2>
-          <p class="lead">GridHub は、開発をそのまま JRPG すごろくにしたゲームです。<b>道の上のマス1つ = テスト1件 = モンスター1体</b>。テストが通るとモンスターを倒して1マス進みます。キャラクターはモジュールを1つずつ担当するエージェント（と人間）。</p>
-          <div class="rule-grid">
-            <section><h3>1. 指令書を読む</h3><p><code>gridhub brief &lt;ID&gt;</code> に、いまのダンジョン・いま戦うテスト・受け継いだ技・前の自分の日誌が出ます。</p></section>
-            <section><h3>2. 1マスずつ歩く</h3><p>いちばん手前の落ちているテストだけを通して <code>gridhub step &lt;ID&gt;</code>。何度でも、罰なし。倒したモンスターには赤い斜線。</p></section>
-            <section><h3>3. 出口で宣言</h3><p>全部倒したら <code>gridhub check &lt;ID&gt;</code>。町から今までをまとめて走らせる一発勝負。通れば赤ペンのはなまる。</p></section>
-            <section><h3>4. 負けたら町から</h3><p>宣言に落ちると Lv−1、最後の町からやり直し。間のはなまるは<b>消しゴム</b>で消され、町の commit に戻ります（変更は stash の墓に残る）。</p></section>
-            <section><h3>5. 町 = セーブ</h3><p>町に着くと、縄張りの変更を git commit します。看板に <code>commit a1b2c3d</code>。こまめにセーブするほど、負けても失うものが小さい。</p></section>
-            <section><h3>6. 中ボス = 結合ゲート</h3><p>道が合流する城壁。仲間がそろうと結合テスト（連携）。HP はテストの数。負けると責任のある仲間だけ町へ。</p></section>
-            <section><h3>7. 王様の城 = ハンコ</h3><p>人間が決めるべき所は、人間のハンコで進みます。</p></section>
-            <section><h3>8. 冒険の書</h3><p>起きたことは追記専用のセーブデータ（ハッシュの鎖）に残ります。判定ファイルは GM が<b>封印</b>。改ざんは <code>gridhub verify</code> で「呪い」として見つかります。盤面の時点は<b>記録の番号</b>（見出しの <code>seq 42</code>）、コードの時点は Git のコミットで指し、<code>gridhub load &lt;seq&gt;</code> か <code>gridhub load &lt;commit&gt;</code> でその時点の盤面に戻せます（コードは <code>git checkout</code> で戻す）。</p></section>
+          <!-- 冒険のことば: はじめての人向け。ゲームの説明書のように -->
+          <div data-say="game">
+            <h2>あそびかた</h2>
+            <p class="lead">GridHub は、ソフトウェアづくりをそのまま RPG すごろくにしたゲームです。<b>道の上のマス1つ ＝ テスト1件 ＝ モンスター1体</b>。テストが通るとモンスターを倒して、駒が1マス進みます。駒（キャラクター）は、作るものの部品を1つずつ受け持つ AI エージェント、または人間です。</p>
+            <div class="rule-grid">
+              <section><h3>1. 指令書を読む</h3><p>キャラクターは、まず自分の<b>指令書</b>を読みます。いまいるダンジョン・いま戦うモンスター・先代から受け継いだ技・前の自分の日誌が書いてあります。</p></section>
+              <section><h3>2. 1マスずつ歩く</h3><p>いちばん手前のモンスター（落ちているテスト）だけを倒して、<b>歩く</b>で確かめます。何度でも、罰はありません。倒したモンスターには赤い斜線がつきます。</p></section>
+              <section><h3>3. 出口で宣言判定</h3><p>モンスターを全部倒したら、ダンジョンの出口で<b>宣言判定</b>。町を出てからここまでの戦いをまとめて確かめる、一発勝負です。通れば赤ペンの<b>はなまる</b>。</p></section>
+              <section><h3>4. 負けたら町から</h3><p>宣言判定に落ちると<b>全滅</b>。レベルが1つ下がり、最後の町からやり直しです。あいだのはなまるは<b>消しゴム</b>で消され、書いたものも町でセーブしたところまで戻ります（戻す前の変更は<b>墓</b>に残るので、なくなりません）。</p></section>
+              <section><h3>5. 町でセーブ</h3><p>町に着くと、宿屋に泊まって<b>セーブ</b>します。看板にセーブの印（<code>commit a1b2c3d</code>）が書かれます。こまめにセーブするほど、負けたときに失うものが小さくなります。</p></section>
+              <section><h3>6. 中ボスの砦</h3><p>道が合流する城壁です。仲間が全員そろうと<b>ボス戦</b>（結合ゲートの判定）が始まります。ボスの体力はテストの数。負けると、責任のある仲間だけが町へ戻されます。</p></section>
+              <section><h3>7. 王様の城</h3><p>人間が決めるべきところは、人間の<b>ハンコ</b>で進みます。契約・鍵・デザインの承認など、人にしかできないことだけです。</p></section>
+              <section><h3>8. 冒険の書</h3><p>起きたことはすべて<b>冒険の書</b>（追記だけのセーブデータ）に残ります。判定のファイルは GM が<b>封印</b>していて、書き換えると「封印が破れた」と記録されます。冒険の書が壊れると「<b>呪われています</b>」と出ます。盤面の時点は見出しの<b>記録の番号</b>（<code>seq 42</code>）で指し、<code>gridhub load 42</code> でその時点に戻れます。</p></section>
+            </div>
+            <h3>積み上げ</h3>
+            <ul>
+              <li><b>復活</b>: 一度倒したモンスターが、あとの変更でよみがえることがあります（赤い丸）。もう一度倒しましょう。</li>
+              <li><b>強敵と技</b>: 2回以上負けたモンスターを倒すと「強敵を倒した」。その直後に書いた日誌が<b>技</b>になり、次の代（次の出撃）に受け継がれます。</li>
+              <li><b>ちいさなメダル</b> ◎: ダンジョンの出口を一発で抜けた数。<b>モンスター図鑑</b>: 計画したテストのうち、いま倒している数。</li>
+              <li><b>作戦</b>: いのちだいじに / バッチリがんばれ / ガンガンいこうぜ。エージェントの動き方が変わります（ルールは変わりません）。</li>
+            </ul>
+            <p class="foot">右上の「⌨ 開発のことば」を押すと、この説明も盤面も、開発の言い方（テスト・タスク・コミット）に切り替わります。くわしいルールは <code>docs/RULEBOOK.md</code>。</p>
           </div>
-          <h3>積み上げ</h3>
-          <ul>
-            <li><b>復活</b>: 前に倒したテストが落ちると、赤い丸で復活して見える（リグレッション）。</li>
-            <li><b>強敵と技</b>: 2回以上負けたテストを倒すと「強敵を倒した」。その直後の日誌が<b>技</b>になり、次の代（出撃）に受け継がれる。</li>
-            <li><b>ちいさなメダル</b> ◎: ダンジョンの出口を一発で抜けた数。<b>モンスター図鑑</b>: 計画したテストのうち、いま通っている数。</li>
-            <li><b>作戦</b>: いのちだいじに / バッチリがんばれ / ガンガンいこうぜ。エージェントの動き方が変わる（ルールは変わらない）。</li>
-          </ul>
-          <p class="foot">くわしくは <code>docs/GAME_DESIGN.md</code> と <code>docs/RULEBOOK.md</code>。CLI は <code>gridhub</code>（<code>masume</code> も同じ）。</p>
+          <!-- 開発のことば: エンジニア向け。ゲームの言葉は添え書き -->
+          <div data-say="dev">
+            <h2>使い方</h2>
+            <p class="lead">GridHub は、E2E テストを1件ずつ通して開発を進める進行管理ボードです。<b>道の上のマス1つ ＝ テスト1件</b>。テストが通ると駒が1マス進みます。駒（キャラクター）はモジュールを1つずつ担当する AI エージェント（Claude Code・Codex）か人間で、担当ごとに道が分かれ、結合テストで合流します。</p>
+            <div class="rule-grid">
+              <section><h3>1. 指示を読む（brief）</h3><p><code>gridhub brief &lt;ID&gt;</code> に、いまのタスク・テスト1件ずつの成否・次に通すテスト・判定コマンド・前回までのメモと引き継ぎが出ます。コンテキストが切れても、ここから再開できます。</p></section>
+              <section><h3>2. テストを1件ずつ通す（step）</h3><p>最初に落ちているテストだけを通すように1か所変えて、<code>gridhub step &lt;ID&gt;</code>。いまのタスクの判定だけを走らせ、成否を記録します。何度でも、レベルも位置も変わりません。</p></section>
+              <section><h3>3. 判定する（check）</h3><p>全部通ったら <code>gridhub check &lt;ID&gt;</code>。直前のセーブポイントから今までの判定を<b>累積</b>で走らせる一発勝負です。自己申告では1マスも進みません。合格すると経験値（タスク 1 / 結合 3）。</p></section>
+              <section><h3>4. 失敗したら</h3><p>判定に落ちると Lv−1。直前のセーブポイントの次まで戻り、あいだのタスクは<b>要再検証</b>（消しゴム）になります。担当ファイルは町のコミットに <code>git checkout</code> され、戻す前の変更は <code>git stash</code>（墓）に残ります。</p></section>
+              <section><h3>5. 町 = git commit</h3><p>町に着くと、その担当のファイルだけが自動でコミットされます（push はしません）。看板に <code>commit a1b2c3d</code>。町が近いほど、失敗時に失う変更が小さくなります。</p></section>
+              <section><h3>6. 結合ゲート</h3><p>複数の道に同じ ID で現れるマスです。メンバーが全員そろうと結合テストが自動で走ります。失敗時は出力の <code>MASUME_BLAME: &lt;id&gt;</code> で責任のある担当だけが戻されます（無ければ全員）。</p></section>
+              <section><h3>7. 承認（stamp）</h3><p><code>check.kind: "stamp"</code> のマスは、指定された人間のハンコで通ります。契約・本番鍵・デザイン承認など、人間が決めるべきことだけに使います。</p></section>
+              <section><h3>8. 冒険の書（セーブデータ）</h3><p>すべてのイベントは <code>.masume/log.jsonl</code> に追記され、各行が前の行のハッシュを含みます（ハッシュの鎖）。判定ファイルは GM が<b>封印</b>（ハッシュを記録）し、変更すると判定できません。改ざんは <code>gridhub verify</code> で見つかり、<code>gridhub repair</code> で直せます。時点は<b>記録の番号</b>（<code>seq 42</code>）と Git のコミットで指し、<code>gridhub load &lt;seq|commit&gt;</code> でその時点の盤面に戻れます。</p></section>
+            </div>
+            <h3>積み上げ</h3>
+            <ul>
+              <li><b>リグレッション</b>: 前に通ったテストが落ちると、マスに赤い丸がつきます（累積判定で必ず見つかります）。</li>
+              <li><b>苦戦と引き継ぎ</b>: 2回以上失敗したテストを通した直後のメモは<b>引き継ぎ</b>（技）として、次の起動の指示に必ず入ります。</li>
+              <li><b>最初の判定で合格</b> ◎: タスクの判定を一発で通した数。<b>テスト一覧</b>: 計画したテストのうち、いま通っている数。</li>
+              <li><b>作戦</b>（<code>--tactic</code>）: careful / balanced / bold。エージェントが1回の起動でどこまで進むかが変わります（判定の重さは同じ）。</li>
+            </ul>
+            <p class="foot">右上の「🗡 冒険のことば」を押すと、ゲームの言い方（モンスター・ダンジョン・町）に切り替わります。くわしくは <code>docs/RULEBOOK.md</code>・<code>docs/CONTRACTS.md</code>。CLI は <code>gridhub</code>（<code>masume</code> も同じ）。</p>
+          </div>
         </article>
       </div>
       <section id="lobby" class="lobby" hidden aria-label="新しい冒険の入口">
         <div class="lobby-card">
-          <p class="lobby-kicker">新しい冒険</p>
+          <p class="lobby-kicker"><span data-say="game">新しい冒険</span><span data-say="dev">新しいプロジェクト</span></p>
           <h2>どんなアプリを作りたい？</h2>
-          <p class="lobby-lead">「○○のようなアプリを作りたい」と書くと、GM の LLM が、開発のロードマップ全体を5mm方眼ノートの世界地図にします。テスト1件が1マス。モジュールごとのキャラクター（エージェント）の道が、中ボス（結合テスト）で合流します。</p>
+          <p class="lobby-lead" data-say="game">「○○のようなアプリを作りたい」と書くと、GM（AI）が、できあがるまでの道のりを5mm方眼ノートの世界地図にします。テスト1件が1マス。部品ごとのキャラクター（AI エージェント）の道が、中ボスの砦で合流します。</p>
+          <p class="lobby-lead" data-say="dev">「○○のようなアプリを作りたい」と書くと、GM の LLM が開発のロードマップを地図（<code>quest.map.json</code>）にし、タスクごとの E2E テストを書いて封印します。テスト1件が1マス。モジュールごとのエージェントの道が、結合テストで合流します。</p>
           <form id="lobby-form">
-            <label class="field"><span>願い</span>
+            <label class="field"><span><span data-say="game">願い</span><span data-say="dev">作りたいもの</span></span>
               <textarea id="wish" rows="4" maxlength="2000" placeholder="例: ことづけのような、電話の用件をAIが聞いてメールで届けるアプリを作りたい"></textarea>
             </label>
             <div class="examples">
@@ -116,8 +147,9 @@
               <label class="check-field"><input id="gm-allow-listen" type="checkbox"> <span>Codex の箱のソケットを開ける</span></label>
               <p class="hint listen-hint">判定（E2E）が <code>127.0.0.1</code> に手元のサーバーを立てるときに使います。ゲームはローカルのままです。ただし Codex の設定は localhost だけに絞れないので、開けているあいだはエージェントが<b>インターネット</b>にも出られます。codex にだけ効きます（チェックすると、生まれた冒険の出撃にも持ち越します）。</p>
             </div>
-            <button id="start-quest" class="act quest" type="submit" disabled>冒険をはじめる</button>
-            <p class="hint">GM は地図（quest.map.json）と最初の判定（E2E）を書くだけで、アプリは作りません。作るのは、このあと出撃させるキャラクターたちです。</p>
+            <button id="start-quest" class="act quest" type="submit" disabled><span data-say="game">冒険をはじめる</span><span data-say="dev">地図を作る</span></button>
+            <p class="hint" data-say="game">GM は地図と最初の判定（テスト）を書くだけで、アプリは作りません。作るのは、このあと出撃させるキャラクターたちです。</p>
+            <p class="hint" data-say="dev">GM は地図（quest.map.json）と最初の E2E テストを書くだけで、実装はしません。実装するのは、このあと起動するエージェントです。</p>
           </form>
           <div id="quest-progress" hidden data-state="idle">
             <p id="quest-phase" class="quest-phase"></p>
@@ -130,33 +162,33 @@
 
     <aside id="hand" class="hand-panel" hidden aria-labelledby="hand-title" data-char="" data-loaded="false" data-busy="false">
       <div class="hand-head">
-        <h3 id="hand-title">手で進める</h3>
+        <h3 id="hand-title" data-t="hand.title">手で進める</h3>
         <button id="hand-close" class="close" type="button" aria-label="閉じる">✕</button>
       </div>
       <section id="hand-brief" class="hand-brief" aria-label="指令書"></section>
       <div class="hand-actions">
-        <button id="hand-step" class="act" type="button" hidden>歩く（このダンジョンのテストを走らせる）</button>
-        <button id="hand-check" class="act" type="button" hidden>宣言判定（通れば次のマスへ）</button>
-        <button id="hand-stamp" class="act stamp" type="button" hidden>ハンコを押す</button>
-        <button id="hand-battle" class="act battle" type="button" hidden>ボス戦を始める</button>
+        <button id="hand-step" class="act" type="button" hidden data-t="hand.step">歩く（モンスターと戦う）</button>
+        <button id="hand-check" class="act" type="button" hidden data-t="hand.check">宣言判定（出口にいどむ）</button>
+        <button id="hand-stamp" class="act stamp" type="button" hidden data-t="hand.stamp">ハンコを押す</button>
+        <button id="hand-battle" class="act battle" type="button" hidden data-t="hand.battle">ボス戦を始める</button>
       </div>
       <p id="hand-msg" class="hand-msg" role="status" hidden></p>
       <ol id="hand-result" class="hand-result" aria-label="テスト1件ずつ"></ol>
       <section class="hand-edit" aria-label="縄張りのファイル">
-        <h4>縄張りのファイル</h4>
+        <h4 data-t="hand.files">縄張りのファイル</h4>
         <ul id="hand-files" class="hand-files"></ul>
-        <p id="hand-files-empty" class="hint">まだありません。下の欄で書いて保存すると作れます。</p>
+        <p id="hand-files-empty" class="hint" data-t="hand.files.empty">まだありません。下の欄で書いて保存すると作れます。</p>
         <div id="hand-samples" class="hand-samples"></div>
         <div id="hand-review" class="hand-review" hidden>
-          <h4>読むだけのファイル</h4>
-          <p class="hint">指令書と判定に書かれた、仲間のファイルです。押すと下の欄に出します（書けません）。</p>
+          <h4 data-t="hand.review">読むだけのファイル</h4>
+          <p class="hint" data-t="hand.review.hint">指令書と判定に書かれた、仲間のファイルです。押すと下の欄に出します（書けません）。</p>
           <ul id="hand-review-list" class="hand-files"></ul>
         </div>
-        <label for="hand-path">ファイル（縄張りの中の相対パス）</label>
+        <label for="hand-path" data-t="hand.path">ファイル（縄張りの中の相対パス）</label>
         <input id="hand-path" type="text" spellcheck="false" autocomplete="off" placeholder="">
-        <p id="hand-readonly" class="hand-readonly" hidden>読むだけ（書けません）</p>
-        <textarea id="hand-content" rows="8" spellcheck="false" aria-label="ファイルの中身"></textarea>
-        <button id="hand-save" class="act" type="button">保存</button>
+        <p id="hand-readonly" class="hand-readonly" hidden data-t="hand.readonly">読むだけ（書けません）</p>
+        <textarea id="hand-content" rows="8" spellcheck="false" data-t-aria="hand.content" aria-label="ファイルの中身"></textarea>
+        <button id="hand-save" class="act" type="button" data-t="hand.save">保存</button>
       </section>
     </aside>
 
@@ -165,17 +197,17 @@
         <div id="party-list-wrap"></div>
         <section id="bestiary" aria-label="モンスター図鑑"></section>
         <div id="party-controls">
-          <button id="sortie-open" class="act sortie">出撃させる</button>
+          <button id="sortie-open" class="act sortie" data-t="sortie.open">出撃させる</button>
           <div id="party-status" data-running="false" aria-live="polite">
             <span id="party-status-text">出撃していません</span>
-            <button id="party-stop" class="mini-btn dark" hidden>止める</button>
+            <button id="party-stop" class="mini-btn dark" hidden data-t="sortie.stop">止める</button>
           </div>
         </div>
       </aside>
     <aside id="side" class="slip">
       <div class="punch-holes" aria-hidden="true"><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i><i class="punch"></i></div>
       <div id="drawer" hidden></div>
-      <section id="git-panel" class="git-panel" aria-label="GitHub に送る（町のセーブ = Git のコミットを GitHub に置く）" hidden>
+      <section id="git-panel" class="git-panel" data-t-aria="git.aria" aria-label="GitHub に送る（町のセーブを GitHub に置く）" hidden>
         <h2 class="git-head"><span class="git-mark">GitHub</span><small id="git-sub"></small></h2>
         <p id="git-remote" hidden></p>
         <div class="git-row">
@@ -183,7 +215,7 @@
           <button id="git-push" class="mini-btn git-push" type="button" hidden>GitHub に送る</button>
         </div>
         <ol id="git-guide" hidden></ol>
-        <label class="git-auto" hidden><input id="git-auto" type="checkbox"> 町でセーブしたら GitHub に送る</label>
+        <label class="git-auto" hidden><input id="git-auto" type="checkbox"> <span data-t="git.auto">町でセーブしたら GitHub に送る</span></label>
         <p id="git-last" hidden></p>
       </section>
       <section id="news" aria-label="瓦版（作っている製品のまわりの話と、冒険の号外）" hidden></section>
@@ -194,8 +226,9 @@
 
   <dialog id="sortie-modal" aria-labelledby="sortie-title">
     <form id="sortie-form" method="dialog">
-      <h2 id="sortie-title">出撃させる</h2>
-      <p class="hint">選んだキャラクターごとにエージェントを1人ずつ出撃させます。エージェントは指令書を読み、いちばん手前の落ちているテストから1件ずつ倒して進みます（作戦で、どこまで進むかが変わります）。中ボス（結合テスト）はパーティがします。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b></p>
+      <h2 id="sortie-title" data-t="sortie.title">出撃させる</h2>
+      <p class="hint" data-say="game">選んだキャラクターごとに、AI エージェントを1人ずつ出撃させます。エージェントは指令書を読み、いちばん手前のモンスター（落ちているテスト）から1体ずつ倒して進みます。どこまで進むかは<b>作戦</b>で決まります。中ボスの砦では、仲間がそろうと自動でボス戦が始まります。<b>本物の AI を呼ぶので、時間と利用料がかかります。</b></p>
+      <p class="hint" data-say="dev">選んだ担当ごとに、エージェント（LLM）を1つずつ起動します。エージェントは brief を読み、最初に落ちているテストから順に通していきます。1回の起動でどこまで進むかは<b>作戦</b>で決まります。結合テストは、メンバーがそろうと自動で走ります。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b></p>
       <div class="field-row">
         <label class="field"><span>エージェント</span>
           <select id="sortie-agent"><option value="claude">Claude</option><option value="codex">Codex</option></select>
@@ -208,37 +241,37 @@
         </label>
       </div>
       <div class="tactic">
-        <label class="field"><span>作戦</span>
+        <label class="field"><span data-t="sortie.tactic">作戦</span>
           <select id="sortie-tactic">
             <option value="careful">いのちだいじに（careful）</option>
             <option value="balanced" selected>バッチリがんばれ（balanced）</option>
             <option value="bold">ガンガンいこうぜ（bold）</option>
           </select>
         </label>
-        <p class="hint tactic-hint" data-tactic-hint="careful">1マスずつ <code>gridhub step</code> で確かめ、全部のテストが通るまで宣言しない。1つのダンジョンを抜けたら（宣言に2回失敗したら）止まる。</p>
-        <p class="hint tactic-hint" data-tactic-hint="balanced">小さく変えて <code>step</code> を回し、全部通ったら宣言。1つのダンジョンを抜けたら（宣言に2回失敗したら）止まる。</p>
-        <p class="hint tactic-hint" data-tactic-hint="bold">次の町まで、ダンジョンを続けて進んでよい。町でセーブしたら・ゲートで待機になったら（宣言に2回失敗したら）止まる。</p>
+        <p class="hint tactic-hint" data-tactic-hint="careful"><span data-say="game">1マスずつ「歩く」で確かめ、モンスターを全部倒すまで宣言判定しません。ダンジョンを1つ抜けたら（宣言判定に2回失敗したら）止まります。</span><span data-say="dev">テストを1件ずつ <code>gridhub step</code> で確かめ、全部通るまで判定しません。タスクを1つ終えたら（判定に2回失敗したら）止まります。</span></p>
+        <p class="hint tactic-hint" data-tactic-hint="balanced"><span data-say="game">小さく直しては「歩く」をくり返し、全部倒したら宣言判定。ダンジョンを1つ抜けたら（宣言判定に2回失敗したら）止まります。</span><span data-say="dev">小さく変えて <code>step</code> を回し、全部通ったら判定。タスクを1つ終えたら（判定に2回失敗したら）止まります。</span></p>
+        <p class="hint tactic-hint" data-tactic-hint="bold"><span data-say="game">次の町まで、ダンジョンを続けて進みます。町でセーブしたら・砦で仲間を待つことになったら（宣言判定に2回失敗したら）止まります。</span><span data-say="dev">次のセーブポイントまで、タスクを続けて進みます。コミットしたら・結合待ちになったら（判定に2回失敗したら）止まります。</span></p>
       </div>
       <div class="listen">
         <label class="check-field"><input id="sortie-allow-listen" type="checkbox"> <span>Codex の箱のソケットを開ける</span> <small id="sortie-allow-listen-note" class="listen-note" hidden>codex にだけ効きます</small></label>
         <p class="hint listen-hint">判定（E2E）が <code>127.0.0.1</code> に手元のサーバーを立てるときに使います。ゲームはローカルのままです。ただし Codex の設定は localhost だけに絞れないので、開けているあいだはエージェントが<b>インターネット</b>にも出られます。codex にだけ効きます。既定は、この冒険の <code>.masume/party.json</code> の <code>allow_listen</code>。</p>
       </div>
-      <fieldset class="field"><legend>だれを</legend><div id="sortie-choices"></div></fieldset>
+      <fieldset class="field"><legend data-t="sortie.who">だれを</legend><div id="sortie-choices"></div></fieldset>
       <div class="dialog-actions">
-        <button id="sortie-cancel" type="button" class="mini-btn plain">やめる</button>
-        <button id="sortie-go" type="submit" class="act sortie">出撃！</button>
+        <button id="sortie-cancel" type="button" class="mini-btn plain" data-t="sortie.cancel">やめる</button>
+        <button id="sortie-go" type="submit" class="act sortie" data-t="sortie.go">出撃！</button>
       </div>
     </form>
   </dialog>
 
   <div id="ending" role="dialog" aria-modal="true" aria-labelledby="ending-kicker" hidden>
     <div class="ending-card">
-      <p id="ending-kicker" class="ending-kicker">エンディング</p>
+      <p id="ending-kicker" class="ending-kicker" data-t="ending.kicker">エンディング</p>
       <div class="ending-stamp" aria-hidden="true">あがり</div>
       <h2 id="ending-title"></h2>
       <div id="ending-text"></div>
       <div id="ending-stats"></div>
-      <button id="ending-close" type="button" class="act">盤面にもどる</button>
+      <button id="ending-close" type="button" class="act" data-t="ending.close">盤面にもどる</button>
     </div>
   </div>
 
