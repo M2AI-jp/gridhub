@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>戦士</title>
+  <desc>大きな兜をかぶった戦士。短い足を踏ん張り、大きな刃の斧を持っている。</desc>
+  <path d="M15 58C17 54 46 54 49 58C49 63 14 62 15 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 47L20 55Q15 59 29 58L30 48M33 48L34 58Q47 59 41 54L40 47" fill="#1d2b5c"/>
+    <path d="M23 32Q29 30 37 33L42 48Q32 52 20 48Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M21 33Q14 33 14 40L21 42L25 36M38 33Q44 32 47 39L41 43L36 37" fill="var(--pawn, #ffe45c)"/>
+    <path d="M15 41Q12 43 16 47Q20 48 22 43Z" fill="#ffffff"/>
+    <path d="M22 44Q30 46 40 44M27 36Q30 39 34 36"/>
+    <path d="M19 18Q19 11 31 11Q43 12 41 26Q39 35 29 35Q19 34 19 24Z" fill="#ffffff"/>
+    <path d="M17 26C14 13 22 8 29 8C40 7 46 16 42 28L37 26L38 20Q30 17 23 20L22 28Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M24 9Q26 2 36 5L34 10Q29 8 28 13Z" fill="#d94a3a"/>
+    <path d="M29 13Q28 16 29 18M25 24L26 25M35 24L34 25M28 30Q30 31 33 30"/>
+    <path d="M49 20Q50 35 48 54L52 55Q54 36 53 20Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M50 20Q55 22 59 17Q62 25 58 32Q55 29 50 30Z" fill="#ffffff"/>
+    <path d="M48 21L53 22M48 28L53 29"/>
+    <path d="M44 39Q48 37 51 40L51 44Q46 47 43 43Z" fill="#ffffff"/>
+  </g>
+</svg>

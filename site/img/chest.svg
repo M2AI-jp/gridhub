@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>宝箱</title>
+  <desc>丸いふたの宝箱。黄色い金具が両端を囲み、真ん中に鍵穴がついている。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M9 30L55 30L54 52Q32 55 10 52Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M9 30Q7 12 25 12L40 12Q56 13 55 30Z" fill="#ffffff"/>
+    <path d="M18 14Q14 20 15 30L16 52M46 14Q50 21 49 30L48 52" stroke-width="3"/>
+    <path d="M17 21Q31 19 48 21M17 43Q31 45 47 43" stroke-width="2"/>
+    <path d="M27 27L37 27L37 40Q32 42 27 40Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M32 32L32 36" stroke-width="3"/>
+    <path d="M14 54L14 57M50 54L50 57"/>
+  </g>
+</svg>

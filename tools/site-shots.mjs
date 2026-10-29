@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 // 紹介ページ（site/img/）のスクリーンショットを撮り直す道具（CONTRACTS §75.1）。看板屋の縄張り。包みには入らない。
 // テストの Chrome（MASUME_CHROME。無ければ /Applications/Google Chrome.app）で、次の4枚を 1440×900 で撮る:
-//   board.png  … GridHub 自身の盤面（このリポジトリの冒険の書を gridhub serve で配る。読むだけ）
+//   board.png  … サンプルの冒険（examples/memo を一時フォルダに作り直し、途中まで進めた盤面）
 //   start.png  … gridhub app のはじめの画面（最近のフォルダ: チュートリアル・メモのアプリ・まだ冒険の無いフォルダ）
 //   hand.png   … チュートリアルの盤面で、見習いAI の「手で進める」（見本を写す → 歩く）
 //   ending.png … チュートリアルをあがったときのエンディング
 //   icon.png   … ページの印（mac/AppIcon.png を 192×192 に。背景は透明）
-// 冒険はすべて一時フォルダに作る。このリポジトリの冒険の書には書かない。
+// 冒険はすべて一時フォルダに作る。このリポジトリの冒険の書は使わない（開発の記録を写さない）。
 // つかいかた: MASUME_CHROME=<Chrome の場所> node tools/site-shots.mjs [icon|board|start|hand|ending …]
+import { spawnSync } from 'node:child_process';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -103,9 +104,17 @@ async function launcher(root) {
   }
 }
 
-/** GridHub 自身の盤面（このリポジトリの冒険の書。読むだけ） */
-async function own() {
-  const srv = await startGridhub(['serve', '--port', '0', '--dir', ROOT], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH }, cwd: ROOT });
+/** サンプルの冒険の盤面: examples/memo を作り直し、倉庫番は砦（G1）で待ち、伝令と絵師は道の途中、勇者はハンコのマス（H1） */
+async function sample(root) {
+  const dir = join(root, 'memo');
+  cpSync(join(ROOT, 'examples', 'memo'), dir, { recursive: true, filter: (src) => !src.split(/[\\/]/).includes('.masume') });
+  const run = (...args) => {
+    const r = spawnSync(process.execPath, [join(ROOT, 'bin', 'gridhub.js'), ...args], { cwd: dir, encoding: 'utf8', env: { ...process.env, NO_COLOR: '1' } });
+    if (r.status !== 0) throw new Error(`gridhub ${args.join(' ')}: ${r.stdout}${r.stderr}`);
+  };
+  run('new', 'quest.map.json');
+  for (const c of ['store', 'store', 'store', 'api', 'api', 'ui']) run('check', c, '--as', c, '--no-boss');
+  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH }, cwd: dir });
   const page = await browser();
   try {
     await page.goto(`${srv.url}/`);
@@ -142,7 +151,7 @@ const root = mkdtempSync(join(tmpdir(), 'gh-'));
 try {
   mkdirSync(OUT, { recursive: true });
   if (want('icon')) await icon(root);
-  if (want('board')) await own();
+  if (want('board')) await sample(root);
   if (want('start') || want('hand') || want('ending')) await launcher(root);
 } finally {
   rmSync(root, { recursive: true, force: true });

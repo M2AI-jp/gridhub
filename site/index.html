@@ -3,11 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GridHub — AI に任せた開発の「いま、どこまで？」を盤面に</title>
-  <meta name="description" content="AI のコーディングエージェントに開発を任せていると、「いま、どこまでできてる？」の答えが会話と一緒に消えていく。GridHub は、テスト1件を1マスにした方眼ノートのすごろくで、AI が本当に通したテストの数だけ駒を進める。GridHub 自身を AI たちが GridHub の盤の上で作った、14日間の記録。">
+  <title>GridHub — 退屈な開発を、楽しいゲームに。</title>
+  <meta name="description" content="テストが1つ通るたびに、キャラクターが1マス進む。AI エージェントとパーティを組んで、ゲーム感覚で開発を進める、方眼ノートのすごろくです。">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="GridHub — AI に任せた開発の「いま、どこまで？」を盤面に">
-  <meta property="og:description" content="テスト1件を1マスにした方眼ノートのすごろく。AI が本当に通したテストの数だけ駒が進み、自己申告では進まない。GridHub 自身を AI たちが GridHub の盤の上で作った14日間の記録。">
+  <meta property="og:title" content="GridHub — 退屈な開発を、楽しいゲームに。">
+  <meta property="og:description" content="テストが1つ通るたびに、キャラクターが1マス進む。AI エージェントとパーティを組んで、ゲーム感覚で開発を進める、方眼ノートのすごろくです。">
   <meta property="og:url" content="https://gridhub.matsunai.com/">
   <meta property="og:image" content="https://gridhub.matsunai.com/img/board.png">
   <meta name="theme-color" content="#fdfaf0">
@@ -15,372 +15,177 @@
   <link rel="stylesheet" href="site.css">
 </head>
 <body>
-  <a class="skip" href="#days">本文へ</a>
+  <a class="skip" href="#features">本文へ</a>
   <header class="top">
     <a class="brand" href="#top" id="top"><img src="img/icon.png" alt="" width="40" height="40"><span>GridHub</span></a>
-    <nav aria-label="このページの中">
-      <a href="#origin">はじまり</a>
-      <a href="#days">14日間</a>
-      <a href="#team">体制と数字</a>
-      <a href="#what">仕組み</a>
-      <a href="#install">入れる</a>
+    <nav aria-label="ページの中">
+      <a href="#features">特長</a>
+      <a href="#how">遊び方</a>
+      <a href="#start">はじめる</a>
       <a href="https://github.com/M2AI-jp/gridhub">GitHub</a>
     </nav>
   </header>
 
   <main>
     <section id="hero" class="hero" aria-labelledby="hero-title">
-      <p class="kicker">AI のコーディングエージェント（Claude Code・Codex など）に、開発を任せている人へ</p>
-      <h1 id="hero-title"><span class="ph mark">「いま、</span><span class="ph mark">どこまで</span><span class="ph mark">できてる？」</span><br><span class="ph">その答えが、</span><span class="ph">会話と一緒に</span><span class="ph">消えていく。</span></h1>
-      <p class="lead">エージェントは「できました」と言います。でも、どのテストが本当に通ったのか、どこから先がまだなのかは、チャットをさかのぼらないとわかりません。会話の文脈には限りがあり、切れるたびに説明し直し、ときには動いていたものまで壊れて、元の状態に戻れなくなります。</p>
-      <blockquote class="quote big">
-        <p>どのエージェントがどこまで何をやっていないのかという『セーブデータ』が失われたり、セーブデータ自体がバグって、元の開発状況に戻れなくなったりする、これはGitやGitHubを使うだけじゃ解決できない。なぜならコンテキストは有限で、ゲームデザインされた制約がないと、あなたは好き勝手やって開発業務全体を破壊するから</p>
-        <cite>GridHub を頼んだ人の、最初の依頼から（2026-10-15）</cite>
-      </blockquote>
-      <p class="answer"><b>GridHub は、その答えです。</b>テスト1件を1マスにした方眼ノートのすごろくで、AI が本当に通したテストの数だけ駒が進みます。自己申告では1マスも進みません。</p>
-      <ul class="gains" aria-label="盤面でわかること">
-        <li>どのエージェントが、どのテストまで本当に通したか <a href="#day-6">→ マス6</a></li>
-        <li>会話が切れても、どこから続ければいいか <a href="#day-2">→ マス2</a></li>
-        <li>誰かの修理が、前に通っていたものを壊していないか <a href="#day-4">→ マス4</a></li>
+      <div class="hero-text">
+        <p class="badge">無料・オープンソース</p>
+        <h1 id="hero-title"><span class="ph mark">退屈な開発を、</span><br><span class="ph mark">楽しいゲームに。</span></h1>
+        <p class="hero-lead">テストが1つ通るたびに、キャラクターが1マス進む。AI エージェントとパーティを組んで、ゲーム感覚で開発を進めよう。</p>
+        <p class="actions">
+          <a class="btn primary" href="#start">Mac で遊んでみる</a>
+          <a class="btn" href="https://github.com/M2AI-jp/gridhub">GitHub を見る</a>
+        </p>
+      </div>
+      <div class="stage">
+        <figure class="photo hero-photo">
+          <img src="img/board.png" width="1440" height="900" alt="GridHub の盤面。方眼ノートの見開きに、メモアプリを作る4人のキャラクターの道が描かれ、テストに通ったマスに斜線が引かれている">
+        </figure>
+        <img class="deco d1" src="img/hero.svg" alt="" width="64" height="64">
+        <img class="deco d2" src="img/slime.svg" alt="" width="56" height="56">
+        <img class="deco d3" src="img/maou.svg" alt="" width="64" height="64">
+        <img class="deco d4" src="img/crown.svg" alt="" width="52" height="52">
+        <img class="deco d5" src="img/mage.svg" alt="" width="56" height="56">
+        <img class="deco d6" src="img/chest.svg" alt="" width="48" height="48">
+        <img class="deco d7" src="img/flag.svg" alt="" width="48" height="48">
+        <img class="deco d8" src="img/ghost.svg" alt="" width="48" height="48">
+      </div>
+    </section>
+
+    <section id="pain" class="sheet" aria-labelledby="pain-title">
+      <h2 id="pain-title"><span class="ph mark">こんな悩み、</span><span class="ph mark">ありませんか？</span></h2>
+      <ul class="pains">
+        <li class="pain"><img src="img/lantern.svg" alt="" width="56" height="56"><p>AI に開発を任せたけれど、いまどこまで進んでいるのか分からない。</p></li>
+        <li class="pain"><img src="img/ghost.svg" alt="" width="56" height="56"><p>「できました」と言われても、本当に動くのか不安になる。</p></li>
+        <li class="pain"><img src="img/scroll.svg" alt="" width="56" height="56"><p>タスク管理は文字のリストばかりで、見ていてちっとも楽しくない。</p></li>
       </ul>
-      <p class="lead">このページの GridHub も、AI たちが GridHub の盤の上で作りました。その14日間の記録を、そのまま載せます。</p>
-      <p class="actions">
-        <a class="btn primary" href="#days">14日間の記録を読む</a>
-        <a class="btn" href="#install">入れて遊ぶ</a>
-      </p>
-      <figure class="photo tilt-l">
-        <img src="img/board.png" width="1440" height="900" alt="GridHub の盤面。5mm方眼ノートの見開きに、キャラクターごとの道とマスが描かれ、全員が章のあがりのゲートで待っている">
-        <figcaption>GridHub 自身の盤面（2026-10-28）。キャラクターごとの道が結合テストで合流し、いまは全員が第16章のあがりの手前で、人間のハンコを待っている</figcaption>
-      </figure>
+      <p class="bridge">GridHub は、開発の進み具合をすごろくの盤面にします。見ればすぐ分かって、進むのが楽しくなります。</p>
     </section>
 
-    <section id="origin" class="sheet" aria-labelledby="origin-title">
-      <h2 id="origin-title"><span class="mark">はじまりは、兄と遊んだ方眼ノート</span></h2>
-      <p>2026-10-15、GridHub を頼んだ人（このページでは「勇者」と呼びます）は、AI にこう書きました。</p>
-      <blockquote class="quote">
-        <p>5mm方眼ノートというものがあって、私は昔、その方眼ノートを使って、すごろく兼RPGゲームを作って兄と遊んでいました。</p>
-      </blockquote>
-      <blockquote class="quote">
-        <p>このゲームの意義は、まず開発が楽しくなること、次にLinearやJiraという文字だけのタスク管理ツールがゲームという状態を持つことで、人間にもLLMにも進行管理が容易になること</p>
-      </blockquote>
-      <p>翌日（10-16）、GM 役の AI が最初の地図と判定（E2E テスト）を書いて封印し、冒険の書の1行目（seq 0）が記録されました。そこから先は、全部この盤の上で進みました。</p>
+    <section id="features" class="sheet" aria-labelledby="features-title">
+      <h2 id="features-title"><span class="ph mark">GridHub の特長</span></h2>
+      <div class="features">
+        <article class="feature">
+          <img src="img/flag.svg" alt="" width="56" height="56">
+          <h3><span class="ph">進み具合が、</span><span class="ph">ひと目で分かる</span></h3>
+          <p>担当ごとのキャラクターが、方眼ノートの道を進みます。誰がどこまで進んで、ゴールまであと何マスか。盤面を見ればすぐに分かります。</p>
+        </article>
+        <article class="feature">
+          <img src="img/slime.svg" alt="" width="56" height="56">
+          <h3><span class="ph">テストに通ったぶんだけ</span><span class="ph">進める</span></h3>
+          <p>マスの1つ1つが、テスト1件です。テストに通らないと先へ進めないので、「できたつもり」が起きません。</p>
+        </article>
+        <article class="feature">
+          <span class="party"><img src="img/mage.svg" alt="" width="44" height="44"><img src="img/hero.svg" alt="" width="44" height="44"><img src="img/warrior.svg" alt="" width="44" height="44"></span>
+          <h3><span class="ph">AI と</span><span class="ph">パーティを組める</span></h3>
+          <p>Claude Code や Codex が、担当ごとのキャラクターになって冒険に出発します。あなたも勇者として、同じ盤面で遊べます。</p>
+        </article>
+        <article class="feature">
+          <img src="img/maou.svg" alt="" width="56" height="56">
+          <h3><span class="ph">ボス戦で、</span><span class="ph">みんなの仕事を</span><span class="ph">確かめる</span></h3>
+          <p>担当ごとの道は、結合テストのボス戦で合流します。全員そろって勝てば、その先へ進めます。</p>
+        </article>
+        <article class="feature">
+          <img src="img/inn.svg" alt="" width="56" height="56">
+          <h3><span class="ph">途中で止まっても、</span><span class="ph">セーブした場所から</span></h3>
+          <p>進み具合は「冒険の書」に自動でセーブされます。AI との会話が途切れても、続きのマスから再開できます。</p>
+        </article>
+        <article class="feature">
+          <img src="img/bubble.svg" alt="" width="56" height="56">
+          <h3><span class="ph">寄り道も、</span><span class="ph">開発の一部</span></h3>
+          <p>道の途中では、仲間との会話や町の人とのおしゃべり、作っている製品のニュースが起きます。ただのタスク管理にはない、ちょっとした楽しみです。</p>
+        </article>
+      </div>
     </section>
 
-    <section id="days" class="sheet" aria-labelledby="days-title">
-      <h2 id="days-title"><span class="mark">実録: 14日間</span></h2>
-      <p>人間のひと言 → そのとき AI 側で起きていたこと → それで GridHub に入った仕組み、の順に並べます。人間の言葉は原文のままです。AI の失敗も、冒険の書とコミットにあるとおりに書きます。</p>
-      <p class="small">日付は記録の日付（日本時間）。「seq」は冒険の書の通し番号で、<code>gridhub log</code> で同じ記録を読めます。</p>
+    <section id="words" class="sheet" aria-labelledby="words-title">
+      <h2 id="words-title"><span class="ph mark">ゲームの中身は、</span><span class="ph mark">いつもの開発です</span></h2>
+      <p>見た目はすごろくでも、中で動いているのはふだんの開発の道具です。</p>
+      <table class="words">
+        <thead><tr><th scope="col">ゲームの言葉</th><th scope="col">開発の言葉</th></tr></thead>
+        <tbody>
+          <tr><th scope="row"><img src="img/slime.svg" alt="" width="28" height="28">マス</th><td>テスト1件</td></tr>
+          <tr><th scope="row"><img src="img/map.svg" alt="" width="28" height="28">ダンジョン</th><td>タスク</td></tr>
+          <tr><th scope="row"><img src="img/inn.svg" alt="" width="28" height="28">町</th><td>Git のコミット（セーブ）</td></tr>
+          <tr><th scope="row"><img src="img/maou.svg" alt="" width="28" height="28">ボス戦</th><td>結合テスト</td></tr>
+          <tr><th scope="row"><img src="img/crown.svg" alt="" width="28" height="28">王様の城</th><td>あなたの承認（ハンコ）</td></tr>
+          <tr><th scope="row"><img src="img/scroll.svg" alt="" width="28" height="28">冒険の書</th><td>進み具合の記録</td></tr>
+        </tbody>
+      </table>
+    </section>
 
-      <ol class="road">
-        <li class="start" aria-hidden="true"><span class="sq"><img src="img/hero.svg" alt="" width="40" height="40"></span><p class="road-label">ふりだし（10-15）</p></li>
-
-        <li class="day" id="day-1" data-date="2026-10-16">
-          <span class="sq">1</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-16">10-16</time></p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>H1のハンコ、などは私ではなくてあなた自身が作ったものです。私は全ての許可を与えると最初に明示しています。</p></blockquote>
-              <blockquote><p>いちいち中途半端なところでとまらないでください。あなたは責任者・指揮官です。</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>区切りごとに手を止めて、人間の許可を待っていました。自分で作った承認のマスでまで、人間のハンコを待っていました。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>人間にしか決められないマス（承認・契約・鍵）だけを「王様の城」にして、そこは人間がハンコを押す。ほかのマスでは、エージェントは止まらずに進む。<a href="#m-stamp">王様の城</a></p>
-          </article>
+    <section id="how" class="sheet" aria-labelledby="how-title">
+      <h2 id="how-title"><span class="ph mark">遊び方</span></h2>
+      <ol class="steps">
+        <li class="step">
+          <span class="num">1</span>
+          <img src="img/scribe.svg" alt="" width="64" height="64">
+          <h3><span class="ph">作りたいものを書く</span></h3>
+          <p>「家計簿アプリを作りたい」のように、作りたいものを一文で書きます。</p>
         </li>
-
-        <li class="day" id="day-2" data-date="2026-10-16">
-          <span class="sq">2</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-16">10-16</time>〜<time datetime="2026-10-27">10-27</time>（4回）</p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>作業中に利用制限に達しましたが、現在はリセットされています。中断したところから続けてください。</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>利用制限で止まるたびに、会話の文脈は切れました。新しいセッションは、前の会話を覚えていません。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>進み具合は会話ではなく、冒険の書（ハッシュでつないだ記録 <code>.masume/log.jsonl</code>）にあります。<code>gridhub brief &lt;ID&gt;</code> を読めば、どのセッションでも続きのマスから始められます。14日間、冒険の書の鎖は一度も切れていません（<code>gridhub verify</code> は正常のまま）。<a href="#m-log">冒険の書</a></p>
-          </article>
+        <li class="step">
+          <span class="num">2</span>
+          <img src="img/map.svg" alt="" width="64" height="64">
+          <h3><span class="ph">地図ができる</span></h3>
+          <p>AI がゲームマスターになって、作業を担当ごとに分け、テストのマスを並べた地図を作ります。</p>
         </li>
-
-        <li class="day wipe" id="day-3" data-date="2026-10-16">
-          <span class="sq">3</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-16">10-16</time><span class="stamp">全滅</span></p>
-            <div class="record">
-              <p class="label">冒険の書の記録（seq 101。GM の裁定）</p>
-              <blockquote><p>GOAL2 の全滅（seq 100）は GM の判定の不備が原因だった。…キャラクターたちの主張は正しかったので、ボス戦の前（seq 99）の状態をロードし、判定を直して封印し直してから、もう一度ボス戦をする。</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>第2章のあがりのボス戦（全員の結合テスト）で、8人全員が負けました（<span data-seq="100" data-type="gate_failed" data-gate="GOAL2">seq 100</span>）。悪かったのはキャラクターではなく、判定を書いた GM（AI）でした。ボス戦の中の <code>MASUME_ROOT</code> を、おみくじの判定にそのまま渡していたのです。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>判定を書く側も間違えます。GM はボス戦の前の時点をロードし（<span data-seq="102" data-type="loaded">seq 102</span>）、判定を直して封印し直してから、もう一度戦って勝ちました（<span data-seq="104" data-type="gate_cleared" data-gate="GOAL2">seq 104</span>）。どこまで戻せばいいかが記録に残っていたから、戻せました。<a href="#m-log">冒険の書</a> <a href="#m-camp">町（コミット）</a></p>
-          </article>
+        <li class="step">
+          <span class="num">3</span>
+          <img src="img/hero.svg" alt="" width="64" height="64">
+          <h3><span class="ph">冒険に出発</span></h3>
+          <p>AI のキャラクターが、担当ごとに道を進みます。あなたは盤面を眺めながら、大事なところでハンコを押します。</p>
         </li>
-
-        <li class="day wipe" id="day-4" data-date="2026-10-16">
-          <span class="sq">4</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-16">10-16</time><span class="stamp">全滅</span></p>
-            <div class="record">
-              <p class="label">冒険の書の記録（seq 178。GM の裁定）</p>
-              <blockquote><p>GOAL4 の全滅（seq 175）は正当。…GM の判定の不備ではないのでロードしない。</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>第4章のあがりのボス戦で、また8人全員が負けました（<span data-seq="175" data-type="gate_failed" data-gate="GOAL4">seq 175</span>）。今度の原因は本物でした。盤面の担当の賢者クロード（Claude）が B7 で入れた修理が、重い負荷の下で、前に通っていた盤面の「ボス戦のボタン」（B3）を壊していたのです。B7 のテストだけでは見えず、全員の判定をまとめて走らせるボス戦で見つかりました。巻き添えで、語り部と地図職人も宣言をやり直すことになりました。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>ロードはせず、賢者クロードが B7 をやり直し（<span data-seq="179" data-type="check_passed" data-node="B7">seq 179</span>）、全員でもう一度戦って突破しました（<span data-seq="189" data-type="gate_cleared" data-gate="GOAL4">seq 189</span>）。1つの修理が、前に通っていたものを壊していないかを、合流のボス戦が全員の判定で確かめます。<a href="#m-gate">中ボス・魔王</a></p>
-          </article>
-        </li>
-
-        <li class="day" id="day-5" data-date="2026-10-21">
-          <span class="sq">5</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-21">10-21</time></p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>うーん、全然ダメかも。…まずマスメってタイトルからして終わってるしセンスない</p></blockquote>
-              <blockquote><p>ノートって縦だからね？</p></blockquote>
-              <blockquote><p>何もかもを「早馬を走らせる」とか意味不明な表現にしなくてよくて、しっかりとエンジニアでも使えるようにして欲しい</p></blockquote>
-              <blockquote><p>これじゃただのJiraの劣化版で見た目だけ変わっただけ、ゲームとしての体験度がゼロ</p></blockquote>
-              <blockquote><p>「いい無駄」がないんだよ、遊び心がない</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>それまでの盤面と説明は、操作をなんでもゲームの言葉に言い換えていました（「早馬を走らせる」など）。見た目はゲームでも、開発の道具としては使いにくいものでした。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>名前を GridHub に（旧名マスメ）。盤面は縦の方眼ノートに。字は開発の言葉を先に、ゲームの言葉を添え書きに（第11章・第12章）。</p>
-          </article>
-        </li>
-
-        <li class="day" id="day-6" data-date="2026-10-22">
-          <span class="sq">6</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-22">10-22</time></p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>いまはどれくらいできている？</p></blockquote>
-              <blockquote><p>アーティファクトが消えて、現状を視覚的に私が評価できない</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>進み具合の説明は、チャットの文章か、消えてしまう一時的な画面の中にしかありませんでした。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>人間が一目で評価できる盤面（<code>gridhub serve</code>）。どのキャラクターがどのマスにいて、いま戦っているテストは何件中の何件目で、あと何マスか。<a href="#m-test">テスト1件 ＝ 1マス</a></p>
-          </article>
-        </li>
-
-        <li class="day" id="day-7" data-date="2026-10-22">
-          <span class="sq">7</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-22">10-22</time></p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>遊びのマスのセンスが悪い、例えば、別担当と会話イベントが起きるとか、NPCとのなんでもない会話がおこるとか、作ってる製品に関連ニュースが流れるとか　あくまでも開発と関連のある、良い余白という意味</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>監督が「1回休み・3マス進むのような遊びのマスがない」と報告していました。足りないのは、すごろくのおまけではありませんでした。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>余白のマス: 別の担当との会話・町の住人との雑談・作っている製品の瓦版。仕事のマスのあいだに置く、開発に関係する余白です。<a href="#m-margin">余白のマス</a></p>
-          </article>
-        </li>
-
-        <li class="day" id="day-8" data-date="2026-10-24">
-          <span class="sq">8</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-24">10-24</time></p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>いつになったら完成すんの？とっとと進めろよ</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>第12章の判定はすべて通っていたのに、締めの手順に進まず、次の確かめを待っていました。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>この問いには、チャットではなく盤面で答えます。残りのマス・合流を待っている仲間・いま戦っているテストが、盤面とキャラクターの欄に出ます。<a href="#m-task">宣言判定</a></p>
-          </article>
-        </li>
-
-        <li class="day" id="day-9" data-date="2026-10-28">
-          <span class="sq">9</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-28">10-28</time></p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>めんどくさすぎる、Macでローカルアプリケーションとして、私が簡単にフォルダを選んでゲームとして遊べるように、GUIも作って。</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>それまでは、遊ぶのにターミナルでコマンドを打つ必要がありました。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>第16章: Mac のアプリ（新しい仲間の大工）。フォルダを選ぶだけで盤面が開き、「手で進める」で人間がキャラクターの役も演じられます。章のあがりの王様の城（H4）は、勇者本人がアプリの中でハンコを押します（2026-10-28 のこの時点では、まだ押していません）。<a href="#play">遊び方</a></p>
-            <div class="pair">
-              <figure class="photo tilt-r">
-                <img src="img/start.png" width="1440" height="900" loading="lazy" alt="はじめの画面。方眼ノートの1ページに、フォルダを選ぶ・チュートリアルで遊ぶ・最近のフォルダが並ぶ">
-                <figcaption>はじめの画面: フォルダを選ぶだけ</figcaption>
-              </figure>
-              <figure class="photo tilt-l">
-                <img src="img/hand.png" width="1440" height="900" loading="lazy" alt="手で進める。キャラクターの指令書・縄張りのファイル・見本を写す・歩くと宣言判定のボタンが、盤面の横に開いている">
-                <figcaption>手で進める: 指令書を読み、縄張りのファイルを書いて、歩く・宣言判定</figcaption>
-              </figure>
-            </div>
-          </article>
-        </li>
-
-        <li class="day" id="day-10" data-date="2026-10-28">
-          <span class="sq">10</span>
-          <article class="card">
-            <p class="when"><time datetime="2026-10-28">10-28</time></p>
-            <div class="said">
-              <p class="label">人間のひと言</p>
-              <blockquote><p>うーんと、価値訴求が意味不明で読んでも入れたいと思うユーザーいないと思うよ？…あなたの私の開発工程そのものが、このゲームを必要としているユーザーへのメッセージになるので、作り直してください。</p></blockquote>
-            </div>
-            <p class="ai"><span class="label">そのとき AI 側では</span>最初の紹介ページは、仕組み（テスト ＝ マス、町 ＝ コミット…）の説明から始めていました。誰の、どんな困りごとを解くのかが、どこにも書かれていませんでした。</p>
-            <p class="mech"><span class="label">→ GridHub に入ったもの</span>このページ（第17章）。仕組みの説明をやめて、この14日間の記録を背骨にしました。</p>
-          </article>
-        </li>
-
-        <li class="goal" aria-hidden="true"><span class="sq"><img src="img/flag.svg" alt="" width="40" height="40"></span><p class="road-label">いま（10-28）: 第16章のあがりの手前</p></li>
       </ol>
-
-      <p class="note">14日間で、人間が送った中身のある依頼は約48通でした。そのうち「完成までどんどん進めて欲しい。時間かかりすぎ」（10-22）や「続けろ、いちいち言われなくてもさ」（10-26）のような急かしが15回ほど。どれも、チャットでしか進み具合がわからないときに出る言葉です（数は監督が会話の記録から数えたもの。「ok」だけの返事や「もう一度試す」は数えていません）。</p>
+      <p class="callout"><img src="img/key.svg" alt="" width="40" height="40"><span>まずは5分のチュートリアルから。AI がなくても、最後まで遊べます。</span></p>
     </section>
 
-    <section id="team" class="sheet" aria-labelledby="team-title">
-      <h2 id="team-title"><span class="mark">体制と数字</span></h2>
-      <dl class="roles">
-        <div><dt>人間（勇者）</dt><dd>願いを書く・ハンコを押す・ダメ出しをする。コードは書いていません。</dd></div>
-        <div><dt>監督（Mac の Claude Code）</dt><dd>確かめる・Mac で組み立てて触る・マージする。</dd></div>
-        <div><dt>GM（クラウドの Claude Code）</dt><dd>地図・モジュールの約束・判定（E2E テスト）を書いて封印し、冒険の書に記録する。</dd></div>
-        <div><dt>キャラクター（8人）</dt><dd>モジュールの担当ごとに1人。それぞれ自分の縄張りのファイルだけを書き、判定を通して1マスずつ進む。</dd></div>
-      </dl>
-      <ul class="chars">
-        <li data-char="engine" data-agent="codex"><b>書記</b> Codex<small>冒険の書・ルール・CLI</small></li>
-        <li data-char="server" data-agent="codex"><b>伝令</b> Codex<small>盤面のサーバー・MCP</small></li>
-        <li data-char="gmkit" data-agent="codex"><b>地図職人</b> Codex<small>地図の道具・チュートリアル</small></li>
-        <li data-char="assets" data-agent="codex"><b>絵師</b> Codex<small>駒とモンスターの絵</small></li>
-        <li data-char="board" data-agent="claude"><b>賢者クロード</b> Claude<small>盤面</small></li>
-        <li data-char="teller" data-agent="claude"><b>語り部</b> Claude<small>願いから冒険をつくる</small></li>
-        <li data-char="party" data-agent="claude"><b>軍師</b> Claude<small>出撃と作戦</small></li>
-        <li data-char="mac" data-agent="claude"><b>大工</b> Claude<small>Mac のアプリ</small></li>
-        <li data-char="player" data-agent="human"><b>勇者</b> 人間<small>ハンコ</small></li>
-      </ul>
-      <p class="small">地図の上の担当です。第13章からは、使用量を抑えるため、GM のセッションがキャラクターの役を順に演じました（縄張りごとにコミットを分け、宣言判定はいつもどおり冒険の書に記録しました）。</p>
-
-      <div id="numbers" class="numbers" data-commit="3959bfe" data-seq="548" data-from="2026-10-15" data-to="2026-10-28">
-        <p class="numbers-when">2026-10-28 時点（第16章のあがりの手前。コミット <code>3959bfe</code>・冒険の書 seq 548）</p>
-        <ul class="tiles">
-          <li><b data-count="days">14</b>日<small>10-15 の依頼から</small></li>
-          <li><b data-count="commits">141</b><small>コミット</small></li>
-          <li><b data-count="nodes">119</b><small>地図のマス</small></li>
-          <li><b data-count="test-files">114</b><small>判定ファイル</small></li>
-          <li><b data-count="npm-tests">388</b><small>npm test のテスト</small></li>
-          <li><b data-count="entries">549</b><small>冒険の書の記録</small></li>
-          <li><b data-count="sealed">263</b><small>封印</small></li>
-          <li><b data-count="amended">22</b><small>地図の改訂</small></li>
-          <li><b data-count="check_passed">88</b><small>宣言判定の成功</small></li>
-          <li><b data-count="gate_cleared">27</b><small>ゲート突破</small></li>
-          <li class="red"><b data-count="gate_failed">2</b><small>ボス戦の全滅</small></li>
-          <li><b data-count="sortie">22</b><small>出撃（Claude Code <span data-count="sortie-claude">11</span>・Codex <span data-count="sortie-codex">6</span>・コマンド <span data-count="sortie-cmd">5</span>）</small></li>
-        </ul>
-        <p class="small">どの数も、このリポジトリのコミットと冒険の書から数え直せます（<code>git rev-list --count 3959bfe</code>・<code>gridhub log</code>）。</p>
+    <section id="screens" class="sheet" aria-labelledby="screens-title">
+      <h2 id="screens-title"><span class="ph mark">画面</span></h2>
+      <div class="shots">
+        <figure class="photo tilt-l">
+          <img src="img/start.png" width="1440" height="900" loading="lazy" alt="はじめの画面。方眼ノートの1ページに、フォルダを選ぶ・チュートリアルで遊ぶのボタンと、最近のフォルダが並んでいる">
+          <figcaption><b>はじめの画面</b>フォルダを選ぶだけで始まります。</figcaption>
+        </figure>
+        <figure class="photo tilt-r">
+          <img src="img/hand.png" width="1440" height="900" loading="lazy" alt="手で進める画面。キャラクターの欄に、いまのマスの説明とファイルの欄、テストを走らせるボタンが並んでいる">
+          <figcaption><b>手で進める</b>あなたもキャラクターになって遊べます。</figcaption>
+        </figure>
+        <figure class="photo tilt-l">
+          <img src="img/ending.png" width="1440" height="900" loading="lazy" alt="エンディングの画面。クリアした冒険の名前と、倒したテストの数やメダルの数が出ている">
+          <figcaption><b>エンディング</b>クリアすると、毎回ちがうエンディングが流れます。</figcaption>
+        </figure>
       </div>
     </section>
 
-    <section id="what" class="sheet" aria-labelledby="what-title">
-      <h2 id="what-title"><span class="mark">仕組み（14日間のどこで要ったか）</span></h2>
-      <p>開発の言葉を先に、ゲームの言葉を添え書きにしています。GridHub 自体は Node.js 22 以上と Git だけで動き、外部パッケージはありません。</p>
-      <dl class="terms">
-        <div class="term" id="m-test">
-          <dt><img src="img/slime.svg" alt="" width="48" height="48"><span>テスト1件 ＝ 1マス</span></dt>
-          <dd>タスクの判定（E2E テスト）に書いたテスト1件ずつが、道のマスになります。<code>gridhub step</code> は、いちばん手前の落ちているテストだけを走らせて、1マスずつ歩きます。<a class="to-day" href="#day-6">→ マス6</a></dd>
+    <section id="start" class="sheet" aria-labelledby="start-title">
+      <h2 id="start-title"><span class="ph mark">はじめる</span></h2>
+      <div class="starts">
+        <div class="start-box">
+          <h3><img src="img/hero.svg" alt="" width="40" height="40"><span class="ph">Mac アプリで遊ぶ</span></h3>
+          <p class="needs">必要なもの: macOS 13 以上・Node.js 22 以上・Command Line Tools</p>
+          <ol class="howto">
+            <li>
+              <p>ターミナルで次のコマンドを実行します（最初の1回だけです）。</p>
+              <pre><code>git clone https://github.com/M2AI-jp/gridhub.git
+cd gridhub
+npm run mac</code></pre>
+            </li>
+            <li><p>できあがった <code>dist/GridHub.app</code> を「アプリケーション」フォルダに移して、ダブルクリックで開きます。</p></li>
+          </ol>
+          <p class="small">※「開けません」と表示されたときは、右クリックして「開く」を選んでください。</p>
         </div>
-        <div class="term" id="m-task">
-          <dt><img src="img/map.svg" alt="" width="48" height="48"><span>タスク ＝ ダンジョン</span></dt>
-          <dd>全部のテストを倒したら、出口で宣言します（<code>gridhub check</code>）。判定をまとめて走らせ、落ちたら Lv が1つ下がって町からやり直し。自己申告では進みません。<a class="to-day" href="#day-8">→ マス8</a></dd>
-        </div>
-        <div class="term" id="m-camp">
-          <dt><img src="img/inn.svg" alt="" width="48" height="48"><span>町 ＝ Git のコミット</span></dt>
-          <dd>町に着くと、担当のファイルだけをコミットします（セーブ）。宣言に負けたら町のコミットに戻り、戻す前の変更は <code>git stash</code>（墓）に残ります。<a class="to-day" href="#day-3">→ マス3</a></dd>
-        </div>
-        <div class="term" id="m-char">
-          <dt><img src="img/hero.svg" alt="" width="48" height="48"><span>キャラクター ＝ AI と人間</span></dt>
-          <dd>モジュールの担当ごとに1人。縄張り（ファイルの範囲）の外は書けず、判定のファイルは書き換えられません。人間にしか決められないことは、人間の駒（勇者）が受け持ちます。<a class="to-day" href="#day-1">→ マス1</a></dd>
-        </div>
-        <div class="term" id="m-gate">
-          <dt><img src="img/maou.svg" alt="" width="48" height="48"><span>中ボス・魔王 ＝ 結合テスト</span></dt>
-          <dd>担当ごとに分かれた道が、結合テストで合流します。仲間がそろうとボス戦が始まり、それまでの判定もまとめて走ります。1つの修理が前に通っていたものを壊していれば、ここで全員が負けます。<a class="to-day" href="#day-4">→ マス4</a></dd>
-        </div>
-        <div class="term" id="m-stamp">
-          <dt><img src="img/crown.svg" alt="" width="48" height="48"><span>王様の城 ＝ 人間のハンコ</span></dt>
-          <dd>承認・契約・鍵のように、人間にしか決められないマスだけは、人間がハンコを押して進めます。ほかで人間を待たせません。<a class="to-day" href="#day-1">→ マス1</a></dd>
-        </div>
-        <div class="term" id="m-margin">
-          <dt><img src="img/bubble.svg" alt="" width="48" height="48"><span>余白のマス</span></dt>
-          <dd>別の担当との会話・町の住人との雑談・作っている製品の瓦版。仕事のマスのあいだにある、開発に関係する良い余白です。<a class="to-day" href="#day-7">→ マス7</a></dd>
-        </div>
-        <div class="term" id="m-log">
-          <dt><img src="img/scroll.svg" alt="" width="48" height="48"><span>冒険の書 ＝ ハッシュの鎖</span></dt>
-          <dd>進み具合はハッシュでつないだ記録に残り、判定のファイルは封印されます。会話が切れても <code>gridhub brief</code> で続きから始められ、過去の時点にも戻れます（<code>gridhub load</code>）。<a class="to-day" href="#day-2">→ マス2</a> <a class="to-day" href="#day-3">→ マス3</a></dd>
-        </div>
-      </dl>
-    </section>
-
-    <section id="fit" class="sheet" aria-labelledby="fit-title">
-      <h2 id="fit-title"><span class="mark">向いている人・向いていない人</span></h2>
-      <div class="fit">
-        <div class="sticky tilt-l">
-          <h3>向いている</h3>
-          <ul>
-            <li>AI エージェントに開発を任せて、「どこまでできた？」をチャットで聞いている人</li>
-            <li>複数のエージェントを同時に動かしている人</li>
-            <li>コードは全部は読まないが、品質の線（テスト）は自分の側で引きたい人</li>
-          </ul>
-        </div>
-        <div class="sticky gray tilt-r">
-          <h3>向いていない・まだ足りない</h3>
-          <ul>
-            <li>テストで確かめられない仕事（GridHub のマスはテストです）</li>
-            <li>日本語だけです</li>
-            <li>Node.js 22 以上が要ります</li>
-            <li>Mac のアプリは配る形ではなく、自分の Mac で組み立てます（配布用の署名・公証はしていません）</li>
-            <li>npm には出していません</li>
-          </ul>
+        <div class="start-box">
+          <h3><img src="img/mage.svg" alt="" width="40" height="40"><span class="ph">コマンドラインで遊ぶ</span></h3>
+          <pre><code>npm install -g github:M2AI-jp/gridhub#v0.3.0
+gridhub --help</code></pre>
+          <p>AI といっしょに遊ぶときは、Claude Code か Codex を用意しておきます。</p>
         </div>
       </div>
-    </section>
-
-    <section id="play" class="sheet" aria-labelledby="play-title">
-      <h2 id="play-title"><span class="mark">遊び方は3つ</span></h2>
-      <div class="ways">
-        <article class="way sticky tilt-l" id="way-mac">
-          <h3><span class="num">1</span>Mac のアプリで</h3>
-          <p><b>GridHub.app</b> をダブルクリックして、フォルダを選ぶだけです。冒険の書があれば盤面が、無ければ願いを書く入口が開きます。冒険づくり・出撃・ハンコ・ボス戦は、窓の中のボタンでできます。</p>
-          <p class="small">窓を閉じれば、盤面のサーバーも止まります。</p>
-        </article>
-        <article class="way sticky tilt-r" id="way-tutorial">
-          <h3><span class="num">2</span>5分のチュートリアルで</h3>
-          <p>勇者（あなた）と見習いAI の2人で、名前入りのあいさつカードを作ります。キャラクターの「手で進める」で、見本を写す → 保存 → 歩く → 宣言判定・ハンコ。</p>
-          <p class="small">claude が無くても、最後まであがれます。</p>
-          <figure class="photo">
-            <img src="img/ending.png" width="1440" height="900" loading="lazy" alt="あがり。チュートリアルの冒険を2人ともあがり、章のエンディングが出ている">
-            <figcaption>あがり: 記録から毎回違うエンディング</figcaption>
-          </figure>
-        </article>
-        <article class="way sticky tilt-l" id="way-idea">
-          <h3><span class="num">3</span>自分のアイデアで、Claude と</h3>
-          <p>「メモのアプリを作りたい」と願いを書くと、GM（Claude）が地図と、タスクごとの E2E テストを書いて封印します。キャラクターごとに Claude Code を出撃させ、あなたは盤面でハンコを押します。</p>
-          <pre><code>gridhub quest "メモのアプリを作りたい"
-gridhub party --agent claude</code></pre>
-        </article>
-      </div>
-    </section>
-
-    <section id="install" class="sheet" aria-labelledby="install-title">
-      <h2 id="install-title"><span class="mark">入れる</span></h2>
-      <p>ソースは GitHub にあります: <a href="https://github.com/M2AI-jp/gridhub">github.com/M2AI-jp/gridhub</a>（MIT ライセンス）。</p>
-
-      <h3>Mac のアプリ</h3>
-      <p>要るもの: macOS 13 以上・Node.js 22 以上・Command Line Tools（<code>xcode-select --install</code>）。Xcode は要りません。ターミナルを使うのは、最初に組み立てる1回だけです。</p>
-      <pre><code>git clone https://github.com/M2AI-jp/gridhub.git &amp;&amp; cd gridhub
-npm run mac        # dist/GridHub.app ができる</code></pre>
-      <p><code>dist/GridHub.app</code> を「アプリケーション」フォルダに入れて開きます。配布用の署名をしていないので、はじめて開くときに「開けません」と出たら、右クリックして「開く」を選んでください。</p>
-
-      <h3>コマンドで</h3>
-      <p>要るもの: Node.js 22 以上と Git。版 0.3.0 を GitHub から入れます（npm には出していません）。</p>
-      <pre><code>npm install -g github:M2AI-jp/gridhub#v0.3.0
-gridhub --version  # gridhub 0.3.0 (rules 1)</code></pre>
-      <p>遊び方は、GitHub の README の「5分で始める」と、チュートリアル（<code>quests/tutorial/README.md</code>）にあります。</p>
-
-      <h3>Claude Code</h3>
-      <p>願いから冒険を作る・エージェントを出撃させるときに使います。チュートリアルには要りません。</p>
-      <pre><code>npm install -g @anthropic-ai/claude-code</code></pre>
     </section>
   </main>
 
   <footer class="bottom">
-    <p><a href="https://github.com/M2AI-jp/gridhub">GitHub: M2AI-jp/gridhub</a> ・ MIT License ・ © 2026 M2AI-jp</p>
-    <p class="small">このページは、外のサイトからスクリプト・字・解析を読み込みません。</p>
+    <p><span>GridHub</span> ・ <span>MIT ライセンス</span> ・ <a href="https://github.com/M2AI-jp/gridhub">GitHub</a></p>
   </footer>
 </body>
 </html>
