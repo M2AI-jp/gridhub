@@ -23,7 +23,7 @@ const listenHelp = (extra) => [
 
 export function questHelp() {
   return [
-    '使い方: masume quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--allow-listen] [--dry-run] [--json]',
+    '使い方: gridhub quest "<願い>" [--gm claude|codex|cmd:<command>] [--model M] [--dir D] [--force] [--retries N] [--allow-listen] [--dry-run] [--json]',
     '',
     '願い（例: 「メモアプリのようなアプリを作りたい」）から、GM の LLM に地図と最初の判定を書かせて、新しい冒険をつくります。',
     '',
@@ -36,7 +36,7 @@ export function questHelp() {
     '  --retries N    GM の地図に指摘があったとき、GM に直させる回数（既定 2）',
     ...listenHelp([
       '      GM が codex のとき、GM の箱を開けます（GM が判定を素振りするときも、手元でサーバーを立てられます）。',
-      '      生まれた冒険の .masume/party.json にも "allow_listen": true を書くので、出撃（masume party）の箱も開けたまま始まります。',
+      '      生まれた冒険の .masume/party.json にも "allow_listen": true を書くので、出撃（gridhub party）の箱も開けたまま始まります。',
     ]),
     '  --dry-run      GM を呼ばず、起動するコマンドとプロンプトの先頭だけを見せる（何も書きません）',
     '  --json         結果を JSON で出す（知らせは stderr）',
@@ -46,17 +46,17 @@ export function questHelp() {
 
 export function initHelp() {
   return [
-    '使い方: masume init [--dir D] [--agent claude|codex [--allow-listen]] [--force] [--json]',
+    '使い方: gridhub init [--dir D] [--agent claude|codex [--allow-listen]] [--force] [--json]',
     '',
     'よそのプロジェクトに、GridHub の支度（AGENTS.md・CLAUDE.md・.gitignore。--agent があれば .masume/party.json も）をします。',
     '',
     'オプション:',
     '  --dir D        支度をするフォルダ（既定は今のフォルダ）',
     '  --agent claude|codex',
-    '      masume party が出撃させるエージェントを .masume/party.json に書く（冒険の書があるときだけ）',
+    '      gridhub party が出撃させるエージェントを .masume/party.json に書く（冒険の書があるときだけ）',
     ...listenHelp([
       '      --agent といっしょに使います（--agent が無いと E_USAGE）。',
-      '      .masume/party.json に "allow_listen": true を書くので、masume party は出撃の箱を開けて始まります。',
+      '      .masume/party.json に "allow_listen": true を書くので、gridhub party は出撃の箱を開けて始まります。',
     ]),
     '  --force        すでにある AGENTS.md・CLAUDE.md を書き直す',
     '  --json         結果を JSON で出す',

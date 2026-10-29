@@ -324,10 +324,41 @@ function renderDrawer() {
 }
 
 // ---- エンディング（§50.10） ----
+// 本物の盤面では、一度見たエンディング（同じ冒険の同じ seq）は開くたびには出さない。見出しの「🏁 エンディング」で読み直せる。
+// 見本（?fixture=）は毎回出す（判定とスクリーンショットのため）
+const endingKey = (view) => (LIVE && view.quest?.id ? `masume.ending.${view.quest.id}` : null);
+function seenEnding(key) {
+  try {
+    return Number(localStorage.getItem(key));
+  } catch {
+    return NaN;
+  }
+}
+function rememberEnding(key, seq) {
+  try {
+    localStorage.setItem(key, String(seq));
+  } catch {
+    // 覚えられなくても（プライベートウィンドウなど）、次に開いたときにもう一度出るだけ
+  }
+}
+/** 用意してあるエンディングを開く（演出つき） */
+function openEnding() {
+  const el = $('#ending');
+  el.hidden = false;
+  el.classList.remove('show');
+  void el.offsetWidth;
+  el.classList.add('show');
+  sound.play('fanfare');
+}
 function renderEnding(view) {
   const e = view.ending;
   const el = $('#ending');
-  if (!e || typeof e !== 'object' || typeof e.text !== 'string') return;
+  const again = $('#ending-open');
+  if (!e || typeof e !== 'object' || typeof e.text !== 'string') {
+    if (again) again.hidden = true;
+    return;
+  }
+  if (again) again.hidden = false;
   if (state.endingSeq === e.seq) return;
   state.endingSeq = e.seq;
   const lines = e.text.split('\n').filter(Boolean);
@@ -363,11 +394,13 @@ function renderEnding(view) {
       return d;
     }),
   );
-  el.hidden = false;
-  el.classList.remove('show');
-  void el.offsetWidth;
-  el.classList.add('show');
-  sound.play('fanfare');
+  const key = endingKey(view);
+  if (key && seenEnding(key) === e.seq) {
+    el.hidden = true; // 前に見たエンディング。見出しの「🏁 エンディング」で読み直せる
+    return;
+  }
+  openEnding();
+  if (key) rememberEnding(key, e.seq);
 }
 
 // ---- 演出（新しく書かれた冒険の書を読み上げる） ----
@@ -532,7 +565,7 @@ async function post(path, body) {
 
 function setupInteractions() {
   document.addEventListener('click', async (e) => {
-    const t = e.target.closest('[data-close],[data-stamp],[data-battle],[data-hand],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-record,#sound,#ending-close');
+    const t = e.target.closest('[data-close],[data-stamp],[data-battle],[data-hand],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-record,#sound,#ending-close,#ending-open');
     const inBoard = e.target.closest('#board');
     if (inBoard && svg.dataset.justDragged) return;
     if (!t && inBoard) {
@@ -549,6 +582,10 @@ function setupInteractions() {
     if (!t) return;
     if (t.matches('#ending-close')) {
       $('#ending').hidden = true;
+      return;
+    }
+    if (t.matches('#ending-open')) {
+      openEnding();
       return;
     }
     if (t.matches('[data-close]')) return select(null);

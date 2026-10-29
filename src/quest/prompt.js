@@ -55,11 +55,11 @@ ${wish}
 ## 2. いまの状況
 
 - あなたの作業フォルダ（cwd）が、この冒険のルートです: ${root}
-- いまは地図も冒険の書もありません。あなたが書いた \`quest.map.json\` を、あなたが終わったあとに masume が検査し、問題がなければ冒険の書をつくります（判定ファイルの封印もそのときに自動で行われます）。
+- いまは地図も冒険の書もありません。あなたが書いた \`quest.map.json\` を、あなたが終わったあとに gridhub が検査し、問題がなければ冒険の書をつくります（判定ファイルの封印もそのときに自動で行われます）。
 - 検査で問題が見つかったときは、問題の一覧を添えて、あなたはもう一度呼ばれます。
 - ユーザーに質問を返すことはできません（答える人がいません）。GM ガイドの「0. ヒアリング」は、聞かずに自分で決めて、決めたことを \`ASSUMPTIONS.md\` に書く、に読み替えてください。
-- 環境変数: \`MASUME_DIR\`（ルート）、\`MASUME_BIN\`（masume の実行ファイル。\`node "$MASUME_BIN" …\` で呼べます）、\`MASUME_WISH\`（願い）、\`MASUME_PROMPT_FILE\`（この依頼書のファイル）。
-- この依頼書と GM ガイドが食い違ったら、この依頼書を優先してください。ガイドの「手順 7」の \`masume new\` / \`masume seal\` / \`masume serve\` は、あとで masume が代わりに行うので、あなたはしません。
+- 環境変数: \`MASUME_DIR\`（ルート）、\`MASUME_BIN\`（gridhub の実行ファイル。\`node "$MASUME_BIN" …\` で呼べます）、\`MASUME_WISH\`（願い）、\`MASUME_PROMPT_FILE\`（この依頼書のファイル）。
+- この依頼書と GM ガイドが食い違ったら、この依頼書を優先してください。ガイドの「8. 書いて、確かめて、始める」にある \`gridhub new\` / \`gridhub seal\` / \`gridhub serve\` は、あとで gridhub が代わりに行うので、あなたはしません（\`gridhub validate\` だけは、下の「5. 終わる前に確かめること」のとおり自分で走らせます）。
 
 ## 3. やってほしいこと（GM の仕事は2つだけです）
 
@@ -85,7 +85,7 @@ ${NEWS_GUIDE.map((line, index) => `${index === 0 ? '-' : '  -'} ${line}`).join('
 - 判定は E2E です。単体テストではなく、外から叩きます（CLI を実行して出力を見る、HTTP を叩く、生成物を検査する、など）。
 - 本物の外部サービス・本物の鍵は使いません（フェイク、サンドボックス、録画データを使う）。
 - 何度走らせても同じ結果になるようにします（一時ディレクトリを使い、後片付けする）。累積判定で何度も再実行されます。
-- 判定は Node.js 20 以上の標準ライブラリだけで書き、外部パッケージのインストールを要求しません（\`node checks/xxx.mjs\` や \`node --test checks/xxx.test.mjs\`）。判定の中で \`node --test\` を入れ子に呼ぶときは、環境変数 \`NODE_TEST_CONTEXT\` を外してください（残すと何も走らずに通ってしまいます）。
+- 判定は Node.js 22 以上の標準ライブラリだけで書き、外部パッケージのインストールを要求しません（\`node checks/xxx.mjs\` や \`node --test checks/xxx.test.mjs\`）。判定の中で \`node --test\` を入れ子に呼ぶときは、環境変数 \`NODE_TEST_CONTEXT\` を外してください（残すと何も走らずに通ってしまいます）。
 - 判定が走るとき、環境変数 \`MASUME_ROOT\`（ルート）、\`MASUME_CHARACTER\`、\`MASUME_NODE\` が渡されます。
 - 落ちるときは、何が足りないのかが1行で読める出力にします。ゲートの判定は、どのモジュールのせいか分かる箇所で \`MASUME_BLAME: <キャラクターID>\` の行を出します。
 
@@ -97,7 +97,7 @@ ${NEWS_GUIDE.map((line, index) => `${index === 0 ? '-' : '  -'} ${line}`).join('
 ## 4. やってはいけないこと
 
 - **アプリそのものは実装しない。** 機能のコード、画面、データベースの実体を書かないでください。書いてよいのは、地図・判定ファイル・約束の文書だけです（設定ファイルが要るなら最小限）。
-- \`.masume/\` を作らない・触らない。\`masume new\` や \`masume seal\` を自分で実行しない。
+- \`.masume/\` を作らない・触らない。\`gridhub new\` や \`gridhub seal\` を自分で実行しない。
 - git の書き込み操作（commit / push / reset / checkout / stash など）をしない。
 - 外部パッケージのインストールや、外部ネットワークへの通信が必要な判定を書かない。
 - 地図を \`quest.map.json\` 以外の場所や名前で置かない。
@@ -150,7 +150,7 @@ export function buildRetryPrompt({ original, problems, warnings = [], missing = 
     lines.push('ユーザーへの質問や説明だけで終わらず、いま `quest.map.json` を書いてください。');
   } else if (problems.length > 0) {
     lines.push('# 依頼書（やり直し） — quest.map.json を直してください', '');
-    lines.push(`前回の仕事のあと、masume が \`quest.map.json\` を検査したところ、次の問題が見つかりました（${attempt}回目のやり直し）。`);
+    lines.push(`前回の仕事のあと、gridhub が \`quest.map.json\` を検査したところ、次の問題が見つかりました（${attempt}回目のやり直し）。`);
     lines.push('', '```', ...problems, '```', '');
     lines.push('`quest.map.json` を直して、同じ場所（ルート直下）に書き直してください。');
     lines.push('- いまの `quest.map.json` はルートにあります。読んで、問題の箇所を直してください（最初から書き直さなくてかまいません）。');

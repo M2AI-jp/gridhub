@@ -747,6 +747,7 @@ body.in-lobby #curse { display: none; }
   .desk { display: flex; flex-direction: column; height: auto; padding: 0 16px 16px; }
   #rail { display: contents; }
   #party { order: 1; max-height: none; }
+  #party-controls { position: static; }
   .party-list { flex-direction: row; overflow-x: auto; padding-top: 16px; }
   .party-card { min-width: 210px; }
   .party-foot { display: none; }
@@ -822,7 +823,8 @@ body.in-lobby #curse { display: none; }
 .live[data-mode='lobby']::before { content: '🔮 '; }
 
 /* ---------- 第2章: 出撃 ---------- */
-#party-controls { padding: 10px 12px 12px; border-top: 1.5px dashed rgba(29, 43, 92, 0.3); display: flex; flex-direction: column; gap: 8px; background: var(--paper); }
+/* 「出撃させる」は、なかまの欄が長くても隠れないように、欄の下に貼り付く */
+#party-controls { position: sticky; bottom: 0; z-index: 1; padding: 10px 12px 12px; border-top: 1.5px dashed rgba(29, 43, 92, 0.3); display: flex; flex-direction: column; gap: 8px; background: var(--paper); }
 .act.sortie { margin: 0; background: #ffe45c; color: var(--ink); font-size: 16px; padding: 9px 12px 8px; }
 .act.sortie::before { content: '📯 '; }
 #party-status { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-soft); min-height: 24px; font-family: var(--hand); }
@@ -916,7 +918,7 @@ body.in-lobby #stage { min-height: 70vh; }
     linear-gradient(rgba(143, 195, 218, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(143, 195, 218, 0.4) 1px, transparent 1px);
   background-size: auto, 16px 16px, 16px 16px; border-radius: 3px; box-shadow: 0 30px 50px -20px rgba(30, 20, 5, 0.75); transform: rotate(-0.6deg); }
 .ending-kicker { margin: 0; font-family: var(--hand); font-weight: 700; letter-spacing: 3px; color: var(--red); }
-.ending-card h2 { font-family: var(--marker); font-weight: 400; font-size: 28px; margin: 4px 0 12px; }
+.ending-card h2 { font-family: var(--marker); font-weight: 400; font-size: 28px; margin: 4px 100px 12px 0; } /* 右はハンコのぶん空ける（長い題がハンコの下に入らない） */
 .ending-stamp { position: absolute; right: 22px; top: 14px; width: 104px; height: 104px; border-radius: 50%; border: 6px double var(--red); color: var(--red); display: grid; place-items: center; font-family: var(--marker); font-size: 26px; transform: rotate(-14deg); background: rgba(255, 255, 255, 0.6); }
 #ending-text p { font-family: var(--hand); font-size: 16px; line-height: 1.7; margin: 0 0 4px; padding-right: 96px; }
 #ending-text p:first-child { font-weight: 700; font-size: 18px; }
@@ -938,6 +940,7 @@ body.in-lobby #stage { min-height: 70vh; }
   .ending-card { padding: 22px 18px 18px 38px; }
   #ending-text p { padding-right: 0; }
   .ending-stamp { width: 72px; height: 72px; font-size: 18px; top: 8px; right: 10px; }
+  .ending-card h2 { margin-right: 70px; }
 }
 
 /* 書体の予熱（見えない。index.html の .font-warm） */

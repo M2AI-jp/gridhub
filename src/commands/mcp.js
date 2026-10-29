@@ -16,7 +16,7 @@ function packageVersion(repo) {
   }
 }
 
-/** masume mcp [--dir D] — 標準入出力の MCP サーバー（CONTRACTS §19）。stdout はプロトコル専用。 */
+/** gridhub mcp [--dir D] — 標準入出力の MCP サーバー（CONTRACTS §19）。stdout はプロトコル専用。 */
 export async function run(argv, ctx) {
   let values;
   try {
@@ -27,7 +27,7 @@ export async function run(argv, ctx) {
       allowPositionals: false,
     }));
   } catch {
-    throw usageError('引数が不正です。使い方: masume mcp [--dir D]');
+    throw usageError('引数が不正です。使い方: gridhub mcp [--dir D]');
   }
   if (values.dir !== undefined && !values.dir.trim()) {
     throw usageError('--dir に冒険の書のある場所を指定してください');
@@ -39,6 +39,6 @@ export async function run(argv, ctx) {
     : env.MASUME_DIR ? resolve(ctx.cwd, env.MASUME_DIR)
       : (findRoot(ctx.cwd) ?? resolve(ctx.cwd));
 
-  process.stderr.write(`masume mcp: 冒険の書の場所は ${root}\n`);
+  process.stderr.write(`gridhub mcp: 冒険の書の場所は ${root}\n`);
   return serveMcp({ root, bin: ctx.bin, repo: ctx.root, cwd: ctx.cwd, env, version: packageVersion(ctx.root) });
 }

@@ -10,6 +10,9 @@ import { newsProblems } from './news.js';
 import { buildPrompt, buildRetryPrompt } from './prompt.js';
 import { AGENT_KINDS, fileEntry, printSetup, setupProject } from './setup.js';
 
+// GM の作業ファイル（依頼書の控えと GM の出力）。利用者のコミットに入らないように .gitignore に足す（最初のコミットより前に書く）
+const QUEST_IGNORE = ['quest-prompt-*.txt', 'quest.log'];
+
 const { MasumeError } = engine;
 const DEFAULT_RETRIES = 2;
 const PROMPT_HEAD_LINES = 40;
@@ -58,7 +61,7 @@ function summarize(root, view, wish) {
 function prepareProject(root, { gm, override, allowListen, ctx }) {
   const requested = (gm ?? (override ? '' : 'claude')).trim();
   try {
-    return setupProject({ root, agent: AGENT_KINDS.includes(requested) ? requested : undefined, allowListen }, ctx);
+    return setupProject({ root, agent: AGENT_KINDS.includes(requested) ? requested : undefined, allowListen, ignore: QUEST_IGNORE }, ctx);
   } catch (error) {
     return { root, files: [], error: error.message };
   }
@@ -74,17 +77,17 @@ function printSummary(say, { root, cwd, bin }, s) {
   say(`  瓦版の話題: ${s.news.count} 件`);
   for (const problem of s.news.problems) say(`  ※ ${problem}`);
   if (s.unsealed.length > 0) {
-    say(`  ※ 判定ファイルがまだ無いマス: ${s.unsealed.join('、')}（キャラクターが着く前に masume seal <マス> で封印してください）`);
+    say(`  ※ 判定ファイルがまだ無いマス: ${s.unsealed.join('、')}（キャラクターが着く前に gridhub seal <マス> で封印してください）`);
   }
-  if (s.setup.error) say(`※ 支度（AGENTS.md ほか）に失敗しました: ${s.setup.error}\n  あとで masume init${root === cwd ? '' : ` --dir ${quote(root)}`} を打ってください`);
+  if (s.setup.error) say(`※ 支度（AGENTS.md ほか）に失敗しました: ${s.setup.error}\n  あとで gridhub init${root === cwd ? '' : ` --dir ${quote(root)}`} を打ってください`);
   else printSetup(say, s.setup);
   if (s.beginning?.commit) say(`  最初のコミット: ${s.beginning.commit.slice(0, 7)} gridhub: 冒険のはじまり`);
   say(engine.recordLine(s));
   say('');
   say('次の一手:');
-  say(`  盤面を開く      masume serve${dir}`);
-  say(`  パーティ出撃    masume party${dir}`);
-  say(`（masume が PATH に無いときは、masume の代わりに node ${quote(bin)} と打ってください）`);
+  say(`  盤面を開く      gridhub serve${dir}`);
+  say(`  パーティ出撃    gridhub party${dir}`);
+  say(`（gridhub が PATH に無いときは、gridhub の代わりに node ${quote(bin)} と打ってください。別名の masume serve / masume party でも同じです）`);
 }
 
 function printDryRun({ out, gm, command, root, override, prompt, promptFile, exists, json }) {

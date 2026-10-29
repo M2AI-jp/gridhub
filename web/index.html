@@ -34,6 +34,7 @@
       </div>
       <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
       <span id="live" class="pill live" data-mode="off">…</span>
+      <button id="ending-open" class="mini-btn" type="button" hidden title="この章のエンディングをもう一度読む">🏁 エンディング</button>
       <button id="sound" class="mini-btn" aria-pressed="false">♪ 音なし</button>
     </div>
   </header>
@@ -118,6 +119,7 @@
             </div>
             <button id="start-quest" class="act quest" type="submit" disabled>冒険をはじめる</button>
             <p class="hint">GM は地図（quest.map.json）と最初の判定（E2E）を書くだけで、アプリは作りません。作るのは、このあと出撃させるキャラクターたちです。</p>
+            <p class="hint">GM には手元の Claude Code（<code>claude</code>）か Codex CLI（<code>codex</code>）を使います。どちらも<b>確認なしにファイルを読み書きし、コマンドを実行する</b>設定で起動します（<code>claude -p --permission-mode bypassPermissions</code> / <code>codex exec -s workspace-write</code>）。本物の LLM を呼ぶので、数分の時間と利用料がかかります。</p>
           </form>
           <div id="quest-progress" hidden data-state="idle">
             <p id="quest-phase" class="quest-phase"></p>
@@ -195,7 +197,7 @@
   <dialog id="sortie-modal" aria-labelledby="sortie-title">
     <form id="sortie-form" method="dialog">
       <h2 id="sortie-title">出撃させる</h2>
-      <p class="hint">選んだキャラクターごとにエージェントを1人ずつ出撃させます。エージェントは指令書を読み、いちばん手前の落ちているテストから1件ずつ倒して進みます（作戦で、どこまで進むかが変わります）。中ボス（結合テスト）はパーティがします。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b></p>
+      <p class="hint">選んだキャラクターごとにエージェントを1人ずつ出撃させます。エージェントは指令書を読み、いちばん手前の落ちているテストから1件ずつ倒して進みます（作戦で、どこまで進むかが変わります）。中ボス（結合テスト）はパーティがします。<b>本物の LLM を呼ぶので、時間と利用料がかかります。</b> エージェントは、<b>確認なしにファイルを読み書きし、コマンドを実行する</b>設定で起動します（Claude は <code>--permission-mode bypassPermissions</code>、Codex は <code>-s workspace-write</code> の箱）。</p>
       <div class="field-row">
         <label class="field"><span>エージェント</span>
           <select id="sortie-agent"><option value="claude">Claude</option><option value="codex">Codex</option></select>
