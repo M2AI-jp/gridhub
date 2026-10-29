@@ -1,6 +1,7 @@
 import { inspectLog } from '../engine/store.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { recordLine } from '../engine/record.js';
+import { t } from '../engine/words.js';
 
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx);
@@ -10,11 +11,11 @@ export async function run(argv, ctx) {
   const result = { ok, errors, warnings, head };
   if (options.json) console.log(JSON.stringify(result));
   else if (!ok) {
-    console.log(`冒険の書は呪われています（seq ${errors[0].seq}）`);
+    console.log(t('verify.cursed', errors[0].seq));
     for (const { seq, code, message } of errors) console.log(`[${code}] seq ${seq}: ${message}`);
   } else {
-    console.log('冒険の書は正常です');
-    if (head) console.log(`${recordLine(head)}（鎖の先頭 ${head.hash.slice(0, 12)}）`);
+    console.log(t('verify.ok'));
+    if (head) console.log(t('verify.head', recordLine(head), head.hash.slice(0, 12)));
   }
   return ok ? 0 : 3;
 }

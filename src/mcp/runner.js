@@ -1,5 +1,6 @@
 // CLI（bin/masume.js）を子プロセスとして呼ぶ。MCP の道具の中身は CLI と同じ（CONTRACTS §19）。
 import { spawn } from 'node:child_process';
+import { wordsMode } from '../engine/words.js';
 
 const MAX_OUTPUT = 200_000; // 文字数。超えたら先頭を捨てる（判定の失敗理由は末尾にある）
 const DEFAULT_TIMEOUT_MS = 30 * 60 * 1000;
@@ -22,7 +23,7 @@ function timeoutMs(env) {
  * 起動できなければ code=127。呼び出し側は kill() で途中で止められる。
  */
 export function runCli({ bin, args, cwd, env }) {
-  const childEnv = { ...env };
+  const childEnv = { ...env, GRIDHUB_WORDS: wordsMode() }; // 子（gridhub brief など）にも、いまのことばを伝える（§76）
   // 入れ子の判定（node --test）が何も走らずに通ってしまわないように
   delete childEnv.NODE_TEST_CONTEXT;
 

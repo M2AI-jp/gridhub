@@ -2,12 +2,13 @@ import { MasumeError } from './errors.js';
 import { latestMargin } from './margins.js';
 import { inspectLog, requireHealthy } from './store.js';
 import { buildView } from './view.js';
+import { t } from './words.js';
 
 export function brief(root, characterId) {
   const view = buildView(root);
   requireHealthy(view.integrity);
   const character = view.characters.find(({ id }) => id === characterId);
-  if (!character) throw new MasumeError('E_UNKNOWN', `キャラクターが見つかりません: ${characterId}`);
+  if (!character) throw new MasumeError('E_UNKNOWN', t('err.unknown.char', characterId));
   const current = character.at === null ? null : view.nodes[character.at];
   const visibleIds = character.path.slice(character.pos + 1, character.pos + 1 + character.vision);
   const notes = inspectLog(root).events
@@ -51,13 +52,6 @@ export function brief(root, characterId) {
     save: view.quest.save ?? null,
     margin: latestMargin(view.margins, characterId),
     notes,
-    rules: [
-      '1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる',
-      '現在のマスだけをやる',
-      '自分の縄張りの中だけを編集する',
-      '判定ファイルと地図を変更しない',
-      '判定コマンドを自分で走らせ、結果を確認する',
-      '宣言判定と日誌で進行を冒険の書に記録する',
-    ],
+    rules: ['rule.step', 'rule.current', 'rule.territory', 'rule.seal', 'rule.run', 'rule.record'].map((key) => t(key)),
   };
 }

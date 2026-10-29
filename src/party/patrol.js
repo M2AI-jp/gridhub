@@ -9,6 +9,10 @@ import { launch } from './agents.js';
 import { startBoss } from './boss.js';
 import { buildPrompt, sq } from './prompt.js';
 import { DEFAULT_TACTIC, TACTICS } from './tactics.js';
+import { isDev, t } from '../engine/words.js';
+
+/** いまのことばの字（冒険 / 開発。§76）。既定（冒険）の字は判定が見ているので変えない */
+const pick = (game, dev) => (isDev() ? dev : game);
 
 const ACTOR = 'party';
 const LOST_AFTER = 2; // 進めずに帰還したことが続いたら迷子
@@ -60,7 +64,7 @@ export class Party {
   }
 
   say(text) {
-    this.out(`[${clock()}] 軍師: ${text}`);
+    this.out(`[${clock()}] ${pick('軍師', 'party')}: ${text}`);
   }
 
   // ---- 外から呼ぶ ----
@@ -83,7 +87,7 @@ export class Party {
       const view = buildView(this.root);
       if (view.integrity.ok) return view;
       if (i >= 5) {
-        throw new MasumeError('E_CURSED', `冒険の書は呪われています（seq ${view.integrity.errors[0].seq}）。verify / repair で確認してください`, 3);
+        throw new MasumeError('E_CURSED', t('err.cursed', view.integrity.errors[0].seq, null), 3);
       }
       await sleep(150);
     }
@@ -110,7 +114,7 @@ export class Party {
       if (error.code !== 'E_BUSY') throw error;
       // ほかの指揮役がすでに出撃させている。そのキャラクターは外して、自分の出撃は続ける（§26.2）
       this.busyHits.set(c.id, (this.busyHits.get(c.id) ?? 0) + 1);
-      this.say(`${c.id}（${c.name}）はほかの指揮役がすでに出撃させているので、出撃させません`);
+      this.say(pick(`${c.id}（${c.name}）はほかの指揮役がすでに出撃させているので、出撃させません`, `${c.id}（${c.name}）はほかの party がすでに起動しているので、起動しません`));
       return false;
     }
     this.busyHits.delete(c.id);
@@ -139,7 +143,7 @@ export class Party {
       });
     this.active.set(c.id, entry);
     const title = view.nodes[c.at]?.title ?? '';
-    this.say(`出撃 ${c.id}（${c.name}） @ ${c.at}「${title}」 [${this.agent.name}${this.agent.model ? ` ${this.agent.model}` : ''}] seq ${event.seq}`);
+    this.say(`${pick('出撃', '起動')} ${c.id}（${c.name}） @ ${c.at}「${title}」 [${this.agent.name}${this.agent.model ? ` ${this.agent.model}` : ''}] seq ${event.seq}`);
     if (this.interrupted) handle.stop('interrupt');
     return true;
   }
@@ -151,7 +155,7 @@ export class Party {
     } catch (error) {
       if (error.code !== 'E_USAGE') throw error;
       // 誰かが先に帰還を記録した（GM が return したなど）。こちらは記録せず、巡回は続ける
-      this.say(`帰還 ${c.id}（${c.name}） seq ${entry.seq} はもう帰還が記録されています（code ${code}）`);
+      this.say(pick(`帰還 ${c.id}（${c.name}） seq ${entry.seq} はもう帰還が記録されています（code ${code}）`, `終了 ${c.id}（${c.name}） seq ${entry.seq} はもう終了が記録されています（code ${code}）`));
       return null;
     }
     this.returned++;
@@ -166,15 +170,15 @@ export class Party {
       if (n >= LOST_AFTER) this.lost.add(c.id);
     }
     const reason = code === 124 ? '（時間切れ）' : code === 130 ? '（中断）' : code === 127 ? '（起動できない）' : '';
-    this.say(`帰還 ${c.id}（${c.name}） ${before} → ${after ?? 'あがり'} ${advanced ? '進んだ' : '進めなかった'} code ${code}${reason} seq ${event.seq}`);
-    if (!advanced && this.lost.has(c.id)) this.say(`${c.id}（${c.name}）は ${LOST_AFTER} 回続けて進めなかったので、迷子として出撃をやめます`);
+    this.say(`${pick('帰還', '終了')} ${c.id}（${c.name}） ${before} → ${after ?? t('goal')} ${advanced ? '進んだ' : '進めなかった'} code ${code}${reason} seq ${event.seq}`);
+    if (!advanced && this.lost.has(c.id)) this.say(pick(`${c.id}（${c.name}）は ${LOST_AFTER} 回続けて進めなかったので、迷子として出撃をやめます`, `${c.id}（${c.name}）は ${LOST_AFTER} 回続けて進めなかったので、起動をやめます`));
     return event;
   }
 
   // ---- ボス戦 ----
 
   async boss(gate) {
-    this.say(`ボス戦: ${gate.id}「${gate.title}」（メンバー: ${gate.members.join('、')}）`);
+    this.say(`${pick('ボス戦', '結合テスト')}: ${gate.id}「${gate.title}」（メンバー: ${gate.members.join('、')}）`);
     // ボス戦は子プロセスで起こす。中断のときは、判定のシェルとその子孫まで止められるように（§26.4）
     const fight = startBoss({ bin: this.bin, root: this.root, env: this.env, gate: gate.id });
     this.fight = fight;
@@ -193,16 +197,16 @@ export class Party {
       if (code === 'E_CURSED' || exitCode === 3) throw new MasumeError('E_CURSED', message, 3);
       const tries = (this.bossTries.get(gate.id) ?? 0) + 1;
       this.bossTries.set(gate.id, tries);
-      this.say(`ボス戦に入れませんでした（${gate.id}）: [${code ?? 'ERROR'}] ${message}`);
+      this.say(pick(`ボス戦に入れませんでした（${gate.id}）: [${code ?? 'ERROR'}] ${message}`, `結合テストを始められませんでした（${gate.id}）: [${code ?? 'ERROR'}] ${message}`));
       if (!BOSS_RETRY.has(code) || tries >= BOSS_TRIES) this.bossBlocked.set(gate.id, message);
       return;
     }
     this.bossTries.delete(gate.id);
     for (const event of outcome.result?.events ?? []) {
       const d = event.data;
-      if (event.type === 'gate_cleared') this.say(`結合ゲート突破: ${d.gate} を ${d.members.join('、')} が突破しました`);
+      if (event.type === 'gate_cleared') this.say(t('check.gate_cleared', d.gate, d.members.join('、')));
       else if (event.type === 'gate_failed') {
-        this.say(`${d.blamed.length === d.members.length ? '全滅' : '差し戻し'}: ${d.gate} の判定失敗（責任: ${d.blamed.join('、')}）`);
+        this.say(t('check.gate_failed', d.blamed.length === d.members.length, d.gate, `責任: ${d.blamed.join('、')}`));
         this.showOutput(event.seq, d.gate);
       }
     }
@@ -236,7 +240,7 @@ export class Party {
 
   async loop() {
     const first = await this.view();
-    this.out(`出撃準備: ${first.quest.title}（エージェント ${this.agent.display}／同時 ${this.parallel}人／上限 ${this.rounds}回${this.only ? `／対象 ${[...this.only].join(',')}` : ''}／作戦: ${this.tactic.name}）`);
+    this.out(`${pick('出撃準備', '起動準備')}: ${first.quest.title}（エージェント ${this.agent.display}／同時 ${this.parallel}${pick('人', '')}／上限 ${this.rounds}回${this.only ? `／対象 ${[...this.only].join(',')}` : ''}／作戦: ${this.tactic.name}）`);
     for (;;) {
       if (this.fatal) throw this.fatal;
       if (this.interrupted) return this.finishInterrupted();
@@ -245,7 +249,7 @@ export class Party {
       if (view.finished) {
         await Promise.allSettled([...this.active.values()].map((e) => e.promise));
         if (this.fatal) throw this.fatal;
-        this.out(`あがり！ ${view.quest.title} を最後まで走りきりました（${recordLine(view.head)}）`);
+        this.out(pick(`あがり！ ${view.quest.title} を最後まで走りきりました（${recordLine(view.head)}）`, `完了！ ${view.quest.title} を最後まで走りきりました（${recordLine(view.head)}）`));
         return 0;
       }
 
@@ -316,9 +320,9 @@ export class Party {
   }
 
   async finishInterrupted() {
-    this.say('中断します。出撃中のエージェントを止めて、帰還を記録します');
+    this.say(pick('中断します。出撃中のエージェントを止めて、帰還を記録します', '中断します。実行中のエージェントを止めて、終了を記録します'));
     await Promise.allSettled([...this.active.values()].map((e) => e.promise));
-    this.say(`中断しました（出撃 ${this.launched}回・帰還 ${this.returned}回）`);
+    this.say(`中断しました（${pick('出撃', '起動')} ${this.launched}回・${pick('帰還', '終了')} ${this.returned}回）`);
     return 130;
   }
 
@@ -331,33 +335,33 @@ export class Party {
       reasons.push(`エージェントを起動できません: ${unlaunchable.why}。${hint}`);
     }
     if (stamps.length) {
-      reasons.push(`ハンコ待ち: ${[...new Set(stamps)].join('、')}`);
+      reasons.push(`${pick('ハンコ待ち', '承認待ち')}: ${[...new Set(stamps)].join('、')}`);
     }
     if (unsealed.size) {
-      reasons.push(`未封印: ${[...unsealed].join('、')}（判定ファイルがまだ封印されていないので、出撃させません）`);
+      reasons.push(pick(`未封印: ${[...unsealed].join('、')}（判定ファイルがまだ封印されていないので、出撃させません）`, `ハッシュ未記録: ${[...unsealed].join('、')}（判定ファイルのハッシュがまだ記録されていないので、起動しません）`));
     }
     if (this.lost.size) {
-      reasons.push(`迷子: ${[...this.lost].join('、')}（${LOST_AFTER}回続けて進めなかった）`);
+      reasons.push(`${pick('迷子', '進めない担当')}: ${[...this.lost].join('、')}（${LOST_AFTER}回続けて進めなかった）`);
     }
     if (exhausted) reasons.push(`巡回の上限: --rounds ${this.rounds} を使い切りました`);
-    for (const [gate, why] of this.bossBlocked) reasons.push(`ボス戦に入れません: ${gate}（${why}）`);
+    for (const [gate, why] of this.bossBlocked) reasons.push(`${pick('ボス戦に入れません', '結合テストを始められません')}: ${gate}（${why}）`);
     for (const c of foreign) {
       const seq = c.sortie?.seq;
       reasons.push(seq === undefined
-        ? `ほかの指揮役が出撃させています: ${c.id}`
-        : `出撃中の記録が残っています: ${c.id}（seq ${seq}）。止まっているなら node ${sq(this.bin)} return ${c.id} --sortie ${seq} --code 130 --dir ${sq(this.root)}`);
+        ? pick(`ほかの指揮役が出撃させています: ${c.id}`, `ほかの party が起動しています: ${c.id}`)
+        : pick(`出撃中の記録が残っています: ${c.id}（seq ${seq}）。止まっているなら node ${sq(this.bin)} return ${c.id} --sortie ${seq} --code 130 --dir ${sq(this.root)}`, `起動中の記録が残っています: ${c.id}（seq ${seq}）。止まっているなら node ${sq(this.bin)} return ${c.id} --sortie ${seq} --code 130 --dir ${sq(this.root)}`));
     }
-    if (!reasons.length) reasons.push('進められるキャラクターがいません');
-    this.say(`止まります（出撃 ${this.launched}回・帰還 ${this.returned}回）`);
+    if (!reasons.length) reasons.push(pick('進められるキャラクターがいません', '進められる担当がいません'));
+    this.say(`止まります（${pick('出撃', '起動')} ${this.launched}回・${pick('帰還', '終了')} ${this.returned}回）`);
     for (const r of reasons) this.out(`  ${r}`);
     for (const id of new Set(stamps)) {
       const node = view.nodes[id];
       const by = node.check?.by ?? '<humanId>';
-      this.out(`  ハンコは: node ${sq(this.bin)} stamp ${id} --as ${by} --dir ${sq(this.root)}`);
+      this.out(`  ${pick('ハンコは', '承認は')}: node ${sq(this.bin)} stamp ${id} --as ${by} --dir ${sq(this.root)}`);
     }
     if (unsealed.size) {
       const ids = [...unsealed].join(' ');
-      this.out(`  封印の案内（GM の仕事です）: gridhub seal ${ids} — node ${sq(this.bin)} seal ${ids} --dir ${sq(this.root)}`);
+      this.out(`  ${pick('封印の案内', 'ハッシュの記録')}（GM の仕事です）: gridhub seal ${ids} — node ${sq(this.bin)} seal ${ids} --dir ${sq(this.root)}`);
     }
     return 2;
   }

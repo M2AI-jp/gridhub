@@ -7,6 +7,7 @@ import { casesOf } from './cases.js';
 import { marginTracker } from './margins.js';
 import { containedFile } from './paths.js';
 import { replay } from './state.js';
+import { t } from './words.js';
 
 const JUDGED = new Set(['check_passed', 'check_failed', 'gate_cleared', 'gate_failed', 'stepped']);
 // 第10章までのイベント（data.cases が無い）の読み直しは、出力のハッシュごとに覚えておく。
@@ -213,22 +214,22 @@ export function endingText(map, stats) {
   const party = names.length > 1 ? `${names.slice(0, -1).join('、')} と ${names.at(-1)}` : names[0];
   const goal = map.nodes[map.quest.goal];
   const lines = [];
-  lines.push(`テスト ${stats.defeated}/${stats.tests} が通った。魔王の城 ${map.quest.goal}「${goal?.title ?? ''}」、陥落。`);
+  lines.push(t('ending.1', stats.defeated, stats.tests, map.quest.goal, goal?.title ?? ''));
   lines.push(stats.fails === 0
-    ? `${party} は、一度も倒れずにここまで来た。`
-    : `${party} は ${stats.fails} 度倒れ、そのたびに町から立ち上がった。`);
+    ? t('ending.2.clean', party)
+    : t('ending.2.fell', party, stats.fails));
   lines.push(stats.medals > 0
-    ? `一発で抜けたダンジョンは ${stats.medals}。ちいさなメダルが、袋の中で鳴っている。`
-    : '一発で抜けたダンジョンはなかった。それでも、出口はすべて越えた。');
+    ? t('ending.3.medals', stats.medals)
+    : t('ending.3.none'));
   if (stats.strong > 0) {
-    lines.push(`何度も負けた強敵を ${stats.strong} 体倒した。${stats.skills > 0 ? `その手ごたえは ${stats.skills} つの技になり、次の代へ渡る。` : 'その手ごたえは、まだ日誌に書かれていない。'}`);
+    lines.push(t('ending.4', stats.strong, stats.skills));
   }
-  if (stats.revived > 0) lines.push(`倒したはずのテストが ${stats.revived} 度よみがえった。気づいて、もう一度倒した。`);
-  if (stats.treasures > 0) lines.push(`判定のほころびを見つけて、宝箱を ${stats.treasures} つ開けた。`);
-  if (stats.traps > 0) lines.push(`封印に手をかけた跡が ${stats.traps} つ。冒険の書は、それも覚えている。`);
+  if (stats.revived > 0) lines.push(t('ending.5', stats.revived));
+  if (stats.treasures > 0) lines.push(t('ending.6', stats.treasures));
+  if (stats.traps > 0) lines.push(t('ending.7', stats.traps));
   lines.push(stats.sorties > 0
-    ? `出撃 ${stats.sorties} 回。代は替わっても、日誌と技は受け継がれた。`
-    : 'この章は、出撃なしで歩ききった。');
-  lines.push(`――『${map.quest.title}』、ひとつの章が幕を閉じる。次のページは、まだ白い。`);
+    ? t('ending.8.sorties', stats.sorties)
+    : t('ending.8.none'));
+  lines.push(t('ending.9', map.quest.title));
   return lines.join('\n');
 }

@@ -1442,3 +1442,20 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 4. **アプリの中の言い換え**（§74.3）は、いまの言い方のボタンの名前になる: 冒険は「歩く」「宣言判定」「ハンコを押す」「手で進める」、開発は「テストを走らせる」「判定する」「承認する」「手動で進める」（かっこ書きの説明は外す）。
 5. 判定: `B22`。既定が冒険のことばで、判定が見ている字（「手で進める」「宣言判定」「歩く」「出撃中」「GitHub に送っていないセーブ: N」「町でセーブしたら GitHub に送る」「フォルダを選ぶ」「チュートリアルで遊ぶ」「冒険の書が呪われています」など）は冒険のことばのまま。
 
+## 76. ことばを CLI・MCP・文書にも（冒険のことば / 開発のことば）
+
+監督（ユーザー）の指示: 「CLI と RULEBOOK も同じ方針で直して。というか全部ね。顧客の目に触れるところはすべてデザインであり UX」。§75 の方針（1つの文に2つの言い方を並べない・1つの切り替えで全部が変わる）を、盤面の外にも広げる。
+
+1. **書記**（`src/engine/words.js`）: Node 側の辞書 `t(key, …引数)`（key ごとに `{game, dev}`）と、決め方。`resolveWords({ root, env, flag })` は `--words game|dev` > 環境変数 `GRIDHUB_WORDS` > `<root>/.masume/words.json` の `words` > `game` の順で決め、`wordsMode()`・`isDev()` で読める。`wordsSetting(root)`・`setWordsSetting(root, mode)` で冒険ごとの設定を読み書きする（`.masume/git.json` と同じ置き場・書き方。Git には入れてよい）。
+   - `parseArgs`（`src/engine/cli.js`）は `--words` を受け、`guessRoot` で冒険の書の場所を推し量って `resolveWords` する。自分で引数を読むコマンド（quest・party・init・serve・app・mcp）も `--words` を受け、同じ順で決める。`serve` と `app` の `--words` は、そのサーバーのあいだ環境変数と同じ強さで効く。
+   - `gridhub words [game|dev]`: 引数なしで、いまの言い方と何で決まったか（`--words で指定` / `環境変数 GRIDHUB_WORDS` / `この冒険の設定 .masume/words.json` / `既定`）。引数をつけると `.masume/words.json` に書く（冒険の書が無ければ `E_NO_GAME`）。`--json` で `{words, source}`。
+   - 字を辞書から出すもの: 受付係（`bin/gridhub.js` の `--help`・一覧・担当の役名。開発のことばでは役を `engine`・`server`・`party`・`quest`・`linear/jira`・`mac` と出す）、`brief`・`status`・`step`・`check`・`stamp`・`note`・`verify`・`repair`・`load`・`new`・`seal`・`amend`・`remote`・`push`・`serve` の知らせ、冒険の書のログの文（§5 の `text`。`view.js`）、道の余白の文（§53。`margins.js`）、エンディング（§42.1。`chronicle.js`）、`E_*` のエラー文（`store`・`game`・`checks`・`save`・窓口）。
+   - **既定（冒険のことば）の字は、判定（tests/e2e）が見ているものを変えない**（`歩いた:`・`いちばん手前のモンスター:`・`全部倒した。出口で宣言する: gridhub check <id>`・`判定成功:`・`結合ゲート突破:`・`全滅`／`差し戻し`・`冒険の書は正常です`・`呪われています`・`X が出撃した（…）`・`X が帰還した（…）`・`X の縄張りを commit … に戻した（墓: stash …）`・`GitHub に送っていないセーブ: N`・`町でセーブしたら GitHub に送る: オン|オフ`・`ルールブック: docs/RULEBOOK.md` で終わる `--help` など）。開発のことばは、§75.1 の語（テスト・通った・再び落ちた・タスク・判定（check・累積）・テストを走らせる（step）・セーブポイント・結合テスト・完了・承認・担当ファイル・作業指示・メモ・引き継ぎメモ・起動・終了・起動 N回目・ほかの担当・セーブデータ・整合性エラー・stash・ハッシュ記録）でそろえる。
+   - 変えない字（どちらでも同じ）: `記録: seq N / Git: commit xxxxxxx`、`テスト p/t`、`Lv`・`経験値`、作戦の名前、`箱のソケット:` の行、`盤面: http://…`、コミットメッセージ（`gridhub save: …`・`gridhub: 冒険のはじまり`）、Linear・Jira へ書き出す字、`[E_…]` のコード、GM へのプロンプト（`src/quest/prompt.js`）。
+2. **伝令**（`src/server/index.js`・`src/mcp`）: `GET /api/words` → `{ok, words, set, source}`（`set` は冒険の設定があるか。`source` は `env` / `file` / `default`）。`POST /api/words {words}` → 設定に書き、サーバーの言い方もその場で切り替える（冒険の書が無ければ `E_NO_GAME`。`words` が `game`/`dev` でなければ `E_USAGE`）。起動時は `resolveWords({ root, env })`。`serve --words` と `app --words` は環境変数 `GRIDHUB_WORDS` に写すので、そのサーバーのあいだは設定より優先する。MCP の道具の題・説明・引数の説明と `instructions` も辞書から（`src/mcp/tools.js` の `{game, dev}`）。
+   - 子プロセスにも伝える: 窓口・MCP・軍師（プロンプトの指令書）が `gridhub …` を子で走らせるときは、環境変数 `GRIDHUB_WORDS` にいまの言い方を入れる（子が `--words` も設定も知らなくても、同じ言い方で出る）。
+3. **盤面**（`web/board/words.js`・`app.js`）: 本物の盤面では、URL の `?words=` にもブラウザにも選択が無ければ `GET /api/words` の設定を既定にする（`adoptServerWords`）。切り替えたら `POST /api/words` にも書く（届かなくても切り替えは効く）。見本の盤面（`?fixture=`）は窓口に触らない。
+4. **軍師・語り部**: `gridhub party` の `--help`・巡回の知らせ（出撃／起動・帰還／終了・ボス戦／結合テスト・迷子など）・`--dry-run`・エージェントへのプロンプトの枠の文（`src/party/prompt.js`。既定の文は P6 が見ているので変えない）・作戦の動き方と止まる条件（`src/party/tactics.js` の `dev`。`tacticText()`）。`gridhub quest` の知らせ。`gridhub init`／`quest` が書く AGENTS.md は、いまのことばの版（`src/quest/setup.js` の `agentsMdGame`／`agentsMdDev`。守ることとコマンドは同じ）。
+5. **文書**: 文書ごとに言い方を1つに決める。`docs/RULEBOOK.md` は冒険のことばで、冒頭の「ことばの対応表」1つに開発のことばをまとめる（見出しは `GridHub ルールブック` のまま。§15.2）。`README.md` は開発のことばで、ゲームの言い方は「ゲームと開発の対応表」の節と、盤面の設定の名前（「町でセーブしたら GitHub に送る」など）にだけ出す。`docs/GAME_DESIGN.md` は対応づけの設計文書なので両方が並ぶ（柱 4 をこの方針に改めた）。`docs/GM_GUIDE.md` は地図のデータの名前で書く。判定が見ている語（§73 の README の節・`第N章`・対応表の行・チュートリアルの `gridhub` コマンド）は残す。
+6. 判定: `E19`（書記: `gridhub words`・`--words`・`GRIDHUB_WORDS`・`.masume/words.json`・開発のことばの `brief`／`step`／`status`／ログの文／エラー文）、`S15`（伝令: `GET/POST /api/words`・MCP の道具の説明）、`B22` に盤面と窓口の同期を足す。
+

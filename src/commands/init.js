@@ -1,8 +1,9 @@
 import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { MasumeError } from '../engine/index.js';
+import { MasumeError, findRoot } from '../engine/index.js';
 import { initHelp, wantsHelp } from '../quest/help.js';
 import { fileEntry, printSetup, setupProject } from '../quest/setup.js';
+import { WORDS, resolveWords } from '../engine/words.js';
 
 const USAGE = '使い方: gridhub init [--dir D] [--agent claude|codex [--allow-listen]] [--force] [--json]';
 
@@ -23,6 +24,7 @@ export async function run(argv, ctx) {
         force: { type: 'boolean' },
         'allow-listen': { type: 'boolean' },
         json: { type: 'boolean' },
+        words: { type: 'string' },
       },
       strict: true,
       allowPositionals: false,
@@ -31,6 +33,8 @@ export async function run(argv, ctx) {
     throw new MasumeError('E_USAGE', `引数が不正です（${error.message.split('\n')[0]}）\n${USAGE}`);
   }
   const { values } = parsed;
+  if (values.words !== undefined && !WORDS.includes(values.words)) throw new MasumeError('E_USAGE', `--words は game か dev です: ${values.words}`);
+  resolveWords({ root: values.dir !== undefined ? resolve(ctx.cwd, values.dir) : findRoot(ctx.cwd), env: ctx.env ?? process.env, flag: values.words ?? null });
   for (const key of ['dir', 'agent']) {
     if (values[key] !== undefined && !values[key].trim()) throw new MasumeError('E_USAGE', `--${key} に空文字は指定できません`);
   }

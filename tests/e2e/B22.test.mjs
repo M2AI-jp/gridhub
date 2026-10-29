@@ -5,7 +5,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT, serveStatic, openBrowser } from '../helpers4.mjs';
+import { ROOT, serveStatic, openBrowser, waitUntil } from '../helpers4.mjs';
 
 const WEB = join(ROOT, 'web');
 const READY = 'window.__masume && window.__masume.ready';
@@ -153,4 +153,66 @@ test('§75.5 はじめの画面にも同じボタン。押すと説明が切り�
     await page.close();
     await srv.close();
   }
+});
+
+// ---- §76.3 本物の盤面と窓口の同期（GET/POST /api/words）。窓口は偽物で配る ----
+async function withLive(fn, { words = null, query = '' } = {}) {
+  const posts = [];
+  let setting = words; // 偽の冒険の設定（null なら未設定）
+  const json = (res, status, body) => {
+    res.writeHead(status, { 'content-type': 'application/json' });
+    res.end(JSON.stringify(body));
+  };
+  const readBody = (req) => new Promise((res) => { let b = ''; req.on('data', (d) => (b += d)); req.on('end', () => res(b)); });
+  const srv = await serveStatic(WEB, {
+    'GET /api/state': (req, res) => json(res, 200, base),
+    'GET /api/stream': (req, res) => { res.writeHead(200, { 'content-type': 'text/event-stream' }); res.write('event: hello\ndata: {}\n\n'); },
+    'GET /api/party': (req, res) => json(res, 200, { ok: true, running: false, code: null, log: '', tactic: null, agent: 'claude', parallel: 2, allow_listen: false }),
+    'GET /api/words': (req, res) => json(res, 200, { ok: true, words: setting ?? 'game', set: setting !== null, source: setting ? 'file' : 'default' }),
+    'POST /api/words': async (req, res) => {
+      const body = JSON.parse(await readBody(req));
+      posts.push({ body, masume: req.headers['x-masume'] });
+      setting = body.words;
+      json(res, 200, { ok: true, words: body.words });
+    },
+  });
+  const page = await openBrowser({ width: 1440, height: 900 });
+  try {
+    await page.goto(`${srv.url}/${query}`);
+    await page.waitFor(READY, { timeout: 20000 });
+    await fn(page, posts, srv.url);
+    assert.deepEqual(exceptions(page), [], 'コンソールにエラーがない');
+  } finally {
+    await page.close();
+    await srv.close();
+  }
+}
+
+test('§76.3 本物の盤面は、URL にもブラウザにも選択が無ければ、この冒険の設定（GET /api/words）を既定にする', { timeout: 120000 }, async () => {
+  await withLive(async (page) => {
+    await page.waitFor(`${MODE} === 'dev'`, { timeout: 10000, message: '冒険の設定（dev）が既定になる' });
+    assert.match(await page.eval(text('nav.tabs')), /使い方/);
+    assert.match(await page.eval(`${TOGGLE}.innerText`), /開発のことば/);
+  }, { words: 'dev' });
+  // 設定が無ければ game のまま。?words= があれば URL が勝つ
+  await withLive(async (page) => {
+    assert.equal(await page.eval(MODE), 'game');
+  });
+  await withLive(async (page) => {
+    assert.equal(await page.eval(MODE), 'game', '?words=game が冒険の設定（dev）より優先');
+  }, { words: 'dev', query: '?words=game' });
+});
+
+test('§76.3 本物の盤面で切り替えると、X-Masume 付きで POST /api/words に書く（届かなくても切り替えは効く）', { timeout: 120000 }, async () => {
+  await withLive(async (page, posts) => {
+    await page.eval(`${TOGGLE}.click()`);
+    await page.waitFor(`${MODE} === 'dev'`);
+    await waitUntil(() => posts.length >= 1, { timeout: 5000, message: 'POST /api/words' });
+    assert.deepEqual(posts.map((p) => p.body), [{ words: 'dev' }], `POST /api/words の本文: ${JSON.stringify(posts)}`);
+    assert.equal(posts[0].masume, '1', 'X-Masume: 1');
+    await page.eval(`${TOGGLE}.click()`);
+    await page.waitFor(`${MODE} === 'game'`);
+    await waitUntil(() => posts.length >= 2, { timeout: 5000, message: '2回目の POST /api/words' });
+    assert.deepEqual(posts.map((p) => p.body), [{ words: 'dev' }, { words: 'game' }]);
+  });
 });

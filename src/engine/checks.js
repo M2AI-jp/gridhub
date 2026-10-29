@@ -11,24 +11,25 @@ import { gateParty, isSealed, readyGate, reduceEvent, replay, sealFiles } from '
 import {
   appendEventsLocked, defaultActor, inspectLog, requireHealthy, withLockAsync, writeDurable,
 } from './store.js';
+import { t } from './words.js';
 
 function checkTarget(state, target) {
   const character = state.characters[target];
-  if (character?.status === 'done') throw new MasumeError('E_DONE', `${target} はもうあがっています`);
+  if (character?.status === 'done') throw new MasumeError('E_DONE', t('err.done.char', target));
   const path = character && state.map.characters.find(({ id }) => id === target).path;
   const node = character ? path[character.pos] : target;
   if (state.map.nodes[node]?.type === 'gate') {
-    if (state.nodes[node].cleared) throw new MasumeError('E_DONE', `${node} はもう突破しています`);
+    if (state.nodes[node].cleared) throw new MasumeError('E_DONE', t('err.done.node', node));
     const party = gateParty(state, node);
     if (!party.ready) {
       const names = party.missing.map((id) => state.map.characters.find((member) => member.id === id).name);
-      throw new MasumeError('E_PARTY_INCOMPLETE', `${node} の仲間が揃っていません: ${names.join('、')}`);
+      throw new MasumeError('E_PARTY_INCOMPLETE', t('err.party_incomplete', node, names.join('、')));
     }
     return { node, gate: true, members: party.members, segment: [node] };
   }
-  if (!character) throw new MasumeError('E_UNKNOWN', `キャラクターまたはゲートが見つかりません: ${target}`);
+  if (!character) throw new MasumeError('E_UNKNOWN', t('err.unknown.target', target));
   if (state.map.nodes[node].check.kind === 'stamp') {
-    throw new MasumeError('E_NEEDS_STAMP', `${node} は人間のハンコが必要です`);
+    throw new MasumeError('E_NEEDS_STAMP', t('err.needs_stamp', node));
   }
   const segment = path.slice(character.checkpoint + 1, character.pos + 1)
     .filter((id) => state.map.nodes[id].type === 'task' && state.map.nodes[id].check.kind === 'cmd');
@@ -39,7 +40,7 @@ function brokenSeal(root, state, segment) {
   // 未封印なら、区間のどこにあっても何も記録しない。
   for (const id of segment) {
     if (!isSealed(state.map.nodes[id], state.nodes[id].files)) {
-      throw new MasumeError('E_UNSEALED', `${id} は未封印です。GM に封印を依頼してください`);
+      throw new MasumeError('E_UNSEALED', t('err.unsealed', id));
     }
   }
   for (const node of segment) {
@@ -65,7 +66,7 @@ function requireSealed(root, state, segment, { actor, character, previous }) {
   if (!broken) return;
   appendEventsLocked(root, [{ type: 'seal_broken', data: { character, ...broken } }],
     { actor, previous });
-  throw new MasumeError('E_SEAL_BROKEN', `${broken.node} の封印が破れています`);
+  throw new MasumeError('E_SEAL_BROKEN', t('err.seal_broken', broken.node));
 }
 
 function requireUnchanged(state, before, target) {
@@ -239,7 +240,7 @@ async function runStamp(root, nodeId, { actor = defaultActor(), as = actor, boss
     const character = owner && state.characters[owner.id];
     if (node?.type !== 'task' || node.check.kind !== 'stamp' || node.check.by !== as
       || !character || character.status !== 'working' || owner.path[character.pos] !== nodeId) {
-      throw new MasumeError('E_STAMP', `${nodeId} にハンコを押せません。指定された本人と現在のマスを確認してください`);
+      throw new MasumeError('E_STAMP', t('err.stamp', nodeId));
     }
     const events = appendEventsLocked(root, [{
       type: 'stamped', data: { character: owner.id, node: nodeId, by: as },
@@ -266,14 +267,14 @@ export async function stamp(root, nodeId, options = {}) {
 function stepTarget(state, characterId) {
   const definition = state.map.characters.find(({ id }) => id === characterId);
   const character = state.characters[characterId];
-  if (!definition || !character) throw new MasumeError('E_UNKNOWN', `キャラクターが見つかりません: ${characterId}`);
-  if (character.status === 'done') throw new MasumeError('E_DONE', `${characterId} はもうあがっています`);
+  if (!definition || !character) throw new MasumeError('E_UNKNOWN', t('err.unknown.char', characterId));
+  if (character.status === 'done') throw new MasumeError('E_DONE', t('err.done.char', characterId));
   const node = definition.path[character.pos];
   const spec = state.map.nodes[node];
   if (character.status === 'waiting' || spec.type !== 'task') {
-    throw new MasumeError('E_USAGE', `${characterId} は ${node} で仲間を待っています。歩けるのはダンジョン（task）の中だけです`);
+    throw new MasumeError('E_USAGE', t('err.step.waiting', characterId, node));
   }
-  if (spec.check.kind === 'stamp') throw new MasumeError('E_NEEDS_STAMP', `${node} は人間のハンコが必要です`);
+  if (spec.check.kind === 'stamp') throw new MasumeError('E_NEEDS_STAMP', t('err.needs_stamp', node));
   return { node, gate: false, members: [characterId], segment: [node] };
 }
 

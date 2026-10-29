@@ -14,16 +14,24 @@
 const KEY = 'gridhub.words';
 export const MODES = ['game', 'dev'];
 
+// 何で決まったか: 'url' | 'local'（ブラウザに残した選択）| 'server'（冒険の設定 .masume/words.json）| 'default'
+let source = 'default';
 function initialMode() {
   try {
     const q = new URLSearchParams(location.search).get('words');
-    if (MODES.includes(q)) return q;
+    if (MODES.includes(q)) {
+      source = 'url';
+      return q;
+    }
   } catch {
     /* URL が読めない所（書き出した SVG など）では既定 */
   }
   try {
     const s = localStorage.getItem(KEY);
-    if (MODES.includes(s)) return s;
+    if (MODES.includes(s)) {
+      source = 'local';
+      return s;
+    }
   } catch {
     /* localStorage が使えなければ既定 */
   }
@@ -32,6 +40,39 @@ function initialMode() {
 
 let mode = initialMode();
 const listeners = new Set();
+let saveToServer = null; // 本物の盤面で、切り替えを冒険の設定にも書く（§76.3）。initWords({ post }) で入る
+
+/** 何で決まったか（'url' | 'local' | 'server' | 'default'） */
+export const wordsSource = () => source;
+
+/**
+ * 本物の盤面（§76.3）: URL にもブラウザにも選択が無ければ、この冒険の設定（GET /api/words）を既定にする。
+ * 変わったら描き直す。fetchJson は api/words の JSON を返す関数（取れなければ null）
+ */
+export async function adoptServerWords(fetchJson) {
+  if (source === 'url' || source === 'local') return false;
+  let got = null;
+  try {
+    got = await fetchJson();
+  } catch {
+    got = null;
+  }
+  if (!got || got.ok === false || !got.set || !MODES.includes(got.words)) return false;
+  source = 'server';
+  if (got.words === mode) return false;
+  mode = got.words;
+  syncWordsAttr();
+  applyWords(document);
+  renderToggle();
+  for (const fn of listeners) {
+    try {
+      fn(mode);
+    } catch (err) {
+      console.warn(err);
+    }
+  }
+  return true;
+}
 
 /** いまの言い方（'game' | 'dev'） */
 export const wordsMode = () => mode;
@@ -46,11 +87,14 @@ export function syncWordsAttr() {
 export function setWordsMode(next) {
   if (!MODES.includes(next) || next === mode) return false;
   mode = next;
+  source = 'local';
   try {
     localStorage.setItem(KEY, mode);
   } catch {
     /* 残せなくても切り替えは効く */
   }
+  // 本物の盤面なら、この冒険の設定にも書く（CLI・MCP の字もそろう。§76.3）。届かなくても切り替えは効く
+  if (saveToServer) Promise.resolve(saveToServer(mode)).catch(() => {});
   try {
     const url = new URL(location.href);
     if (mode === 'game') url.searchParams.delete('words');
@@ -516,7 +560,8 @@ export function renderToggle() {
 }
 
 /** 切り替えのボタンを生かし、最初の字を入れる。盤面もはじめの画面も、読み込みのはじめに1回呼ぶ */
-export function initWords() {
+export function initWords({ save = null } = {}) {
+  saveToServer = typeof save === 'function' ? save : null;
   syncWordsAttr();
   applyWords(document);
   renderToggle();

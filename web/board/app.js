@@ -8,7 +8,7 @@ import { Sound } from './sound.js';
 import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit, rewordsCommand } from './command.js';
 import { own } from './sketch.js';
 import { initHand } from './hand.js';
-import { t, initWords, onWords } from './words.js';
+import { t, initWords, onWords, adoptServerWords } from './words.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
 // （字が届くたび・届かないと分かるたびに、ノート全体の字を組み直すので、最初の描画とは重ねない）
@@ -776,6 +776,8 @@ async function liveRefresh() {
 }
 
 async function startLive() {
+  // URL にもブラウザにも選択が無ければ、この冒険の設定（GET /api/words）を既定にする（§76.3）
+  await adoptServerWords(() => fetch('api/words', { cache: 'no-store' }).then((r) => (r.ok ? r.json() : null)));
   await liveRefresh();
   let timer = null;
   const schedule = () => {
@@ -959,7 +961,8 @@ function rewords() {
 }
 
 (async () => {
-  initWords();
+  // 本物の盤面では、切り替えをこの冒険の設定（POST /api/words）にも書き、CLI・MCP の字をそろえる（§76.3）
+  initWords({ save: LIVE ? (mode) => fetch('api/words', { method: 'POST', headers: { 'content-type': 'application/json', 'x-masume': '1' }, body: JSON.stringify({ words: mode }) }) : null });
   onWords(rewords);
   setupHomeLink();
   book = new Book(svg, $('#view-board'), { onChange: updatePageNav });

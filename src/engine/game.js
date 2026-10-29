@@ -9,6 +9,7 @@ import { gateMembers, isSealed, replay, sealFiles } from './state.js';
 import {
   appendEventsLocked, commitOfEvent, defaultActor, headOf, inspectLog, requireHealthy, withLock, writeDurable,
 } from './store.js';
+import { t } from './words.js';
 
 function collectSeals(root, map, nodeIds, { skipMissing = () => false } = {}) {
   const specifications = [];
@@ -48,7 +49,7 @@ export function newGame(root, mapPath, { actor = defaultActor(), force = false }
   }
   const directory = resolve(root, '.masume');
   if (existsSync(directory) && !force) {
-    throw new MasumeError('E_EXISTS', '冒険の書はすでにあります。作り直す場合は --force を指定してください');
+    throw new MasumeError('E_EXISTS', t('err.exists'));
   }
   // 読めない封印ファイルが原因で、中途半端な初期化・既存データの削除を起こさない。
   const seals = collectSeals(root, map, Object.keys(map.nodes), { skipMissing: () => true });
@@ -57,7 +58,7 @@ export function newGame(root, mapPath, { actor = defaultActor(), force = false }
     mkdirSync(directory);
   } catch (error) {
     if (error.code !== 'EEXIST') throw error;
-    if (!force) throw new MasumeError('E_EXISTS', '冒険の書はすでにあります');
+    if (!force) throw new MasumeError('E_EXISTS', t('err.exists.short'));
   }
   return withLock(root, actor, () => {
     if (existsSync(logFile(root))) requireHealthy(inspectLog(root));
@@ -113,7 +114,7 @@ export function writeNote(root, character, text, { actor = defaultActor() } = {}
     const snapshot = requireHealthy(inspectLog(root));
     const { map } = replay(root, snapshot.events);
     if (!map.characters.some((entry) => entry.id === character)) {
-      throw new MasumeError('E_UNKNOWN', `キャラクターが見つかりません: ${character}`);
+      throw new MasumeError('E_UNKNOWN', t('err.unknown.char', character));
     }
     return appendEventsLocked(root, [{ type: 'note', data: { character, text } }],
       { actor, previous: snapshot.events.at(-1) })[0];
@@ -186,7 +187,7 @@ function seqOfCommit(events, text) {
     const commit = commitOfEvent(event);
     if (commit !== null && commit.startsWith(prefix) && !first.has(commit)) first.set(commit, event.seq);
   }
-  if (first.size === 0) throw new MasumeError('E_LOAD', `そのコミットは冒険の書に記録されていません: ${text}`);
+  if (first.size === 0) throw new MasumeError('E_LOAD', t('err.load.commit', text));
   if (first.size > 1) {
     throw new MasumeError('E_LOAD', `コミット ${text} は ${first.size} 個に当たります。もっと長く書いてください: ${[...first.keys()].map((c) => c.slice(0, 12)).join('、')}`);
   }
@@ -213,7 +214,7 @@ export function load(root, target, { actor = defaultActor() } = {}) {
     const previous = snapshot.events.at(-1);
     const seq = resolveLoadTarget(snapshot.events, target);
     if (!Number.isSafeInteger(seq) || seq < 0 || seq >= previous.seq) {
-      throw new MasumeError('E_LOAD', 'ロード先は、いまより前の記録の番号（seq）か、冒険の書に記録された Git のコミットで指定してください');
+      throw new MasumeError('E_LOAD', t('err.load.target'));
     }
     const events = appendEventsLocked(root, [{ type: 'loaded', data: { to_seq: seq } }],
       { actor, previous });
