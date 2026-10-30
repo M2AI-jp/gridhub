@@ -143,10 +143,11 @@ function commandHelp(cmd) {
 
 function usage() {
   const lines = [t('cli.tagline'), '', t('cli.usage'), ''];
-  // 一覧は、いちばん長い使い方に合わせて桁をそろえる（§78.10）
-  const width = Math.max(...Object.values(COMMANDS).map(([, , how]) => how.length)) + 2;
+  // 使い方の欄は 50 桁まで。それより長い使い方（party・serve など）は1行に置き、説明を次の行の同じ桁に出す（端末で折り返さないため。§78.10）
+  const width = 50;
   for (const [name, [, , how]] of Object.entries(COMMANDS)) {
-    lines.push(`  ${how.padEnd(width)}${what(name)}（担当: ${who(name)}）`);
+    if (how.length < width - 1) lines.push(`  ${how.padEnd(width)}${what(name)}（担当: ${who(name)}）`);
+    else lines.push(`  ${how}`, `  ${' '.repeat(width)}${what(name)}（担当: ${who(name)}）`);
   }
   lines.push('', '--allow-listen: 判定が 127.0.0.1 にサーバーを立てられるよう、Codex の箱（サンドボックス）のソケットを開ける。',
     '  ゲームはローカルのまま。ただし Codex の設定は localhost だけに絞れないので、その出撃中はインターネットにも出られる。',

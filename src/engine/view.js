@@ -107,8 +107,8 @@ export function logEntry(event, map) {
   };
 }
 
-export function buildView(root) {
-  const snapshot = inspectLog(root);
+// snapshot は、呼ぶ側がもう inspectLog で読んであれば渡す（二度読まない）
+export function buildView(root, snapshot = inspectLog(root)) {
   // 呪いがある場合、確かめられた先頭区間だけを再生して API に返す。
   // CLI の status はこの integrity を見て E_CURSED にする。
   const events = snapshot.ok ? snapshot.events

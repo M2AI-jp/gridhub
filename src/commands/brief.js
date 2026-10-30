@@ -1,4 +1,5 @@
 import { brief } from '../engine/brief.js';
+import { MARK } from '../engine/cases.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { marginText } from '../engine/margins.js';
 import { localTime, recordLine } from '../engine/record.js';
@@ -31,9 +32,8 @@ export async function run(argv, ctx) {
     console.log(t('brief.seal', node.seal_broken ? t('seal.broken') : node.sealed ? t('seal.ok') : t('seal.none')));
     if (node.rollback_to) console.log(t('brief.rollback', node.rollback_to));
     if (kind === 'dungeon' && node.check?.kind === 'cmd') {
-      const mark = { true: '✔', false: '✖', null: '・' };
       console.log(t('brief.tests', report.cases.filter((x) => x.ok === true).length, report.cases.length));
-      for (const x of report.cases) console.log(`  ${mark[x.ok]} ${x.name}`);
+      for (const x of report.cases) console.log(`  ${MARK[x.ok]} ${x.name}`);
       if (report.cases.length === 0) console.log(t('brief.tests.unknown'));
       console.log(report.next_case !== null ? t('brief.next', report.next_case)
         : report.cases.length ? t('brief.next.all') : t('brief.next.first'));

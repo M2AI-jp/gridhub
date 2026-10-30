@@ -8,8 +8,14 @@ import { isDev } from '../engine/words.js';
 export const AGENT_KINDS = ['claude', 'codex'];
 const PARALLEL = 3;
 const IGNORE_LINES = ['.masume/lock', '.masume/state.json', '.masume/party.log'];
-const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 第15章まで書いていた見出し。前に書いた .gitignore に見出しを2つ並べないために覚えておく
+const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 第15章まで書いていた見出し（GOAL15 §64.1 の例外。この行の形を変えない）
 const IGNORE_HEADING_NOW = '# GridHub（旧名マスメ）の一時ファイル（冒険の書 .masume/log.jsonl と判定の出力 .masume/outputs/ は残す）';
+// いままでに書いた見出しは全部覚えておく（前に書いた .gitignore に見出しを2つ並べない）。文を変えるときは、ここに足して消さない
+const IGNORE_HEADINGS = [
+  IGNORE_HEADING_NOW,
+  '# GridHub（旧名マスメ）の一時ファイル（セーブデータ本体 .masume/log.jsonl は残す）', // 配る前の点検 A（§64）のあいだ
+  IGNORE_HEADING,
+];
 
 const CLAUDE_MD = `このプロジェクトは GridHub（旧名マスメ）で進めています。AGENTS.md を読んでください。
 
@@ -224,7 +230,7 @@ function ensureIgnore(target, lines = IGNORE_LINES) {
   const eol = before.includes('\r\n') ? '\r\n' : '\n';
   const lead = before === '' || before.endsWith('\n') ? '' : eol;
   const gap = before.trim() === '' ? '' : eol;
-  const heading = have.has(IGNORE_HEADING) || have.has(IGNORE_HEADING_NOW) ? [] : [IGNORE_HEADING_NOW];
+  const heading = IGNORE_HEADINGS.some((h) => have.has(h)) ? [] : [IGNORE_HEADING_NOW];
   const text = `${before}${lead}${gap}${[...heading, ...missing].join(eol)}${eol}`;
   if (target.exists) writeFileSync(target.path, text);
   else writeFileSync(target.path, text, { flag: 'wx' });

@@ -3,8 +3,7 @@ import { step } from '../engine/index.js';
 import { actorFor, gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { outputFile } from '../engine/store.js';
 import { t } from '../engine/words.js';
-
-const MARK = { true: '✔', false: '✖', null: '・' };
+import { MARK } from '../engine/cases.js';
 
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx);
