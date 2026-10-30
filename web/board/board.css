@@ -738,9 +738,14 @@ body.in-lobby #curse { display: none; }
 @media (max-width: 1100px) {
   :root { --side-w: 270px; }
   .tagline { display: none; }
-  /* 見出しの右の欄（記録・コピー・セーブ正常・音）が 1024px で横にはみ出さないように詰める（§57） */
+  /* 見出しの右の欄（記録・コピー・セーブ正常・音）が 1024px で横にはみ出さないように、間と余白を詰める（§57。「記録」の札は残す） */
+  .cover { gap: 12px; }
+  .brand { padding: 5px 10px 6px; }
   .save { gap: 6px; margin-left: 8px; }
-  .rec-label { display: none; }
+  .record-box { gap: 6px; padding: 5px 5px 5px 8px; }
+  .mini-btn { padding: 3px 7px; }
+  .pill { padding: 3px 8px; }
+  #ending-open .btn-text { display: none; } /* あがった盤面では 🏁 だけ（名前は aria-label と title に） */
 }
 @media (max-width: 860px) {
   body { overflow: auto; }

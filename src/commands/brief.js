@@ -1,4 +1,5 @@
 import { brief } from '../engine/brief.js';
+import { MARK } from '../engine/cases.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { marginText } from '../engine/margins.js';
 import { localTime, recordLine } from '../engine/record.js';
@@ -29,9 +30,8 @@ export async function run(argv, ctx) {
     console.log(`封印: ${node.seal_broken ? '封印が破れています' : node.sealed ? '封印済み' : '未封印'}`);
     if (node.rollback_to) console.log(`失敗時の戻り先: ${node.rollback_to}`);
     if (kind === 'dungeon' && node.check?.kind === 'cmd') {
-      const mark = { true: '✔', false: '✖', null: '・' };
       console.log(`テスト ${report.cases.filter((t) => t.ok === true).length}/${report.cases.length}`);
-      for (const t of report.cases) console.log(`  ${mark[t.ok]} ${t.name}`);
+      for (const t of report.cases) console.log(`  ${MARK[t.ok]} ${t.name}`);
       if (report.cases.length === 0) console.log('  ？ まだ一度も歩いていない（中の分からないダンジョン）');
       console.log(report.next_case !== null ? `いま戦うテスト: ${report.next_case}`
         : report.cases.length ? '全部倒した。出口で宣言する' : 'いま戦うテスト: まず歩いて、テストを見る');

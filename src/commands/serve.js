@@ -9,19 +9,28 @@ function usageError(message) {
   return Object.assign(new Error(message), { code: 'E_USAGE', exitCode: 2 });
 }
 
-/** ブラウザで URL を開く（OS の open / xdg-open / start）。開けたかは待たない。失敗したら false */
+/**
+ * ブラウザで URL を開く（OS の open / xdg-open / start）。起動できたか（コマンドがあるか）だけを待ち、ページが開いたかは待たない。
+ * 起動できなければ false（xdg-open の無い Linux など。ENOENT は spawn のあとから 'error' で来る）
+ */
 export function openBrowser(url, platform = process.platform) {
   const [file, args] = platform === 'darwin' ? ['open', [url]]
     : platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
       : ['xdg-open', [url]];
-  try {
-    const child = spawn(file, args, { stdio: 'ignore', detached: true });
-    child.on('error', () => {});
-    child.unref();
-    return true;
-  } catch {
-    return false;
-  }
+  return new Promise((done) => {
+    let child;
+    try {
+      child = spawn(file, args, { stdio: 'ignore', detached: true });
+    } catch {
+      done(false);
+      return;
+    }
+    child.once('spawn', () => {
+      child.unref();
+      done(true);
+    });
+    child.once('error', () => done(false));
+  });
 }
 
 export async function run(argv, ctx) {
@@ -70,7 +79,7 @@ export async function run(argv, ctx) {
   const interactive = Boolean(process.stdout.isTTY) && !values.lifeline && !(ctx.env ?? process.env).CI;
   const wantOpen = values['no-open'] ? false : values.open === true || interactive;
   if (wantOpen) {
-    console.log(openBrowser(running.url) ? 'ブラウザで開きます（開かなければ、上の URL をブラウザに貼ってください。--no-open で開かずに済ませられます）'
+    console.log(await openBrowser(running.url) ? 'ブラウザで開きます（開かなければ、上の URL をブラウザに貼ってください。--no-open で開かずに済ませられます）'
       : '（ブラウザを開けませんでした。上の URL をブラウザで開いてください）');
   } else if (!values.lifeline) console.log('上の URL をブラウザで開いてください（--open で、gridhub が開きます）');
   // 止める合図（SIGINT・SIGTERM・SIGHUP。--lifeline なら標準入力が閉じたときも。§68.2）を待つ
