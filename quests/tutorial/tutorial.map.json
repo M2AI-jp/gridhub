@@ -15,8 +15,15 @@
       "job": "hero",
       "color": "pink",
       "module": "カードに載せる名前を決め、完成した内容を承認する",
-      "territory": ["human/**"],
-      "path": ["H1", "G1", "H2", "GOAL"]
+      "territory": [
+        "human/**"
+      ],
+      "path": [
+        "H1",
+        "G1",
+        "H2",
+        "GOAL"
+      ]
     },
     {
       "id": "apprentice",
@@ -25,8 +32,17 @@
       "job": "scribe",
       "color": "blue",
       "module": "あいさつ文とカードを作る。人間がこの役を演じてもよい",
-      "territory": ["ai/**"],
-      "path": ["A1", "A2", "G1", "C1", "A3", "GOAL"]
+      "territory": [
+        "ai/**"
+      ],
+      "path": [
+        "A1",
+        "A2",
+        "G1",
+        "C1",
+        "A3",
+        "GOAL"
+      ]
     }
   ],
   "nodes": {
@@ -34,28 +50,48 @@
       "type": "task",
       "title": "カードに載せる名前を決める",
       "detail": "勇者が human/request.json を作り、例 {\"name\":\"GridHub\"} のように name を決めてください。合格条件は、JSON がオブジェクトで、name が前後に空白も改行もない空でない文字列であり、人間がその名前でよいと確認したことです。確認後に gridhub stamp H1 --as player でハンコを押します。以後、この冒険では名前を変更しません。ハンコ自体はファイルを検査しないため、内容は G1 で確認します。",
-      "check": { "kind": "stamp", "by": "player" },
+      "check": {
+        "kind": "stamp",
+        "by": "player"
+      },
       "rollback_to": "@here"
     },
     "A1": {
       "type": "task",
       "title": "あいさつを一行で書く",
-      "detail": "見習いAIが ai/hello.txt を作り、human/request.json の名前を使って「こんにちは、GridHub！」のような一行を書いてください。合格条件は、本文が「こんにちは、<名前>！」の形で、名前が空でなく前後の空白や改行を含まないことです。末尾の改行は1つまで付けられます。このマスでは書式を検査し、勇者の名前との一致は G1 で検査します。素振りは node checks/hello.mjs、進むときは gridhub check apprentice --as apprentice です。",
+      "detail": "見習いAIが ai/hello.txt を作り、human/request.json の名前を使って「こんにちは、GridHub！」のような一行を書いてください。合格条件は、本文が「こんにちは、<名前>！」の形で、名前が空でなく前後の空白や改行を含まないことです。末尾の改行は1つまで付けられます。このマスでは書式を検査し、勇者の名前との一致は G1 で検査します。テストは3件（1件 = 1マス）。歩く（gridhub step apprentice）で1件ずつ確かめ、全部通ったら gridhub check apprentice で宣言します。",
       "check": {
         "kind": "cmd",
         "run": "node checks/hello.mjs",
-        "seal": ["checks/hello.mjs", "checks/common.mjs"]
+        "seal": [
+          "checks/hello.mjs",
+          "checks/common.mjs"
+        ],
+        "cases": [
+          "ai/hello.txt がある",
+          "「こんにちは、」で始まる",
+          "名前のあとが「！」で終わる"
+        ]
       },
       "rollback_to": "@here"
     },
     "A2": {
       "type": "task",
       "title": "あいさつをカードに写す",
-      "detail": "見習いAIが ai/card.json を作り、例 {\"name\":\"GridHub\",\"message\":\"こんにちは、GridHub！\"} のように名前とあいさつを保存してください。合格条件は、JSON がオブジェクトで、name が前後に空白も改行もない空でない文字列であり、message が「こんにちは、<name>！」と ai/hello.txt の本文の両方に一致することです。ready はまだ不要です。素振りは node checks/card.mjs、進むときは gridhub check apprentice --as apprentice です。宣言判定では A1 も再検査します。",
+      "detail": "見習いAIが ai/card.json を作り、例 {\"name\":\"GridHub\",\"message\":\"こんにちは、GridHub！\"} のように名前とあいさつを保存してください。合格条件は、JSON がオブジェクトで、name が前後に空白も改行もない空でない文字列であり、message が「こんにちは、<name>！」と ai/hello.txt の本文の両方に一致することです。ready はまだ不要です。テストは4件。gridhub step apprentice で確かめ、全部通ったら gridhub check apprentice で宣言します。宣言判定では A1 も再検査します。",
       "check": {
         "kind": "cmd",
         "run": "node checks/card.mjs",
-        "seal": ["checks/card.mjs", "checks/common.mjs"]
+        "seal": [
+          "checks/card.mjs",
+          "checks/common.mjs"
+        ],
+        "cases": [
+          "ai/card.json が { ... } の JSON",
+          "name が空でない文字列",
+          "message が「こんにちは、<name>！」",
+          "message が ai/hello.txt のあいさつと同じ"
+        ]
       },
       "rollback_to": "@here"
     },
@@ -66,7 +102,10 @@
       "check": {
         "kind": "cmd",
         "run": "node checks/join.mjs",
-        "seal": ["checks/join.mjs", "checks/common.mjs"]
+        "seal": [
+          "checks/join.mjs",
+          "checks/common.mjs"
+        ]
       }
     },
     "C1": {
@@ -77,11 +116,18 @@
     "A3": {
       "type": "task",
       "title": "カードに完成の印を付ける",
-      "detail": "見習いAIが ai/card.json の name と message を保ったまま、\"ready\": true を追加してください。合格条件は、カードとあいさつが A1・A2 の条件を引き続き満たし、ready が文字列の \"true\" ではなく JSON の真偽値 true になっていることです。素振りは node checks/ready.mjs、進むときは gridhub check apprentice --as apprentice です。成功すると GOAL で勇者の最終確認を待ちます。",
+      "detail": "見習いAIが ai/card.json の name と message を保ったまま、\"ready\": true を追加してください。合格条件は、カードとあいさつが A1・A2 の条件を引き続き満たし、ready が文字列の \"true\" ではなく JSON の真偽値 true になっていることです。テストは2件。gridhub step apprentice で確かめ、全部通ったら gridhub check apprentice で宣言します。成功すると GOAL で勇者の最終確認を待ちます。",
       "check": {
         "kind": "cmd",
         "run": "node checks/ready.mjs",
-        "seal": ["checks/ready.mjs", "checks/common.mjs"]
+        "seal": [
+          "checks/ready.mjs",
+          "checks/common.mjs"
+        ],
+        "cases": [
+          "name と message が A2 のまま",
+          "ready が真偽値の true"
+        ]
       },
       "rollback_to": "@here"
     },
@@ -89,17 +135,23 @@
       "type": "task",
       "title": "完成したカードを読んで承認する",
       "detail": "勇者が human/request.json、ai/hello.txt、ai/card.json を読み、お願いした名前で自然にあいさつできているか確認してください。合格条件は、カードの name がお願いの name と同じで、message があいさつの本文と同じ、ready が真偽値 true になっており、人間が完成品として承認したことです。見習いAIの A3 が終わってから gridhub stamp H2 --as player でハンコを押します。2人が GOAL にそろうと最後の判定が自動で始まります。",
-      "check": { "kind": "stamp", "by": "player" },
+      "check": {
+        "kind": "stamp",
+        "by": "player"
+      },
       "rollback_to": "@here"
     },
     "GOAL": {
       "type": "gate",
       "title": "あがりを迎える",
-      "detail": "見習いAIが A3、勇者が H2 を終えると、名前入りのあいさつカードが完成したかを自動で判定します。新しいファイルは不要です。合格条件は、お願い・あいさつ・カードが G1 の全条件を満たし、カードの ready が真偽値 true であることです。お願いの不備は player、あいさつやカードの不備は apprentice に差し戻します。成功すると2人ともあがりです。gridhub status --json の finished が true になります。",
+      "detail": "見習いAIが A3、勇者が H2 を終えると、名前入りのあいさつカードが完成したかを自動で判定します。新しいファイルは不要です。合格条件は、お願い・あいさつ・カードが G1 の全条件を満たし、カードの ready が真偽値 true であることです。お願いの不備は player、あいさつやカードの不備は apprentice に差し戻します。成功すると2人ともあがりです。gridhub status に「この章はあがり」と出ます。",
       "check": {
         "kind": "cmd",
         "run": "node checks/goal.mjs",
-        "seal": ["checks/goal.mjs", "checks/common.mjs"]
+        "seal": [
+          "checks/goal.mjs",
+          "checks/common.mjs"
+        ]
       }
     }
   }

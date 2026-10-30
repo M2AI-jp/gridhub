@@ -238,10 +238,19 @@ async function runStamp(root, nodeId, { actor = defaultActor(), as = actor, boss
     const node = state.map.nodes[nodeId];
     const owner = state.map.characters.find(({ path }) => path.includes(nodeId));
     const character = owner && state.characters[owner.id];
-    if (node?.type !== 'task' || node.check.kind !== 'stamp' || node.check.by !== as
-      || !character || character.status !== 'working' || owner.path[character.pos] !== nodeId) {
-      throw new MasumeError('E_STAMP', t('err.stamp', nodeId));
-    }
+    // 押せないときは、理由を分けて言う（--as 忘れ・本人違い・マス違い・押し済み。§78.6）。字は辞書（§76）から
+    const label = node?.title ? `${nodeId}「${node.title}」` : nodeId;
+    const refuse = (why) => {
+      throw new MasumeError('E_STAMP', t('err.stamp', label, why));
+    };
+    if (!node) refuse(t('err.stamp.nonode'));
+    if (node.type !== 'task' || node.check?.kind !== 'stamp') refuse(t('err.stamp.notstamp'));
+    if (as === undefined || as === null || as === '') refuse(t('err.stamp.noas', node.check.by));
+    if (node.check.by !== as) refuse(t('err.stamp.wrongas', node.check.by, as));
+    if (!character) refuse(t('err.stamp.noroad'));
+    const at = owner.path[character.pos];
+    if (at !== nodeId) refuse(state.nodes[nodeId]?.cleared ? t('err.stamp.done') : t('err.stamp.elsewhere', owner.id, at));
+    if (character.status !== 'working') refuse(t('err.stamp.waiting', owner.id, nodeId));
     const events = appendEventsLocked(root, [{
       type: 'stamped', data: { character: owner.id, node: nodeId, by: as },
     }], { actor, previous: snapshot.events.at(-1) });

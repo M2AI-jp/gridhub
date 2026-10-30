@@ -21,7 +21,7 @@ const COMMANDS = {
   stamp: ['engine', { game: '人間のマスにハンコを押す', dev: '承認のマスを人間が通す' }, 'stamp <nodeId> --as <humanId>'],
   status: ['engine', { game: '盤面の状態', dev: '盤面の状態' }, 'status [--json]'],
   brief: ['engine', { game: '指令書（いまやること・見えている範囲）', dev: '作業指示（いまやること・見えている範囲）' }, 'brief <characterId> [--json]'],
-  log: ['engine', { game: '冒険の書を読む', dev: 'セーブデータのログを読む' }, 'log [--tail N] [--json]'],
+  log: ['engine', { game: '冒険の書を読む（人の読める文。--json で生のイベント）', dev: 'セーブデータのログを読む（読める文。--json で生のイベント）' }, 'log [--tail [N]] [--json]'],
   verify: ['engine', { game: '冒険の書のハッシュの鎖を検証する（改ざんを見つける）', dev: 'セーブデータのハッシュの鎖を検証する（改ざんを見つける）' }, 'verify [--json]'],
   repair: ['engine', { game: '呪われたセーブデータを修復する', dev: '整合性エラーのあるセーブデータを修復する' }, 'repair'],
   note: ['engine', { game: '日誌を書く（次の自分への申し送り）', dev: 'メモを書く（次の自分への申し送り）' }, 'note <characterId> <text>'],
@@ -36,7 +36,7 @@ const COMMANDS = {
   quest: ['quest', { game: '「xxxのようなアプリを作りたい」から冒険をつくる', dev: '「xxxのようなアプリを作りたい」から地図とテストをつくる' }, 'quest "<願い>" [--gm claude|codex] [--allow-listen]'],
   party: ['party', { game: 'キャラクターごとにエージェントを出撃させる', dev: '担当ごとにエージェントを起動する' }, 'party [--agent claude|codex] [--tactic careful|balanced|bold] [--allow-listen]'],
   init: ['quest', { game: 'よそのプロジェクトに GridHub の支度をする（AGENTS.md ほか）', dev: 'よそのプロジェクトに GridHub の支度をする（AGENTS.md ほか）' }, 'init [--agent claude|codex] [--allow-listen]'],
-  serve: ['server', { game: '盤面（5mm方眼ノート）を開く', dev: '盤面（5mm方眼ノート）を開く' }, 'serve [--port 5005] [--host 127.0.0.1] [--dir D] [--lifeline]'],
+  serve: ['server', { game: '盤面（5mm方眼ノート）を開く', dev: '盤面（5mm方眼ノート）を開く' }, 'serve [--port 5005] [--host 127.0.0.1] [--dir D] [--no-open] [--lifeline]'],
   app: ['server', { game: 'アプリの起動役（はじめの画面・フォルダを開く・チュートリアル）', dev: 'アプリの起動役（はじめの画面・フォルダを開く・チュートリアル）' }, 'app [--port 0] [--home D] [--play D] [--lifeline]'],
   mcp: ['server', { game: 'LLM の道具箱（MCP サーバー、標準入出力）', dev: 'MCP サーバー（標準入出力）' }, 'mcp [--dir D]'],
   export: ['linear', { game: 'Linear形式で書き出す', dev: 'Linear 形式で書き出す' }, 'export linear [--format csv|json] [--out file]'],
@@ -63,7 +63,9 @@ const OPTIONS = {
   serve: () => [
     '  --port N       待ち受けるポート（既定 5005。0 なら空いているポート）',
     '  --host H       待ち受けるホスト名（既定 127.0.0.1）',
-    { game: '  --dir D        冒険の書のあるフォルダ（無ければ入口を開く。省略すると、今いる場所から上へ探す）', dev: '  --dir D        セーブデータのあるフォルダ（無ければ入口を開く。省略すると、今いる場所から上へ探す）' },
+    { game: '  --dir D        冒険の書のあるフォルダ（無ければ入口を開く。省略すると、今いる場所から上へ探す。フォルダ自体が無ければ止まる）', dev: '  --dir D        セーブデータのあるフォルダ（無ければ入口を開く。省略すると、今いる場所から上へ探す。フォルダ自体が無ければ止まる）' },
+    '  --open         ブラウザで盤面を開く（ターミナルから打ったときは、言わなくても開く）',
+    '  --no-open      ブラウザを開かない（URL を出すだけ）',
     '  --lifeline     標準入力が閉じたら止まる（アプリから起こすとき用。アプリが落ちてもサーバーを残さない）',
     t('cli.help.words'),
   ],
@@ -94,7 +96,7 @@ const DETAIL = {
   stamp: [{ game: '人間のマス（check.kind: stamp）にハンコを押す。--as には、そのマスの check.by（人間のID）を書く。', dev: '承認のマス（check.kind: stamp）を人間が通す。--as には、そのマスの check.by（人間の ID）を書く。' }],
   status: [{ game: '冒険の題・各キャラクターの場所と状態・レベル・いまの記録（seq と Git のコミット）。', dev: 'プロジェクトの題・各担当の場所と状態・レベル・いまの記録（seq と Git のコミット）。' }],
   brief: [{ game: '指令書: 現在のマス・テスト1件ずつの成否・いま戦うテスト・受け継いだ技・仲間の位置・自分の日誌。', dev: '作業指示: 現在のマス・テスト1件ずつの成否・次に通すテスト・引き継ぎメモ・ほかの担当の位置・自分のメモ。' }],
-  log: [{ game: '冒険の書（.masume/log.jsonl）を最初から読む。--tail N で最後の N 件だけ。', dev: 'セーブデータ（.masume/log.jsonl）を最初から読む。--tail N で最後の N 件だけ。' }],
+  log: [{ game: '冒険の書（.masume/log.jsonl）を、最初から人の読める文で出す（盤面の「冒険の書」と同じ言い方。時刻はこの機械のローカル時刻）。', dev: 'セーブデータ（.masume/log.jsonl）を、最初から読める文で出す（盤面のログと同じ言い方。時刻はこの機械のローカル時刻）。' }, '--tail で最後の 20 件、--tail N で最後の N 件。--json は生のイベント（seq・ts・actor・type・data）。'],
   verify: [{ game: 'ハッシュの鎖・地図・判定の出力の改ざんを見つける。壊れていれば「呪われています」（終了コード 3）。', dev: 'ハッシュの鎖・地図・テストの出力の改ざんを見つける。壊れていれば「整合性エラー」（終了コード 3）。' }],
   repair: ['壊れた所から後ろを退避して、鎖を直す。'],
   note: [{ game: '日誌（次の自分への申し送り）。強敵を倒した直後の日誌は技になり、次の代に受け継がれる。', dev: 'メモ（次の自分への申し送り）。2回以上失敗したテストを通した直後のメモは引き継ぎメモになり、次の起動に渡る。' }],
@@ -106,7 +108,7 @@ const DETAIL = {
   sortie: [{ game: '（軍師が使う）エージェントの出撃を冒険の書に記録する。ふつうは gridhub party が打つ。', dev: '（party が使う）エージェントの起動をセーブデータに記録する。ふつうは gridhub party が打つ。' }],
   return: [{ game: '（軍師が使う）出撃の帰還を記録する。止まったままの出撃を閉じるときにも使う。', dev: '（party が使う）起動の終了を記録する。止まったままの起動を閉じるときにも使う。' }],
   wish: [{ game: '（語り部が使う）冒険の始まりの願いを記録する。ふつうは gridhub quest が打つ。', dev: '（quest が使う）作りたいもの（最初の依頼）を記録する。ふつうは gridhub quest が打つ。' }],
-  serve: ['盤面を http://127.0.0.1:5005/ で配る。URL を表示するので、ブラウザで開いてください（動かしたままにする）。', { game: '冒険の書が無ければ入口（願いを書く所）を開く。', dev: 'セーブデータが無ければ入口（作りたいものを書く所）を開く。' }],
+  serve: ['盤面を http://127.0.0.1:5005/ で配る（動かしたままにする）。ターミナルから打てばブラウザも開く（--no-open で開かない。パイプの先やアプリからは開かない）。', { game: '冒険の書が無ければ入口（願いを書く所）を開く。', dev: 'セーブデータが無ければ入口（作りたいものを書く所）を開く。' }],
   mcp: ['標準入出力の MCP サーバー。道具は masume_brief / masume_step / masume_check / masume_note / masume_stamp ほか。', '例: claude mcp add gridhub -- node <このファイル> mcp --dir <プロジェクト>'],
   export: ['盤面の状態を Linear 形式（issue の一覧）に書き出す。task にテストのチェックリストが付く。'],
   import: ['Linear の CSV（書き出したもの）から、地図の下書きをつくる。'],
@@ -141,14 +143,17 @@ function commandHelp(cmd) {
 
 function usage() {
   const lines = [t('cli.tagline'), '', t('cli.usage'), ''];
+  // 一覧は、いちばん長い使い方に合わせて桁をそろえる（§78.10）
+  const width = Math.max(...Object.values(COMMANDS).map(([, , how]) => how.length)) + 2;
   for (const [name, [, , how]] of Object.entries(COMMANDS)) {
-    lines.push(`  ${how.padEnd(44)} ${what(name)}（担当: ${who(name)}）`);
+    lines.push(`  ${how.padEnd(width)}${what(name)}（担当: ${who(name)}）`);
   }
   lines.push('', '--allow-listen: 判定が 127.0.0.1 にサーバーを立てられるよう、Codex の箱（サンドボックス）のソケットを開ける。',
     '  ゲームはローカルのまま。ただし Codex の設定は localhost だけに絞れないので、その出撃中はインターネットにも出られる。',
     'くわしくは gridhub <command> --help');
   lines.push('', t('cli.words.hint'));
-  lines.push('', t('cli.rulebook'));
+  // 版の説明（§78.10）のあと、最後の行はルールブック（E19 が見ている）
+  lines.push('', t('cli.version'), t('cli.rulebook'));
   return lines.join('\n');
 }
 
@@ -161,7 +166,8 @@ export async function main(bin) {
     console.log(usage());
     return 0;
   }
-  if (cmd === '--version' || cmd === '-v') {
+  if (cmd === '--version' || cmd === '-v' || cmd === '-V' || cmd === 'version') {
+    // `gridhub <版> (rules 1)` の1行だけ（道具と判定が全文を読む）。rules の意味は --help の末尾に
     console.log(`gridhub ${version()} (rules 1)`);
     return 0;
   }

@@ -214,7 +214,7 @@ export async function runQuest(opts, ctx) {
   if (ensureGitSave(mapFile)) say(`${MAP_FILE} に quest.save: "git" を足しました（${pick('町に着くと Git にセーブします', 'セーブポイントで自動でコミットします')}）`);
   const repository = ensureRepository(root);
   if (repository.error) say(`※ ${repository.error}。Git のセーブなしで続けます（${pick('町に着いてもコミットされません', 'セーブポイントでもコミットされません')}）`);
-  else if (repository.initialized) say('ここは Git の作業ツリーではなかったので、git init しました');
+  else if (repository.initialized) say('ここは Git の作業ツリーではなかったので、git init しました（ブランチ main）');
   engine.newGame(root, mapFile, { actor: opts.actor, force: Boolean(opts.force) });
   const wish = recordWish(root, { actor: opts.actor, text: opts.wish, gm: gm.kind, model });
   try {

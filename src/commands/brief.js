@@ -1,7 +1,7 @@
 import { brief } from '../engine/brief.js';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { marginText } from '../engine/margins.js';
-import { recordLine } from '../engine/record.js';
+import { localTime, recordLine } from '../engine/record.js';
 import { t } from '../engine/words.js';
 
 export async function run(argv, ctx) {
@@ -14,21 +14,23 @@ export async function run(argv, ctx) {
   }
   const status = (s) => t(`status.${s}`);
   const c = report.character;
+  const node = report.current;
+  // マスの種類で、進み方と守ることが変わる（§78.2）
+  const kind = node === null ? 'done' : node.type === 'gate' ? 'gate' : node.check?.kind === 'stamp' ? 'stamp' : node.type === 'task' ? 'dungeon' : 'other';
   console.log(t('brief.head', c.name, c.id, c.kind));
   console.log(t('brief.gen', c.name, c.id, report.generation, report.medals));
   console.log(t('brief.level', c.max_level ? t('level.max', c.level) : t('level.xp', c.level, c.xp, c.xp_next), c.vision, status(c.status)));
   console.log(t('brief.module', c.module ?? t('brief.none')));
   console.log(t('brief.territory', c.territory.join('、') || t('brief.none')));
   if (report.sortie) console.log(t('brief.sortie', report.sortie.agent, report.sortie.seq));
-  if (report.current) {
-    const node = report.current;
+  if (node) {
     console.log(t('brief.current', node.id, node.title, node.type));
     if (node.detail) console.log(node.detail);
     if (node.check?.kind === 'cmd') console.log(t('brief.check', node.check.run));
     if (node.check?.kind === 'stamp') console.log(t('brief.check.stamp', node.check.by));
     console.log(t('brief.seal', node.seal_broken ? t('seal.broken') : node.sealed ? t('seal.ok') : t('seal.none')));
     if (node.rollback_to) console.log(t('brief.rollback', node.rollback_to));
-    if (node.type === 'task' && node.check?.kind === 'cmd') {
+    if (kind === 'dungeon' && node.check?.kind === 'cmd') {
       const mark = { true: '✔', false: '✖', null: '・' };
       console.log(t('brief.tests', report.cases.filter((x) => x.ok === true).length, report.cases.length));
       for (const x of report.cases) console.log(`  ${mark[x.ok]} ${x.name}`);
@@ -54,8 +56,11 @@ export async function run(argv, ctx) {
       for (const line of shown) console.log(`  ${line}`);
     }
   }
-  console.log(t('brief.visible'));
-  for (const node of report.visible) console.log(`  ${node.id}「${node.title}」（${node.type}）`);
+  if (report.visible.length === 0) console.log(t('brief.visible.none', report.fog));
+  else {
+    console.log(t('brief.visible'));
+    for (const ahead of report.visible) console.log(`  ${ahead.id}「${ahead.title}」（${ahead.type}）`);
+  }
   console.log(t('brief.fog', report.fog));
   console.log(t('brief.party'));
   for (const member of report.party) {
@@ -66,12 +71,28 @@ export async function run(argv, ctx) {
       ? t('brief.waiting', report.waiting_for.map((id) => report.party.find((p) => p.id === id)?.name ?? id).join('、'))
       : t('brief.ready'));
   }
-  console.log(t('brief.notes'));
-  for (const note of report.notes) console.log(`  seq ${note.seq} ${note.ts}: ${note.text}`);
-  console.log(t('brief.how'));
-  console.log(t('brief.how.step', c.id));
-  console.log(t('brief.how.check', c.id));
-  console.log(t('brief.how.note', c.id));
+  if (report.notes.length === 0) console.log(t('brief.notes.none'));
+  else {
+    console.log(t('brief.notes'));
+    for (const note of report.notes) console.log(`  seq ${note.seq} ${localTime(note.ts)}: ${note.text}`);
+  }
+  // 進み方は、マスの種類で変わる（ハンコのマスに「歩く」は無い）
+  if (kind === 'dungeon') {
+    console.log(t('brief.how'));
+    console.log(t('brief.how.step', c.id));
+    console.log(t('brief.how.check', c.id));
+    console.log(t('brief.how.note', c.id));
+  } else if (kind === 'stamp') {
+    console.log(t('brief.how.other'));
+    console.log(t('brief.how.stamp', node.id, node.check.by));
+    console.log(t('brief.how.note', c.id));
+  } else if (kind === 'gate') {
+    console.log(t('brief.how.other'));
+    console.log(t('brief.how.gate', node.id));
+    console.log(t('brief.how.note', c.id));
+  } else if (kind === 'done') {
+    console.log(t('brief.how.done'));
+  }
   console.log(t('brief.rules'));
   for (const rule of report.rules) console.log(`  ${rule}`);
   console.log(recordLine(report));

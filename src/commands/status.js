@@ -15,9 +15,11 @@ export async function run(argv, ctx) {
   else {
     console.log(t('status.title', view.quest.title, view.map_version));
     for (const character of view.characters) {
-      const location = character.at === null ? t('goal') : `${character.at}「${view.nodes[character.at].title}」`;
+      // あがった人は「あがり」を1回だけ（場所と状態が同じ語なので。§78.5）
+      const where = character.at === null ? [t('goal')]
+        : [`${character.at}「${view.nodes[character.at].title}」`, t(`status.${character.status}`)];
       const level = character.max_level ? t('status.level.max', character.level) : t('status.level.xp', character.level, character.xp, character.xp_next);
-      console.log(t('status.line', character.name, location, t(`status.${character.status}`), level, character.clears, character.fails));
+      console.log(t('status.line', character.name, where.join(' / '), level, character.clears, character.fails));
     }
     const margin = latestMargin(view.margins);
     if (margin) {
@@ -30,6 +32,7 @@ export async function run(argv, ctx) {
       const p = view.push;
       console.log(p.ok ? t('status.push.ok', p.remote, p.branch, String(p.commit).slice(0, 7)) : t('status.push.ng', p.error));
     }
+    if (view.finished) console.log('この章はあがり（エンディングは盤面の「🏁 エンディング」で読める）');
     console.log(recordLine(view.head));
   }
   return 0;

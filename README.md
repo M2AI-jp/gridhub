@@ -10,7 +10,7 @@
 
 この README は**開発のことば**（テスト・タスク・コミット・承認）で書いてあります。ゲームの言い方（モンスター・ダンジョン・町・ハンコ）で読みたい人は [docs/RULEBOOK.md](docs/RULEBOOK.md) をどうぞ。盤面と CLI の字も、どちらの言い方にも切り替えられます（下の「ことば」）。
 
-![GridHub の盤面（縦の5mm方眼ノートの見開き）](docs/board.png)
+![GridHub の盤面（縦の5mm方眼ノートの見開き）](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board.png)
 
 動かすのに要るのは Node.js 22 以上と Git だけです（外部パッケージはありません。macOS と Linux で動きます。Windows は WSL で）。
 作りたいものから地図を作る（`gridhub quest`）とエージェントの起動（`gridhub party`）には、手元に [Claude Code](https://claude.com/claude-code) か [Codex CLI](https://github.com/openai/codex) が入っていてログイン済みであることも要ります（下の「0. 入れる」）。
@@ -83,7 +83,7 @@ GM の LLM（手元の `claude` か `codex`）が、作りたいものを地図�
 ### 2. 盤面を開く（`gridhub serve`）
 
 ```sh
-gridhub serve         # http://127.0.0.1:5005/ を開く（動かしたままにするので、続きは別のターミナルで）
+gridhub serve         # 盤面 http://127.0.0.1:5005/ をブラウザで開く（動かしたままにするので、続きは別のターミナルで。--no-open で URL を出すだけ）
 ```
 
 盤面の入口（「どんなアプリを作りたい？」）から、手順 1 の願いを書いて始めることもできます。
@@ -108,6 +108,8 @@ gridhub step engine           # いまのタスクのテストだけを走らせ
 gridhub check engine          # 判定: 全部のテストが通ったら、セーブポイントからの累積で判定する（失敗すると Lv−1）
 gridhub note engine "TTL は秒ではなくミリ秒。テストの名前に単位を書くと迷わない"   # 次の自分への申し送り
 ```
+
+`--as <ID>` を付けなくても、渡したキャラクターID（ここでは `engine`）の記録になります。別の人として記録したいときだけ `--as` を付けます（エージェントを起動したときは、`gridhub party` が付けて打っています）。
 
 `gridhub step` の出力（開発のことば。`gridhub words dev` で切り替えたとき）:
 
@@ -192,6 +194,8 @@ gridhub status --words dev    # 1回だけ切り替える（どのコマンド�
 
 - コミットするのは**担当ファイルだけ**です。あなたのほかの変更やステージ（`git add` したもの）には触れません。push はしません。フックは走りません。
 - `gridhub quest` が置く GM の作業ファイル（依頼書の控え `quest-prompt-*.txt` と GM の出力 `quest.log`）は `.gitignore` に入れるので、コミットには入りません。
+- **セーブデータ（`.masume/log.jsonl`）とテストの出力（`.masume/outputs/`）は Git に入れます**（プロジェクトの歴史そのもので、`gridhub verify` は出力のハッシュも確かめます。`gridhub quest` の最初のコミットに入ります）。セーブポイントのコミットは担当のファイルだけなので、遊んでいるあいだ `git status` には ` M .masume/log.jsonl` と `.masume/outputs/` が出たままになります。壊れているのではありません。章の区切りなど、好きなときに `git add .masume && git commit -m "gridhub: セーブデータ"` で入れてください（このリポジトリ自身もそうしています）。
+- `gridhub quest` が `git init` するときのブランチは `main` です（GitHub の既定と同じ）。
 - stash から変更を取り出すには、作業指示（`gridhub brief`）に出るコマンドを打ちます: `git stash apply <stash>`。
 - `quest.save` が無い地図では、GridHub は Git に触りません。
 
@@ -259,7 +263,7 @@ GitHub のリポジトリのページに出る「Compare & pull request」を押
 - いまの記録は、記録の番号（seq）と Git のコミットで言います: `記録: seq 42 / Git: commit a1b2c3d`（`gridhub status` の最後の行。`gridhub brief` と盤面の見出しにも出ます）。seq は盤面の時点、commit はそのとき判定が見ていたコードの時点です。メモ・コミットメッセージ・PR・Linear のコメントには、この1行を貼れば「その時点」を指せます。
 - `gridhub verify` は、鎖・地図・テストの出力の改ざんを見つけます。`gridhub repair` は、壊れた所から後ろを退避して鎖を直します。
 - `gridhub load <seq>` か `gridhub load <commit>` で、その時点の盤面に戻れます。commit で指すと、そのコミットがセーブデータに初めて記録された時点（セーブポイントの看板の `commit a1b2c3d` なら、そこでコミットした時点）に戻ります。戻したことも記録されます。コードは Git で戻します（`git checkout a1b2c3d`、stash は `git stash apply <stash>`）。
-- `gridhub log` で、何が起きたかを最初から読めます。
+- `gridhub log` で、何が起きたかを最初から読めます（盤面のログと同じ文。時刻はこの機械のローカル時刻）。`--tail` で最後の 20 件、`--tail 100` で 100 件、`--json` で生のイベント。
 
 ---
 
@@ -299,7 +303,7 @@ claude mcp add gridhub -- node /path/to/gridhub/bin/gridhub.js mcp --dir /path/t
 - 札・吹き出し・ニュースの切り抜きは重ならないように置かれ、字は切れません（長い字は短くして、全文はマウスを乗せると出ます）。
 - 道のマスはテスト1件ずつで、テストの名前は拡大すると読めます。タスクの札には `POST /api/memos` のような題と `テスト 3/5`、セーブポイントの看板には `commit a1b2c3d` が書いてあります。
 - **ことばは1つのボタンで切り替えられます**（見出しの右上）。「🗡 冒険のことば」はゲームの言い方（モンスター・ダンジョン・町・ハンコ・全滅）で、はじめての人向け。「⌨ 開発のことば」は開発の言い方（テスト・タスク・コミット・承認・リグレッション）で、エンジニア向け。どちらでも、1つの文の中に2つの言い方を並べません（もう一方は、マウスを乗せたときの補足にだけ出ます）。選んだほうはブラウザに残り、URL の `?words=dev` / `?words=game` でも指定できます。はじめの画面（`gridhub app`・Mac のアプリ）にも同じボタンがあります。
-- 右の欄: メンバー（起動の回数・テストの数・最初の判定で合格した数）、ログ、テスト一覧（成否つき）。冒険のことばでは、なかま・冒険の書・モンスター図鑑になります。
+- 右の欄: メンバー（起動の回数・テストの数・最初の判定で合格した数）、ログ、テスト一覧（成否つき）。冒険のことばでは、なかま・冒険の書・モンスター図鑑になります。見出しの「一覧」は、マスを Linear 風の表にしたものです。
 - 道には、開発に関係する**イベントのマス**もあります。進行には影響しません（テストも罰もない）。駒が通ると、合流の前には別の担当との会話（それぞれの最新のメモから）、セーブポイントでは住人との雑談（通したテストの数・コミット）、ほかではニュース（「速報: 伝令 が S2 を完了した」と、作っている製品の分野の話題 `quest.news`）が起きます。どれもセーブデータと地図に本当にあることからだけ作ります。
 - 「ノートに書き出す」で、ノート全体（すべてのページ）を1目 = 5mm の実寸の SVG にして保存できます。印刷すると、そのまま方眼ノートのすごろくになります。
 - 盤面はネットが無くても手元の書体ですぐ描かれます（Google Fonts の手書きの書体は、届いたら差し替わります）。
@@ -307,17 +311,17 @@ claude mcp add gridhub -- node /path/to/gridhub/bin/gridhub.js mcp --dir /path/t
 
 | 前（第10章: タスク1つ = 1マスの表） | 後（第11章: テスト1件 = 1マスの世界地図） |
 | --- | --- |
-| ![第10章の盤面](docs/board-ch10.png) | ![第11章の盤面](docs/board.png) |
+| ![第10章の盤面](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-ch10.png) | ![第11章の盤面](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board.png) |
 
 | ページをめくる | エンディング |
 | --- | --- |
-| ![ページをめくる](docs/board-flip.png) | ![エンディング](docs/board-ending.png) |
+| ![ページをめくる](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-flip.png) | ![エンディング](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-ending.png) |
 
 縦長の画面（ここでは縦に置いたタブレット、1024×1366）では、ノートを1ページずつ見せます。
 
-![縦長の画面では1ページずつ](docs/board-portrait.png)
+![縦長の画面では1ページずつ](https://raw.githubusercontent.com/M2AI-jp/gridhub/main/docs/board-portrait.png)
 
-スクリーンショットの撮り方は [docs/shots/README.md](docs/shots/README.md) にあります。
+スクリーンショットの撮り方は [docs/shots/README.md](https://github.com/M2AI-jp/gridhub/blob/main/docs/shots/README.md) にあります（写真は GitHub から読み込みます）。
 
 ---
 
@@ -354,7 +358,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | コマンド | すること |
 | --- | --- |
 | `gridhub quest "<作りたいもの>" [--gm claude\|codex]` | 作りたいものから GM の LLM が地図と E2E テストを書き、プロジェクトを始める（`git init` も） |
-| `gridhub serve [--port 5005]` | 盤面を開く |
+| `gridhub serve [--port 5005] [--no-open]` | 盤面を開く（ターミナルから打てば、ブラウザも開く） |
 | `gridhub app [--port 0]` | はじめの画面（フォルダを選ぶ・最近のフォルダ・チュートリアル）を開く。Mac のアプリはこれを起こす |
 | `gridhub party [--agent claude\|codex] [--tactic careful\|balanced\|bold] [--parallel N]` | 担当ごとにエージェントを起動し、結合テストを走らせる |
 | `gridhub brief <id>` | 作業指示 |
@@ -363,7 +367,7 @@ JIRA_BASE_URL=https://example.atlassian.net JIRA_EMAIL=you@example.com JIRA_API_
 | `gridhub note <id> "<text>"` | メモ（2回以上失敗したテストを通した直後のメモは引き継ぎになる） |
 | `gridhub stamp <node> --as <human>` | 承認 |
 | `gridhub words [game\|dev]` | ことばを見る・変える（冒険のことば / 開発のことば。どのコマンドにも `--words game\|dev` を付けられる） |
-| `gridhub status` / `gridhub log` | 盤面の要約 / ログ |
+| `gridhub status` / `gridhub log [--tail [N]]` | 盤面の要約 / ログ（読める文。`--json` で生のイベント） |
 | `gridhub verify` / `gridhub repair` | 改ざんの検証 / 修復 |
 | `gridhub load <seq\|commit>` | 過去の時点の盤面に戻る（記録の番号か Git のコミットで指す） |
 | `gridhub remote [--auto-push on\|off]` / `gridhub push` | GitHub につなぐ手順と、push していないコミットの数（コミットしたら自動で push する設定） / いまのブランチを push する（force push はしない） |

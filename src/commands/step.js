@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { step } from '../engine/index.js';
-import { gameRoot, parseArgs, usage } from '../engine/cli.js';
+import { actorFor, gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { outputFile } from '../engine/store.js';
 import { t } from '../engine/words.js';
 
@@ -8,10 +8,11 @@ const MARK = { true: '✔', false: '✖', null: '・' };
 
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx);
-  const { args, options, actor } = command;
+  const { args, options } = command;
   if (args.length !== 1) usage('つかいかた: step <characterId>（今のダンジョンの判定だけを走らせる。何度でも・罰なし）');
   const root = gameRoot(command);
-  const result = await step(root, args[0], { actor });
+  // --as が無ければ、歩いた本人として記録する
+  const result = await step(root, args[0], { actor: actorFor(command, args[0]) });
   if (options.json) {
     console.log(JSON.stringify(result));
     return result.exitCode;

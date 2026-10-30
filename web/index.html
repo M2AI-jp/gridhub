@@ -25,14 +25,14 @@
     </div>
     <nav class="tabs" role="tablist" aria-label="表示">
       <button role="tab" data-view="board" aria-selected="true" data-t="tab.board">盤面</button>
-      <button role="tab" data-view="list" aria-selected="false" data-t="tab.list">台帳</button>
+      <button role="tab" data-view="list" aria-selected="false" data-t="tab.list">一覧</button>
       <button role="tab" data-view="rules" aria-selected="false" data-t="tab.rules">あそびかた</button>
     </nav>
     <div class="save">
       <div class="record-box" data-t-title="record.title">
         <span class="rec-label" data-t="node.record">記録</span>
         <span id="record" class="record" data-seq="" data-commit=""><span class="rec-seq">seq —</span></span>
-        <button id="copy-record" class="mini-btn" data-t="record.copy" data-t-title="record.copy.title">写す</button>
+        <button id="copy-record" class="mini-btn" type="button" aria-label="いまの記録の目印をコピー" data-t="record.copy" data-t-title="record.copy.title">コピー</button>
       </div>
       <span id="integrity" class="pill" data-ok="true">セーブ正常</span>
       <span id="live" class="pill live" data-mode="off">…</span>
@@ -129,7 +129,7 @@
           <p class="lobby-lead" data-say="dev">「○○のようなアプリを作りたい」と書くと、GM の LLM が開発のロードマップを地図（<code>quest.map.json</code>）にし、タスクごとの E2E テストを書いて封印します。テスト1件が1マス。モジュールごとのエージェントの道が、結合テストで合流します。</p>
           <form id="lobby-form">
             <label class="field"><span><span data-say="game">願い</span><span data-say="dev">作りたいもの</span></span>
-              <textarea id="wish" rows="4" maxlength="2000" placeholder="例: ことづけのような、電話の用件をAIが聞いてメールで届けるアプリを作りたい"></textarea>
+              <textarea id="wish" rows="4" maxlength="2000" placeholder="例: 買い物リストのような、品物を足して買ったら消せるアプリを作りたい"></textarea>
             </label>
             <div class="examples">
               <button type="button" class="chip-btn" data-wish-example="おみくじを引けるコマンドラインのアプリを作りたい">おみくじCLI</button>

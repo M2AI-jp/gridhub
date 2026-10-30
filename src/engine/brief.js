@@ -52,6 +52,16 @@ export function brief(root, characterId) {
     save: view.quest.save ?? null,
     margin: latestMargin(view.margins, characterId),
     notes,
-    rules: ['rule.step', 'rule.current', 'rule.territory', 'rule.seal', 'rule.run', 'rule.record'].map((key) => t(key)),
+    rules: rulesFor(current),
   };
+}
+
+/** 守ること。ダンジョン（判定のあるマス）・ハンコのマス・ゲートで待っているとき・あがりで、言うことが違う（§78.2）。字は辞書（§76）から */
+function rulesFor(node) {
+  const common = ['rule.current', 'rule.territory', 'rule.seal'];
+  const keys = node === null ? ['rule.done']
+    : node.type === 'gate' ? ['rule.gate', ...common.slice(1)]
+      : node.type === 'task' && node.check?.kind === 'stamp' ? [...common, 'rule.stamp.check', 'rule.stamp.record']
+        : ['rule.step', ...common, 'rule.run', 'rule.record'];
+  return keys.map((key) => t(key));
 }

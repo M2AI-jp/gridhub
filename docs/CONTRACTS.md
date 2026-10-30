@@ -33,7 +33,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 - `ctx.bin` = 実際に起動した受付係（`bin/gridhub.js` か `bin/masume.js`）の絶対パス、`ctx.root` = リポジトリの絶対パス（ゲームのルートではない）。
 - 例外に `code`（例 `'E_UNSEALED'`）と `exitCode` を付けて投げると、受付係が `[E_UNSEALED] メッセージ` を stderr に出して終了する。
 - 終了コード: `0` 成功 / `1` 判定失敗・地図が不正 / `2` 使い方の誤り・前提不足（未封印・待機中など） / `3` 冒険の書が呪われている。
-- 共通オプション: `--dir <root>`、`--as <actor>`、`--json`（機械向け出力。stdout に JSON だけを出す）。
+- 共通オプション: `--dir <root>`、`--as <actor>`、`--json`（機械向け出力。stdout に JSON だけを出す）。`--as` の既定は §78.3。
 
 ---
 
@@ -114,13 +114,13 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 | `stamp <nodeId> --as <humanId>` | 書記 | §4.6 |
 | `status [--json]` | 書記 | 人間向けの盤面要約。`--json` は §5 のビュー |
 | `brief <characterId> [--json]` | 書記 | §6 の指令書 |
-| `log [--tail N] [--json]` | 書記 | イベント一覧（`--json` はイベント行の配列） |
+| `log [--tail [N]] [--json]` | 書記 | 冒険の書を人の読める文で（§78.4。`--json` はイベント行の配列） |
 | `verify [--json]` | 書記 | SAVE_FORMAT §6。正常なら `冒険の書は正常です`（0）、呪いなら `呪われています` と最初の seq（3）。`--json` は `{ok, errors:[{seq, code, message}], warnings, head:{seq, hash, commit}}`（§52.3） |
 | `repair` | 書記 | SAVE_FORMAT §6 |
 | `note <characterId> <text…>` | 書記 | `note` イベント（残りの引数を半角スペースでつないだものが text）。知らないキャラは `E_UNKNOWN`/2 |
 | `amend <map>` | 書記 | §4.8 |
 | `load <seq\|commit>` | 書記 | §4.9・§52.5 |
-| `serve [--port 5005] [--host 127.0.0.1]` | 伝令 | §8。起動したら stdout に `盤面: http://127.0.0.1:<port>/` を出して動き続ける。`--port 0` は空きポート |
+| `serve [--port 5005] [--host 127.0.0.1] [--dir D] [--open\|--no-open] [--lifeline]` | 伝令 | §8。起動したら stdout に `盤面: http://127.0.0.1:<port>/` を出して動き続ける。`--port 0` は空きポート。ブラウザを開くのは §78.7 |
 | `export linear [--format csv\|json] [--out file]` | 地図職人 | §9 |
 | `import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` | 地図職人 | §9 |
 
@@ -1472,3 +1472,21 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 2. **Mac のアプリ**（§72.3）は配布物ではなく、手元で組んで使うもの。動くのに要るファイル（§62.4 のアプリの中身）を、このフォルダから `cp` で `Contents/Resources/gridhub/` に写して組む。`GRIDHUB_SKIP_SWIFT=1` なら Mac でなくても、中身の詰め方だけを走らせて確かめられる。
 3. **使う人の入れ方**（README「0. 入れる」）: `git clone` して、`ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub` か `alias gridhub="node $PWD/bin/gridhub.js"`。Claude Code・Codex CLI の入れ方は、それぞれの公式の手順を指す（コマンドは書かない）。
 4. **判定**: `G11` は「アプリの中身から遊ぶ」（`sh mac/build.sh` を `GRIDHUB_SKIP_SWIFT=1` で走らせ、詰めた中身を別のフォルダで `node` で動かす。入れ忘れ・入れすぎは `git ls-files` と §62.4 で見る）。`GOAL15`・`GOAL16` の「アプリの中身に旧名が無い」も同じ中身を読む。`GOAL14` は `package.json` の `files` を見ない。`D2` は `mac/build.sh` がパッケージの道具を呼ばず `cp` で写すことを見る。`B19` ははじめの画面の claude の入れ方が公式の手順へのリンクであることを見る。判定ファイルを直したので、GM が封印し直す。
+
+## 78. 配る前の点検（使う人の目線で・監督の指示）
+
+配る前に、使う人の目線で README・CLI・チュートリアル・盤面・入口を実際に動かして点検した（報告書の A1〜A7・B1〜B9・C）。A1〜A7 は §32・§21・§64 の範囲で直し、B と C はここに書く。封印された判定が決めているもの（`party` がハンコ待ちで止まるときの終了コード 2、余白のマスの題と文、`saved` の文、`step` の1行目）は変えていない。
+
+1. **チュートリアル**（地図職人・`quests/tutorial/`）: 見習いAIのマス A1〜A3 の判定を `node:test` のテスト1件ずつにし、地図の `check.cases`（3件・4件・2件）とテストの名前を同じにする（看板の「テスト1件 = 1マス」を、手で遊べる教材で見せる）。ゲート G1・GOAL は `MASUME_BLAME` を出す1本のスクリプトのまま。README の手順に `gridhub step apprentice`（書く前に歩いて3件の ✖ を見る → 書いて歩く → 全部 ✔ → `gridhub check`）を入れ、開発途中の文（`E_NOT_YET`）を消し、最後の確認は `gridhub status`（`--json` を読ませない）。
+2. **指令書**（書記・`brief`）: 進み方はマスの種類で変わる。ダンジョン（判定のあるマス）は `歩き方:`（歩く・宣言・日誌。§44 のまま）。ハンコのマスは `進み方:` に `gridhub stamp <node> --as <by>`（盤面の「ハンコを押す」でも同じ）と日誌。ゲートで待っているときは「仲間がそろうとボス戦が自動で始まる。手で始めるなら `gridhub check <gate>`」。あがりは「あがり」。`rules` も同じく種類で変わる（ハンコのマスに「gridhub step で確かめる」を出さない。E9 は判定のあるマスで `gridhub step` を求める）。空の節は見出しだけにせず `視界に入っている先のマス: （なし。この先は霧）` / `自分の日誌（新しい順）: （まだない）`。日誌の時刻はローカル時刻（4）。
+3. **`--as` の既定**（書記・`parseArgs`）: `--as` > `MASUME_ACTOR` > **コマンドに渡したキャラクターID**（`step <id>`・`check <id>`・`note <id>`。`check <gateId>` は gm）> `gm`。人が `gridhub step engine` と打てば engine の記録になる（README の手順 4 と指令書の歩き方は `--as` なし、AGENTS.md とエージェントのプロンプトは今までどおり `--as` 付き。どちらも同じ記録になる）。`stamp` は「だれが押したか」の記録なので `--as` を省略できず、無ければ `E_USAGE`（そのマスの `check.by` を添えて `gridhub stamp H1 --as player` と出す）。MCP の既定（S5・S8）は今までどおり。
+4. **`gridhub log`**（書記）: 既定は人の読める文（§5 の `log[].text` と同じ。`seq`・ローカル時刻 `2026-10-30 12:34:56`・✔/✖/・・文・末尾に `[type]`）。`--json` は今までどおり生のイベント。`--tail` は値なしで 20 件、`--tail N` で N 件（`parseArgs` の `maybe` 型: 値があってもなくてもよい）。`localTime(ts)` は `src/engine/record.js`。
+5. **生成される日本語**（書記）: `check`・`stamp` の結果行は名前と題を添える（`判定成功: 見習いAI（apprentice）が A1「あいさつを一行で書く」を突破しました`、`結合ゲート突破: G1「…」を 勇者（player）、見習いAI（apprentice）が突破しました`、`全滅/差し戻し: G1「…」の判定失敗（責任: …）`。§3 の言葉は残す）。`status` はあがった人の「あがり / あがり」を1つに。余白のマスの題（`<題> の住人`・`<名前> と <名前>`）と文、`saved` の文は E13・E10 が決めているので変えない。
+6. **ハンコを押せない理由**（書記・`E_STAMP`）: 「指定された本人と現在のマスを確認してください」をやめ、理由を分けて言う: マスが無い / ハンコのマスではない / `--as` が無い / 本人違い（`このマスのハンコは player が押します（--as player）。apprentice ではありません`）/ 押し済み / いまそのマスにいない / 仲間を待っている。コードは `E_STAMP`/2 のまま（E2）。
+7. **`gridhub serve`**（伝令）: `--dir` のフォルダが無ければ `E_USAGE`（黙って入口を出さない）。ブラウザは、`--open` なら必ず、言われなければ人がターミナルから打ったとき（stdout が端末で、`--lifeline` でなく、`CI` が無い）だけ OS の `open` / `xdg-open` / `start` で開く。`--no-open` で開かない。パイプの先・アプリ・判定からは開かない。開いたか開けなかったかを1行出す。
+8. **Git**（書記・語り部）: 冒険の書 `.masume/log.jsonl` と判定の出力 `.masume/outputs/` は Git に入れる（歴史そのもの。`verify` は出力のハッシュも確かめるので、`.gitignore` には入れない。Q6 が最初のコミットに `.masume/log.jsonl` を求める）。町のセーブは縄張りだけ（§43）なので、遊んでいるあいだ `git status` に ` M .masume/log.jsonl` が出る。これは仕様で、README「Git のセーブと墓」に書く（区切りで `git add .masume && git commit`）。`gridhub quest` の `git init` は `-b main`（`-b` の無い古い git なら設定どおり）。
+9. **`package.json` と README の写真**（GM）: §77 のとおり、パッケージの登録のための項目（`keywords`・`homepage`・`repository`・`bugs`・`author`・`files`・`bin`）は持たない。README の写真は GitHub の raw の絶対 URL（どこで README を開いても切れない。GOAL14〜16 は http の絵を見ない）。`web/fixtures/make-demo*.mjs` はアプリの中身に残す（G11 §62.4 が `web/` の全部を求める）。
+10. **受付係**（GM・`bin/gridhub.js`）: `-V` と `version` も版を出す（出力は D2・G11 のとおり `gridhub <版> (rules 1)` の1行だけ）。`rules 1` の意味は `--help` の末尾で言う。`--help` の一覧は、いちばん長い使い方に合わせて桁をそろえる。
+11. **盤面**（賢者クロード）: 見出しの「台帳」は「一覧」（表の見出しは `一覧 — 台帳: Linear でいうと、こう見える`。`#ledger` と `data-view="list"` は同じ）。記録の「写す」は「コピー」（`aria-label` 付き）。入口の願いの例は一般の例（買い物リスト）。なかまのカードの名前は途中で切らず（`white-space: nowrap` と省略記号）、GitHub の欄の「送っていないセーブ」は語の途中で折り返さない（`word-break: keep-all`。ボタンは下に落ちる）。
+12. **変えていないもの**: `party` がハンコ待ちで正常に止まるときの終了コード 2（P1・G7 が決めている。「進められない」の意味で、エラーと区別するなら判定の改訂が要る）。
+13. **ことば**（§75・§76。main に取り込んだときの決めごと）: この節で足した字も辞書（`src/engine/words.js`・`web/board/words.js`）から出し、開発のことばの言い方を持つ: 指令書の `進み方:`／`進め方:`・`（なし。この先は霧）`・`（まだない）`・マスの種類で変わる `rules`、ハンコを押せない理由（`err.stamp.*`）、判定の結果行の名前と題（`check.*`）、`status` の「あがり」を1つに、`serve` のブラウザの知らせ（`serve.open.*`）、`--help` の `--as` の既定と版の説明（`cli.version`。最後の行は今までどおりルールブック）。盤面の「一覧」「コピー」「買い物リスト」は、どちらのことばでも同じ。

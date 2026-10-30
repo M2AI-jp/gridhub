@@ -152,15 +152,15 @@ const T = {
   // 見出し
   tagline: { game: 'テストが通ったぶんだけ、駒が進む開発すごろく', dev: 'テスト1件 = 1マス。E2E テストで進み具合を見るボード' },
   'tab.board': { game: '盤面', dev: '盤面' },
-  'tab.list': { game: '台帳', dev: '一覧' },
+  'tab.list': { game: '一覧', dev: '一覧' },
   'tab.rules': { game: 'あそびかた', dev: '使い方' },
   'record.title': {
     game: 'いまの記録の番号（seq）と、そのときの Git のコミット。「記録: seq N / Git: commit xxxxxxx」で、その時点の盤面を指せます',
     dev: 'いまの記録の番号（seq）と、その記録が見ていた Git のコミット。gridhub load <seq> か gridhub load <commit> でこの時点の盤面に戻せます',
   },
-  'record.copy': { game: '写す', dev: 'コピー' },
+  'record.copy': { game: 'コピー', dev: 'コピー' },
   'record.copy.title': {
-    game: '「記録: seq N / Git: commit xxxxxxx」を写します（日誌や連絡に貼ると、この時点を指せます）',
+    game: '「記録: seq N / Git: commit xxxxxxx」をコピーします（日誌や連絡に貼ると、この時点を指せます）',
     dev: '「記録: seq N / Git: commit xxxxxxx」をコピーします（コミットメッセージ・PR・日誌でこの時点を指す）',
   },
   'integrity.ok': { game: 'セーブ正常', dev: '整合性 OK' },
@@ -382,11 +382,11 @@ const T = {
   'sheet.path': { game: '道のり', dev: 'マスの並び' },
 
   // 台帳
-  'ledger.head': { game: '台帳', dev: '一覧' },
-  'ledger.sub': { game: 'Linear でいうと、こう見える', dev: 'Linear のステータスで見る' },
+  'ledger.head': { game: '一覧', dev: '一覧' },
+  'ledger.sub': { game: '台帳: Linear でいうと、こう見える', dev: '台帳: Linear のステータスで見る' },
   'ledger.lead': {
-    game: 'マスの状態は、そのまま Linear のステータスになります（gridhub export linear で書き出せます）。行を押すと盤面のマスを開きます。',
-    dev: 'マスの状態は、そのまま Linear のステータスになります（gridhub export linear で書き出せます）。行をクリックすると盤面のマスを開きます。',
+    game: 'マスを表にしたものです。マスの状態は、そのまま Linear のステータスになります（gridhub export linear で書き出せます）。行を押すと盤面のマスを開きます。',
+    dev: 'マスを表にしたものです。マスの状態は、そのまま Linear のステータスになります（gridhub export linear で書き出せます）。行をクリックすると盤面のマスを開きます。',
   },
   'ledger.id': { game: 'ID', dev: 'ID' },
   'ledger.title': { game: 'タイトル', dev: 'タイトル' },
