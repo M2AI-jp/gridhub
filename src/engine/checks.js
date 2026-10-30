@@ -237,14 +237,13 @@ async function runStamp(root, nodeId, { actor = defaultActor(), as = actor, boss
     const node = state.map.nodes[nodeId];
     const owner = state.map.characters.find(({ path }) => path.includes(nodeId));
     const character = owner && state.characters[owner.id];
-    // 押せないときは、理由を分けて言う（--as 忘れ・本人違い・マス違い・押し済み）
+    // 押せないときは、理由を分けて言う（本人違い・マス違い・押し済み。--as 忘れは CLI が E_USAGE で止める）
     const label = node?.title ? `${nodeId}「${node.title}」` : nodeId;
     const refuse = (why) => {
-      throw new MasumeError('E_STAMP', `${label} にハンコを押せません: ${why}`);
+      throw new MasumeError('E_STAMP', `${label}にハンコを押せません: ${why}`);
     };
     if (!node) refuse('そのマスは地図にありません');
     if (node.type !== 'task' || node.check?.kind !== 'stamp') refuse('ハンコのマスではありません（判定で進むマス）');
-    if (as === undefined || as === null || as === '') refuse(`だれが押すかを --as <人間のID> で指定してください（このマスのハンコは ${node.check.by}）`);
     if (node.check.by !== as) refuse(`このマスのハンコは ${node.check.by} が押します（--as ${node.check.by}）。${as} ではありません`);
     if (!character) refuse('このマスはどの道にもありません');
     const at = owner.path[character.pos];

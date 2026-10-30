@@ -97,13 +97,14 @@ function printFailureOutput(root, seq, node) {
   console.log(failed.replace(/\r?\n$/u, '').split(/\r\n|\n|\r/u).slice(-40).join('\n'));
 }
 
-/** 判定の結果行に使う、名前と題（盤面のログと同じ言い方。ID も残す） */
-function namesOf(root) {
-  let view = null;
-  try {
-    view = buildView(root);
-  } catch {
-    view = null;
+/** 判定の結果行に使う、名前と題（盤面のログと同じ言い方。ID も残す）。view は読んであれば渡す（二度再生しない） */
+function namesOf(root, view = null) {
+  if (!view) {
+    try {
+      view = buildView(root);
+    } catch {
+      view = null;
+    }
   }
   const who = (id) => {
     const c = view?.characters.find((x) => x.id === id);
@@ -116,8 +117,8 @@ function namesOf(root) {
   return { who, where };
 }
 
-export function printCheckResult(root, result) {
-  const { who, where } = namesOf(root);
+export function printCheckResult(root, result, { view = null } = {}) {
+  const { who, where } = namesOf(root, view);
   for (const { seq, type, data } of result.events) {
     switch (type) {
       case 'check_passed':

@@ -142,9 +142,11 @@ function usage() {
     'つかいかた: gridhub <command> [options]   共通: --dir <冒険の書のある場所> --as <あなたのID> --json',
     '',
   ];
-  const width = Math.max(...Object.values(COMMANDS).map(([, , how]) => how.length)) + 2;
+  // 使い方の欄は 50 桁まで。それより長い使い方（party・serve など）は1行に置き、説明を次の行の同じ桁に出す（端末で折り返さないため）
+  const width = 50;
   for (const [, [who, what, how]] of Object.entries(COMMANDS)) {
-    lines.push(`  ${how.padEnd(width)}${what}（担当: ${who}）`);
+    if (how.length < width - 1) lines.push(`  ${how.padEnd(width)}${what}（担当: ${who}）`);
+    else lines.push(`  ${how}`, `  ${' '.repeat(width)}${what}（担当: ${who}）`);
   }
   lines.push('', '--allow-listen: 判定が 127.0.0.1 にサーバーを立てられるよう、Codex の箱（サンドボックス）のソケットを開ける。',
     '  ゲームはローカルのまま。ただし Codex の設定は localhost だけに絞れないので、その出撃中はインターネットにも出られる。',
