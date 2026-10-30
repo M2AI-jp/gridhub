@@ -8,7 +8,9 @@ import { Sound } from './sound.js';
 import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit, rewordsCommand } from './command.js';
 import { own } from './sketch.js';
 import { initHand } from './hand.js';
-import { t, initWords, onWords, adoptServerWords } from './words.js';
+import { initHero, nextBoss } from './hero.js';
+import { showBoss } from './boss.js';
+import { t, initWords, onWords, adoptServerWords, isDev } from './words.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
 // （字が届くたび・届かないと分かるたびに、ノート全体の字を組み直すので、最初の描画とは重ねない）
@@ -77,9 +79,10 @@ async function loadArt(dir, key) {
 let pawns;
 let book;
 let hand = { open() {}, refresh() {}, rewords() {} };
+let hero = { start() {}, changed() {}, shown() {}, attention() {}, viewChanged() {} };
 function ensureSvg() {
   if (svg.dataset.init) return;
-  svg.innerHTML = `${defs(state.monsters)}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="margin-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
+  svg.innerHTML = `${defs(state.monsters)}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="sticker-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="margin-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
   pawns = new Pawns($('#pawns'), { walks: window.__masume.walks });
   svg.dataset.init = '1';
 }
@@ -212,7 +215,12 @@ function render(input) {
   renderDrawer();
   noteSorties(view);
   if (prev?.head && view.head && sameQuest) announce(prev, view);
+  // 手帳を読み直す: 同じ冒険で記録が進んだとき・別の冒険に切りかわったとき（入口から生まれた冒険・作り直した冒険）
+  if (view.head && (!sameQuest || !prev?.head || seqOf(view) > seqOf(prev))) hero.changed();
+  hero.viewChanged();
   renderEnding(view);
+  renderBossMeter(view);
+  renderYourTurn(view);
   window.__masume.ready = true;
   askHandFonts();
   window.__masume.view = view;
@@ -254,9 +262,11 @@ function followPawns(moved) {
   state.turnTimer = setTimeout(() => book.turnTo(last.page + 1), last.ms + 150);
 }
 
-/** 新しく起きたこと（強敵・復活・レベルアップ）を、盤面の上の字で見せる */
+/** 新しく起きたこと（撃破・強敵・復活・一発合格）を、盤面の上の字で見せる（レベルアップは駒が出す） */
 function effects(prev, view, lay, sameQuest) {
   if (!prev || !sameQuest) return;
+  let slain = 0;
+  let firstAt = null;
   for (const [id, n] of Object.entries(view.nodes)) {
     const p = own(prev.nodes, id);
     if (!Array.isArray(n.cases) || !p) continue;
@@ -267,8 +277,21 @@ function effects(prev, view, lay, sameQuest) {
       const at = { x: wx(sq.page, sq.x + 1), y: wy(sq.y) + 3.2 * U };
       if ((c.revived || 0) > (was?.revived || 0)) pawns.float(at, t('fx.revived'), 'down');
       else if (c.strong && !was?.strong) pawns.float(at, t('fx.strong'), 'up');
+      else if (c.ok === true && was?.ok !== true) {
+        // 撃破（倒したモンスターは跳ねてから斜線。字は5体まで、残りはまとめて）
+        slain++;
+        firstAt ??= at;
+        if (slain <= 5) pawns.float(at, t('fx.hit'), 'hit', (slain - 1) * 140);
+      }
     });
+    // 一発で出口を抜けた（ちいさなメダル）
+    if (n.first_try === true && p.first_try !== true && n.state === 'cleared') {
+      const pl = lay.place[id];
+      if (pl?.x !== undefined) pawns.float({ x: wx(pl.page, pl.x + 2), y: wy(pl.y) + 3.2 * U }, t('fx.medal'), 'medal', 400);
+    }
   }
+  if (slain >= 3 && firstAt) pawns.float({ x: firstAt.x, y: firstAt.y - 1.6 * U }, t('fx.combo', slain), 'combo', 700);
+  if (slain > 0) sound.play('hit');
 }
 
 function curseLines(view) {
@@ -322,6 +345,70 @@ function renderDrawer() {
   drawer.hidden = false;
   drawer.dataset.kind = sel.kind;
   drawer.dataset.id = sel.id;
+}
+
+/** 次のボス戦まで（§79.23）: 盤面の右上に「次のボス戦 G3 まで あと 7体・仲間 1/3」。押すとそのゲートへ */
+function renderBossMeter(view) {
+  const box = $('#boss-meter');
+  if (!box) return;
+  const b = nextBoss(view);
+  window.__masume.nextBoss = b;
+  if (!b) {
+    box.hidden = true;
+    return;
+  }
+  const kind = t('boss.kind', b.goal);
+  const rest = [b.left ? t('boss.left', b.left) : '', b.stamps ? t('boss.stamps', b.stamps) : ''].filter(Boolean).join('・');
+  const lead = rest ? `${kind} ${b.id} まで ${rest}` : t('boss.wait', kind, b.id);
+  box.dataset.node = b.id;
+  box.dataset.near = String(b.left <= 3);
+  box.title = t('boss.title', b.title, b.arrived, b.members);
+  const strong = document.createElement('b');
+  strong.textContent = lead;
+  const small = document.createElement('small');
+  small.textContent = t('boss.members', b.arrived, b.members);
+  box.replaceChildren(strong, small);
+  box.hidden = false;
+}
+
+/**
+ * あなたの番！（§79.32）: 人間のキャラクターがハンコのマスにいる・手で進めるマスにいるとき、盤面の右上にボタン。
+ * エージェントが止まって人間を待つ、いちばん大事な瞬間。新しく番が来たら音を鳴らし、窓が後ろなら Dock で知らせる
+ */
+function renderYourTurn(view) {
+  const box = $('#your-turn');
+  if (!box) return;
+  const me = view.characters.find((c) => {
+    if (c.kind !== 'human' || c.status !== 'working' || !c.at) return false;
+    const n = own(view.nodes, c.at);
+    return n?.type === 'task' && (n.check?.kind !== 'stamp' || n.check.by === c.id);
+  });
+  const node = me ? own(view.nodes, me.at) : null;
+  window.__masume.yourTurn = node ? node.id : null;
+  if (!node) {
+    box.hidden = true;
+    state.turnKey = null;
+    return;
+  }
+  const stamp = node.check?.kind === 'stamp';
+  box.dataset.node = node.id;
+  box.dataset.char = me.id;
+  box.dataset.kind = stamp ? 'stamp' : 'hand';
+  const big = document.createElement('b');
+  big.textContent = t(stamp ? 'turn.stamp' : 'turn.hand');
+  const small = document.createElement('small');
+  small.textContent = `${node.id}「${node.title ?? ''}」`;
+  box.replaceChildren(big, small);
+  box.hidden = false;
+  const key = `${view.quest?.id}:${node.id}`;
+  if (state.turnKey !== key) {
+    // 開いたときから番だったら鳴らさない（新しく番が回ってきたときだけ）
+    if (state.turnKey !== undefined) {
+      sound.play('achieve');
+      hero.attention();
+    }
+    state.turnKey = key;
+  }
 }
 
 // ---- エンディング（§50.10） ----
@@ -409,6 +496,11 @@ function announce(prev, view) {
   const news = (view.log || []).filter((e) => e.seq > seqOf(prev));
   if (!news.length) return;
   let tone = null;
+  // ボス戦（結合ゲート・魔王の城）はカットインで見せる（いちばん新しい1つ）
+  const battle = news.filter((e) => e.type === 'gate_cleared' || e.type === 'gate_failed').at(-1);
+  if (battle && !view.finished) setTimeout(() => showBoss(battle, view, state.sprites, sound), 250);
+  quips(news);
+  if (news.some((e) => ['returned', 'gate_cleared', 'gate_failed'].includes(e.type)) || (view.finished && !prev.finished)) hero.attention();
   for (const e of news.slice(-3)) {
     toast(e);
     if (e.type === 'gate_cleared') tone = 'fanfare';
@@ -420,6 +512,31 @@ function announce(prev, view) {
     toast({ text: t('finish.toast'), ok: true, type: 'finish' });
   }
   if (tone) sound.play(tone);
+}
+
+// 仲間のひとこと（§79.12）: 本当に記録された出来事に、駒がひとこと返す。言い回しは seq で決まる（同じ記録なら同じ言葉）
+const QUIPS = {
+  sortie: ['いってきます！', '{node} を片づけてくる', 'まかせて！', '指令書、読んだ。行こう'],
+  check_passed: ['よし、{node} を抜けた！', 'テスト全部、通った！', '出口だ！', 'はなまる、もらった'],
+  check_failed: ['くっ… 町からやり直しだ', 'まだ早かったか…', '次は step で確かめてから…', '{node} が手ごわい…'],
+  stepped: ['全部倒した。出口で宣言だ！', 'これで全部、通るはず'],
+  returned: ['ただいま！', '帰ったよ', 'ひと仕事、終わり'],
+  stamped: ['ハンコ、ありがとう！', '王様の許しが出た'],
+};
+function quips(news) {
+  const lay = state.lay;
+  if (!lay?.spots || isDev()) return; // 開発のことばでは、駒はしゃべらない
+  let n = 0;
+  for (const e of news.slice(-4)) {
+    const lines = QUIPS[e.type];
+    if (!lines || !e.character || n >= 2) continue;
+    if (e.type === 'stepped' && e.ok !== true) continue; // 歩くたびには言わない。全部倒したときだけ
+    const sp = lay.spots[e.character];
+    if (!sp) continue;
+    const line = lines[e.seq % lines.length].replace('{node}', e.node ?? '');
+    pawns.float({ x: wx(sp.page, sp.x), y: wy(sp.y) - 0.6 * U }, line, 'quip', 900 + n * 700);
+    n++;
+  }
 }
 
 /** 知らせ。文字はすべてテキストとして入れる（HTML として解釈しない）。sticky なら自分では消えない */
@@ -541,6 +658,7 @@ function setView(name) {
   else url.searchParams.set('view', name);
   history.replaceState(null, '', url);
   if (name === 'board' && book?.cam) requestAnimationFrame(() => (book.cam.auto ? book.fit() : book.apply()));
+  if (name === 'techo') hero.shown();
 }
 
 async function post(path, body) {
@@ -566,7 +684,7 @@ async function post(path, body) {
 
 function setupInteractions() {
   document.addEventListener('click', async (e) => {
-    const t_ = e.target.closest('[data-close],[data-stamp],[data-battle],[data-hand],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#copy-record,#sound,#ending-close,#ending-open');
+    const t_ = e.target.closest('[data-close],[data-stamp],[data-battle],[data-hand],button[data-view],.party-card,tr[data-node],.step[data-node],.log-entry[data-node],#boss-meter,#your-turn,#copy-record,#sound,#ending-close,#ending-open');
     const inBoard = e.target.closest('#board');
     if (inBoard && svg.dataset.justDragged) return;
     if (!t_ && inBoard) {
@@ -592,6 +710,13 @@ function setupInteractions() {
     if (t_.matches('[data-close]')) return select(null);
     if (t_.matches('button[data-view]')) return setView(t_.dataset.view);
     if (t_.matches('.party-card')) return select('char', t_.dataset.char, { focus: true });
+    if (t_.matches('#boss-meter')) return select('node', t_.dataset.node, { focus: true });
+    if (t_.matches('#your-turn')) {
+      setView('board');
+      if (t_.dataset.kind === 'stamp') return select('node', t_.dataset.node, { focus: true });
+      select('char', t_.dataset.char, { focus: true });
+      return hand.open(t_.dataset.char);
+    }
     if (t_.matches('tr[data-node], .step[data-node], .log-entry[data-node]')) {
       setView('board');
       return select('node', t_.dataset.node, { focus: true });
@@ -879,10 +1004,19 @@ function exportSvg() {
 <title>${xmlText(state.view.quest?.title || 'GridHub')}</title>
 <style><![CDATA[${css.replace(/]]>/g, ']]]]><![CDATA[>')}]]></style>
 ${defsEl ? ser.serializeToString(defsEl) : ''}
+${heroSymbols()}
 ${ser.serializeToString(world)}
 </svg>
 `;
   return out.replace(XML_BAD, '');
+}
+
+/** ノートに貼ったシールの絵（勇者の手帳の symbol。§79.11）。書き出しのノートにも入れる */
+function heroSymbols() {
+  const holder = document.querySelector('#hero-defs');
+  if (!holder || !document.querySelector('#sticker-layer use')) return '';
+  const ser = new XMLSerializer();
+  return `<defs>${[...holder.children].map((c) => ser.serializeToString(c)).join('')}</defs>`;
 }
 
 function downloadNotebook() {
@@ -972,10 +1106,14 @@ function rewords() {
   hand = initHand({ live: LIVE, post, toast, app: APP });
   $('#export-notebook').addEventListener('click', downloadNotebook);
   [state.sprites, state.monsters] = await Promise.all([loadArt('sprites', 'jobs'), loadArt('monsters', 'monsters')]);
-  if (params.get('view')) setView(params.get('view'));
+  hero = initHero({ live: LIVE, post, toast, sound, setView, monsters: state.monsters, board: svg, getView: () => state.view });
+  if (params.get('view') && params.get('view') !== 'techo') setView(params.get('view'));
   try {
-    if (LIVE) await startLive();
-    else await startFixture();
+    if (LIVE) {
+      await startLive();
+      await hero.start();
+      if (params.get('view') === 'techo' && !$('#techo-tab').hidden) setView('techo');
+    } else await startFixture();
   } catch (err) {
     console.warn(err);
     toast({ text: t('load.fail', String(err?.message || err)), ok: false, sticky: true });

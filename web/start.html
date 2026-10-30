@@ -9,6 +9,7 @@
   <!-- 外の字は、はじめの画面を描いたあとで読む（届かなくても待たない。§37） -->
   <link id="hand-fonts" disabled href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Yomogi&family=Yusei+Magic&display=swap" rel="stylesheet" media="print">
   <link rel="stylesheet" href="board/board.css">
+  <link rel="stylesheet" href="board/hero.css">
   <!-- ことば（冒険 / 開発。§75）: 描く前に <html data-words> を決めて、2つの言い方のうち片方だけを見せる（board/boot.js。board/words.js と同じ決め方） -->
   <script src="board/boot.js"></script>
 </head>
@@ -19,6 +20,8 @@
       <p class="start-tagline" data-t="tagline">テストが通ったぶんだけ、駒が進む開発すごろく</p>
       <button id="words-toggle" class="mini-btn words-toggle" type="button" aria-pressed="false">🗡 冒険のことば</button>
     </header>
+
+    <section id="start-hero" class="start-hero" hidden aria-label="勇者の手帳"></section>
 
     <section class="start-actions" aria-label="はじめる">
       <div class="start-card">

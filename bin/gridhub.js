@@ -29,6 +29,7 @@ const COMMANDS = {
   load: ['engine', { game: '過去の時点（冒険の書の seq か Git のコミット）の盤面に戻る', dev: '過去の時点（記録の seq か Git のコミット）の盤面に戻る' }, 'load <seq|commit>'],
   remote: ['engine', { game: 'Git と GitHub の様子と、GitHub につなぐ手引き', dev: 'Git と GitHub の様子と、GitHub につなぐ手順' }, 'remote [--auto-push on|off] [--json]'],
   push: ['engine', { game: 'いまのブランチを GitHub（リモート）に送る（force はしない）', dev: 'いまのブランチを push する（--force はしない）' }, 'push [--json]'],
+  me: ['engine', { game: '勇者の手帳（ランク・続いた日数・今日のお題・シール帳・称号）', dev: '手帳（ランク・連続日数・今日のお題・シール帳・称号）' }, 'me [--json]'],
   words: ['engine', { game: 'ことばを見る・変える（冒険のことば / 開発のことば）', dev: 'ことばを見る・変える（冒険のことば / 開発のことば）' }, 'words [game|dev]'],
   sortie: ['engine', { game: 'エージェントの出撃を記録する', dev: 'エージェントの起動を記録する' }, 'sortie <characterId> --agent <name> [--model M]'],
   return: ['engine', { game: 'エージェントの帰還を記録する', dev: 'エージェントの終了を記録する' }, 'return <characterId> --sortie <seq> --code <n> [--log file]'],
@@ -70,6 +71,11 @@ const OPTIONS = {
     t('cli.help.words'),
   ],
   mcp: () => [{ game: '  --dir D        冒険の書のあるフォルダ（省略すると環境変数 MASUME_DIR か、今いる場所から上へ探す）', dev: '  --dir D        セーブデータのあるフォルダ（省略すると環境変数 MASUME_DIR か、今いる場所から上へ探す）' }, t('cli.help.words')],
+  me: () => [
+    '  --dir D        いまの冒険（「前に見てから」を出す。省略すると、今いる場所から上へ探す。無くてもよい）',
+    '  --home D       手帳を置く場所（既定: GRIDHUB_APP_HOME、macOS は ~/Library/Application Support/GridHub）',
+    t('cli.common.json'),
+  ],
   export: () => ['  --format json|csv  書き出す形（既定 json）', '  --out <file>       出力先（省略すると標準出力）', ...dirJson()],
   import: () => ['  --out <map.json>   地図の下書きの出力先（必須）', '  --quest-id KEY     冒険の ID', '  --title T          冒険の題', t('cli.common.json')],
   linear: () => [
@@ -104,6 +110,7 @@ const DETAIL = {
   load: ['その時点の盤面に戻る（戻したことも記録される）。コードは git checkout <commit> で戻す。'],
   remote: [{ game: 'Git と GitHub の様子と、まだの手引き（gh の導入・ログイン・リポジトリ・送る）。', dev: 'Git と GitHub の様子と、まだの手順（gh の導入・ログイン・リポジトリ・push）。' }, { game: '--auto-push on|off: 町でセーブしたら GitHub に送る（初めはオフ）。', dev: '--auto-push on|off: コミットしたら自動で push する（初めはオフ）。' }],
   push: ['いまのブランチを git push する（force はしない。GitHub のほうが先に進んでいたら止まる）。'],
+  me: ['遊ぶ人の積み上げ。冒険をまたいで残る（盤面の「手帳」と同じ）。中身はすべて冒険の書から導く。', 'シール袋は盤面の「手帳」で開ける。ここでは数だけ出す。'],
   words: [{ game: 'ことば（字の言い方）を見る・変える。game は冒険のことば（モンスター・ダンジョン・町）、dev は開発のことば（テスト・タスク・コミット）。', dev: 'ことば（字の言い方）を見る・変える。game は冒険のことば（モンスター・ダンジョン・町）、dev は開発のことば（テスト・タスク・コミット）。' }, { game: '引数をつけると、この冒険の .masume/words.json に書く（盤面の右上のボタンと同じ設定）。', dev: '引数をつけると、このプロジェクトの .masume/words.json に書く（盤面の右上のボタンと同じ設定）。' }],
   sortie: [{ game: '（軍師が使う）エージェントの出撃を冒険の書に記録する。ふつうは gridhub party が打つ。', dev: '（party が使う）エージェントの起動をセーブデータに記録する。ふつうは gridhub party が打つ。' }],
   return: [{ game: '（軍師が使う）出撃の帰還を記録する。止まったままの出撃を閉じるときにも使う。', dev: '（party が使う）起動の終了を記録する。止まったままの起動を閉じるときにも使う。' }],

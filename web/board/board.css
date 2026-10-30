@@ -736,7 +736,7 @@ body.in-lobby #curse { display: none; }
   :root { --side-w: 290px; }
 }
 /* 見出しが横にはみ出さないように（§57）: 飾りの字から順に隠す。添え書き → 記録の札の「記録」とことばのボタンの名前 */
-@media (max-width: 1400px) {
+@media (max-width: 1640px) {
   .tagline { display: none; }
 }
 @media (max-width: 1100px) {
@@ -750,7 +750,7 @@ body.in-lobby #curse { display: none; }
   .pill { padding: 3px 8px; }
   #ending-open .btn-text { display: none; } /* あがった盤面では 🏁 だけ（名前は aria-label と title に） */
 }
-@media (max-width: 1000px) and (min-width: 861px) {
+@media (max-width: 1360px) and (min-width: 861px) {
   .cover #live, .cover #copy-record { display: none; }
 }
 @media (max-width: 860px) {
@@ -1219,7 +1219,7 @@ html:not([data-words='dev']) [data-say='dev'], html[data-words='dev'] [data-say=
   .words-toggle { padding-inline: 6px; }
 }
 /* 狭い画面: 見出しが横にはみ出さないように、名前を隠して印（🗡 / ⌨）だけにする。名前は title で読める */
-@media (max-width: 1100px) {
+@media (max-width: 1240px) {
   .cover .words-toggle .wt-label { display: none; }
 }
 .start-head .words-toggle { margin-left: auto; align-self: center; }

@@ -44,6 +44,9 @@ export function chronicle(root, events) {
   const firstTry = new Map();
   const lastSealed = new Map();
   const incidents = []; // {seq, kind, character}
+  const firsts = []; // はじめて倒したテスト {seq, node, case, character, strong, losses}（勇者の手帳のシール。§79）
+  const cures = []; // 復活していたテストを倒し直した {seq, node, case, character}
+  const goals = []; // 魔王の撃破（章のあがり）{seq, gate, stats}
   const saves = [];
   const restores = [];
   let goal = null;
@@ -104,11 +107,14 @@ export function chronicle(root, events) {
             incidents.push({ seq, kind: 'revived', character });
           }
         } else {
-          if (stat.streak >= 2) {
+          const strong = stat.streak >= 2;
+          if (strong) {
             stat.strong = true;
             incidents.push({ seq, kind: 'strong', character });
             strongCase ??= { node: id, case: name };
           }
+          if (!stat.passed) firsts.push({ seq, node: id, case: name, character, strong, losses: stat.losses });
+          else if (stat.ok === false) cures.push({ seq, node: id, case: name, character });
           stat.streak = 0;
           stat.passed = true;
         }
@@ -201,11 +207,12 @@ export function chronicle(root, events) {
           sorties: count('sortie'), fails: count('fail'),
         },
       };
+      goals.push(ending);
     }
   };
 
   const state = replay(root, events, { before, after });
-  return { state, fights, people, firstTry, saves, restores, incidents, ending, nodeCases, bestiary, margins };
+  return { state, fights, people, firstTry, saves, restores, incidents, firsts, cures, goals, ending, nodeCases, bestiary, margins };
 }
 
 /** 章のエンディングの文（§42.1）。記録が違えば、文も違う。技術の言葉を先に */
