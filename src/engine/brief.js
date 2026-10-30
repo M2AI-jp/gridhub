@@ -2,12 +2,13 @@ import { MasumeError } from './errors.js';
 import { latestMargin } from './margins.js';
 import { inspectLog, requireHealthy } from './store.js';
 import { buildView } from './view.js';
+import { t } from './words.js';
 
 export function brief(root, characterId) {
   const view = buildView(root);
   requireHealthy(view.integrity);
   const character = view.characters.find(({ id }) => id === characterId);
-  if (!character) throw new MasumeError('E_UNKNOWN', `キャラクターが見つかりません: ${characterId}`);
+  if (!character) throw new MasumeError('E_UNKNOWN', t('err.unknown.char', characterId));
   const current = character.at === null ? null : view.nodes[character.at];
   const visibleIds = character.path.slice(character.pos + 1, character.pos + 1 + character.vision);
   const notes = inspectLog(root).events
@@ -55,18 +56,12 @@ export function brief(root, characterId) {
   };
 }
 
-/** 守ること。ダンジョン（判定のあるマス）・ハンコのマス・ゲートで待っているとき・あがりで、言うことが違う */
+/** 守ること。ダンジョン（判定のあるマス）・ハンコのマス・ゲートで待っているとき・あがりで、言うことが違う（§78.2）。字は辞書（§76）から */
 function rulesFor(node) {
-  const common = ['現在のマスだけをやる', '自分の縄張りの中だけを編集する', '判定ファイルと地図を変更しない'];
-  if (node === null) return ['あがり。この地図でやることは、もうない'];
-  if (node.type === 'gate') return ['仲間がそろうとボス戦（結合テスト）が自動で始まる。待っているあいだ、縄張りのファイルを変えない', ...common.slice(1)];
-  if (node.type === 'task' && node.check?.kind === 'stamp') {
-    return [...common, 'ファイルの中身を自分の目で確かめてからハンコを押す（ハンコは判定ではなく、人間の判断の記録）', '日誌で進行を冒険の書に記録する'];
-  }
-  return [
-    '1マスずつ: いちばん手前の落ちているテストだけを通して、gridhub step で確かめる',
-    ...common,
-    '判定コマンドを自分で走らせ、結果を確認する',
-    '宣言判定と日誌で進行を冒険の書に記録する',
-  ];
+  const common = ['rule.current', 'rule.territory', 'rule.seal'];
+  const keys = node === null ? ['rule.done']
+    : node.type === 'gate' ? ['rule.gate', ...common.slice(1)]
+      : node.type === 'task' && node.check?.kind === 'stamp' ? [...common, 'rule.stamp.check', 'rule.stamp.record']
+        : ['rule.step', ...common, 'rule.run', 'rule.record'];
+  return keys.map((key) => t(key));
 }

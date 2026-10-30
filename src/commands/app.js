@@ -9,7 +9,7 @@ function usageError(message) {
   return Object.assign(new Error(message), { code: 'E_USAGE', exitCode: 2 });
 }
 
-const USAGE = '使い方: gridhub app [--port 0] [--host 127.0.0.1] [--home D] [--play D] [--lifeline]';
+const USAGE = '使い方: gridhub app [--port 0] [--host 127.0.0.1] [--home D] [--play D] [--lifeline] [--words game|dev]';
 
 export async function run(argv, ctx) {
   let values;
@@ -23,6 +23,7 @@ export async function run(argv, ctx) {
         play: { type: 'string' },
         lifeline: { type: 'boolean', default: false },
         help: { type: 'boolean', short: 'h', default: false },
+        words: { type: 'string' },
       },
       strict: true,
       allowPositionals: false,
@@ -39,8 +40,13 @@ export async function run(argv, ctx) {
       '  --home D     最近のフォルダを置く場所（既定: GRIDHUB_APP_HOME、macOS は ~/Library/Application Support/GridHub）',
       '  --play D     チュートリアルのフォルダを作る場所（既定: GRIDHUB_PLAY_DIR か ~/GridHub）',
       '  --lifeline   標準入力が閉じたら止まる（アプリが落ちてもサーバーを残さない）',
+      '  --words game|dev  盤面の字を冒険のことば（game）か開発のことば（dev）で出す（開いた盤面の設定が優先）',
     ].join('\n'));
     return 0;
+  }
+  if (values.words !== undefined) {
+    if (values.words !== 'game' && values.words !== 'dev') throw usageError(`--words は game か dev です: ${values.words}`);
+    process.env.GRIDHUB_WORDS = values.words;
   }
   const port = Number(values.port);
   if (!/^\d+$/.test(values.port) || port > 65535) throw usageError('--port には 0 から 65535 までの整数を指定してください');

@@ -1,4 +1,4 @@
-// gridhub me — 勇者の手帳（CONTRACTS §76.6）。ランク・続いた日数・今日のお題・シール帳・称号を、ターミナルで見る。
+// gridhub me — 勇者の手帳（CONTRACTS §79.6）。ランク・続いた日数・今日のお題・シール帳・称号を、ターミナルで見る。
 // 読むだけ（シール袋は盤面の「手帳」で開ける。開ける楽しみはとっておく）。
 import { resolve } from 'node:path';
 import { gameRoot, parseArgs, usage } from '../engine/cli.js';

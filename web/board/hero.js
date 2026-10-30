@@ -1,4 +1,4 @@
-// 勇者の手帳（CONTRACTS §76）: 遊ぶ人の積み上げ。手帳のタブ・勇者のカード・シール袋を開ける部屋・おかえりのカード・お祝い。
+// 勇者の手帳（CONTRACTS §79）: 遊ぶ人の積み上げ。手帳のタブ・勇者のカード・シール袋を開ける部屋・おかえりのカード・お祝い。
 // 中身はすべてサーバーの GET /api/hero（冒険の書から導いたもの）。書くのは、シール袋を開けた・知らせを閉じた、の2つだけ。
 // 字はすべてテキストとして入れる（冒険の書から来た字を HTML として解釈しない）。
 import { U, PAGE, pageOrigin } from './world.js';
@@ -69,7 +69,7 @@ export function stickerEl(f, { count = null, fresh = false, big = false } = {}) 
 }
 
 /**
- * 次のボス戦（§76.23）: まだ突破していない結合ゲート・魔王の城のうち、仲間が全員そろうまでに倒すテストがいちばん少ないもの。
+ * 次のボス戦（§79.23）: まだ突破していない結合ゲート・魔王の城のうち、仲間が全員そろうまでに倒すテストがいちばん少ないもの。
  * { id, title, goal, left, stamps, arrived, members }。残っていなければ null
  */
 export function nextBoss(view) {
@@ -182,7 +182,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     return { j, t };
   }
 
-  // Mac のアプリの中（§76.14）: Dock に未開封の数を出し、窓が後ろのときの大きな出来事は Dock で知らせる
+  // Mac のアプリの中（§79.14）: Dock に未開封の数を出し、窓が後ろのときの大きな出来事は Dock で知らせる
   const tell = (message) => {
     try {
       window.webkit?.messageHandlers?.gridhub?.postMessage(message);
@@ -233,7 +233,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     badge.classList.add('bump');
   }
 
-  // ---- 今週のMVP（§76.21）: なかまのカードに「今週のMVP」の札（並べ直されても消えないよう、CSS で付ける） ----
+  // ---- 今週のMVP（§79.21）: なかまのカードに「今週のMVP」の札（並べ直されても消えないよう、CSS で付ける） ----
   function renderMvp() {
     let style = document.querySelector('#mvp-style');
     if (!style) {
@@ -251,7 +251,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     window.__masume.mvp = id;
   }
 
-  // ---- エンディングの戦利品（§76.15）: 章をあがったら、勇者のランクと、開けられるシール袋 ----
+  // ---- エンディングの戦利品（§79.15）: 章をあがったら、勇者のランクと、開けられるシール袋 ----
   function renderEndingLoot() {
     const box = $('#ending-loot');
     if (!box) return;
@@ -264,7 +264,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     box.hidden = false;
   }
 
-  /** 出撃中の戦果（§76.27）: だれかが出撃しているあいだ、いちばん新しい出撃のあとに倒したテストの数 */
+  /** 出撃中の戦果（§79.27）: だれかが出撃しているあいだ、いちばん新しい出撃のあとに倒したテストの数 */
   function sortieLine() {
     const view = getView();
     const out = (view?.characters ?? []).filter((c) => c.sortie);
@@ -380,7 +380,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
       el('div', { class: 'tc-col wide' }, albumSec, titles)));
   }
 
-  /** 自己ベスト（§76.17） */
+  /** 自己ベスト（§79.17） */
   function renderRecords(r) {
     if (!r) return null;
     const md = (date) => (date ? `${Number(date.slice(5, 7))}/${Number(date.slice(8))}` : '');
@@ -584,7 +584,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     return tease;
   }
 
-  /** 交換所（§76.16）: 5枚を1つ上のレア度1枚と換えて、開ける部屋でめくって見せる */
+  /** 交換所（§79.16）: 5枚を1つ上のレア度1枚と換えて、開ける部屋でめくって見せる */
   async function trade(slot) {
     if (opening) return;
     $('#slot-pop').hidden = true;
@@ -751,7 +751,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     }, reduced() ? 0 : 900);
   }
 
-  // ---- シールをノートに貼る（§76.11） ----
+  // ---- シールをノートに貼る（§79.11） ----
   const PASTE_SIZE = 4 * U;
   /** 貼ったシールを、盤面の #sticker-layer（景色の上・道の下）に描く */
   function renderPasted() {
@@ -872,7 +872,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     });
   }
 
-  // ---- 冒険者カードを画像に（§76.24）: 1200×630 の SVG を描いて PNG に。コピーか保存 ----
+  // ---- 冒険者カードを画像に（§79.24）: 1200×630 の SVG を描いて PNG に。コピーか保存 ----
   function cardSvg() {
     const j = journal;
     const W = 1200;

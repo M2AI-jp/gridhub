@@ -1,6 +1,7 @@
-// ボス戦のカットイン（CONTRACTS §76.8）: 結合ゲート（中ボス）・魔王の城の判定が記録されたら、
+// ボス戦のカットイン（CONTRACTS §79.8）: 結合ゲート（中ボス）・魔王の城の判定が記録されたら、
 // 仲間とボスを並べ、テスト1件ずつで HP を削って見せる。数秒で消える（押せばすぐ消える）。盤面の操作はふさがない。
 import { spriteMarkup } from './draw.js';
+import { t } from './words.js';
 
 const $ = (sel) => document.querySelector(sel);
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -43,7 +44,7 @@ export function showBoss(entry, view, sprites, sound) {
   box.dataset.goal = String(goal);
   const band = document.createElement('div');
   band.className = 'bc-band';
-  band.append(text('p', 'bc-kicker', goal ? `魔王の城 ${entry.node} — あがりの結合テスト` : `中ボス戦 ${entry.node} — 結合テスト`));
+  band.append(text('p', 'bc-kicker', t('cut.kicker', goal, entry.node)));
   band.append(text('h2', 'bc-title', gate.title || entry.node));
 
   const arena = document.createElement('div');
@@ -73,7 +74,7 @@ export function showBoss(entry, view, sprites, sound) {
   band.append(list);
   const result = text('p', 'bc-result', '');
   band.append(result);
-  const skip = text('button', 'bc-skip mini-btn', '閉じる');
+  const skip = text('button', 'bc-skip mini-btn', t('cut.close'));
   skip.type = 'button';
   skip.addEventListener('click', hideBoss);
   band.append(skip);
@@ -110,7 +111,8 @@ export function showBoss(entry, view, sprites, sound) {
       label.textContent = `HP 0/${total}`;
       boss.classList.add('down');
     }
-    result.textContent = win ? (goal ? '魔王を倒した！ あがり！' : `撃破！ テスト ${hits}/${total}`) : `${entry.text.includes('全滅') ? '全滅…' : '差し戻し…'} テスト ${hits}/${total}`;
+    const all = /全滅|全員/.test(entry.text); // 冒険の書の文（どちらのことばでも）から
+    result.textContent = win ? (goal ? t('cut.goal') : t('cut.win', hits, total)) : t(all ? 'cut.wipe' : 'cut.back', hits, total);
     box.classList.add('done');
   }, end));
   hideTimer = setTimeout(hideBoss, end + (reduced() ? 2500 : 2600));

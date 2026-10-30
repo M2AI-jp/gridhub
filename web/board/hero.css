@@ -1,6 +1,6 @@
-/* 勇者の手帳（CONTRACTS §76）: 勇者のカード・手帳のタブ・シール・シール袋を開ける部屋・おかえり・お祝い・ボス戦 */
+/* 勇者の手帳（CONTRACTS §79）: 勇者のカード・手帳のタブ・シール・シール袋を開ける部屋・おかえり・お祝い・ボス戦 */
 
-/* ---------- ノートの模様（勇者ランクで増える。§76.30） ---------- */
+/* ---------- ノートの模様（勇者ランクで増える。§79.30） ---------- */
 :root[data-notebook='kraft'], [data-notebook='kraft'] .th-paper { --paper: #f1e2c4; --paper-2: #e2cda4; --card: #fbf3e2; --grid: #c79c6a; --grid-strong: #b98a57; }
 :root[data-notebook='sakura'], [data-notebook='sakura'] .th-paper { --paper: #fff5f7; --paper-2: #fbe3ea; --card: #fffafb; --grid: #f3a5bb; --grid-strong: #ec8aa6; }
 :root[data-notebook='night'], [data-notebook='night'] .th-paper { --desk: #2d2622; --desk-2: #1f1a17; --wood: linear-gradient(176deg, #4a392d 0%, #33281f 55%, #261d17 100%); }

@@ -2,6 +2,7 @@
 // キャラクターごとの道・モンスターのマス（テスト1件 = 1マス）・ダンジョンの出口の札・町・城を置く。
 // 座標はすべて「目」（1目 = 5mm = U）の整数。ページの左上からの目で考え、世界の座標はページの位置を足す。
 import { rng, own } from './sketch.js';
+import { t as say } from './words.js';
 
 export const U = 16;
 export const PAGE = { w: 36, h: 51 };
@@ -632,10 +633,10 @@ export function sayOf(view, c) {
   let fight = '';
   if (c.status === 'working' && n?.type === 'task' && n.check?.kind === 'cmd') {
     const cases = Array.isArray(n.cases) ? n.cases : [];
-    if (!cases.length) fight = '？ まだ走らせていない';
+    if (!cases.length) fight = say('say.unknown');
     else if (c.square != null && c.square < cases.length) fight = `${cases[c.square].ok === false ? '✖' : '⚔'} ${cases[c.square].name}`;
-    else fight = '✔ 全部倒した → check';
-  } else if (c.status === 'working' && n?.check?.kind === 'stamp') fight = '㊞ ハンコ待ち';
+    else fight = say('say.all');
+  } else if (c.status === 'working' && n?.check?.kind === 'stamp') fight = say('say.stamp');
   const agent = c.sortie ? `⏳ ${c.sortie.agent}${c.sortie.model ? ' ' + c.sortie.model : ''}` : '';
   return { fight, agent };
 }

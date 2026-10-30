@@ -1,7 +1,7 @@
 // 手で進める（CONTRACTS §71）。盤面の担当。
 // 人間が、キャラクターの役を盤面から手で演じる: 指令書を読む・縄張りのファイルを書く・歩く・宣言判定・ハンコ・ボス戦。
 // #hand はキャラクターシート（#drawer）とは別の欄。盤面が新しくなっても書きかけを消さない（いまのマスが変わったら空にする。§74.3）。
-import { wordsFor } from './words.js';
+import { wordsFor, t as say } from './words.js';
 import { speciesOf } from './draw.js';
 
 const $ = (sel) => document.querySelector(sel);
@@ -34,7 +34,7 @@ function exampleOf(glob) {
 
 export function initHand({ live, post, toast, app = false }) {
   const panel = $('#hand');
-  if (!panel) return { open() {}, refresh() {} };
+  if (!panel) return { open() {}, refresh() {}, rewords() {} };
   const words = wordsFor(app);
   let character = null;
   let data = null;
@@ -80,35 +80,35 @@ export function initHand({ live, post, toast, app = false }) {
     const b = data.brief;
     const c = b.character;
     const n = b.current;
-    const parts = [el('p', { class: 'hand-who', text: `${c.name}（${c.kind === 'human' ? '人間' : 'エージェントの役'}）・Lv${c.level}` })];
+    const parts = [el('p', { class: 'hand-who', text: say('hand.who', c.name, say(c.kind === 'human' ? 'hand.role.human' : 'hand.role.agent'), c.level) })];
     if (!n) {
-      parts.push(el('p', { class: 'hand-node', text: 'あがりました。もう進むマスはありません。' }));
+      parts.push(el('p', { class: 'hand-node', text: say('hand.done') }));
     } else {
       parts.push(el('h4', { class: 'hand-node', text: `${n.id}「${n.title}」` }));
       if (n.detail) parts.push(el('p', { class: 'hand-detail', text: words(n.detail) }));
       if (n.type === 'gate') {
         const waiting = b.waiting_for ?? [];
-        parts.push(el('p', { class: 'hand-wait', text: waiting.length ? `仲間を待っています: ${waiting.join('、')}` : '仲間がそろいました。ボス戦（結合テスト）を始められます。' }));
+        parts.push(el('p', { class: 'hand-wait', text: waiting.length ? say('hand.waiting', waiting.join('、')) : say('hand.ready') }));
       }
       const cases = Array.isArray(n.check?.cases) ? n.check.cases : [];
       if (cases.length) parts.push(el('ol', { class: 'hand-cases' }, ...cases.map((name) => el('li', { text: name }))));
-      if (n.check?.kind === 'cmd') parts.push(el('p', { class: 'hand-run' }, '判定: ', el('code', { text: n.check.run })));
+      if (n.check?.kind === 'cmd') parts.push(el('p', { class: 'hand-run' }, say('hand.run'), el('code', { text: n.check.run })));
     }
     const territory = data.territory ?? [];
-    parts.push(el('p', { class: 'hand-territory' }, '縄張り: ', ...(territory.length ? territory.flatMap((t, i) => [i ? ' ' : '', el('code', { text: t })]) : ['（ありません）'])));
+    parts.push(el('p', { class: 'hand-territory' }, say('hand.territory'), ...(territory.length ? territory.flatMap((glob, i) => [i ? ' ' : '', el('code', { text: glob })]) : [say('hand.territory.none')])));
     box.replaceChildren(...parts);
   }
 
   function renderFiles() {
     const ul = $('#hand-files');
     const files = data.files ?? [];
-    ul.replaceChildren(...files.map((f) => el('li', { 'data-path': f.path, tabIndex: 0, title: `${f.size} バイト` }, el('code', { text: f.path }))));
+    ul.replaceChildren(...files.map((f) => el('li', { 'data-path': f.path, tabIndex: 0, title: say('hand.file.title', f.size) }, el('code', { text: f.path }))));
     show('#hand-files-empty', files.length === 0);
     const samples = $('#hand-samples');
-    samples.replaceChildren(...(data.solutions ?? []).map((s) => el('button', { type: 'button', class: 'mini-btn', 'data-sample': s.path, text: `見本を写す: ${s.path}` })));
+    samples.replaceChildren(...(data.solutions ?? []).map((s) => el('button', { type: 'button', class: 'mini-btn', 'data-sample': s.path, text: say('hand.sample', s.path) })));
     // 承認のマスで、指令書と判定に書かれた仲間のファイル（読むだけ。§74.3）
     const review = data.review ?? [];
-    $('#hand-review-list').replaceChildren(...review.map((f) => el('li', { 'data-path': f.path, tabIndex: 0, title: `${f.owner} の縄張り・${f.size} バイト` }, el('code', { text: f.path }))));
+    $('#hand-review-list').replaceChildren(...review.map((f) => el('li', { 'data-path': f.path, tabIndex: 0, title: say('hand.review.title', f.owner, f.size) }, el('code', { text: f.path }))));
     show('#hand-review', review.length > 0);
     $('#hand-path').placeholder = data.solutions?.[0]?.path ?? exampleOf((data.territory ?? [])[0]);
   }
@@ -134,11 +134,11 @@ export function initHand({ live, post, toast, app = false }) {
       const r = await fetch(`api/hand?character=${encodeURIComponent(id)}`, { cache: 'no-store' });
       got = await r.json();
     } catch {
-      got = { ok: false, error: 'サーバーに届きません' };
+      got = { ok: false, error: say('hand.msg.unreachable') };
     }
     if (character !== id) return;
     if (!got || got.ok === false) {
-      message(`読めませんでした: ${got?.error ?? ''}`, false);
+      message(say('hand.msg.readfail', got?.error ?? ''), false);
       panel.dataset.loaded = 'true';
       return;
     }
@@ -146,7 +146,7 @@ export function initHand({ live, post, toast, app = false }) {
     const node = got.brief.current?.id ?? null;
     if (shownNode !== undefined && shownNode !== node) clearEdit(); // 進んだ・戻された
     shownNode = node;
-    $('#hand-title').textContent = `手で進める: ${got.brief.character.name}`;
+    $('#hand-title').textContent = say('hand.title.for', got.brief.character.name);
     renderBrief();
     renderFiles();
     renderActions();
@@ -161,7 +161,7 @@ export function initHand({ live, post, toast, app = false }) {
       const j = await post(path, body);
       if (j === null) return;
       if (!j.ok) {
-        message(`できませんでした: ${j.error || j.code || ''}`, false);
+        message(say('hand.msg.fail', j.error || j.code || ''), false);
         return;
       }
       done(j);
@@ -171,7 +171,7 @@ export function initHand({ live, post, toast, app = false }) {
     }
   }
 
-  /** テスト1件ずつ: モンスターの絵・倒したら「撃破」・いちばん手前の落ちているものに「いま戦う」（§76.26） */
+  /** テスト1件ずつ: モンスターの絵・倒したら「撃破」・いちばん手前の落ちているものに「いま戦う」（§79.26） */
   function renderCases(cases) {
     const target = cases.findIndex((c) => c.ok !== true);
     $('#hand-result').replaceChildren(...cases.map((c, i) => {
@@ -186,8 +186,8 @@ export function initHand({ live, post, toast, app = false }) {
       use.setAttribute('href', `#mon-${speciesOf(c.name, i)}`);
       art.append(use);
       li.append(art, el('span', { class: 'hr-name', text: `${c.ok === true ? '✔' : c.ok === false ? '✖' : '・'} ${c.name}` }));
-      if (state === 'ok') li.append(el('em', { class: 'hr-slain', text: '撃破' }));
-      else if (i === target) li.append(el('em', { class: 'hr-next', text: 'いま戦う' }));
+      if (state === 'ok') li.append(el('em', { class: 'hr-slain', text: say('hand.slain') }));
+      else if (i === target) li.append(el('em', { class: 'hr-next', text: say('hand.next') }));
       return li;
     }));
   }
@@ -204,7 +204,7 @@ export function initHand({ live, post, toast, app = false }) {
       const path = t.dataset.path;
       const r = await fetch(`api/file?character=${encodeURIComponent(character)}&path=${encodeURIComponent(path)}`, { cache: 'no-store' }).then((x) => x.json()).catch(() => null);
       if (!r || r.ok === false) {
-        message(`読めませんでした: ${r?.error ?? ''}`, false);
+        message(say('hand.msg.readfail', r?.error ?? ''), false);
         return;
       }
       $('#hand-path').value = r.path;
@@ -218,7 +218,7 @@ export function initHand({ live, post, toast, app = false }) {
       setReadonly(false);
       $('#hand-path').value = sample.path;
       $('#hand-content').value = sample.content;
-      message('見本を書き込み欄に写しました。中身を確かめて「保存」を押してください。', true);
+      message(say('hand.msg.sample'), true);
       return;
     }
     if (t.id === 'hand-save') {
@@ -226,22 +226,22 @@ export function initHand({ live, post, toast, app = false }) {
       const path = $('#hand-path').value.trim();
       if (!path) {
         const example = $('#hand-path').placeholder;
-        message(`ファイルのパスを書いてください${example ? `（例: ${example}）` : ''}`, false);
+        message(say('hand.msg.nopath', example), false);
         return;
       }
-      await act('api/file', { character, path, content: $('#hand-content').value }, (j) => message(`保存しました: ${j.path}（${j.bytes} バイト）`, true));
+      await act('api/file', { character, path, content: $('#hand-content').value }, (j) => message(say('hand.msg.saved', j.path, j.bytes), true));
       return;
     }
     if (t.id === 'hand-note-save') {
       const input = $('#hand-note-text');
       const text = input.value.trim();
       if (!text) {
-        message('日誌に書くことを入れてください', false);
+        message(say('hand.note.empty'), false);
         return;
       }
       await act('api/note', { character, text }, () => {
         input.value = '';
-        message('日誌を書きました。次の自分（次の代）の指令書に出ます。', true);
+        message(say('hand.note.done'), true);
       });
       return;
     }
@@ -250,19 +250,17 @@ export function initHand({ live, post, toast, app = false }) {
         const cases = j.cases ?? [];
         renderCases(cases);
         const won = cases.filter((c) => c.ok === true).length;
-        message(j.exit === 0
-          ? `歩きました（${j.node}）。全部倒しました。「宣言判定」で次のマスへ進めます。`
-          : `歩きました（${j.node}）。まだ落ちているテストがあります${cases.length ? `（${won}/${cases.length}）` : ''}。`, j.exit === 0);
+        message(j.exit === 0 ? say('hand.msg.step.ok', j.node) : say('hand.msg.step.ng', j.node, won, cases.length), j.exit === 0);
       });
       return;
     }
     if (t.id === 'hand-check') {
       await act('api/check', { character }, (j) => {
         if (j.passed) {
-          message(`判定成功。次のマスへ進みました。${j.ready ? `仲間がそろいました。${j.ready} のボス戦（結合テスト）を始めます。` : ''}`, true);
-          if (j.ready) toast({ text: `仲間がそろいました。${j.ready} のボス戦を始めます…`, ok: null, type: 'battle' });
+          message(say('hand.msg.check.ok', j.ready), true);
+          if (j.ready) toast({ text: say('toast.ready', j.ready), ok: null, type: 'battle' });
         } else {
-          message('判定失敗。レベルが1つ下がり、戻されました。盤面のこのマスの記録の「出力」を見て直し、「歩く」で確かめてから宣言してください。', false);
+          message(say('hand.msg.check.ng'), false);
         }
       });
       return;
@@ -270,14 +268,14 @@ export function initHand({ live, post, toast, app = false }) {
     if (t.id === 'hand-stamp') {
       const node = data.brief.current.id;
       await act('api/stamp', { node, as: character }, (j) => {
-        message(`ハンコを押しました（${node}）。${j.ready ? `仲間がそろいました。${j.ready} のボス戦を始めます。` : ''}`, true);
-        if (j.ready) toast({ text: `仲間がそろいました。${j.ready} のボス戦を始めます…`, ok: null, type: 'battle' });
+        message(say('hand.msg.stamp', node, j.ready), true);
+        if (j.ready) toast({ text: say('toast.ready', j.ready), ok: null, type: 'battle' });
       });
       return;
     }
     if (t.id === 'hand-battle') {
       const gate = data.brief.current.id;
-      await act('api/battle', { gate }, () => message(`${gate} のボス戦（結合テスト）を始めました。盤面で結果が出ます。`, true));
+      await act('api/battle', { gate }, () => message(say('hand.msg.battle', gate), true));
     }
   });
 
@@ -308,6 +306,14 @@ export function initHand({ live, post, toast, app = false }) {
     /** 盤面が新しくなったら、開いていれば指令書だけ読み直す（書きかけは触らない） */
     refresh() {
       if (!panel.hidden && !busy) load();
+    },
+    /** ことばが切り替わったら、読み直さずに今の中身を描き直す（§75。書きかけは触らない） */
+    rewords() {
+      if (!data) return;
+      $('#hand-title').textContent = say('hand.title.for', data.brief.character.name);
+      renderBrief();
+      renderFiles();
+      renderActions();
     },
   };
 }

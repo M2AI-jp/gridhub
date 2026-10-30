@@ -3,12 +3,19 @@
 import { lstatSync, mkdirSync, readFileSync, realpathSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, sep } from 'node:path';
 import { MasumeError } from '../engine/index.js';
+import { isDev } from '../engine/words.js';
 
 export const AGENT_KINDS = ['claude', 'codex'];
 const PARALLEL = 3;
 const IGNORE_LINES = ['.masume/lock', '.masume/state.json', '.masume/party.log'];
-const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 第15章まで書いていた見出し。前に書いた .gitignore に見出しを2つ並べないために覚えておく
+const IGNORE_HEADING = '# マスメ（セーブデータ本体 .masume/log.jsonl は残す）'; // 第15章まで書いていた見出し（GOAL15 §64.1 の例外。この行の形を変えない）
 const IGNORE_HEADING_NOW = '# GridHub（旧名マスメ）の一時ファイル（冒険の書 .masume/log.jsonl と判定の出力 .masume/outputs/ は残す）';
+// いままでに書いた見出しは全部覚えておく（前に書いた .gitignore に見出しを2つ並べない）。文を変えるときは、ここに足して消さない
+const IGNORE_HEADINGS = [
+  IGNORE_HEADING_NOW,
+  '# GridHub（旧名マスメ）の一時ファイル（セーブデータ本体 .masume/log.jsonl は残す）', // 配る前の点検 A（§64）のあいだ
+  IGNORE_HEADING,
+];
 
 const CLAUDE_MD = `このプロジェクトは GridHub（旧名マスメ）で進めています。AGENTS.md を読んでください。
 
@@ -19,7 +26,7 @@ const CLAUDE_MD = `このプロジェクトは GridHub（旧名マスメ）で�
 export const shellQuote = (text) => `'${String(text).replaceAll("'", "'\\''")}'`;
 
 /** AGENTS.md の中身。コマンドはそのまま打てるよう、bin の絶対パスを（引用して）埋める */
-export function agentsMd({ bin, rulebook }) {
+function agentsMdGame({ bin, rulebook }) {
   const masume = `node ${shellQuote(bin)}`;
   return `# AGENTS.md — このプロジェクトで働くエージェントへ
 
@@ -88,6 +95,81 @@ export function agentsMd({ bin, rulebook }) {
 `;
 }
 
+/** AGENTS.md の中身（開発のことば。§76.4）。字は違うが、守ることとコマンドは冒険のことば版と同じ */
+function agentsMdDev({ bin, rulebook }) {
+  const masume = `node ${shellQuote(bin)}`;
+  return `# AGENTS.md — このプロジェクトで働くエージェントへ
+
+このプロジェクトは「GridHub（旧名マスメ）」（テスト1件を1マスとして、E2E テストで進み具合を管理する開発ボード）で進めています。
+あなたは担当の1人です。進み具合はセーブデータ（\`.masume/\`）にだけ記録され、進めるのは**判定（E2E テスト）に合格したときだけ**です。
+タスクの中のマスはテスト1件ずつです。セーブポイントに着くと、担当ファイルの変更が自動で Git にコミットされます。
+ルールブック: ${rulebook}（迷ったら読む。開発のことばの対応表は README.md）
+
+以降の \`<ID>\` は、あなたの担当の ID（依頼文か \`MASUME_CHARACTER\` で渡される）。
+コマンドはこのプロジェクトのフォルダで打つ（別の場所なら \`--dir <このフォルダ>\` を足す）。
+
+## 1ターンの流れ
+
+1. 作業指示を読む。いまのマス・テストのコマンド・担当ファイル・ほかの担当の位置・前の自分のメモが出る:
+
+   \`\`\`sh
+   ${masume} brief <ID>
+   \`\`\`
+
+2. 1件ずつ進める: 作業指示の「次に通すテスト」（最初に落ちているテスト）だけを通すように、担当ファイルの中で小さく実装する。
+3. テストを走らせる: 今のタスクのテストだけを走らせ、1件ずつの成否を記録する（何度でも。レベルも位置も変わらない）。通ったら次の落ちているテストへ。2と3をくり返す:
+
+   \`\`\`sh
+   ${masume} step <ID> --as <ID>
+   \`\`\`
+
+   作業指示の「テスト:」のコマンドを直接走らせてもよい（記録されない）。
+4. 判定（公式。セーブデータに記録される。失敗すると Lv−1）。全部のテストが通ってから打つ。GM から「まだ打つな」と言われているときは打たない:
+
+   \`\`\`sh
+   ${masume} check <ID> --as <ID>
+   \`\`\`
+
+   現在のマスが結合テスト（gate）や最終結合テストのときは \`--no-boss\` を付ける。結合テストは全員がそろってから GM（gridhub party）が走らせる:
+
+   \`\`\`sh
+   ${masume} check <ID> --as <ID> --no-boss
+   \`\`\`
+
+5. メモ: 次の自分への申し送りを残す。
+
+   \`\`\`sh
+   ${masume} note <ID> "申し送り" --as <ID>
+   \`\`\`
+
+判定に失敗するとレベルが下がり、直前のセーブポイントの次まで戻される（Git でセーブするプロジェクトでは、担当ファイルもセーブポイントのコミットに戻り、戻す前の変更は git stash に残る。作業指示に \`git stash apply\` の取り出し方が出る）。2回失敗したら、そこで止まって報告する。
+
+## 守ること
+
+- **現在のマスだけ**を実装する。作業指示に出ていない先のマス（視界の外）には手を出さない。
+- **担当ファイル**（作業指示の「担当ファイル」＝地図の \`territory\`）の外のファイルを作らない・編集しない。必要なら報告の「GMへの依頼」に書く。
+- **ハッシュを記録した**判定ファイルと地図（\`quest.map.json\`、\`.masume/\` の中）は編集しない。変えると「判定ファイルが変更されています」と記録され、判定できなくなる。
+- git の書き込み操作（commit / push / reset / checkout / stash など）をしない。コミットはセーブポイントに着いたときに GridHub がやる。
+- 判定を通すために、テストの意図を回避する実装（テスト環境の検出、出力の決め打ち）をしない。通らないなら通らないと正直に書く。
+- 作業指示が足りない・矛盾しているときは、解釈を広げず、自然な最小の解釈で実装して報告に書く。
+
+## 最終報告
+
+\`\`\`
+## 報告書 <担当名> <マスID>
+- 変更したファイル:
+- 判定の結果（最後の数行）:
+- 申し送り（次のマスの自分へ）:
+- GMへの依頼（足りない契約・担当の外で必要なこと）:
+\`\`\`
+`;
+}
+
+/** AGENTS.md の中身。いまのことば（冒険 / 開発）で。コマンドはそのまま打てるよう、bin の絶対パスを（引用して）埋める */
+export function agentsMd({ bin, rulebook }) {
+  return (isDev() ? agentsMdDev : agentsMdGame)({ bin, rulebook });
+}
+
 /**
  * root の中の rel に書いてよいか調べる（§27.7）。
  *  - 書いてよい: { path, exists } … path は実際に書く場所（symlink なら実体。symlink 自体は残す）
@@ -148,7 +230,7 @@ function ensureIgnore(target, lines = IGNORE_LINES) {
   const eol = before.includes('\r\n') ? '\r\n' : '\n';
   const lead = before === '' || before.endsWith('\n') ? '' : eol;
   const gap = before.trim() === '' ? '' : eol;
-  const heading = have.has(IGNORE_HEADING) || have.has(IGNORE_HEADING_NOW) ? [] : [IGNORE_HEADING_NOW];
+  const heading = IGNORE_HEADINGS.some((h) => have.has(h)) ? [] : [IGNORE_HEADING_NOW];
   const text = `${before}${lead}${gap}${[...heading, ...missing].join(eol)}${eol}`;
   if (target.exists) writeFileSync(target.path, text);
   else writeFileSync(target.path, text, { flag: 'wx' });

@@ -6,6 +6,7 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { t } from './words.js';
 
 const FALLBACK = { name: 'GridHub', email: 'gridhub@localhost' };
 
@@ -201,7 +202,7 @@ export function saveTerritory(root, map, characterIds, node) {
 export function restoreTerritory(root, map, characterId, node, seq, target) {
   const base = { character: characterId, node, commit: target };
   try {
-    if (!target) return { ...base, stash: null, error: 'このキャラクターのセーブ（町のコミット）がありません' };
+    if (!target) return { ...base, stash: null, error: t('err.restore.none') };
     const repo = repository(resolve(root));
     if (repo.error) return { ...base, stash: null, error: repo.error };
     if (repo.git(['cat-file', '-e', `${target}^{commit}`], { allowFail: true }).code !== 0) {
@@ -228,7 +229,7 @@ export function restoreTerritory(root, map, characterId, node, seq, target) {
       // 墓に入ったことを確かめてから、作業ツリーを変える
       const left = changedFiles(repo).filter(inTerritory);
       if (!stash || left.length) {
-        return { ...base, stash, error: `縄張りの変更を墓に入れきれませんでした（${left.slice(0, 3).join('、') || 'stash が作れません'}）。作業ツリーはそのままです` };
+        return { ...base, stash, error: t('err.restore.grave', left.slice(0, 3).join('、') || 'stash が作れません') };
       }
     }
     // 消すものを先に（ファイルとディレクトリが入れ替わるときのため）、それから書く。

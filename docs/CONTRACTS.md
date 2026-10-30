@@ -33,7 +33,7 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 - `ctx.bin` = 実際に起動した受付係（`bin/gridhub.js` か `bin/masume.js`）の絶対パス、`ctx.root` = リポジトリの絶対パス（ゲームのルートではない）。
 - 例外に `code`（例 `'E_UNSEALED'`）と `exitCode` を付けて投げると、受付係が `[E_UNSEALED] メッセージ` を stderr に出して終了する。
 - 終了コード: `0` 成功 / `1` 判定失敗・地図が不正 / `2` 使い方の誤り・前提不足（未封印・待機中など） / `3` 冒険の書が呪われている。
-- 共通オプション: `--dir <root>`、`--as <actor>`、`--json`（機械向け出力。stdout に JSON だけを出す）。`--as` の既定は §75.3。
+- 共通オプション: `--dir <root>`、`--as <actor>`、`--json`（機械向け出力。stdout に JSON だけを出す）。`--as` の既定は §78.3。
 
 ---
 
@@ -114,13 +114,13 @@ export async function run(argv /* string[] */, ctx /* {bin, root, cwd, env} */) 
 | `stamp <nodeId> --as <humanId>` | 書記 | §4.6 |
 | `status [--json]` | 書記 | 人間向けの盤面要約。`--json` は §5 のビュー |
 | `brief <characterId> [--json]` | 書記 | §6 の指令書 |
-| `log [--tail [N]] [--json]` | 書記 | 冒険の書を人の読める文で（§75.4。`--json` はイベント行の配列） |
+| `log [--tail [N]] [--json]` | 書記 | 冒険の書を人の読める文で（§78.4。`--json` はイベント行の配列） |
 | `verify [--json]` | 書記 | SAVE_FORMAT §6。正常なら `冒険の書は正常です`（0）、呪いなら `呪われています` と最初の seq（3）。`--json` は `{ok, errors:[{seq, code, message}], warnings, head:{seq, hash, commit}}`（§52.3） |
 | `repair` | 書記 | SAVE_FORMAT §6 |
 | `note <characterId> <text…>` | 書記 | `note` イベント（残りの引数を半角スペースでつないだものが text）。知らないキャラは `E_UNKNOWN`/2 |
 | `amend <map>` | 書記 | §4.8 |
 | `load <seq\|commit>` | 書記 | §4.9・§52.5 |
-| `serve [--port 5005] [--host 127.0.0.1] [--dir D] [--open\|--no-open] [--lifeline]` | 伝令 | §8。起動したら stdout に `盤面: http://127.0.0.1:<port>/` を出して動き続ける。`--port 0` は空きポート。ブラウザを開くのは §75.7 |
+| `serve [--port 5005] [--host 127.0.0.1] [--dir D] [--open\|--no-open] [--lifeline]` | 伝令 | §8。起動したら stdout に `盤面: http://127.0.0.1:<port>/` を出して動き続ける。`--port 0` は空きポート。ブラウザを開くのは §78.7 |
 | `export linear [--format csv\|json] [--out file]` | 地図職人 | §9 |
 | `import linear <csv> --out <map.json> [--quest-id KEY] [--title T]` | 地図職人 | §9 |
 
@@ -899,7 +899,7 @@ Codex の `-s workspace-write` の箱（サンドボックス）は、既定で�
 
 # 第10章: 外の字を待たない
 
-npm test の揺れを調べたところ、盤面が外の字（Google Fonts）の CSS を待って、描画もスクリプトも止めていた。
+判定をまとめて走らせたときの揺れを調べたところ、盤面が外の字（Google Fonts）の CSS を待って、描画もスクリプトも止めていた。
 返ってこない回線（オフラインに近い・詰まった Wi-Fi・社内のプロキシ）では、盤面が白いまま `window.__masume` も生まれない。
 「ゲームはローカルのまま」なのに、盤面だけが外を待っていた。判定の Chrome は外のホストを引けなくした（GM の縄張り）ので、盤面の約束としてここで守る。
 
@@ -1272,15 +1272,15 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 
 ## 62. リリースの支度（第14章・ユーザーの指示）
 
-ユーザーの指示「リリースの準備（LICENSE・package.json の files・バージョンとリリースノート・engines）を進めて。公開や npm への公開はそのあとで聞いて」。**公開に当たること（リポジトリを公開する・名前を変える・`npm publish`・タグ・GitHub Release）はしない。** ユーザーに聞いてから。
+ユーザーの指示「リリースの準備（LICENSE・バージョンとリリースノート・engines）を進めて。公開はそのあとで聞いて」。**公開に当たること（リポジトリを公開する・名前を変える・タグ・GitHub Release）はしない。** ユーザーに聞いてから。配ることは、§77 のとおり、いまは考えない（この節の 4 は、Mac のアプリに入る中身の定義に改めた）。
 
 1. **LICENSE**: ルートに MIT License の本文を置く（`package.json` の `license` は `MIT`）。著作権者の行は `Copyright (c) 2026 M2AI-jp`（GitHub の持ち主。ユーザーに確かめる）。
 2. **版**: `package.json` の `version` は `0.3.0`。`gridhub --version`（`masume --version` も）は、版を `package.json` から読む（決め打ちしない。§38.3 の形 `gridhub <版> (rules 1)` は変えない）。README の `gridhub --version` の例も同じ版。
 3. **engines**: `"node": ">=22"`。Node 20 は 2026年4月にサポートが終わり、確かめているのは Node 22 と 26 だけなので。README・AGENTS.md・この契約書の冒頭・チュートリアルの README の「Node.js <n> 以上」も 22 にそろえる。
-4. **包み**（`npm pack`）: `package.json` の `files` で、動くのに要るものだけを入れる。
-   - 入れる: `bin/`・`src/`・`web/`（盤面。見本の `web/fixtures/` も）・`docs/*.md`（`gridhub quest` のプロンプト・MCP の資料・`gridhub init` の AGENTS.md が読む）・`quests/tutorial/`・`CHANGELOG.md`。npm がいつも入れる `package.json`・`README.md`・`LICENSE` も入る。
-   - 入れない: `.masume/`（このリポジトリ自身の冒険の書）・`tests/`・`examples/`・`demos/`・docs の写真と下書き（`docs/*.png`・`docs/shots/`・`docs/prototype/`）・`quests/masume.map.json`・`quests/kotozuke.*`・`AGENTS.md`。
-   - 包みを別のフォルダに `npm install` すると、`gridhub` と `masume` が動き、`--version` は包みの `package.json` の版、包みのチュートリアルで冒険を作って遊びきれ、`gridhub serve` の盤面が開き、MCP の資料と `gridhub init` の AGENTS.md が包みの中の docs を指す（結合ゲート `G11`）。
+4. **アプリの中身**（§72.3・§77。Mac のアプリに入る、動くのに要るファイル）: 動くのに要るものだけ。
+   - 入れる: `bin/`・`src/`・`web/`（盤面。見本の `web/fixtures/` も）・`docs/*.md`（`gridhub quest` のプロンプト・MCP の資料・`gridhub init` の AGENTS.md が読む）・`quests/tutorial/`・`CHANGELOG.md`・`package.json`・`README.md`・`LICENSE`。
+   - 入れない: `.masume/`（このリポジトリ自身の冒険の書）・`tests/`・`examples/`・`demos/`・docs の写真と下書き（`docs/*.png`・`docs/shots/`・`docs/prototype/`）・`quests/masume.map.json`・`quests/kotozuke.*`・`AGENTS.md`・`mac/`。
+   - アプリの中身を別のフォルダに写す（`sh mac/build.sh` の中身の詰め方と同じ）と、`node <そこ>/bin/gridhub.js` と `masume.js` が動き、`--version` はそこの `package.json` の版、そこのチュートリアルで冒険を作って遊びきれ、`gridhub serve` の盤面が開き、MCP の資料と `gridhub init` の AGENTS.md がそこの docs を指す（結合ゲート `G11`）。
 5. **リリースノート**: ルートの `CHANGELOG.md`。新しい版が上。
    - `## 0.3.0` に第11章〜第13章: GridHub への改名（`masume` は別名）・テスト1件が1マス（`gridhub step`）・町 = Git のコミット・ふっかつのじゅもんをやめた（seq と Git のコミットで時点を指す）・余白のマス・瓦版（作っている製品の話題）・GitHub につなぐ導線（`gridhub remote`・`gridhub push`）と町でセーブしたら自動で送る設定・縦のノート・最大レベルの表示。この版から Node.js 22 以上。
    - その下に、それより前（`0.1.0`。第1章〜第10章）をまとめる。`0.2.0` は第11章の途中で `package.json` に書いただけで配っていないので、`0.3.0` にまとめたと書く。
@@ -1288,15 +1288,15 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 
 ## 63. あがり（第14章）
 
-- `G11`（結合: 配る包みから遊ぶ）: 書記・伝令・盤面・語り部・地図職人。§62.4 の最後の項目。
+- `G11`（結合: アプリの中身から遊ぶ）: 書記・伝令・盤面・語り部・地図職人。§62.4 の最後の項目。
 - `GOAL14`: 第1章〜第14章のすべての判定がまとめて通り、すべての冒険の書が正常で、`package.json` が §62.2〜§62.4 のとおり（`version` 0.3.0・`engines.node` >=22・`files`・`license` MIT）、`LICENSE` が MIT の本文、`CHANGELOG.md` に `0.3.0` とそれより前、README の `gridhub --version` の例が `package.json` の版、README・AGENTS.md・契約書・チュートリアルの README に、古い下限（20）の「Node.js <n>」が残っていない。
 - `package.json` の `test:goal` は `GOAL14` に向ける。
 
-## 64. 配る前に名前をそろえる（第15章・監督の確認）
+## 64. 名前をそろえる（第15章・監督の確認）
 
-監督が包みを手元で確かめたところ、配る包みの中の、使う人の目に入る所に旧名「マスメ」が残っていた。ユーザーは最初に「マスメってタイトルからして終わってるしセンスない」と言っている。リリースの前に GridHub にそろえる。**公開に当たることは、今回もしない。**
+監督が手元で確かめたところ、使う人の目に入る所に旧名「マスメ」が残っていた。ユーザーは最初に「マスメってタイトルからして終わってるしセンスない」と言っている。リリースの前に GridHub にそろえる。**公開に当たることは、今回もしない。**
 
-1. **決まり**: 包み（§62.4 の `files`）に入る文字のファイルでは、旧名「マスメ」を名前として使わない（GridHub と書く）。書いてよいのは、旧名だと分かる書き方 `旧名マスメ`・`旧名 マスメ`・`旧名はマスメ` だけ。
+1. **決まり**: 使う人の目に入る文字のファイル（§62.4 のアプリの中身）では、旧名「マスメ」を名前として使わない（GridHub と書く）。書いてよいのは、旧名だと分かる書き方 `旧名マスメ`・`旧名 マスメ`・`旧名はマスメ` だけ。
    - 例外（互換のため・使う人の目に入らないため・記録のため）: `src/quest/setup.js` の `.gitignore` の見出し（`IGNORE_HEADING`。変えると、前に書いた `.gitignore` に見出しが2つ並ぶ）、`web/board/board.css` の先頭のコメント、この契約書（章ごとの経緯とユーザーの言葉の記録。ただし GM のプロンプトに入る §2 の例は GridHub にする）。
    - 変えないもの（§38.4 のまま）: `.masume/`・`MASUME_*`・MCP の道具名 `masume_*`・`masume: 1`・別名のコマンド `masume`。
 2. **地図職人**（`M10`）: チュートリアル（`quests/tutorial/`）の題は「はじめての GridHub」、例の名前は `GridHub`（あいさつは「こんにちは、GridHub！」）。手順のコマンドは `gridhub`（シェルの関数も `gridhub`、受付係は `bin/gridhub.js`）。`masume` という字は、`"masume": 1`・`.masume/`・`MASUME_*` のほかに使わない。手順（sh のブロック）は §35 のとおり、そのまま貼って最後まで遊べる。
@@ -1307,7 +1307,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 
 ## 65. あがり（第15章）
 
-- `GOAL15`: 第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、包み（`npm pack --dry-run`）に入るすべての文字のファイルが §64.1 の決まりを守り、README と CHANGELOG に第15章（名前をそろえた）が書いてある。
+- `GOAL15`: 第1章〜第15章のすべての判定がまとめて通り、すべての冒険の書が正常で、アプリの中身（§62.4）に入るすべての文字のファイルが §64.1 の決まりを守り、README と CHANGELOG に第15章（名前をそろえた）が書いてある。
 - `package.json` の `test:goal` は `GOAL15` に向ける。版は `0.3.0` のまま。
 
 ## 66. Mac のアプリ（第16章・ユーザーの指示）
@@ -1324,7 +1324,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 6. Finder から開いたアプリは PATH が短いので、ログインシェルの PATH で node と claude を見つける。Node.js 22 以上が無い・claude が無いときは、何を入れればよいかを日本語で出す。claude が無くても、チュートリアルは遊べる。
 7. アイコンは今の絵（`web/assets`）から作る。
 
-作り: Swift の1ファイル（`mac/GridHub.swift`）で、Apple 標準の AppKit と WebKit だけを使う。ネイティブの窓（WKWebView）に、Node の GridHub（`gridhub app`。§68）が配る画面をそのまま映す。フォルダのダイアログだけを Swift が出す。Xcode は使わず、`swiftc` だけで組める（`mac/build.sh`・`npm run mac`。§72）。**公開に当たること（npm publish・タグ・GitHub Release・アプリの zip を配る）はしない。**
+作り: Swift の1ファイル（`mac/GridHub.swift`）で、Apple 標準の AppKit と WebKit だけを使う。ネイティブの窓（WKWebView）に、Node の GridHub（`gridhub app`。§68）が配る画面をそのまま映す。フォルダのダイアログだけを Swift が出す。Xcode は使わず、`swiftc` だけで組める（`sh mac/build.sh`。§72）。**公開に当たること（タグ・GitHub Release・アプリの zip を配る）はしない。**
 
 ## 67. 書記: 手で演じる役のファイル（第16章）
 
@@ -1353,7 +1353,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - `node` は動いている Node.js の版、`in_app` は環境変数 `GRIDHUB_APP` が `1` か。`claude` は PATH の中の実行できる `claude`（無ければ `found: false`・`path: null`）。
    - `recent` は新しい順に最大10件。`title` は冒険の書があれば地図の題、`missing` はフォルダがもう無いとき `true`。
 5. `POST /api/app/open {dir}` → `dir` は絶対パスの文字列（でなければ 400 `E_USAGE`）、あるフォルダ（無ければ 404 `E_NO_DIR`）。前に開いていた盤面のサーバーを止め、`dir` で盤面のサーバー（§15。冒険の書が無ければ入口）を `--port 0` で起こし、最近のフォルダの先頭に入れる（同じ場所は1つにまとめる）。200 `{ok: true, dir, url, has_game}`。`url` は盤面のサーバーの URL に `?home=<はじめの画面の URL>` を足したもの。
-6. `POST /api/app/tutorial {}` → 包みの `quests/tutorial/` を、`play` の下の新しいフォルダ `チュートリアル`（あれば `チュートリアル 2`・`チュートリアル 3`…）に写し、`tutorial.map.json` で冒険の書を作り（`gridhub new` と同じ）、5 と同じく開く。200 `{ok: true, dir, url, has_game: true}`。
+6. `POST /api/app/tutorial {}` → GridHub の `quests/tutorial/` を、`play` の下の新しいフォルダ `チュートリアル`（あれば `チュートリアル 2`・`チュートリアル 3`…）に写し、`tutorial.map.json` で冒険の書を作り（`gridhub new` と同じ）、5 と同じく開く。200 `{ok: true, dir, url, has_game: true}`。
 7. `POST /api/app/forget {dir}` → 最近のフォルダから外す。200 `{ok: true, recent}`。
 
 ## 69. 伝令: 手で演じる窓口（第16章）
@@ -1373,7 +1373,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 1. `#choose-folder`（字「フォルダを選ぶ」）・`#tutorial`（字「チュートリアルで遊ぶ」）・`#recent`（最近のフォルダ。`li[data-dir]` に、開く `button.open-recent` と外す `button.forget`）・`#env`（`#env-node` に Node.js の版、`#env-claude[data-found=true|false]`）・`#start-error`。読み終えたら `window.__gridhubStart = {ready: true}`。
 2. アプリの中（`window.webkit.messageHandlers.gridhub` がある）では、`#choose-folder` を押すと `postMessage({type: 'chooseFolder'})` を送る。アプリは選ばれたフォルダで `window.gridhubApp.folderChosen(<絶対パス>)` を呼ぶ。ブラウザでは、`#choose-folder` を押すと `#folder-form`（`input#folder-path` と開くボタン）を出す。
 3. フォルダが決まったら `POST /api/app/open`、チュートリアルは `POST /api/app/tutorial`。返ってきた `url` に移る。できなければ `#start-error` に理由。
-4. `claude.found` が `false` なら、`#env-claude` に「claude（Claude Code）が見つかりません」と入れ方（`npm install -g @anthropic-ai/claude-code`）と、「チュートリアルは claude なしで遊べます」を出す。
+4. `claude.found` が `false` なら、`#env-claude` に「claude（Claude Code）が見つかりません」と入れ方（https://claude.com/claude-code へのリンク）と、「チュートリアルは claude なしで遊べます」を出す。
 5. 盤面（`web/index.html`）は、URL の `?home=` が手元（`http://127.0.0.1:<port>/` か `http://localhost:<port>/`）なら、`a#home-link`（字「はじめの画面」）をそこへのリンクとして出す。それ以外の `home` は無視する。
 
 ## 71. 盤面: 手で進める（第16章）
@@ -1398,19 +1398,19 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - 窓を閉じるとアプリも終わる（`applicationShouldTerminateAfterLastWindowClosed` が `true`）。終わるときは命綱を閉じてサーバーを止める（`applicationWillTerminate`）。
    - 「編集」メニュー（取り消す・カット・コピー・ペースト・すべてを選択）と、終了（⌘Q）。JavaScript の alert・confirm を出す。手元（127.0.0.1・localhost）でない URL と、新しい窓で開くリンクは、既定のブラウザで開く。
 2. `mac/Info.plist`: `CFBundleExecutable` は `GridHub`、`CFBundleIdentifier` は `jp.m2ai.gridhub`、`CFBundlePackageType` は `APPL`、`CFBundleShortVersionString` と `CFBundleVersion` は `__VERSION__`（組み立てで `package.json` の版に置き換える）、`CFBundleIconFile` は `AppIcon`、`LSMinimumSystemVersion`、`NSHighResolutionCapable`、`NSAppTransportSecurity` の `NSAllowsLocalNetworking` が `true`。
-3. `mac/build.sh`（`npm run mac`）: POSIX の sh。`dist/GridHub.app` を作る。
-   - `npm pack` と同じ中身（§62.4）を `Contents/Resources/gridhub/` に入れる（`npm pack` して開く）。`Info.plist` の `__VERSION__` を置き換えて `Contents/Info.plist` に。
+3. `mac/build.sh`（`sh mac/build.sh`）: POSIX の sh。`dist/GridHub.app` を作る。
+   - 動くのに要るファイル（§62.4）を、このフォルダから `cp` で `Contents/Resources/gridhub/` に写す（パッケージの道具は使わない）。`Info.plist` の `__VERSION__` を置き換えて `Contents/Info.plist` に。
    - `swiftc`（Xcode の `xcodebuild` は使わない）で `Contents/MacOS/GridHub` を作る。`mac/AppIcon.png` から `sips` と `iconutil` で `Contents/Resources/AppIcon.icns` を作る。アドホック署名（`codesign --force --deep --sign -`）。
    - 環境変数 `GRIDHUB_SKIP_SWIFT=1` なら、Swift・アイコン・署名を飛ばし、中身だけを詰める（Mac でない所の判定のため）。
    - 終わりに、`dist/GridHub.app` の場所と「はじめて開くときは、右クリックして「開く」を選ぶ（署名していないため）」を出す。
 4. `mac/AppIcon.png`: 1024×1024 の PNG。今の絵（`web/assets/sprites/` の勇者と、方眼ノートの紙）から `mac/icon.mjs` で作る（ヘッドレスの Chrome で描く。作り直すときだけ使う）。
-5. `package.json` の `scripts.mac` は `sh mac/build.sh`。`mac/` は npm の包みに入れない（§62.4 のまま）。`dist/` は Git に入れない（`.gitignore`）。
+5. `package.json` の `scripts.mac` は `sh mac/build.sh`。`mac/` はアプリの中身に入れない（§62.4）。`dist/` は Git に入れない（`.gitignore`）。
 
 ## 73. あがり（第16章）
 
 - `G12`（結合: アプリの中だけでチュートリアルをあがる）: 書記・伝令・盤面・地図職人。`gridhub app` を起こし、はじめの画面の「チュートリアルで遊ぶ」から、盤面の「手で進める」だけで（見本を写す → 保存 → ハンコ・宣言判定・ボス戦）チュートリアルをあがる。claude が PATH に無くても遊べ、はじめの画面がそれを知らせる。最後に標準入力を閉じると、起動役も盤面のサーバーも止まる。
-- `H4`（王様の城）: 勇者（ユーザー）が、自分の Mac で `npm run mac` で作った `GridHub.app` を開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。
-- `GOAL16`: 第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、包みに旧名が無く（§64.1）、`package.json` の `scripts.mac`・`test:goal`、README の「Mac アプリで遊ぶ」（`npm run mac`・`dist/GridHub.app`・右クリックして「開く」・Node.js 22 以上・claude が無くてもチュートリアル）と、CHANGELOG の第16章。
+- `H4`（王様の城）: 勇者（ユーザー）が、自分の Mac で `sh mac/build.sh` で作った `GridHub.app` を開き、このリポジトリのフォルダを選んで、アプリの中でこのマスのハンコを押す。
+- `GOAL16`: 第1章〜第16章のすべての判定がまとめて通り、すべての冒険の書が正常で、アプリの中身に旧名が無く（§64.1）、`package.json` の `scripts.mac`・`test:goal`、README の「Mac アプリで遊ぶ」（`sh mac/build.sh`・`dist/GridHub.app`・右クリックして「開く」・Node.js 22 以上・claude が無くてもチュートリアル）と、CHANGELOG の第16章。
 - `package.json` の `test:goal` は `GOAL16` に、`test` の判定に `D*`（大工）を足す。
 
 ## 74. 手で進めるの手直し（第16章・監督の確かめ）
@@ -1428,30 +1428,76 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - いまのマスが変わったら（進んだ・戻された）、`#hand-path` と `#hand-content` を空にする。
    - アプリの中（`?home=` が手元。§70.5）では、手で進める欄の指令書・マスの説明（`#drawer`）・仲間の欄に、CLI の言い方を出さない。`gridhub`（`masume`）の `stamp …`・`check …`・`step …`・`brief …` は、ボタンの名前（「ハンコを押す」・「宣言判定」・「歩く」・「手で進める」）に言い換える。キャラクターシートの CLI の指示は `details.cli`（字「ターミナルでは」。初めは閉じている）に畳む。アプリの外（`?home=` が無い）は今までどおり。
 
-## 75. 配る前の点検（使う人の目線で・監督の指示）
+## 75. 盤面のことば（冒険 / 開発の切り替え）
+
+監督（ユーザー）の指摘: 盤面の日本語が、技術者向けと非技術者向けの言い方を1つの文に並べていて（「町 = commit」「ダンジョンの出口 = 宣言判定」）、日本のゲームとして読みにくい。1つのボタンで言い方を切り替え、それぞれの中では日本のゲームで慣れた言い方・開発で慣れた言い方にそろえる。
+
+1. **2つの言い方**。`game`（冒険のことば。既定）と `dev`（開発のことば）。辞書は `web/board/words.js`（`t(key, …引数)`。1つの key に `{game, dev}`）。盤面・右の欄・詳細・キャラクターシート・台帳・あそびかた・手で進める・出撃の窓・GitHub の欄・知らせ・はじめの画面の字は、すべて辞書から取る。地図に書かれた字（マスの題・説明・テストの名前・キャラクターの名前）と、冒険の書のログの字（書記 §5 の `text`）は、そのまま出す。
+   - どちらの言い方でも、1つの文の中に2つの言い方を「A = B」のように並べない。もう一方の言い方は `title`（マウスを乗せたときの補足）にだけ出してよい。
+   - 冒険のことばの語: モンスター（テスト1件）・倒した・復活・ダンジョン・出口・宣言判定・歩く・町（宿屋でセーブ）・中ボスの砦・ボス戦・魔王の城・あがり・王様の城・ハンコ・全滅・縄張り・指令書・日誌・技・強敵・ちいさなメダル・宝箱・罠・出撃・◯代目・なかま・冒険の書・瓦版・寄り道・封印・呪い・墓。
+   - 開発のことばの語: テスト・通った・再び落ちた（リグレッション）・タスク・判定（check・累積）・テストを走らせる（step）・町（git commit）・結合テスト・最終結合テスト・完了・承認・担当ファイル・指示（brief）・メモ・引き継ぎ・苦戦・最初の判定で合格・判定の直し・判定の改変・起動・起動 N回目・メンバー・ログ・ニュース・イベント・改変チェック（ハッシュ）・整合性エラー・stash。
+   - どちらでも変えない字: `テスト p/t`（札・砦の HP・なかまの欄）、`commit xxxxxxx`（町の看板・セーブ）、`seq N`、`Lv`・`経験値`、作戦の名前（いのちだいじに／バッチリがんばれ／ガンガンいこうぜ）、キャラクターの職（勇者・書記 …）、「ふりだし」「あがり」の大きな字、Linear のステータス（詳細の札・台帳）。
+2. **1つのボタン** `button#words-toggle`（盤面の見出し `.save` の中と、はじめの画面の見出し）。字はいまの言い方（「🗡 冒険のことば」／「⌨ 開発のことば」）、`title` に「押すともう一方になる」こと、`aria-pressed` は開発のことばのとき `true`、`data-words` にいまの言い方。押すともう一方に切り替わり、盤面（SVG）・右の欄・詳細・手で進める・出撃の様子・GitHub の欄・知らせの札が、窓口を読み直さずに描き直される（書きかけは消さない）。
+3. **残し方**。選んだ言い方は `localStorage` の `gridhub.words` に残す。URL の `?words=game|dev` があればそれが優先（知らない値は無視）。切り替えると URL も書き換える（`dev` なら `?words=dev` を足し、`game` なら消す）。`<html data-words="game|dev">` を描く前に決め（`index.html`・`start.html` の `<head>` で読む `board/boot.js`。§29.1 のとおり、インラインのスクリプトは置かない）、CSS の `[data-say="game"]`／`[data-say="dev"]`（2つの言い方を両方書いた HTML）は、合うほうだけを見せる。
+4. **アプリの中の言い換え**（§74.3）は、いまの言い方のボタンの名前になる: 冒険は「歩く」「宣言判定」「ハンコを押す」「手で進める」、開発は「テストを走らせる」「判定する」「承認する」「手動で進める」（かっこ書きの説明は外す）。
+5. 判定: `B22`。既定が冒険のことばで、判定が見ている字（「手で進める」「宣言判定」「歩く」「出撃中」「GitHub に送っていないセーブ: N」「町でセーブしたら GitHub に送る」「フォルダを選ぶ」「チュートリアルで遊ぶ」「冒険の書が呪われています」など）は冒険のことばのまま。
+
+## 76. ことばを CLI・MCP・文書にも（冒険のことば / 開発のことば）
+
+監督（ユーザー）の指示: 「CLI と RULEBOOK も同じ方針で直して。というか全部ね。顧客の目に触れるところはすべてデザインであり UX」。§75 の方針（1つの文に2つの言い方を並べない・1つの切り替えで全部が変わる）を、盤面の外にも広げる。
+
+1. **書記**（`src/engine/words.js`）: Node 側の辞書 `t(key, …引数)`（key ごとに `{game, dev}`）と、決め方。`resolveWords({ root, env, flag })` は `--words game|dev` > 環境変数 `GRIDHUB_WORDS` > `<root>/.masume/words.json` の `words` > `game` の順で決め、`wordsMode()`・`isDev()` で読める。`wordsSetting(root)`・`setWordsSetting(root, mode)` で冒険ごとの設定を読み書きする（`.masume/git.json` と同じ置き場・書き方。Git には入れてよい）。
+   - `parseArgs`（`src/engine/cli.js`）は `--words` を受け、`guessRoot` で冒険の書の場所を推し量って `resolveWords` する。自分で引数を読むコマンド（quest・party・init・serve・app・mcp）も `--words` を受け、同じ順で決める。`serve` と `app` の `--words` は、そのサーバーのあいだ環境変数と同じ強さで効く。
+   - `gridhub words [game|dev]`: 引数なしで、いまの言い方と何で決まったか（`--words で指定` / `環境変数 GRIDHUB_WORDS` / `この冒険の設定 .masume/words.json` / `既定`）。引数をつけると `.masume/words.json` に書く（冒険の書が無ければ `E_NO_GAME`）。`--json` で `{words, source}`。
+   - 字を辞書から出すもの: 受付係（`bin/gridhub.js` の `--help`・一覧・担当の役名。開発のことばでは役を `engine`・`server`・`party`・`quest`・`linear/jira`・`mac` と出す）、`brief`・`status`・`step`・`check`・`stamp`・`note`・`verify`・`repair`・`load`・`new`・`seal`・`amend`・`remote`・`push`・`serve` の知らせ、冒険の書のログの文（§5 の `text`。`view.js`）、道の余白の文（§53。`margins.js`）、エンディング（§42.1。`chronicle.js`）、`E_*` のエラー文（`store`・`game`・`checks`・`save`・窓口）。
+   - **既定（冒険のことば）の字は、判定（tests/e2e）が見ているものを変えない**（`歩いた:`・`いちばん手前のモンスター:`・`全部倒した。出口で宣言する: gridhub check <id>`・`判定成功:`・`結合ゲート突破:`・`全滅`／`差し戻し`・`冒険の書は正常です`・`呪われています`・`X が出撃した（…）`・`X が帰還した（…）`・`X の縄張りを commit … に戻した（墓: stash …）`・`GitHub に送っていないセーブ: N`・`町でセーブしたら GitHub に送る: オン|オフ`・`ルールブック: docs/RULEBOOK.md` で終わる `--help` など）。開発のことばは、§75.1 の語（テスト・通った・再び落ちた・タスク・判定（check・累積）・テストを走らせる（step）・セーブポイント・結合テスト・完了・承認・担当ファイル・作業指示・メモ・引き継ぎメモ・起動・終了・起動 N回目・ほかの担当・セーブデータ・整合性エラー・stash・ハッシュ記録）でそろえる。
+   - 変えない字（どちらでも同じ）: `記録: seq N / Git: commit xxxxxxx`、`テスト p/t`、`Lv`・`経験値`、作戦の名前、`箱のソケット:` の行、`盤面: http://…`、コミットメッセージ（`gridhub save: …`・`gridhub: 冒険のはじまり`）、Linear・Jira へ書き出す字、`[E_…]` のコード、GM へのプロンプト（`src/quest/prompt.js`）。
+2. **伝令**（`src/server/index.js`・`src/mcp`）: `GET /api/words` → `{ok, words, set, source}`（`set` は冒険の設定があるか。`source` は `env` / `file` / `default`）。`POST /api/words {words}` → 設定に書き、サーバーの言い方もその場で切り替える（冒険の書が無ければ `E_NO_GAME`。`words` が `game`/`dev` でなければ `E_USAGE`）。起動時は `resolveWords({ root, env })`。`serve --words` と `app --words` は環境変数 `GRIDHUB_WORDS` に写すので、そのサーバーのあいだは設定より優先する。MCP の道具の題・説明・引数の説明と `instructions` も辞書から（`src/mcp/tools.js` の `{game, dev}`）。
+   - 子プロセスにも伝える: 窓口・MCP・軍師（プロンプトの指令書）が `gridhub …` を子で走らせるときは、環境変数 `GRIDHUB_WORDS` にいまの言い方を入れる（子が `--words` も設定も知らなくても、同じ言い方で出る）。
+3. **盤面**（`web/board/words.js`・`app.js`）: 本物の盤面では、URL の `?words=` にもブラウザにも選択が無ければ `GET /api/words` の設定を既定にする（`adoptServerWords`）。切り替えたら `POST /api/words` にも書く（届かなくても切り替えは効く）。見本の盤面（`?fixture=`）は窓口に触らない。
+4. **軍師・語り部**: `gridhub party` の `--help`・巡回の知らせ（出撃／起動・帰還／終了・ボス戦／結合テスト・迷子など）・`--dry-run`・エージェントへのプロンプトの枠の文（`src/party/prompt.js`。既定の文は P6 が見ているので変えない）・作戦の動き方と止まる条件（`src/party/tactics.js` の `dev`。`tacticText()`）。`gridhub quest` の知らせ。`gridhub init`／`quest` が書く AGENTS.md は、いまのことばの版（`src/quest/setup.js` の `agentsMdGame`／`agentsMdDev`。守ることとコマンドは同じ）。
+5. **文書**: 文書ごとに言い方を1つに決める。`docs/RULEBOOK.md` は冒険のことばで、冒頭の「ことばの対応表」1つに開発のことばをまとめる（見出しは `GridHub ルールブック` のまま。§15.2）。`README.md` は開発のことばで、ゲームの言い方は「ゲームと開発の対応表」の節と、盤面の設定の名前（「町でセーブしたら GitHub に送る」など）にだけ出す。`docs/GAME_DESIGN.md` は対応づけの設計文書なので両方が並ぶ（柱 4 をこの方針に改めた）。`docs/GM_GUIDE.md` は地図のデータの名前で書く。判定が見ている語（§73 の README の節・`第N章`・対応表の行・チュートリアルの `gridhub` コマンド）は残す。
+6. 判定: `E19`（書記: `gridhub words`・`--words`・`GRIDHUB_WORDS`・`.masume/words.json`・開発のことばの `brief`／`step`／`status`／ログの文／エラー文）、`S15`（伝令: `GET/POST /api/words`・MCP の道具の説明）、`B22` に盤面と窓口の同期を足す。
+7. **大工**（`mac/GridHub.swift`。監督の指示「Mac アプリの文言も開発のことばに切り替わるように」）: アプリは選んだことばを `UserDefaults`（`GridHubWords`）に覚える。
+   - web → アプリ: 盤面・はじめの画面で切り替えると、スクリプトの窓口 `gridhub` に `postMessage({type: "words", words: "game"|"dev"})`（`web/board/words.js` の `tellApp`。アプリの外では何もしない。開いたときには送らない）。
+   - アプリ → web: ページを描く前に `WKUserScript`（document start）で `window.__gridhubWords = "game"|"dev"` を入れる。`board/boot.js` と `board/words.js` は、URL の `?words=` > `window.__gridhubWords` > ブラウザの選択 > 冒険の設定 > game の順で決める（`wordsSource()` は `app`）。アプリの中は `--port 0` で開くたびにポートが変わり `localStorage` が残らないので、アプリが覚えたことばが次の起動のはじめの画面と盤面の既定になる。
+   - アプリ自身の字: フォルダのダイアログの `prompt`（「このフォルダで遊ぶ」／「このフォルダを開く」）と `message`（「冒険の書のあるフォルダか…」／「セーブデータ（.masume）のあるフォルダか…」）、起動中の知らせ（「盤面を配る GridHub（Node.js）を起こしています」／「盤面のサーバー（Node.js）を起動しています」）、起動できなかったときの題。Node.js の入れ方・「もう一度さがす」・メニューの字はどちらでも同じ。
+   - 判定: `D4`（ソースの約束: `"words"` の窓口・`UserDefaults`・`WKUserScript` の `__gridhubWords`・両方の字）、`B22`（`window.__gridhubWords` を読む・切り替えで `postMessage({type: "words"})`・開いただけでは送らない）。
+
+## 77. 配ることは、いまは考えない（GitHub だけ。監督の決めごと）
+
+監督の指示「npm は実装しないの。SSoT 他、コンテキストから完全に削除するように」「配るのは今考えなくていい。GitHub だけでいい」。前の章（§62・§65・§72・§73）で、配る支度をパッケージの登録・包み・インストールの道具に寄せていたのを改める。
+
+1. **決めごと**: GridHub は **GitHub から git clone したフォルダで `node` で動かす**。配ること（パッケージの登録・包み・インストール・配布物の一覧）は、いまは考えない。その支度を作らない・文書に書かない。`package.json` は ESM（`"type": "module"`）・版・`engines`・`scripts` のためだけに置き、`files`・`bin` は持たない。過去の章の記録である冒険の書・地図の `detail`・examples の控えは、歴史なので残す。
+2. **Mac のアプリ**（§72.3）は配布物ではなく、手元で組んで使うもの。動くのに要るファイル（§62.4 のアプリの中身）を、このフォルダから `cp` で `Contents/Resources/gridhub/` に写して組む。`GRIDHUB_SKIP_SWIFT=1` なら Mac でなくても、中身の詰め方だけを走らせて確かめられる。
+3. **使う人の入れ方**（README「0. 入れる」）: `git clone` して、`ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub` か `alias gridhub="node $PWD/bin/gridhub.js"`。Claude Code・Codex CLI の入れ方は、それぞれの公式の手順を指す（コマンドは書かない）。
+4. **判定**: `G11` は「アプリの中身から遊ぶ」（`sh mac/build.sh` を `GRIDHUB_SKIP_SWIFT=1` で走らせ、詰めた中身を別のフォルダで `node` で動かす。入れ忘れ・入れすぎは `git ls-files` と §62.4 で見る）。`GOAL15`・`GOAL16` の「アプリの中身に旧名が無い」も同じ中身を読む。`GOAL14` は `package.json` の `files` を見ない。`D2` は `mac/build.sh` がパッケージの道具を呼ばず `cp` で写すことを見る。`B19` ははじめの画面の claude の入れ方が公式の手順へのリンクであることを見る。判定ファイルを直したので、GM が封印し直す。
+
+## 78. 配る前の点検（使う人の目線で・監督の指示）
 
 配る前に、使う人の目線で README・CLI・チュートリアル・盤面・入口を実際に動かして点検した（報告書の A1〜A7・B1〜B9・C）。A1〜A7 は §32・§21・§64 の範囲で直し、B と C はここに書く。封印された判定が決めているもの（`party` がハンコ待ちで止まるときの終了コード 2、余白のマスの題と文、`saved` の文、`step` の1行目）は変えていない。
 
-1. **チュートリアル**（地図職人・`quests/tutorial/`）: 見習いAIのマス A1〜A3 の判定を `node:test` のテスト1件ずつにし、地図の `check.cases`（3件・4件・2件）とテストの名前を同じにする（看板の「テスト1件 = 1マス」を、手で遊べる教材で見せる）。ゲート G1・GOAL は `MASUME_BLAME` を出す1本のスクリプトのまま。README の手順に `gridhub step apprentice`（書く前に歩いて3件の ✖ を見る → 書いて歩く → 全部 ✔ → `gridhub check`）を入れ、開発途中の文（`E_NOT_YET`）を消し、npm で入れた人の `TUTORIAL_REPO="$(npm root -g)/gridhub"` を書き、最後の確認は `gridhub status`（`--json` を読ませない）。
+1. **チュートリアル**（地図職人・`quests/tutorial/`）: 見習いAIのマス A1〜A3 の判定を `node:test` のテスト1件ずつにし、地図の `check.cases`（3件・4件・2件）とテストの名前を同じにする（看板の「テスト1件 = 1マス」を、手で遊べる教材で見せる）。ゲート G1・GOAL は `MASUME_BLAME` を出す1本のスクリプトのまま。README の手順に `gridhub step apprentice`（書く前に歩いて3件の ✖ を見る → 書いて歩く → 全部 ✔ → `gridhub check`）を入れ、開発途中の文（`E_NOT_YET`）を消し、最後の確認は `gridhub status`（`--json` を読ませない）。判定 M2 は、`cases` の名前が判定の出力のテストの名前と同じことも確かめる（違えば、テストは通っても盤面の図鑑でそのモンスターが「結果なし」のまま残る。GM_GUIDE の注意）。マスの説明は `gridhub step apprentice で確かめ` の形で書く（アプリの中では CLI をボタンの名前に言い換えるので、「歩く（gridhub step …）」と書くと「歩く（「歩く」）」になる。§74.3）。
 2. **指令書**（書記・`brief`）: 進み方はマスの種類で変わる。ダンジョン（判定のあるマス）は `歩き方:`（歩く・宣言・日誌。§44 のまま）。ハンコのマスは `進み方:` に `gridhub stamp <node> --as <by>`（盤面の「ハンコを押す」でも同じ）と日誌。ゲートで待っているときは「仲間がそろうとボス戦が自動で始まる。手で始めるなら `gridhub check <gate>`」。あがりは「あがり」。`rules` も同じく種類で変わる（ハンコのマスに「gridhub step で確かめる」を出さない。E9 は判定のあるマスで `gridhub step` を求める）。空の節は見出しだけにせず `視界に入っている先のマス: （なし。この先は霧）` / `自分の日誌（新しい順）: （まだない）`。日誌の時刻はローカル時刻（4）。
 3. **`--as` の既定**（書記・`parseArgs`）: `--as` > `MASUME_ACTOR` > **コマンドに渡したキャラクターID**（`step <id>`・`check <id>`・`note <id>`。`check <gateId>` は gm）> `gm`。人が `gridhub step engine` と打てば engine の記録になる（README の手順 4 と指令書の歩き方は `--as` なし、AGENTS.md とエージェントのプロンプトは今までどおり `--as` 付き。どちらも同じ記録になる）。`stamp` は「だれが押したか」の記録なので `--as` を省略できず、無ければ `E_USAGE`（そのマスの `check.by` を添えて `gridhub stamp H1 --as player` と出す）。MCP の既定（S5・S8）は今までどおり。
-4. **`gridhub log`**（書記）: 既定は人の読める文（§5 の `log[].text` と同じ。`seq`・ローカル時刻 `2026-10-30 12:34:56`・✔/✖/・・文・末尾に `[type]`）。`--json` は今までどおり生のイベント。`--tail` は値なしで 20 件、`--tail N` で N 件（`parseArgs` の `maybe` 型: 値があってもなくてもよい）。`localTime(ts)` は `src/engine/record.js`。
+4. **`gridhub log`**（書記）: 既定は人の読める文（§5 の `log[].text` と同じ。`seq`・ローカル時刻 `2026-10-30 12:34:56`・✔/✖/・・文・末尾に `[type]`）。`--json` は今までどおり生のイベント。`--tail` は値なしで 20 件、`--tail N` で N 件（`parseArgs` の `maybe` 型: 値があってもなくてもよい）。`localTime(ts)` は `src/engine/record.js`。だれの記録か（`actor`）が文の本人（キャラクター・押した人・仲間）と違うときは、文の末尾に `（記録: gm）` を添える（gm が代わりに書いた日誌、軍師が記録した出撃）。「（最後の N 件…）」の案内は、出した件数が全体より少ないときだけ。成否の印 ✔/✖/・ は `src/engine/cases.js` の `MARK`（step・brief・log で同じ）。読んだ冒険の書は `buildView(root, snapshot)` に渡して、二度読まない。
 5. **生成される日本語**（書記）: `check`・`stamp` の結果行は名前と題を添える（`判定成功: 見習いAI（apprentice）が A1「あいさつを一行で書く」を突破しました`、`結合ゲート突破: G1「…」を 勇者（player）、見習いAI（apprentice）が突破しました`、`全滅/差し戻し: G1「…」の判定失敗（責任: …）`。§3 の言葉は残す）。`status` はあがった人の「あがり / あがり」を1つに。余白のマスの題（`<題> の住人`・`<名前> と <名前>`）と文、`saved` の文は E13・E10 が決めているので変えない。
-6. **ハンコを押せない理由**（書記・`E_STAMP`）: 「指定された本人と現在のマスを確認してください」をやめ、理由を分けて言う: マスが無い / ハンコのマスではない / `--as` が無い / 本人違い（`このマスのハンコは player が押します（--as player）。apprentice ではありません`）/ 押し済み / いまそのマスにいない / 仲間を待っている。コードは `E_STAMP`/2 のまま（E2）。
-7. **`gridhub serve`**（伝令）: `--dir` のフォルダが無ければ `E_USAGE`（黙って入口を出さない）。ブラウザは、`--open` なら必ず、言われなければ人がターミナルから打ったとき（stdout が端末で、`--lifeline` でなく、`CI` が無い）だけ OS の `open` / `xdg-open` / `start` で開く。`--no-open` で開かない。パイプの先・アプリ・判定からは開かない。開いたか開けなかったかを1行出す。
+6. **ハンコを押せない理由**（書記・`E_STAMP`）: 「指定された本人と現在のマスを確認してください」をやめ、理由を分けて言う: マスが無い / ハンコのマスではない / 本人違い（`このマスのハンコは player が押します（--as player）。apprentice ではありません`）/ 押し済み / いまそのマスにいない / 仲間を待っている。文は `H1「題」にハンコを押せません: <理由>`（判定成功の行と同じく、「」のすぐ後に「に」）。`--as` が無いときは、エンジンに届く前に CLI が `E_USAGE` で止める（3）。コードは `E_STAMP`/2 のまま（E2）。
+7. **`gridhub serve`**（伝令）: `--dir` のフォルダが無ければ `E_USAGE`（黙って入口を出さない）。ブラウザは、`--open` なら必ず、言われなければ人がターミナルから打ったとき（stdout が端末で、`--lifeline` でなく、`CI` が無い）だけ OS の `open` / `xdg-open` / `start` で開く。`--no-open` で開かない。パイプの先・アプリ・判定からは開かない。起動できたか（`open` / `xdg-open` があるか。`spawn` の `spawn` / `error`）を待ってから、開いたか開けなかったかを1行出す（xdg-open の無い Linux で「ブラウザで開きます」と言わない）。
 8. **Git**（書記・語り部）: 冒険の書 `.masume/log.jsonl` と判定の出力 `.masume/outputs/` は Git に入れる（歴史そのもの。`verify` は出力のハッシュも確かめるので、`.gitignore` には入れない。Q6 が最初のコミットに `.masume/log.jsonl` を求める）。町のセーブは縄張りだけ（§43）なので、遊んでいるあいだ `git status` に ` M .masume/log.jsonl` が出る。これは仕様で、README「Git のセーブと墓」に書く（区切りで `git add .masume && git commit`）。`gridhub quest` の `git init` は `-b main`（`-b` の無い古い git なら設定どおり）。
-9. **npm の体裁**（GM）: `package.json` に `keywords`・`homepage`・`repository`・`bugs`・`author`。README の写真は GitHub の raw の絶対 URL（npm のページで切れない。GOAL14〜16 は http の絵を見ない）。`web/fixtures/make-demo*.mjs` は包みに残す（G11 §62.4 が `web/` の全部を求める）。
-10. **受付係**（GM・`bin/gridhub.js`）: `-V` と `version` も版を出す（出力は D2・G11 のとおり `gridhub <版> (rules 1)` の1行だけ）。`rules 1` の意味は `--help` の末尾で言う。`--help` の一覧は、いちばん長い使い方に合わせて桁をそろえる。
-11. **盤面**（賢者クロード）: 見出しの「台帳」は「一覧」（表の見出しは `一覧 — 台帳: Linear でいうと、こう見える`。`#ledger` と `data-view="list"` は同じ）。記録の「写す」は「コピー」（`aria-label` 付き）。入口の願いの例は一般の例（買い物リスト）。なかまのカードの名前は途中で切らず（`white-space: nowrap` と省略記号）、GitHub の欄の「送っていないセーブ」は語の途中で折り返さない（`word-break: keep-all`。ボタンは下に落ちる）。
+9. **`package.json` と README の写真**（GM）: §77 のとおり、パッケージの登録のための項目（`keywords`・`homepage`・`repository`・`bugs`・`author`・`files`・`bin`）は持たない。README の写真は GitHub の raw の絶対 URL（どこで README を開いても切れない。GOAL14〜16 は http の絵を見ない）。`web/fixtures/make-demo*.mjs` はアプリの中身に残す（G11 §62.4 が `web/` の全部を求める）。
+10. **受付係**（GM・`bin/gridhub.js`）: `-V` と `version` も版を出す（出力は D2・G11 のとおり `gridhub <版> (rules 1)` の1行だけ）。`rules 1` の意味は `--help` の末尾で言う。`--help` の一覧は、使い方の欄を 50 桁にそろえる。それより長い使い方（`party`・`serve`・`return`・`import`・`linear`）は1行に置き、説明を次の行の同じ桁に出す（端末で折り返さない）。
+11. **盤面**（賢者クロード）: 見出しの「台帳」は「一覧」（表の見出しは `一覧 — 台帳: Linear でいうと、こう見える`。`#ledger` と `data-view="list"` は同じ）。記録の「写す」は「コピー」（`aria-label` 付き）。入口の願いの例は一般の例（買い物リスト）。なかまのカードの名前は途中で切らず（`white-space: nowrap` と省略記号）、GitHub の欄の「送っていないセーブ」は語の途中で折り返さない（`word-break: keep-all`。ボタンは下に落ちる）。1100px 以下の幅では、見出しの右の欄が横にはみ出さないように間と余白を詰め、あがった盤面の「🏁 エンディング」は 🏁 だけにする（名前は aria-label と title に残す。「記録」の札は隠さない。§57）。
 12. **変えていないもの**: `party` がハンコ待ちで正常に止まるときの終了コード 2（P1・G7 が決めている。「進められない」の意味で、エラーと区別するなら判定の改訂が要る）。
+13. **ことば**（§75・§76。main に取り込んだときの決めごと）: この節で足した字も辞書（`src/engine/words.js`・`web/board/words.js`）から出し、開発のことばの言い方を持つ: 指令書の `進み方:`／`進め方:`・`（なし。この先は霧）`・`（まだない）`・マスの種類で変わる `rules`、ハンコを押せない理由（`err.stamp.*`）、判定の結果行の名前と題（`check.*`）、`status` の「あがり」を1つに、`serve` のブラウザの知らせ（`serve.open.*`）、`--help` の `--as` の既定と版の説明（`cli.version`。最後の行は今までどおりルールブック）。盤面の「一覧」「コピー」「買い物リスト」は、どちらのことばでも同じ。
 
-## 76. 勇者の手帳（遊び込み・ユーザーの指示）
+## 79. 勇者の手帳（遊び込み・ユーザーの指示）
 
 ユーザーの指示: 「ゲーム性を高めないと、自分でプレイする気にならない。ゲームとしての完成度・面白さ・やみつきになる改善を」。
 いままでの盤面は、エージェントの進み具合を描く絵で、人間（勇者）は見る・ハンコを押すだけだった。勇者に**自分の積み上げ**と**自分の手でやること**を足す。
 柱（GAME_DESIGN §2）はそのまま: 中身はすべて冒険の書から導き（本当に起きたことしか起きない）、遊びの報酬はどれも開発の節目（テストを倒す・一発で抜ける・リグレッションを直す・セーブ・結合）に結びつく。ルール（判定・レベル・巻き戻し）は変えない。
 
-1. **手帳の場所と中身**（書記・`src/engine/hero.js`・`src/engine/home.js`）: 手帳のファイルは `<home>/hero.json`。`<home>` は起動役の最近のフォルダと同じ場所（`GRIDHUB_APP_HOME` → macOS は `~/Library/Application Support/GridHub` → `~/.config/gridhub`）。手帳がまとめる冒険は、いま開いている冒険・`hero.json` が覚えている冒険・最近のフォルダ（`recent.json`）のうち冒険の書のあるもの（最大 40）。同じ冒険（genesis のハッシュが同じ）は1つに数える。`hero.json` が覚えるのは遊ぶ人の手の跡だけ: `quests`（見た冒険）・`opened`（冒険ごとに、先頭から何枚開けたか）・`opened_global`（日々のシールの id）・`seen`/`seen_at`（その冒険のどの seq まで見たか・いつ）・`achieved`（見た称号）・`rank`（見たランク）。壊れていたら空の手帳として読む。書くのはシール袋を開けたとき（§76.7 open）と知らせを閉じたとき（seen）だけで、読むだけの窓口・`gridhub me` は書かない。
+1. **手帳の場所と中身**（書記・`src/engine/hero.js`・`src/engine/home.js`）: 手帳のファイルは `<home>/hero.json`。`<home>` は起動役の最近のフォルダと同じ場所（`GRIDHUB_APP_HOME` → macOS は `~/Library/Application Support/GridHub` → `~/.config/gridhub`）。手帳がまとめる冒険は、いま開いている冒険・`hero.json` が覚えている冒険・最近のフォルダ（`recent.json`）のうち冒険の書のあるもの（最大 40）。同じ冒険（genesis のハッシュが同じ）は1つに数える。`hero.json` が覚えるのは遊ぶ人の手の跡だけ: `quests`（見た冒険）・`opened`（冒険ごとに、先頭から何枚開けたか）・`opened_global`（日々のシールの id）・`seen`/`seen_at`（その冒険のどの seq まで見たか・いつ）・`achieved`（見た称号）・`rank`（見たランク）。壊れていたら空の手帳として読む。書くのはシール袋を開けたとき（§79.7 open）と知らせを閉じたとき（seen）だけで、読むだけの窓口・`gridhub me` は書かない。
 2. **シール**: はじめて倒したテスト1件ごとに、道のモンスターのシールが1枚落ちる（種類はテストの名前で決まる。盤面の `speciesOf` と同じ6種）。レア度は**そのテストを倒したイベントのハッシュ**（`sha256(hash|node|case)` の先頭32ビット）で決まる: 金 2%・ホロ 8%・キラ 25%・ノーマル 65%、強敵（2回以上負けたテスト）はキラ以上。同じ冒険の書なら、だれが・いつ・どこで読んでも同じシール。出来事のシール（レア度は決まっている）: 冒険の地図（冒険をはじめる）・宿屋のスタンプ（町でセーブ）・ちいさなメダル（一発で抜ける）・やくそう（復活したテストを倒し直す）・王様のハンコ（ハンコ）・GitHub の旗（push）・お題のランタン（今日のお題を3つ）・はがねのつるぎ（1回の判定で5体以上）・技の巻物（技）・宝箱（宝）・皆勤の鐘（3・7・14・30・60・100日続けて）・無傷の盾（一度も倒れずにあがる）。ボス: ドラゴン（結合ゲート。ホロか金）・魔王（あがり。金）。シール帳は 39 枠（道のモンスター 6種×4・ドラゴン 2・魔王 1・出来事 12）で、**開けたシールだけ**が貼られる。積み上げの数え方は `chronicle` の `firsts`（はじめて倒した）・`cures`（倒し直した）・`goals`（魔王の撃破）を使う（第10章までの冒険の書も、出力から読んで数える）。
 3. **勇者ランク**: 冒険をまたいだ経験値。テスト 10（強敵 +20）・倒し直し 20・宣言の成功 30・メダル 20・結合ゲート 100・あがり 300・ハンコ 20・日誌 5・技 30・宝 30・セーブ 10・push 10・冒険をはじめる 20・まとめて倒す 30・お題 50・皆勤 100。ランク L から L+1 へは `50 + 50L`。称号名: 見習い勇者（1）・駆け出しの勇者（3）・一人前の勇者（5）・歴戦の勇者（8）・名のある勇者（12）・英雄（17）・伝説の勇者（24）・神話の勇者（32）。キャラクターのレベル（§4）とは別のもの。
 4. **称号**: 44 個（`ACHIEVEMENTS`）。数え方（倒したテスト・ダンジョン・メダル・強敵・大逆転・技・倒し直し・まとめて・ゲート・あがり・無傷・ハンコ・日誌・宝・セーブ・push・出撃・冒険・夜ふかし（0〜4時台）・早起き（5〜7時台）・週末・続いた日数・お題・キラ以上・金・シール帳・開けたシール袋・交換所・ノートに貼った数・そろえた列・名乗り）と目標の数で決まる。キラ・金・シール帳と、開けた袋・交換・貼り・列・名乗りは、手帳の手の跡（開けたシールなど）で数える（達成した時刻は持たない）。時刻は遊ぶ人の手元の時刻。
@@ -1484,3 +1530,6 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 30. **ノートの模様**: 勇者ランクで使えるようになる（`THEMES`: 方眼ノート 1・クラフト紙 3・さくら色の方眼 5・夜の机 8・青写真 12・金の方眼 24）。`POST /api/hero/theme {id}`（届いていなければ 409、知らない模様は 400）、`hero.json` の `theme`、手帳の `themes[]`（`unlocked`）と `theme`。盤面とはじめの画面は `<html data-notebook="…">` にして、CSS の色（`--paper`・`--grid`・`--grid-strong`・`--card`・`--desk`・`--wood`）をかえる。ランクアップで新しい模様が使えるようになったら知らせる。手帳のタブに「ノートの模様」。
 31. **通しで遊んで直したこと**（新しい遊ぶ人として、ボタンだけでチュートリアルをあがって確かめた）: (1) 盤面から日誌を書ける（`POST /api/note {character, text}`。1〜2000 文字。`actor` は書いた本人。手で進めるの欄に「日誌を書く」）。これが無いと、アプリの中では今日のお題「日誌を1つ書く」と技（§42）に手が届かなかった。(2) お祝いはボス戦のカットインの上に重ねない（消えてから出す）。(3) 「まとめ斬りの記録更新」は 5 体以上のときだけ。(4) 称号が1度に5つ以上なら「ほかに称号を N つ」。(5) スタンプカードのお祝いは、1日目は「スタンプカードにハンコ！」。(6) シール袋が 0 なら「1枚あける」を出さない、1 なら「まとめて」を出さない。(7) はじめの画面: 冒険を全部あがっていれば「次は本当の冒険を」。
 32. **出撃を見守って直したこと**（偽の claude で本物の「出撃させる」を押し、見える物を時系列で確かめた）: (1) **あなたの番！**: 人間のキャラクターが作業中で、ハンコのマス（`check.by` が本人）か手で進めるマスにいるとき、盤面の右上に `#your-turn`（押すと、ハンコならそのマスの札、それ以外は手で進める）。新しく番が回ってきたら音と Dock。(2) 盤面の「出撃」の欄と知らせに、ターミナル向けの行（`ハンコは: node …`）を出さない（軍師の出力そのものは変えない）。(3) 出撃中の戦果は、30 分以内に続いた出撃を一連として数える（ダンジョンごとに 0 に戻らない）。(4) 次のボス戦のメーターは、ハンコをモンスターに数えない（`nextBoss` の `stamps`。「あと 2体・ハンコ 1」）。
+33. **ことば（§75）との関係**: 盤面に出る字（撃破・まとめて撃破・一発合格・次のボス戦のメーター・あなたの番！・カットイン・手で進めるの「撃破」「いま戦う」と日誌の欄）は辞書（`words.js`）に載せ、開発のことばでも読める。開発のことばでは、駒のひとことは出さない。手帳のタブと、勇者のカード・シール袋の部屋・お祝いの中の字は、ゲームの層なので冒険のことばのまま（手帳の遊びそのものが冒険の言い方でできているため）。`gridhub me` の字も冒険のことば。
+34. **見出しの幅**: Git で管理している冒険（コミット番号が出る）でエンディングのボタンもあると、見出しが幅 1024〜1624 で画面からあふれていた（§75 の切り替えのボタンのあと、手帳のタブでさらに広がる）。861〜1360px では `#live` とコピーのボタン、1240px 以下では切り替えのボタンの字、1640px 以下ではキャッチコピーを隠す。
+

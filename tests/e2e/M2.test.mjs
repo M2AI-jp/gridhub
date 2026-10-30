@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync, cpSync, writeFileSync, mkdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { join, dirname, normalize, isAbsolute } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { ROOT, tmp } from '../helpers.mjs';
 
 const DIR = join(ROOT, 'quests', 'tutorial');
@@ -81,5 +82,35 @@ test('解く前はどの判定も落ち、SOLUTIONS を当てると全部通る'
   for (const [id, n] of cmds) {
     const r = run(n.check.run, play);
     assert.equal(r.status, 0, `解いた後の ${id} は通る: ${r.stdout}${r.stderr}`);
+  }
+});
+
+// 配る前の点検（§75.1）: 見習いAIのダンジョンは「テスト1件 = 1マス」。地図の cases の名前が判定の出力のテストの名前と
+// 同じでなければ、テストは通っても盤面の図鑑ではそのモンスターが「結果なし」のまま残る（GM_GUIDE の注意）
+test('cases の名前は、判定の出力のテストの名前と同じ（テスト1件 = 1マスが盤面で結びつく）', async () => {
+  const { readResults } = await import(pathToFileURL(join(ROOT, 'src', 'engine', 'cases.js')).href);
+  const m = JSON.parse(readFileSync(join(DIR, 'tutorial.map.json'), 'utf8'));
+  const sol = JSON.parse(readFileSync(join(DIR, 'SOLUTIONS.json'), 'utf8'));
+  const play = tmp('masume-tutorial-');
+  cpSync(DIR, play, { recursive: true });
+  for (const files of Object.values(sol)) {
+    for (const f of files) {
+      mkdirSync(dirname(join(play, f.path)), { recursive: true });
+      writeFileSync(join(play, f.path), f.content);
+    }
+  }
+  // 書記の runner と同じく NODE_TEST_CONTEXT を外す（残すと、中の node:test は結果を字で出さない）
+  const env = { ...process.env };
+  delete env.NODE_TEST_CONTEXT;
+  const tasks = Object.entries(m.nodes).filter(([, n]) => n.type === 'task' && n.check?.kind === 'cmd');
+  assert.ok(tasks.length >= 3, 'ダンジョン（判定コマンドの task）が3つ以上');
+  for (const [id, n] of tasks) {
+    assert.ok(Array.isArray(n.check.cases) && n.check.cases.length >= 2, `${id} に cases（テスト1件 = 1マス）`);
+    const r = spawnSync('/bin/sh', ['-c', n.check.run], { cwd: play, env, encoding: 'utf8', timeout: 15000 });
+    assert.equal(r.status, 0, `解いた後の ${id} は通る: ${r.stdout}${r.stderr}`);
+    const found = new Map(readResults(`${r.stdout}\n${r.stderr}`).map(({ name, ok }) => [name, ok]));
+    for (const name of n.check.cases) {
+      assert.equal(found.get(name), true, `${id} の cases「${name}」が判定の出力にある（出力のテスト: ${[...found.keys()].join(' / ')}）`);
+    }
   }
 });

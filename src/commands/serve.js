@@ -4,24 +4,34 @@ import { resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { startServer } from '../server/index.js';
 import { holdUntilStopped } from '../server/lifeline.js';
+import { WORDS, t } from '../engine/words.js';
 
 function usageError(message) {
   return Object.assign(new Error(message), { code: 'E_USAGE', exitCode: 2 });
 }
 
-/** ブラウザで URL を開く（OS の open / xdg-open / start）。開けたかは待たない。失敗したら false */
+/**
+ * ブラウザで URL を開く（OS の open / xdg-open / start）。起動できたか（コマンドがあるか）だけを待ち、ページが開いたかは待たない。
+ * 起動できなければ false（xdg-open の無い Linux など。ENOENT は spawn のあとから 'error' で来る）
+ */
 export function openBrowser(url, platform = process.platform) {
   const [file, args] = platform === 'darwin' ? ['open', [url]]
     : platform === 'win32' ? ['cmd', ['/c', 'start', '', url]]
       : ['xdg-open', [url]];
-  try {
-    const child = spawn(file, args, { stdio: 'ignore', detached: true });
-    child.on('error', () => {});
-    child.unref();
-    return true;
-  } catch {
-    return false;
-  }
+  return new Promise((done) => {
+    let child;
+    try {
+      child = spawn(file, args, { stdio: 'ignore', detached: true });
+    } catch {
+      done(false);
+      return;
+    }
+    child.once('spawn', () => {
+      child.unref();
+      done(true);
+    });
+    child.once('error', () => done(false));
+  });
 }
 
 export async function run(argv, ctx) {
@@ -36,12 +46,18 @@ export async function run(argv, ctx) {
         open: { type: 'boolean' },
         'no-open': { type: 'boolean', default: false },
         lifeline: { type: 'boolean', default: false },
+        words: { type: 'string' },
       },
       strict: true,
       allowPositionals: false,
     }));
   } catch {
-    throw usageError('引数が不正です。使い方: gridhub serve [--port N] [--host H] [--dir D] [--open|--no-open] [--lifeline]');
+    throw usageError('引数が不正です。使い方: gridhub serve [--port N] [--host H] [--dir D] [--open|--no-open] [--lifeline] [--words game|dev]');
+  }
+  // ことば（§76）: --words はこのサーバーのあいだ、環境変数と同じ強さで効く（盤面から変えるまで）
+  if (values.words !== undefined) {
+    if (!WORDS.includes(values.words)) throw usageError(`--words は game か dev です: ${values.words}`);
+    process.env.GRIDHUB_WORDS = values.words;
   }
 
   const port = Number(values.port);
@@ -63,16 +79,15 @@ export async function run(argv, ctx) {
   const running = await startServer({ root, port, host: values.host });
   const lobby = !existsSync(logFile(root));
 
-  console.log(`盤面: ${running.url}`);
-  if (lobby) console.log('冒険の書はまだありません。盤面の入口で願いを書いて、冒険をはじめてください。');
-  // ブラウザを開く: --open なら必ず。言われなければ、人がターミナルから打ったとき（stdout が端末）だけ。
+  console.log(t('serve.board', running.url));
+  if (lobby) console.log(t('serve.lobby'));
+  // ブラウザを開く（§78.7）: --open なら必ず。言われなければ、人がターミナルから打ったとき（stdout が端末）だけ。
   // パイプの先・アプリ（--lifeline）・CI では開かない。--no-open で止められる
   const interactive = Boolean(process.stdout.isTTY) && !values.lifeline && !(ctx.env ?? process.env).CI;
   const wantOpen = values['no-open'] ? false : values.open === true || interactive;
   if (wantOpen) {
-    console.log(openBrowser(running.url) ? 'ブラウザで開きます（開かなければ、上の URL をブラウザに貼ってください。--no-open で開かずに済ませられます）'
-      : '（ブラウザを開けませんでした。上の URL をブラウザで開いてください）');
-  } else if (!values.lifeline) console.log('上の URL をブラウザで開いてください（--open で、gridhub が開きます）');
+    console.log(await openBrowser(running.url) ? t('serve.open.ok') : t('serve.open.ng'));
+  } else if (!values.lifeline) console.log(t('serve.open.hint'));
   // 止める合図（SIGINT・SIGTERM・SIGHUP。--lifeline なら標準入力が閉じたときも。§68.2）を待つ
   return holdUntilStopped(running.stop, { lifeline: values.lifeline });
 }

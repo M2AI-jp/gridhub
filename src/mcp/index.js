@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { createInterface } from 'node:readline';
 import { checkArguments, findTool, listTools } from './tools.js';
 import { killAll, runCli } from './runner.js';
+import { isDev } from '../engine/words.js';
 
 const DEFAULT_PROTOCOL = '2025-06-18';
 
@@ -16,13 +17,24 @@ const DOCS = [
   ['CONTRACTS.md', 'GridHub 契約書', 'モジュール間の約束（CLI・API・MCP）'],
 ];
 
-const INSTRUCTIONS = [
-  'GridHub は、5mm方眼のすごろくで開発を進めるゲームです。あなたは盤上のキャラクターの1人として、いまのマスだけを実装します。',
-  '1. masume_brief で指令書（いまのマス・縄張り・判定コマンド）を読む。',
-  '2. 縄張りの中だけを実装し、判定を素振りする。判定ファイルや地図は編集しない。',
-  '3. masume_check で宣言判定し、通ったら masume_note で次の自分への申し送りを書く。',
-  '冒険の書がまだ無いときは、masume_quest に作りたいものの願いを渡して冒険をはじめる。ルールは資料 masume://docs/RULEBOOK.md にある。',
-].join('\n');
+// 道具箱の説明（§76.4）。いまのことば（冒険 / 開発）で
+const INSTRUCTIONS_BY = {
+  game: [
+    'GridHub は、5mm方眼のすごろくで開発を進めるゲームです。あなたは盤上のキャラクターの1人として、いまのマスだけを実装します。',
+    '1. masume_brief で指令書（いまのマス・縄張り・判定コマンド）を読む。',
+    '2. 縄張りの中だけを実装し、判定を素振りする。判定ファイルや地図は編集しない。',
+    '3. masume_check で宣言判定し、通ったら masume_note で次の自分への申し送りを書く。',
+    '冒険の書がまだ無いときは、masume_quest に作りたいものの願いを渡して冒険をはじめる。ルールは資料 masume://docs/RULEBOOK.md にある。',
+  ].join('\n'),
+  dev: [
+    'GridHub は、テスト1件を1マスとして E2E テストで開発を進めるボードです。あなたは担当の1人として、いまのマス（タスク）だけを実装します。',
+    '1. masume_brief で作業指示（いまのマス・担当ファイル・テストのコマンド）を読む。',
+    '2. 担当ファイルの中だけを実装し、テストを走らせて確かめる。テストのファイルや地図は編集しない。',
+    '3. masume_check で判定し、合格したら masume_note で次の自分への申し送りを書く。',
+    'セーブデータがまだ無いときは、masume_quest に作りたいものを渡して地図を作る。ルールは資料 masume://docs/RULEBOOK.md にある。',
+  ].join('\n'),
+};
+const INSTRUCTIONS = () => INSTRUCTIONS_BY[isDev() ? 'dev' : 'game'];
 
 class RpcError extends Error {
   constructor(code, message) {
@@ -118,7 +130,7 @@ export function serveMcp({ root, bin, repo, cwd, env, version = '0.1.0', input =
             protocolVersion: typeof params?.protocolVersion === 'string' ? params.protocolVersion : DEFAULT_PROTOCOL,
             capabilities: { tools: {}, resources: {} },
             serverInfo: { name: 'masume', version },
-            instructions: INSTRUCTIONS,
+            instructions: INSTRUCTIONS(),
           };
           break;
         case 'ping':

@@ -1,184 +1,93 @@
-// S15「勇者の手帳の窓口」— 伝令（遊び込み）。CONTRACTS §76.7。
-// GET /api/hero は読むだけ。POST /api/hero/open でシール袋を開け、POST /api/hero/seen で「見た」と覚える。起動役も手帳を出す。
+// S15「ことばの窓口」— 伝令。CONTRACTS §76.2。
+// GET /api/words は冒険の設定（--words・GRIDHUB_WORDS・.masume/words.json）を、POST /api/words は設定に書いてその場で切り替える。
+// MCP の道具の題・説明と instructions も、いまのことばで出る。
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { ROOT, tmp, masume, getJson, startGridhub, startApp, postJson, pathWith } from '../helpers8.mjs';
+import { newToy, startServe, getJson, mcpClient } from '../helpers3.mjs';
 
-function played() {
-  const dir = tmp('gridhub-s15-');
-  cpSync(join(ROOT, 'quests', 'tutorial'), dir, { recursive: true });
-  assert.equal(masume(['new', 'tutorial.map.json'], { cwd: dir }).code, 0);
-  mkdirSync(join(dir, 'ai'), { recursive: true });
-  writeFileSync(join(dir, 'ai', 'hello.txt'), 'こんにちは、GridHub！\n');
-  assert.equal(masume(['step', 'apprentice', '--dir', dir]).code, 0);
-  return dir;
-}
+const post = (url, body, headers = { 'X-Masume': '1' }) => getJson(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
 
-test('§76.7 GET /api/hero は読むだけ。POST /api/hero/open は古い順に開けてシール帳に貼り、POST /api/hero/seen は「留守のあいだ」を空にする', { timeout: 60000 }, async () => {
-  const dir = played();
-  const home = tmp('gridhub-s15-home-');
-  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir, '--no-open'], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH, GRIDHUB_APP_HOME: home }, cwd: dir });
+test('§76.2 GET /api/words は既定 game（未設定）。POST /api/words で .masume/words.json に書き、GET とエラー文がその場で切り替わる', { timeout: 120000 }, async () => {
+  const dir = newToy();
+  const srv = await startServe(dir);
   try {
-    const url = srv.url;
-    const first = await getJson(`${url}/api/hero`);
-    assert.equal(first.status, 200);
-    assert.equal(first.body.bags.count, 4);
-    assert.equal(first.body.current.since.first, true);
-    assert.equal(first.body.current.since.defeats, 3);
-    assert.ok(!existsSync(join(home, 'hero.json')), 'GET では手帳のファイルを書かない');
+    let r = await getJson(`${srv.url}/api/words`);
+    assert.equal(r.status, 200);
+    assert.deepEqual(r.body, { ok: true, words: 'game', set: false, source: 'default' });
 
-    assert.equal((await postJson(`${url}/api/hero/open`, { count: 1 }, { masume: false })).status, 403, 'X-Masume が要る');
-    assert.equal((await postJson(`${url}/api/hero/open`, { count: 0 })).status, 400);
-    assert.equal((await postJson(`${url}/api/hero/open`, { count: 'all' })).status, 400);
-    const opened = await postJson(`${url}/api/hero/open`, { count: 2 });
-    assert.equal(opened.status, 200, opened.text);
-    assert.equal(opened.body.opened.length, 2);
-    assert.deepEqual(opened.body.opened.map((f) => f.id), first.body.bags.next.slice(0, 2).map((f) => f.id), '古い順');
-    assert.equal(opened.body.opened[0].item, 'map');
-    assert.equal(opened.body.opened[0].new, true, 'その枠ではじめてなら new');
-    assert.equal(opened.body.journal.bags.count, 2);
-    assert.ok(opened.body.journal.album.owned >= 1);
-    const book = JSON.parse(readFileSync(join(home, 'hero.json'), 'utf8'));
-    assert.equal(book.quests[0].dir, dir, '開けた冒険を覚える');
-    assert.equal(Object.values(book.opened)[0], 2);
+    const denied = await post(`${srv.url}/api/words`, { words: 'dev' }, {});
+    assert.equal(denied.status, 403, 'X-Masume が無ければ 403');
+    const bad = await post(`${srv.url}/api/words`, { words: 'elvish' });
+    assert.equal(bad.status, 400);
+    assert.equal(bad.body.code, 'E_USAGE');
 
-    assert.equal((await postJson(`${url}/api/hero/open`, { count: 5001 })).status, 400, '1回に 5000 まで');
-    const rest = await postJson(`${url}/api/hero/open`, { count: 5000 });
-    assert.equal(rest.body.opened.length, 2, '残りだけ');
-    assert.equal(rest.body.journal.bags.count, 0);
+    r = await post(`${srv.url}/api/words`, { words: 'dev' });
+    assert.equal(r.status, 200, JSON.stringify(r.body));
+    assert.deepEqual(r.body, { ok: true, words: 'dev' });
+    assert.deepEqual(JSON.parse(readFileSync(join(dir, '.masume', 'words.json'), 'utf8')), { words: 'dev' });
+    r = await getJson(`${srv.url}/api/words`);
+    assert.deepEqual(r.body, { ok: true, words: 'dev', set: true, source: 'file' });
+    // 窓口のエラー文も開発のことばに（ボス戦 → 結合テスト）
+    const battle = await post(`${srv.url}/api/battle`, { gate: 'NOPE' });
+    assert.ok(battle.status >= 400 && battle.status < 500, `知らないゲートは 4xx（${battle.status}）`);
+    assert.match(battle.body.error, /その結合テストはありません/);
 
-    assert.equal((await postJson(`${url}/api/hero/seen`, { seq: -1 })).status, 400);
-    const partial = await postJson(`${url}/api/hero/seen`, { seq: 0 });
-    assert.equal(partial.body.journal.current.seen, 0, '見せたところまで');
-    assert.equal(partial.body.journal.current.since.defeats, 3, 'その後の手柄は、まだ見ていない');
-    const seen = await postJson(`${url}/api/hero/seen`, {});
-    assert.equal(seen.status, 200);
-    assert.equal(seen.body.journal.current.seen, seen.body.journal.current.head);
-    assert.equal(seen.body.journal.current.since.defeats, 0);
-    assert.ok(seen.body.journal.achievements.filter((a) => a.done).every((a) => a.fresh === false), '見た称号は fresh でない');
-    assert.equal(JSON.parse(readFileSync(join(home, 'hero.json'), 'utf8')).rank, seen.body.journal.rank.level);
-
-    const css = await fetch(`${url}/board/hero.css`);
-    assert.equal(css.status, 200);
-    assert.equal(css.headers.get('cache-control'), 'no-cache', '版を上げたあと古い盤面を使わない');
+    r = await post(`${srv.url}/api/words`, { words: 'game' });
+    assert.deepEqual(r.body, { ok: true, words: 'game' });
+    const again = await post(`${srv.url}/api/battle`, { gate: 'NOPE' });
+    assert.match(again.body.error, /その結合ゲートはありません/);
   } finally {
     await srv.stop();
   }
 });
 
-test('§76.7 起動役（gridhub app）の GET /api/hero: 最近のフォルダの冒険をまとめる', { timeout: 60000 }, async () => {
-  const dir = played();
-  const app = await startApp();
+test('§76.2 serve --words dev と GRIDHUB_WORDS: 設定より優先し、GET /api/words の source は env', { timeout: 120000 }, async () => {
+  const dir = newToy();
+  const srv = await startServe(dir, ['--words', 'dev']);
   try {
-    const empty = await getJson(`${app.url}/api/hero`);
-    assert.equal(empty.status, 200);
-    assert.equal(empty.body.totals.defeats, 0);
-    assert.equal(empty.body.current, null);
-    assert.equal((await postJson(`${app.url}/api/app/open`, { dir })).status, 200);
-    const j = await getJson(`${app.url}/api/hero`);
-    assert.equal(j.body.totals.defeats, 3, '最近のフォルダから');
-    assert.equal(j.body.quests.length, 1);
-    assert.equal(j.body.bags.count, 4);
-    assert.equal(j.body.quests[0].bags, 4, 'はじめの画面の最近のフォルダに出す数');
-    // §76.29 同じフォルダは、開き直しても同じポート（盤面がブラウザに覚えたことが残る）
-    const { stablePort } = await import('../../src/server/app.js');
-    const first = new URL((await postJson(`${app.url}/api/app/open`, { dir })).body.url);
-    const again = new URL((await postJson(`${app.url}/api/app/open`, { dir })).body.url);
-    assert.equal(again.port, first.port, '開き直しても同じ住所');
-    assert.equal(Number(first.port), stablePort(dir));
-    assert.ok(stablePort(dir) >= 41000 && stablePort(dir) < 49000);
-    assert.notEqual(stablePort(dir), stablePort(`${dir}-other`));
-  } finally {
-    await app.stop();
-  }
-});
-
-test('§76.11 シールをノートに貼る・はがす: 持っている数まで。ページの外・持っていないシールは貼れない', { timeout: 60000 }, async () => {
-  const dir = played();
-  const home = tmp('gridhub-s15-home-');
-  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir, '--no-open'], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH, GRIDHUB_APP_HOME: home }, cwd: dir });
-  try {
-    const url = srv.url;
-    const none = await postJson(`${url}/api/hero/paste`, { slot: 'map', page: 0, x: 10, y: 10 });
-    assert.equal(none.status, 409, 'まだ開けていない');
-    assert.equal(none.body.code, 'E_HERO');
-    assert.equal((await postJson(`${url}/api/hero/open`, { count: 1 })).body.opened[0].slot, 'map');
-    assert.equal((await postJson(`${url}/api/hero/paste`, { slot: 'map', page: 0, x: 99, y: 10 })).status, 400, 'ページの外');
-    assert.equal((await postJson(`${url}/api/hero/paste`, { slot: 'map', page: 0, x: 10, y: 10, r: 90 })).status, 400, '傾きすぎ');
-    assert.equal((await postJson(`${url}/api/hero/paste`, { slot: '<b>', page: 0, x: 10, y: 10 })).status, 400);
-    assert.equal((await postJson(`${url}/api/hero/paste`, { slot: 'map', page: 0, x: 10, y: 10 }, { masume: false })).status, 403);
-    const pasted = await postJson(`${url}/api/hero/paste`, { slot: 'map', page: 1, x: 12.5, y: 20, r: -8 });
-    assert.equal(pasted.status, 200, pasted.text);
-    assert.deepEqual(pasted.body.journal.current.pasted.map(({ slot, page, x, y, r, kind, item }) => ({ slot, page, x, y, r, kind, item })), [{ slot: 'map', page: 1, x: 12.5, y: 20, r: -8, kind: 'item', item: 'map' }]);
-    const mapSlot = pasted.body.journal.album.slots.find((s) => s.slot === 'map');
-    assert.deepEqual([mapSlot.count, mapSlot.pasted, mapSlot.free], [1, 1, 0]);
-    assert.equal((await postJson(`${url}/api/hero/paste`, { slot: 'map', page: 0, x: 10, y: 10 })).status, 409, '持っている数まで');
-    assert.equal(JSON.parse(readFileSync(join(home, 'hero.json'), 'utf8')).pasted[pasted.body.journal.current.key].length, 1);
-    assert.equal((await postJson(`${url}/api/hero/peel`, { index: 3 })).status, 400);
-    const peeled = await postJson(`${url}/api/hero/peel`, { index: 0 });
-    assert.equal(peeled.status, 200);
-    assert.deepEqual(peeled.body.journal.current.pasted, []);
-    assert.equal(peeled.body.journal.album.slots.find((s) => s.slot === 'map').free, 1, 'はがせば、また貼れる');
+    const r = await getJson(`${srv.url}/api/words`);
+    assert.deepEqual(r.body, { ok: true, words: 'dev', set: false, source: 'env' });
+    // 設定に game と書いても、このサーバーのあいだは --words（環境変数）が勝つ
+    await post(`${srv.url}/api/words`, { words: 'game' });
+    assert.deepEqual((await getJson(`${srv.url}/api/words`)).body, { ok: true, words: 'dev', set: true, source: 'env' });
   } finally {
     await srv.stop();
   }
 });
 
-test('§76.16・§76.18 POST /api/hero/trade と /api/hero/title', { timeout: 60000 }, async () => {
-  const dir = played();
-  const home = tmp('gridhub-s15-home-');
-  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir, '--no-open'], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH, GRIDHUB_APP_HOME: home }, cwd: dir });
+test('§76.2 MCP の道具の題・説明・instructions が、ことばの設定に合う', { timeout: 120000 }, async () => {
+  const dir = newToy();
+  const game = mcpClient(['--dir', dir], { cwd: dir });
   try {
-    const url = srv.url;
-    await postJson(`${url}/api/hero/open`, { count: 10 });
-    const few = await postJson(`${url}/api/hero/trade`, { slot: 'slime:normal' });
-    assert.equal(few.status, 409, '6枚に足りない');
-    assert.equal(few.body.code, 'E_HERO');
-    assert.equal((await postJson(`${url}/api/hero/trade`, { slot: 'x y' })).status, 400);
-    assert.equal((await postJson(`${url}/api/hero/trade`, { slot: 'map' })).status, 409, '出来事のシールは換えられない');
-    const title = await postJson(`${url}/api/hero/title`, { id: 'first-blood' });
-    assert.equal(title.status, 200, title.text);
-    assert.deepEqual(title.body.journal.epithet, { id: 'first-blood', name: 'はじめの一歩' });
-    assert.equal((await postJson(`${url}/api/hero/title`, { id: 'album-full' })).status, 409);
-    assert.equal((await postJson(`${url}/api/hero/title`, { id: '<x>' })).status, 400);
-    assert.equal((await postJson(`${url}/api/hero/title`, { id: null })).body.journal.epithet, null);
-    // §76.30 ノートの模様: ランクが届いていなければ 409、知らない模様は 400
-    const locked = await postJson(`${url}/api/hero/theme`, { id: 'kraft' });
-    assert.equal(locked.status, 409, locked.text);
-    assert.equal((await postJson(`${url}/api/hero/theme`, { id: 'nothing' })).status, 400);
-    assert.equal((await postJson(`${url}/api/hero/theme`, { id: '<b>' })).status, 400);
-    const note = await postJson(`${url}/api/hero/theme`, { id: 'note' });
-    assert.equal(note.body.journal.theme, 'note');
-    assert.deepEqual(note.body.journal.themes.map((t) => [t.id, t.unlocked]), [['note', true], ['kraft', false], ['sakura', false], ['night', false], ['blueprint', false], ['gold', false]]);
+    const init = await game.start();
+    assert.match(init.result.instructions, /指令書/);
+    const list = await game.request('tools/list');
+    const step = list.result.tools.find((t) => t.name === 'masume_step');
+    assert.equal(step.title, '歩く');
+    assert.match(step.description, /いまのダンジョン/);
+    assert.match(step.inputSchema.properties.character.description, /キャラクター/);
   } finally {
-    await srv.stop();
+    await game.close();
   }
-});
-
-test('§76.31 POST /api/note: 盤面から日誌を書く（今日のお題と技のため）', { timeout: 60000 }, async () => {
-  const dir = played();
-  const home = tmp('gridhub-s15-home-');
-  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir, '--no-open'], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH, GRIDHUB_APP_HOME: home }, cwd: dir });
+  const dev = mcpClient(['--dir', dir, '--words', 'dev'], { cwd: dir });
   try {
-    const url = srv.url;
-    assert.equal((await postJson(`${url}/api/note`, { character: 'apprentice', text: 'x' }, { masume: false })).status, 403);
-    assert.equal((await postJson(`${url}/api/note`, { character: 'apprentice', text: '   ' })).status, 400, '空は書けない');
-    assert.equal((await postJson(`${url}/api/note`, { character: 'apprentice', text: 'あ'.repeat(2001) })).status, 400);
-    assert.equal((await postJson(`${url}/api/note`, { character: 'nobody', text: 'x' })).status, 404);
-    const before = (await getJson(`${url}/api/hero`)).body.totals.notes;
-    const r = await postJson(`${url}/api/note`, { character: 'apprentice', text: '名前のあとは全角の！' });
-    assert.equal(r.status, 200, r.text);
-    assert.equal(typeof r.body.seq, 'number');
-    assert.equal((await getJson(`${url}/api/hero`)).body.totals.notes, before + 1);
-    const view = await getJson(`${url}/api/state`);
-    const entry = view.body.log.find((e) => e.seq === r.body.seq);
-    assert.equal(entry.type, 'note');
-    assert.equal(entry.actor, 'apprentice', '書いた本人の記録');
-    assert.match(entry.text, /名前のあとは全角の！/);
-    assert.equal(masume(['verify', '--dir', dir]).code, 0, '冒険の書は正常');
+    const init = await dev.start();
+    assert.match(init.result.instructions, /作業指示/);
+    assert.doesNotMatch(init.result.instructions, /指令書|縄張り|冒険の書/);
+    const list = await dev.request('tools/list');
+    const step = list.result.tools.find((t) => t.name === 'masume_step');
+    assert.equal(step.title, 'テストを走らせる（step）');
+    assert.match(step.description, /いまのタスク/);
+    assert.doesNotMatch(step.description, /ダンジョン|モンスター/);
+    assert.match(step.inputSchema.properties.character.description, /担当/);
+    assert.deepEqual(list.result.tools.map((t) => t.name).sort(), ['masume_brief', 'masume_check', 'masume_log', 'masume_note', 'masume_quest', 'masume_stamp', 'masume_status', 'masume_step', 'masume_verify'], '道具の名前は変わらない');
+    // 道具の出力（brief）も開発のことば
+    const brief = await dev.call('masume_brief', { character: 'a' });
+    assert.match(brief.text, /^作業指示: /m);
+    assert.match(brief.text, /記録: seq \d+/);
   } finally {
-    await srv.stop();
+    await dev.close();
   }
 });

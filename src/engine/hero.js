@@ -1,4 +1,4 @@
-// 勇者の手帳（CONTRACTS §76）: 遊ぶ人（勇者）の積み上げ。冒険をまたいで残る。
+// 勇者の手帳（CONTRACTS §79）: 遊ぶ人（勇者）の積み上げ。冒険をまたいで残る。
 // 中身はすべて冒険の書（いくつもの冒険の log.jsonl）から導く。シールのレア度もイベントのハッシュで決まる（ハッシュの鎖がサイコロ）。
 // 手帳のファイル（<home>/hero.json）が覚えるのは、遊ぶ人の手の跡だけ: どの冒険を見たか・どのシール袋を開けたか・どこまで読んだか。
 import { createHash } from 'node:crypto';
@@ -18,7 +18,7 @@ const PASTE_MAX = 200; // 1つの冒険のノートに貼れるシールの数
 const PAGE_W = 36;
 const PAGE_H = 51;
 
-// ---- シール（§76.2） ----
+// ---- シール（§79.2） ----
 export const RARITIES = ['normal', 'kira', 'holo', 'gold'];
 export const RARITY_JA = { normal: 'ノーマル', kira: 'キラ', holo: 'ホロ', gold: '金' };
 // 盤面の道のモンスター（web/board/draw.js の SPECIES と同じ並び。テストの名前で決まる）
@@ -42,12 +42,12 @@ export const ITEMS = {
   bell: { name: '皆勤の鐘', rarity: 'holo', how: '何日も続けてテストを倒す（3・7・14・30日…）' },
   shield: { name: '無傷の盾', rarity: 'gold', how: '一度も倒れずに章をあがる' },
 };
-// 交換所（§76.16）: 同じシールが KEEP + TRADE_N 枚あれば、TRADE_N 枚を1つ上のレア度1枚と換える（KEEP 枚はシール帳に残る）
+// 交換所（§79.16）: 同じシールが KEEP + TRADE_N 枚あれば、TRADE_N 枚を1つ上のレア度1枚と換える（KEEP 枚はシール帳に残る）
 export const TRADE_N = 5;
-// シール帳の列（§76.19）: 1列そろえるとコンプの判と経験値
+// シール帳の列（§79.19）: 1列そろえるとコンプの判と経験値
 export const SET_XP = 200;
 const KEEP = 1;
-// ノートの模様（§76.30）: 勇者ランクで使えるようになる
+// ノートの模様（§79.30）: 勇者ランクで使えるようになる
 export const THEMES = [
   { id: 'note', name: '方眼ノート', rank: 1 },
   { id: 'kraft', name: 'クラフト紙', rank: 3 },
@@ -57,7 +57,7 @@ export const THEMES = [
   { id: 'gold', name: '金の方眼', rank: 24 },
 ];
 
-// シールのいわれ（§76.28）: 図鑑のひとこと。どれも開発の話
+// シールのいわれ（§79.28）: 図鑑のひとこと。どれも開発の話
 export const LORE = {
   slime: 'いちばん多い、ふつうのテスト。1つの値を確かめれば倒せる。小さく進む勇者の友。',
   bat: 'すばやく飛び回る。非同期の待ち合わせ（await）を忘れると取り逃がす。',
@@ -114,7 +114,7 @@ const short = (text, n = 48) => {
   return chars.length > n ? `${chars.slice(0, n - 1).join('')}…` : chars.join('');
 };
 
-// ---- 勇者ランク（§76.3） ----
+// ---- 勇者ランク（§79.3） ----
 export const XP = {
   defeat: 10, strong: 20, cure: 20, clear: 30, medal: 20, gate: 100, goal: 300, stamp: 20, note: 5, skill: 30,
   treasure: 30, save: 10, push: 10, quest: 20, combo: 30, daily: 50, streak: 100,
@@ -138,7 +138,7 @@ export function rankOf(xp) {
   return { level, title, xp, floor, next, into: xp - floor, need: next - floor };
 }
 
-// ---- 今日のお題（§76.5） ----
+// ---- 今日のお題（§79.5） ----
 const MISSIONS = {
   defeat3: { text: 'テストを3件倒す', key: 'defeats', goal: 3 },
   defeat8: { text: 'テストを8件倒す', key: 'defeats', goal: 8 },
@@ -161,7 +161,7 @@ export function missionsOf(date) {
   return picked.map((id) => ({ id, ...MISSIONS[id] }));
 }
 
-// ---- 称号（§76.4） ----
+// ---- 称号（§79.4） ----
 export const ACHIEVEMENTS = [
   ['first-blood', 'はじめの一歩', 'テストを1件倒す', 'defeats', 1],
   ['defeat-10', '十人斬り', 'テストを10件倒す', 'defeats', 10],
@@ -658,7 +658,7 @@ function summarize(book, quests, { current, now }) {
       byWho.set(who, (byWho.get(who) ?? 0) + 1);
     }
     const firstSeen = seen === undefined;
-    // 今週のMVP（§76.21）: この7日に、この冒険でいちばんテストを倒した仲間
+    // 今週のMVP（§79.21）: この7日に、この冒険でいちばんテストを倒した仲間
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const week = new Map();
     for (const d of q.deeds) {
@@ -685,7 +685,7 @@ function summarize(book, quests, { current, now }) {
     };
   }
 
-  // 自己ベスト（§76.17）: 1日に倒したテスト（今日を除いた記録も）・1回の判定でまとめて倒した数・続いた日数
+  // 自己ベスト（§79.17）: 1日に倒したテスト（今日を除いた記録も）・1回の判定でまとめて倒した数・続いた日数
   const dayBest = (exclude) => {
     let best = null;
     for (const [date, d] of days) if (date !== exclude && d.defeats > 0 && (!best || d.defeats > best.n)) best = { date, n: d.defeats };
@@ -731,7 +731,7 @@ function summarize(book, quests, { current, now }) {
 }
 
 /**
- * いまの一連の出撃の戦果（§76.27）: { seq, ts, defeats, clears }。出撃が無ければ null。
+ * いまの一連の出撃の戦果（§79.27）: { seq, ts, defeats, clears }。出撃が無ければ null。
  * ダンジョンごとに出撃し直すので、30 分以内に続いた出撃は同じ一連として数える（数がダンジョンごとにふりだしに戻らない）
  */
 function lastSortie(q) {
@@ -805,7 +805,7 @@ export function markSeen(home, { current = null, seq, now = new Date() } = {}) {
 }
 
 /**
- * シールをいまの冒険のノートに貼る（§76.11）。page はノートのページ（0 から）、x・y はそのページの中の目、r は傾き（度）。
+ * シールをいまの冒険のノートに貼る（§79.11）。page はノートのページ（0 から）、x・y はそのページの中の目、r は傾き（度）。
  * 貼れるのは、開けて持っているシールの数まで（冒険をまたいで数える）
  */
 export function pasteSticker(home, { current, slot, page, x, y, r = 0, now = new Date() }) {
@@ -859,7 +859,7 @@ export function upgradeOf(slot) {
   return ALBUM.some((a) => a.slot === to) ? to : null;
 }
 
-/** 交換所（§76.16）: そのシールを TRADE_N 枚、1つ上のレア度1枚と換える。換えたシールと手帳を返す */
+/** 交換所（§79.16）: そのシールを TRADE_N 枚、1つ上のレア度1枚と換える。換えたシールと手帳を返す */
 export function tradeSticker(home, { current = null, slot, now = new Date() }) {
   const book = readHeroBook(home);
   if (current) remember(book, current);
@@ -876,7 +876,7 @@ export function tradeSticker(home, { current = null, slot, now = new Date() }) {
   return { got: { ...got.last, new: fresh }, journal };
 }
 
-/** 名乗る称号（§76.18）。id は手に入れた称号、null で名乗らない */
+/** 名乗る称号（§79.18）。id は手に入れた称号、null で名乗らない */
 export function setTitle(home, { current = null, id, now = new Date() }) {
   const book = readHeroBook(home);
   if (id !== null) {
@@ -890,7 +890,7 @@ export function setTitle(home, { current = null, id, now = new Date() }) {
   return gather(home, { current, now }).journal;
 }
 
-/** ノートの模様（§76.30）。勇者ランクが届いているものだけ */
+/** ノートの模様（§79.30）。勇者ランクが届いているものだけ */
 export function setTheme(home, { current = null, id, now = new Date() }) {
   const t = THEMES.find((x) => x.id === id);
   if (!t) throw heroError('E_USAGE', `その模様はありません: ${id}`);

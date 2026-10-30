@@ -1,4 +1,4 @@
-// 遊ぶ人の置き場所（CONTRACTS §68.1・§76）。最近のフォルダ（recent.json）と勇者の手帳（hero.json）を置く。
+// 遊ぶ人の置き場所（CONTRACTS §68.1・§79）。最近のフォルダ（recent.json）と勇者の手帳（hero.json）を置く。
 // 起動役（src/server/app.js）と勇者の手帳（hero.js）が同じ場所を使う。
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';

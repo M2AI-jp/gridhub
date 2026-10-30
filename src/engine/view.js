@@ -3,6 +3,7 @@ import { sortieStatus } from './sortie.js';
 import { chronicle, endingText } from './chronicle.js';
 import { buildMargins } from './margins.js';
 import { isSealed, nodeXp } from './state.js';
+import { t } from './words.js';
 
 function nodeState(node, progress, members, characters) {
   if (progress.cleared) return 'cleared';
@@ -32,76 +33,73 @@ export function logEntry(event, map) {
   let ok = null;
   let text;
   switch (event.type) {
-    case 'genesis': text = '冒険の書がひらかれた'; break;
-    case 'sealed': text = `${node} の判定ファイルが封印された`; break;
+    case 'genesis': text = t('log.genesis'); break;
+    case 'sealed': text = t('log.sealed', node); break;
     case 'seal_broken':
-      text = character === null ? `${node} の封印が破れていた`
-        : `${name} が ${node} の封印破りを見つけた`;
+      text = character === null ? t('log.seal_broken', node) : t('log.seal_broken.by', name, node);
       break;
     case 'check_passed':
       ok = true;
-      text = `${name} が ${node} の判定に成功した`;
+      text = t('log.check_passed', name, node);
       break;
     case 'check_failed':
       ok = false;
-      text = `${name} が ${node} を判定し、${data.failed} で失敗した`;
+      text = t('log.check_failed', name, node, data.failed);
       break;
     case 'gate_cleared':
       ok = true;
-      text = `${node} の結合ゲート突破。仲間が解散した`;
+      text = t('log.gate_cleared', node);
       break;
     case 'gate_failed': {
       ok = false;
       const blamed = data.blamed ?? [];
       const names = blamed.map((id) => map?.characters.find((c) => c.id === id)?.name ?? id);
       const all = (data.members ?? []).every((id) => blamed.includes(id));
-      text = `${node} のボス戦で${all ? '全滅' : '差し戻し'}: ${names.join('、')}`;
+      text = t('log.gate_failed', node, all, names.join('、'));
       break;
     }
     case 'stamped': {
       ok = true;
       const by = map?.characters.find(({ id }) => id === data.by)?.name ?? data.by;
-      text = data.by === character ? `${name} が ${node} にハンコを押した` : `${by} が ${name} の ${node} にハンコを押した`;
+      text = data.by === character ? t('log.stamped.self', name, node) : t('log.stamped.by', by, name, node);
       break;
     }
-    case 'note': text = `${name} の日誌: ${data.text}`; break;
-    case 'amended': text = `地図が第${data.version}版に改訂された`; break;
-    case 'loaded': text = `冒険の書の seq ${data.to_seq} の状態をロードした`; break;
-    case 'wish': text = `願い: ${data.text}`; break;
+    case 'note': text = t('log.note', name, data.text); break;
+    case 'amended': text = t('log.amended', data.version); break;
+    case 'loaded': text = t('log.loaded', data.to_seq); break;
+    case 'wish': text = t('log.wish', data.text); break;
     case 'sortie':
-      text = `${name} が出撃した（${data.agent}${data.model ? ` ${data.model}` : ''}）`;
+      text = t('log.sortie', name, `${data.agent}${data.model ? ` ${data.model}` : ''}`);
       break;
     case 'stepped': {
       ok = data.code === 0;
       const list = data.cases?.[data.node] ?? [];
-      text = `${name} が ${node} を歩いた（テスト ${list.filter((c) => c.ok === true).length}/${list.length}）`;
+      text = t('log.stepped', name, node, list.filter((c) => c.ok === true).length, list.length);
       break;
     }
     case 'saved': {
       const names = (data.characters ?? []).map((id) => map?.characters.find((c) => c.id === id)?.name ?? id);
       ok = Boolean(data.commit);
       text = data.commit
-        ? `${names.join('、')} が ${data.node ?? 'ふりだし'} でセーブした（commit ${data.commit.slice(0, 7)}）`
-        : `セーブできなかった: ${data.error ?? '不明'}`;
+        ? t('log.saved', names.join('、'), data.node ?? t('start'), data.commit.slice(0, 7))
+        : t('log.saved.failed', data.error ?? '不明');
       break;
     }
     case 'pushed':
       ok = data.ok === true;
-      text = ok
-        ? `GitHub に送った: ${data.remote} ${data.branch}（commit ${String(data.commit).slice(0, 7)}）`
-        : `GitHub に送れなかった: ${data.error ?? '不明'}`;
+      text = ok ? t('log.pushed', data.remote, data.branch, String(data.commit).slice(0, 7)) : t('log.pushed.failed', data.error ?? '不明');
       break;
     case 'restored':
       ok = !data.error;
       text = data.error
-        ? `${name} の縄張りを戻せなかった: ${data.error}`
-        : `${name} の縄張りを commit ${String(data.commit).slice(0, 7)} に戻した（墓: ${data.stash ? `stash ${data.stash.slice(0, 7)}` : 'なし'}）`;
+        ? t('log.restored.failed', name, data.error)
+        : t('log.restored', name, String(data.commit).slice(0, 7), data.stash ? data.stash.slice(0, 7) : null);
       break;
     case 'returned':
       ok = data.advanced === true;
-      text = `${name} が帰還した（${data.node_before} → ${data.node_after ?? 'あがり'}、${ok ? '進んだ' : '進めなかった'}）`;
+      text = t('log.returned', name, data.node_before, data.node_after ?? null, ok);
       break;
-    default: text = `イベントが記録された（${event.type}）`;
+    default: text = t('log.other', event.type);
   }
   return {
     seq: event.seq, ts: event.ts, type: event.type, actor: event.actor,
@@ -109,8 +107,8 @@ export function logEntry(event, map) {
   };
 }
 
-export function buildView(root) {
-  const snapshot = inspectLog(root);
+// snapshot は、呼ぶ側がもう inspectLog で読んであれば渡す（二度読まない）
+export function buildView(root, snapshot = inspectLog(root)) {
   // 呪いがある場合、確かめられた先頭区間だけを再生して API に返す。
   // CLI の status はこの integrity を見て E_CURSED にする。
   const events = snapshot.ok ? snapshot.events

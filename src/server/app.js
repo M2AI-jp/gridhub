@@ -23,7 +23,7 @@ export function defaultHome(env = process.env) {
 }
 
 /**
- * フォルダごとに決まった盤面のポート（§76.29）。41000〜48999 のうち、フォルダの場所のハッシュで決める。
+ * フォルダごとに決まった盤面のポート（§79.29）。41000〜48999 のうち、フォルダの場所のハッシュで決める。
  * 開くたびに同じ住所（origin）になるので、盤面がブラウザに覚えたこと（音・見たエンディング）がアプリを開き直しても残る
  */
 export function stablePort(dir) {
@@ -278,7 +278,7 @@ export async function startApp({
       });
       return;
     }
-    // 勇者の手帳（§76.7）: はじめの画面の勇者のカード。冒険をまたいだまとめ（読むだけ）
+    // 勇者の手帳（§79.7）: はじめの画面の勇者のカード。冒険をまたいだまとめ（読むだけ）
     if (pathname === '/api/hero') {
       response.setHeader('Cache-Control', 'no-store');
       const hero = await import('../engine/hero.js');

@@ -59,7 +59,7 @@
     "A1": {
       "type": "task",
       "title": "あいさつを一行で書く",
-      "detail": "見習いAIが ai/hello.txt を作り、human/request.json の名前を使って「こんにちは、GridHub！」のような一行を書いてください。合格条件は、本文が「こんにちは、<名前>！」の形で、名前が空でなく前後の空白や改行を含まないことです。末尾の改行は1つまで付けられます。このマスでは書式を検査し、勇者の名前との一致は G1 で検査します。テストは3件（1件 = 1マス）。歩く（gridhub step apprentice）で1件ずつ確かめ、全部通ったら gridhub check apprentice で宣言します。",
+      "detail": "見習いAIが ai/hello.txt を作り、human/request.json の名前を使って「こんにちは、GridHub！」のような一行を書いてください。合格条件は、本文が「こんにちは、<名前>！」の形で、名前が空でなく前後の空白や改行を含まないことです。末尾の改行は1つまで付けられます。このマスでは書式を検査し、勇者の名前との一致は G1 で検査します。テストは3件（1件 = 1マス）。gridhub step apprentice で1件ずつ確かめ、全部通ったら gridhub check apprentice で宣言します。",
       "check": {
         "kind": "cmd",
         "run": "node checks/hello.mjs",
