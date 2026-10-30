@@ -11,6 +11,7 @@
 3. `tests/**` `docs/**` `bin/**` `schema/**` `quests/masume.map.json` `AGENTS.md` `README.md` `package.json` `LICENSE` `CHANGELOG.md` は **GM の縄張り**。
    判定ファイルは封印されているので、**絶対に編集しない**（改変は「封印破り」として記録される）。
 4. 外部パッケージを追加しない。Node.js 22+ の標準ライブラリだけ。ESM。
+   **配ることは、いまは考えない。** GridHub は GitHub から git clone したフォルダで `node` で動かす。パッケージの登録・包み・インストールの支度は作らない・書かない。Mac のアプリ（`sh mac/build.sh`）は、このフォルダから動くのに要るファイルを写して手元で組む（CONTRACTS §77）。
 5. git の書き込み操作（commit / push / reset / checkout / stash など）をしない。GM がやる。
 6. 判定コマンドを自分で走らせ、通ることを確かめてから報告する。通らなければ通らないと正直に書く。
    判定を通すためにテストの意図を回避するような実装（テスト環境の検出、出力の決め打ち）はしない。

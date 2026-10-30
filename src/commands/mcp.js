@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { findRoot } from '../engine/index.js';
+import { WORDS, resolveWords, t } from '../engine/words.js';
 import { serveMcp } from '../mcp/index.js';
 
 function usageError(message) {
@@ -22,13 +23,14 @@ export async function run(argv, ctx) {
   try {
     ({ values } = parseArgs({
       args: argv,
-      options: { dir: { type: 'string' } },
+      options: { dir: { type: 'string' }, words: { type: 'string' } },
       strict: true,
       allowPositionals: false,
     }));
   } catch {
-    throw usageError('引数が不正です。使い方: gridhub mcp [--dir D]');
+    throw usageError('引数が不正です。使い方: gridhub mcp [--dir D] [--words game|dev]');
   }
+  if (values.words !== undefined && !WORDS.includes(values.words)) throw usageError(`--words は game か dev です: ${values.words}`);
   if (values.dir !== undefined && !values.dir.trim()) {
     throw usageError('--dir に冒険の書のある場所を指定してください');
   }
@@ -39,6 +41,8 @@ export async function run(argv, ctx) {
     : env.MASUME_DIR ? resolve(ctx.cwd, env.MASUME_DIR)
       : (findRoot(ctx.cwd) ?? resolve(ctx.cwd));
 
-  process.stderr.write(`gridhub mcp: 冒険の書の場所は ${root}\n`);
+  // ことば（§76）: --words > GRIDHUB_WORDS > この冒険の設定 > game
+  resolveWords({ root, env, flag: values.words ?? null });
+  process.stderr.write(`gridhub mcp: ${t('book')}の場所は ${root}\n`);
   return serveMcp({ root, bin: ctx.bin, repo: ctx.root, cwd: ctx.cwd, env, version: packageVersion(ctx.root) });
 }

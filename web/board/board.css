@@ -735,9 +735,12 @@ body.in-lobby #curse { display: none; }
 @media (max-width: 1360px) {
   :root { --side-w: 290px; }
 }
+/* 見出しが横にはみ出さないように（§57）: 飾りの字から順に隠す。添え書き → 記録の札の「記録」とことばのボタンの名前 */
+@media (max-width: 1400px) {
+  .tagline { display: none; }
+}
 @media (max-width: 1100px) {
   :root { --side-w: 270px; }
-  .tagline { display: none; }
   /* 見出しの右の欄（記録・コピー・セーブ正常・音）が 1024px で横にはみ出さないように、間と余白を詰める（§57。「記録」の札は残す） */
   .cover { gap: 12px; }
   .brand { padding: 5px 10px 6px; }
@@ -746,6 +749,9 @@ body.in-lobby #curse { display: none; }
   .mini-btn { padding: 3px 7px; }
   .pill { padding: 3px 8px; }
   #ending-open .btn-text { display: none; } /* あがった盤面では 🏁 だけ（名前は aria-label と title に） */
+}
+@media (max-width: 1000px) and (min-width: 861px) {
+  .cover #live, .cover #copy-record { display: none; }
 }
 @media (max-width: 860px) {
   body { overflow: auto; }
@@ -1202,3 +1208,18 @@ details.cli .hint { margin: 4px 0 0; }
 @media (max-width: 900px) {
   .hand-panel { left: 8px; right: 8px; width: auto; min-width: 0; top: auto; bottom: 8px; max-height: 70vh; }
 }
+
+/* ---------- ことばの切り替え（§75）: 冒険のことば / 開発のことば ---------- */
+/* 2つの言い方を HTML に両方書き、<html data-words> に合うほうだけ見せる。属性が無いあいだは冒険のことば */
+html:not([data-words='dev']) [data-say='dev'], html[data-words='dev'] [data-say='game'] { display: none !important; }
+.words-toggle { white-space: nowrap; }
+.words-toggle[data-words='dev'] { background: #e3edff; border-color: #3b5fb8; color: #1d3a7a; }
+.words-toggle[data-words='dev']:hover { background: #d3e2ff; }
+@media (max-width: 1360px) {
+  .words-toggle { padding-inline: 6px; }
+}
+/* 狭い画面: 見出しが横にはみ出さないように、名前を隠して印（🗡 / ⌨）だけにする。名前は title で読める */
+@media (max-width: 1100px) {
+  .cover .words-toggle .wt-label { display: none; }
+}
+.start-head .words-toggle { margin-left: auto; align-self: center; }

@@ -6,6 +6,8 @@ Node.js 22以上と、macOS・Linuxのターミナル（bashまたはzsh）を�
 
 GridHub の看板は「テスト1件 = 1マス」です。この冒険の見習いAIのマスには、テストが3件・4件・2件あります。`gridhub step`（歩く）で1件ずつ倒し、全部倒したら `gridhub check`（宣言判定）で次のマスへ進みます。
 
+この手順は、冒険のことば（モンスター・ダンジョン・宿屋・ハンコ）で書いた [ルールブック](../../docs/RULEBOOK.md) に沿っています。開発のことば（テスト・タスク・コミット・承認）で読みたいときは、盤面の右上のボタンか `gridhub words dev` で切り替えられます（この手順の字はそのままですが、盤面と CLI の字が変わります）。`node checks/…` は、記録に残らない練習の判定（素振り）です。
+
 ## 1. 冒険の書を作る — gridhub new
 
 GridHub のリポジトリのルートで、次のブロックを実行します。この場所では `bin/gridhub.js` と `quests/tutorial/` が見えます。
@@ -21,7 +23,7 @@ gridhub new tutorial.map.json
 
 `gridhub` は、このターミナルでリポジトリのCLIを呼ぶための関数です。インストールは不要です。コピー先が今回のゲームのルートになり、作業ファイルと進行記録の `.masume/` がそこに保存されます。元のチュートリアルは次の人も遊べる状態で残ります。
 
-npm で入れた人（リポジトリを持っていない人）は、最初の行を `TUTORIAL_REPO="$(npm root -g)/gridhub"` にします。チュートリアルは包みに入っています。
+GridHub は、GitHub から git clone したフォルダで動かします（リポジトリの README「0. 入れる」）。`TUTORIAL_REPO` はそのフォルダです。
 
 `new` は判定スクリプトを自動で封印します。遊ぶ人が編集するのは `human/` と `ai/` の中だけです。地図・`checks/`・`SOLUTIONS.json` は編集しません。
 

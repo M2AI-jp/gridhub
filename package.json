@@ -2,46 +2,7 @@
   "name": "gridhub",
   "version": "0.3.0",
   "description": "テスト1件が1マス。5mm方眼ノートのすごろくで開発を進める、ゲーム型の開発進行（旧名 マスメ。Linear/Jira に「状態」を持たせる）",
-  "keywords": [
-    "game",
-    "gamification",
-    "tdd",
-    "e2e",
-    "test",
-    "agents",
-    "claude-code",
-    "codex",
-    "linear",
-    "jira",
-    "sugoroku",
-    "board-game",
-    "cli",
-    "mcp",
-    "japanese"
-  ],
-  "homepage": "https://github.com/M2AI-jp/gridhub#readme",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/M2AI-jp/gridhub.git"
-  },
-  "bugs": {
-    "url": "https://github.com/M2AI-jp/gridhub/issues"
-  },
-  "author": "M2AI-jp (https://github.com/M2AI-jp)",
-  "license": "MIT",
   "type": "module",
-  "bin": {
-    "gridhub": "bin/gridhub.js",
-    "masume": "bin/masume.js"
-  },
-  "files": [
-    "bin/",
-    "src/",
-    "web/",
-    "docs/*.md",
-    "quests/tutorial/",
-    "CHANGELOG.md"
-  ],
   "engines": {
     "node": ">=22"
   },
@@ -51,5 +12,6 @@
     "serve": "node bin/gridhub.js serve",
     "board": "node bin/gridhub.js serve",
     "mac": "sh mac/build.sh"
-  }
+  },
+  "license": "MIT"
 }

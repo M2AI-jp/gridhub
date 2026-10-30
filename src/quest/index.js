@@ -9,6 +9,10 @@ import { inspectMap, MAP_FILE } from './inspect.js';
 import { newsProblems } from './news.js';
 import { buildPrompt, buildRetryPrompt } from './prompt.js';
 import { AGENT_KINDS, fileEntry, printSetup, setupProject } from './setup.js';
+import { isDev, t } from '../engine/words.js';
+
+/** いまのことばの字（冒険 / 開発。§76） */
+const pick = (game, dev) => (isDev() ? dev : game);
 
 // GM の作業ファイル（依頼書の控えと GM の出力）。利用者のコミットに入らないように .gitignore に足す（最初のコミットより前に書く）
 const QUEST_IGNORE = ['quest-prompt-*.txt', 'quest.log'];
@@ -69,15 +73,15 @@ function prepareProject(root, { gm, override, allowListen, ctx }) {
 
 function printSummary(say, { root, cwd, bin }, s) {
   const dir = root === cwd ? '' : ` --dir ${quote(root)}`;
-  say('冒険がはじまります！');
+  say(pick('冒険がはじまります！', 'プロジェクトを始めます。地図とテストができました'));
   say(`「${s.quest.title}」（${s.quest.id}）  ${s.quest.pitch ?? ''}`.trimEnd());
-  say(`  キャラクター ${s.agents + s.humans}人（エージェント ${s.agents}・人間 ${s.humans}）: ${s.names.join('、')}`);
-  say(`  マス ${s.nodes}（task ${s.tasks}・結合ゲート ${s.gates}・宿屋 ${s.camps}）  あがり: ${s.quest.goal}`);
-  say(`  封印した判定: ${s.sealed}/${s.sealable} マス`);
-  say(`  瓦版の話題: ${s.news.count} 件`);
+  say(`  ${pick('キャラクター', '担当')} ${s.agents + s.humans}人（エージェント ${s.agents}・人間 ${s.humans}）: ${s.names.join('、')}`);
+  say(`  マス ${s.nodes}（task ${s.tasks}・${pick('結合ゲート', '結合テスト')} ${s.gates}・${pick('宿屋', 'セーブポイント')} ${s.camps}）  ${pick('あがり', '完了')}: ${s.quest.goal}`);
+  say(`  ${pick('封印した判定', 'ハッシュを記録した判定ファイル')}: ${s.sealed}/${s.sealable} マス`);
+  say(`  ${pick('瓦版', 'ニュース')}の話題: ${s.news.count} 件`);
   for (const problem of s.news.problems) say(`  ※ ${problem}`);
   if (s.unsealed.length > 0) {
-    say(`  ※ 判定ファイルがまだ無いマス: ${s.unsealed.join('、')}（キャラクターが着く前に gridhub seal <マス> で封印してください）`);
+    say(`  ※ 判定ファイルがまだ無いマス: ${s.unsealed.join('、')}（${pick('キャラクター', '担当')}が着く前に gridhub seal <マス> で${pick('封印', 'ハッシュを記録')}してください）`);
   }
   if (s.setup.error) say(`※ 支度（AGENTS.md ほか）に失敗しました: ${s.setup.error}\n  あとで gridhub init${root === cwd ? '' : ` --dir ${quote(root)}`} を打ってください`);
   else printSetup(say, s.setup);
@@ -86,7 +90,7 @@ function printSummary(say, { root, cwd, bin }, s) {
   say('');
   say('次の一手:');
   say(`  盤面を開く      gridhub serve${dir}`);
-  say(`  パーティ出撃    gridhub party${dir}`);
+  say(`  ${pick('パーティ出撃  ', 'エージェント起動')}  gridhub party${dir}`);
   say(`（gridhub が PATH に無いときは、gridhub の代わりに node ${quote(bin)} と打ってください。別名の masume serve / masume party でも同じです）`);
 }
 
@@ -126,7 +130,7 @@ export async function runQuest(opts, ctx) {
   const exists = existsSync(join(root, '.masume'));
 
   if (exists && !opts.force && !opts.dryRun) {
-    throw new MasumeError('E_EXISTS', `ここにはもう冒険の書があります（${root}）。新しく始めるなら別の --dir を、作り直すなら --force を指定してください`);
+    throw new MasumeError('E_EXISTS', `ここにはもう${t('book')}があります（${root}）。新しく始めるなら別の --dir を、作り直すなら --force を指定してください`);
   }
 
   // 箱のソケットを開ける（または効かない）ことは、GM を呼ぶ前に1行で知らせる（--dry-run でも。§32.3）
@@ -207,16 +211,16 @@ export async function runQuest(opts, ctx) {
   }
 
   // Git でセーブする冒険にする（§46.2・§46.3）。地図に quest.save が無ければ足し、Git の外なら git init する
-  if (ensureGitSave(mapFile)) say(`${MAP_FILE} に quest.save: "git" を足しました（町 = セーブ = Git のコミット）`);
+  if (ensureGitSave(mapFile)) say(`${MAP_FILE} に quest.save: "git" を足しました（${pick('町に着くと Git にセーブします', 'セーブポイントで自動でコミットします')}）`);
   const repository = ensureRepository(root);
-  if (repository.error) say(`※ ${repository.error}。Git のセーブなしで続けます（町に着いてもコミットされません）`);
+  if (repository.error) say(`※ ${repository.error}。Git のセーブなしで続けます（${pick('町に着いてもコミットされません', 'セーブポイントでもコミットされません')}）`);
   else if (repository.initialized) say('ここは Git の作業ツリーではなかったので、git init しました（ブランチ main）');
   engine.newGame(root, mapFile, { actor: opts.actor, force: Boolean(opts.force) });
   const wish = recordWish(root, { actor: opts.actor, text: opts.wish, gm: gm.kind, model });
   try {
     writeFileSync(join(root, 'WISH.md'), `# 願い\n\n${opts.wish}\n`);
   } catch (error) {
-    say(`※ WISH.md を書けませんでした（${error.message}）。願いは冒険の書に記録してあります`);
+    say(`※ WISH.md を書けませんでした（${error.message}）。${pick('願いは冒険の書', '依頼はセーブデータ')}に記録してあります`);
   }
   const summary = summarize(root, engine.buildView(root), opts.wish);
   summary.setup = prepareProject(root, { gm: opts.gm, override, allowListen, ctx });

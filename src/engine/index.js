@@ -11,3 +11,4 @@ export { handFiles, handPathProblem, handReviewFiles, readHandFile, writeHandFil
 export { localTime, recordLine } from './record.js';
 export { autoPush, ghStatus, ghStatusAsync, gitSettings, gitStatus, gitSteps, push, remoteInfo, remoteInfoAsync, safeUrl, setAutoPush } from './remote.js';
 export { recordReturn, recordSortie, recordWish } from './sortie.js';
+export { WORDS, WORDS_JA, hasWords, isDev, resolveWords, setWordsSetting, t, useWords, wordsMode, wordsSetting } from './words.js';

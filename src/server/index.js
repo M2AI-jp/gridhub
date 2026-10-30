@@ -5,6 +5,7 @@ import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ChildJob, tailLines } from './jobs.js';
+import { t } from '../engine/words.js';
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -215,6 +216,7 @@ export function createServer({
   onQuest, getQuest, onSortie, getParty, onPartyStop,
   getGit, onPush, onAutoPush,
   getHand, getFile, onFile, onStep, onCheck,
+  getWords, onWords,
 }) {
   const root = resolve(webRoot);
   const watchedPath = watchFile == null ? null : resolve(watchFile);
@@ -311,6 +313,17 @@ export function createServer({
       status: 200,
     };
   }
+  // ことば（§76.3）: 盤面の切り替えを、この冒険の設定（.masume/words.json）に書く
+  if (typeof onWords === 'function') {
+    postRoutes['/api/words'] = {
+      parse(body) {
+        if (body.words !== 'game' && body.words !== 'dev') throw badRequest('words は game か dev で指定してください');
+        return { words: body.words };
+      },
+      call: (value) => onWords(value),
+      status: 200,
+    };
+  }
   // 手で演じる窓口（§69）
   const characterOf = (body) => {
     if (typeof body.character !== 'string' || !CHARACTER_PATTERN.test(body.character)) throw badRequest('character をキャラクターIDで指定してください');
@@ -343,6 +356,7 @@ export function createServer({
   if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
   if (typeof getParty === 'function') getRoutes['/api/party'] = getParty;
   if (typeof getGit === 'function') getRoutes['/api/git'] = getGit;
+  if (typeof getWords === 'function') getRoutes['/api/words'] = getWords;
 
   async function handlePost(request, response, pathname) {
     if (request.headers['x-masume'] !== '1' || !allowedOrigin(request)) {
@@ -559,13 +573,15 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     if (shuttingDown) throw apiError('E_BUSY', '窓口を閉じています');
   };
   const hasGame = () => existsSync(engine.logFile(gameRoot));
+  // ことば（§76.3）: 起動時に、この冒険の設定（環境変数 GRIDHUB_WORDS が優先）で決める。盤面から変えられたら、その場で切り替える
+  engine.resolveWords({ root: gameRoot, env: process.env });
   const requireGame = () => {
-    if (!hasGame()) throw apiError('E_NO_GAME', '冒険の書がまだありません。入口で願いを書いて冒険をはじめてください');
+    if (!hasGame()) throw apiError('E_NO_GAME', t('err.server.nogame'));
   };
 
   function startBattle(gate) {
     requireOpen();
-    if (battles.has(gate)) throw apiError('E_BUSY', 'この結合ゲートはボス戦の最中です');
+    if (battles.has(gate)) throw apiError('E_BUSY', t('err.server.boss'));
     const battle = new ChildJob();
     // 起動を待つ前に予約し、ハンコと /api/battle からの同時起動も防ぐ。
     battles.set(gate, battle);
@@ -621,7 +637,8 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const runJson = (args) => new Promise((done, fail) => {
     execFile(process.execPath, [bin, ...args], {
       cwd: gameRoot, encoding: 'utf8', timeout: 30 * 60 * 1000, maxBuffer: 64 * 1024 * 1024,
-      env: Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'NODE_TEST_CONTEXT')),
+      // 子（gridhub step / check など）にも、いまのことばを伝える（§76）。NODE_TEST_CONTEXT は受け継がない
+      env: { ...Object.fromEntries(Object.entries(process.env).filter(([key]) => key !== 'NODE_TEST_CONTEXT')), GRIDHUB_WORDS: engine.wordsMode() },
     }, (error, stdout, stderr) => {
       const code = error ? (typeof error.code === 'number' ? error.code : -1) : 0;
       let result = null;
@@ -642,7 +659,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const handJob = async (character, task) => {
     requireOpen();
     requireGame();
-    if (handBusy.has(character)) throw apiError('E_BUSY', `${character} はいま判定を走らせています`);
+    if (handBusy.has(character)) throw apiError('E_BUSY', t('err.server.hand.busy', character));
     handBusy.add(character);
     try {
       return await task();
@@ -685,12 +702,12 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     onBattle: async ({ gate }) => {
       requireOpen();
       requireGame();
-      if (battles.has(gate)) throw apiError('E_BUSY', 'この結合ゲートはボス戦の最中です');
+      if (battles.has(gate)) throw apiError('E_BUSY', t('err.server.boss'));
       const view = await engine.buildView(gameRoot);
-      if (!view.integrity.ok) throw apiError('E_CURSED', '冒険の書が呪われています');
-      if (view.nodes[gate]?.type !== 'gate') throw apiError('E_UNKNOWN', 'その結合ゲートはありません');
+      if (!view.integrity.ok) throw apiError('E_CURSED', t('err.server.cursed'));
+      if (view.nodes[gate]?.type !== 'gate') throw apiError('E_UNKNOWN', t('err.server.nogate'));
       if (view.nodes[gate].state !== 'ready') {
-        throw apiError('E_PARTY_INCOMPLETE', 'まだ仲間が揃っていません');
+        throw apiError('E_PARTY_INCOMPLETE', t('err.server.incomplete'));
       }
       await startBattle(gate);
       return { ok: true, ready: gate };
@@ -745,9 +762,9 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       // 確認から起動までに await を挟まない（同時に2つ起こさないため）
       requireOpen();
       if (hasGame() || existsSync(join(gameRoot, '.masume'))) {
-        throw apiError('E_EXISTS', 'ここにはもう冒険の書があります');
+        throw apiError('E_EXISTS', t('err.server.exists'));
       }
-      if (quest.running) throw apiError('E_BUSY', 'いま冒険をつくっています');
+      if (quest.running) throw apiError('E_BUSY', t('err.server.questing'));
       mkdirSync(gameRoot, { recursive: true });
       // 願いは「--」のあとに置く（先頭が - の願いがオプションに化けないように）
       const args = [
@@ -759,7 +776,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       try {
         await quest.start(args, { cwd: gameRoot, logFile: questLog });
       } catch (error) {
-        throw apiError('E_SPAWN', `語り部を起こせませんでした: ${error.message}`, 500);
+        throw apiError('E_SPAWN', t('err.server.quest.spawn', error.message), 500);
       }
       return { ok: true };
     },
@@ -769,13 +786,13 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     onSortie: async ({ agent, model, parallel, only, allow_listen, tactic }) => {
       requireOpen();
       requireGame();
-      if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
+      if (party.running) throw apiError('E_BUSY', t('err.server.party.busy'));
       if (only !== undefined) {
         const view = await engine.buildView(gameRoot);
         const unknown = only.filter((id) => !view.characters.some((c) => c.id === id));
-        if (unknown.length > 0) throw apiError('E_UNKNOWN', `そんなキャラクターはいません: ${unknown.join('、')}`, 400);
+        if (unknown.length > 0) throw apiError('E_UNKNOWN', t('err.server.party.unknown', unknown.join('、')), 400);
         // view を待つあいだに、別の出撃が始まっていないか確かめ直す
-        if (party.running) throw apiError('E_BUSY', 'もう出撃しています');
+        if (party.running) throw apiError('E_BUSY', t('err.server.party.busy'));
       }
       requireOpen();
       const args = [
@@ -790,7 +807,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       try {
         await party.start(args, { cwd: gameRoot, logFile: partyLog, heading });
       } catch (error) {
-        throw apiError('E_SPAWN', `軍師を起こせませんでした: ${error.message}`, 500);
+        throw apiError('E_SPAWN', t('err.server.party.spawn', error.message), 500);
       }
       return { ok: true };
     },
@@ -803,15 +820,26 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     // ---- GitHub につなぐ導線（§56.3）----
     // Git の様子と手引き（gridhub remote --json と同じ）。ビュー（冒険の書）には入れない
     getGit: () => engine.remoteInfoAsync(gameRoot),
+    getWords: () => {
+      const set = engine.wordsSetting(gameRoot);
+      return { ok: true, words: engine.wordsMode(), set: set !== null, source: engine.WORDS.includes(process.env.GRIDHUB_WORDS) ? 'env' : set ? 'file' : 'default' };
+    },
+    onWords: ({ words }) => {
+      requireOpen();
+      if (!hasGame()) throw apiError('E_NO_GAME', t('err.server.nogame.short'), 404);
+      engine.setWordsSetting(gameRoot, words);
+      engine.resolveWords({ root: gameRoot, env: process.env });
+      return { ok: true, words: engine.wordsMode() };
+    },
     // 町でセーブしたら GitHub に送る設定を書く（§59.5）。冒険ごとなので、冒険の書が要る
     onAutoPush: ({ auto_push: on }) => {
-      if (!hasGame()) throw apiError('E_NO_GAME', '冒険の書がまだありません', 404);
+      if (!hasGame()) throw apiError('E_NO_GAME', t('err.server.nogame.short'), 404);
       return { ok: true, ...engine.setAutoPush(gameRoot, on) };
     },
     // gridhub push --json を別プロセスで走らせる（送っているあいだも盤面のサーバーを止めない）。同時に2つは走らせない
     onPush: async () => {
       requireOpen();
-      if (pushing) throw apiError('E_BUSY', 'いま GitHub に送っています');
+      if (pushing) throw apiError('E_BUSY', t('err.server.pushing'));
       pushing = true;
       try {
         const { code, stdout, stderr } = await new Promise((done) => {
@@ -826,7 +854,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
           result = null;
         }
         if (code === 0 && result) return result;
-        if (code === 1 && result) throw apiError('E_PUSH', `GitHub に送れませんでした: ${result.output.split('\n').slice(-20).join('\n')}`, 409);
+        if (code === 1 && result) throw apiError('E_PUSH', t('err.server.push', result.output.split('\n').slice(-20).join('\n')), 409);
         // Git の外・リモートなし・HEAD の切り離し（終了コード 2）は 400
         const failure = String(stderr || stdout).trim().match(/^\[(E_[A-Z_]+)\]\s*([\s\S]*)$/u);
         if (failure) throw apiError(failure[1], failure[2], 400);

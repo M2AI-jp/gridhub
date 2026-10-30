@@ -1,4 +1,5 @@
-// 第2章のUI: 願いの入口（ロビー）と、出撃の指揮。伝令の窓口（CONTRACTS §15）を使う。
+// 第2章のUI: 願いの入口（ロビー）と、出撃の指揮。伝令の窓口（CONTRACTS §15）を使う。字は words.js の辞書（§75）。
+import { t } from './words.js';
 const $ = (sel) => document.querySelector(sel);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
 
@@ -46,7 +47,7 @@ export function initCommand(c) {
   // 出撃の指揮
   const modal = $('#sortie-modal');
   $('#sortie-open').addEventListener('click', () => {
-    if (!ctx.live) return ctx.toast({ text: '見本の盤面なので出撃はできません（gridhub serve で開くと本物のエージェントを出撃させられます）', ok: null });
+    if (!ctx.live) return ctx.toast({ text: t('sortie.demo'), ok: null });
     fillSortieChoices();
     modal.showModal();
     loadSortieDefaults();
@@ -63,7 +64,7 @@ export function initCommand(c) {
     e.preventDefault();
     const boxes = [...document.querySelectorAll('#sortie-modal input[name="sortie-only"]')];
     const chosen = boxes.filter((b) => b.checked).map((b) => b.value);
-    if (!chosen.length) return ctx.toast({ text: '出撃させるキャラクターを選んでください', ok: false });
+    if (!chosen.length) return ctx.toast({ text: t('sortie.choose'), ok: false });
     const body = { agent: $('#sortie-agent').value, parallel: Math.max(1, Math.min(8, Number($('#sortie-parallel').value) || 3)) };
     const model = $('#sortie-model').value.trim();
     if (model) body.model = model;
@@ -77,7 +78,7 @@ export function initCommand(c) {
     $('#sortie-go').disabled = false;
     if (j && j.ok !== false) {
       modal.close();
-      ctx.toast({ text: `パーティが出撃しました（${body.agent}${model ? ' ' + model : ''}・作戦: ${TACTIC_JA[body.tactic]}）`, ok: null, type: 'battle' });
+      ctx.toast({ text: t('sortie.went', `${body.agent}${model ? ' ' + model : ''}`, TACTIC_JA[body.tactic]), ok: null, type: 'battle' });
       party.running = true;
       renderPartyStatus();
       pollParty(true);
@@ -138,25 +139,32 @@ async function pollQuest() {
     const q = await (await fetch('api/quest', { cache: 'no-store' })).json();
     const wasRunning = questRunning;
     questRunning = q.running === true;
-    const box = $('#quest-progress');
     if (q.running || q.log) {
-      box.hidden = false;
-      $('#quest-log').textContent = (q.log || '').split('\n').slice(-14).join('\n');
-      const next = q.running ? 'running' : q.code === 0 ? 'done' : 'failed';
-      // 失敗したら、見出しに理由（ログの最後の [E_…] の行）を添える。「終了コード 2」だけでは、claude が入っていないのか分からない
-      const why = next === 'failed' ? lastErrorLine(q.log) : '';
-      $('#quest-phase').textContent = q.running ? 'GM が地図を描いています…' : q.code === 0 ? '地図ができました' : `GM が地図を描けませんでした（終了コード ${q.code}）${why ? `: ${why}` : ''}`;
-      if (box.dataset.state !== next) {
-        box.dataset.state = next;
-        // 様子の欄はカードの下にあるので、変わったときは見える所まで送る
-        box.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
-      }
+      renderQuestProgress(q);
       if (!q.running && q.code !== 0 && q.code !== null) $('#start-quest').disabled = !$('#wish').value.trim();
     }
     // 終わったら読み直す（失敗で終わっても、冒険の書が生まれていれば盤面にする）
     if (!q.running && (q.code === 0 || wasRunning)) ctx.refresh();
   } catch {}
   questTimer = setTimeout(pollQuest, 1000);
+}
+
+let lastQuest = null;
+/** 冒険づくりの進み具合（GET /api/quest）。ことばが切り替わったら同じ q で描き直す */
+function renderQuestProgress(q) {
+  lastQuest = q;
+  const box = $('#quest-progress');
+  box.hidden = false;
+  $('#quest-log').textContent = (q.log || '').split('\n').slice(-14).join('\n');
+  const next = q.running ? 'running' : q.code === 0 ? 'done' : 'failed';
+  // 失敗したら、見出しに理由（ログの最後の [E_…] の行）を添える。「終了コード 2」だけでは、claude が入っていないのか分からない
+  const why = next === 'failed' ? lastErrorLine(q.log) : '';
+  $('#quest-phase').textContent = q.running ? t('lobby.phase.running') : q.code === 0 ? t('lobby.phase.done') : t('lobby.phase.failed', q.code, why);
+  if (box.dataset.state !== next) {
+    box.dataset.state = next;
+    // 様子の欄はカードの下にあるので、変わったときは見える所まで送る
+    box.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+  }
 }
 
 // ---- 出撃 ----
@@ -210,10 +218,10 @@ function fillSortieChoices() {
         .map(
           (c) => `<label class="choice"><input type="checkbox" name="sortie-only" value="${esc(c.id)}" checked>
             <span class="choice-name">${esc(c.name)}</span><span class="choice-at">${esc(c.at || '')} ${esc((c.at && Object.hasOwn(v.nodes, c.at) ? v.nodes[c.at].title : '') || '')}</span>
-            ${c.sortie ? '<span class="choice-busy">出撃中</span>' : ''}</label>`,
+            ${c.sortie ? `<span class="choice-busy">${esc(t('sortie.busy'))}</span>` : ''}</label>`,
         )
         .join('')
-    : '<p class="hint">いま作業中のエージェントがいません（全員ゲートで待機中か、あがり）。</p>';
+    : `<p class="hint">${esc(t('sortie.none'))}</p>`;
   $('#sortie-go').disabled = !agents.length;
 }
 
@@ -223,10 +231,10 @@ function renderPartyStatus() {
   const lines = (party.log || '').split('\n').map((l) => l.trim()).filter(Boolean);
   const last = lines.slice(-2).join(' / ');
   // 盤面からではなく CLI（gridhub party）や外の指揮役から出撃していることもあるので、冒険の書の「出撃中」も数えて見せる
-  const outside = !party.running && openSorties > 0 ? `⏳ 出撃中のエージェント ${openSorties}人` : '';
+  const outside = !party.running && openSorties > 0 ? t('sortie.outside', openSorties) : '';
   $('#party-status-text').textContent = party.running
-    ? `⚔ 出撃中… ${lines.slice(-1)[0] || ''}`
-    : [last, outside].filter(Boolean).join(' ／ ') || '出撃していません';
+    ? t('sortie.running', lines.slice(-1)[0] || '')
+    : [last, outside].filter(Boolean).join(' ／ ') || t('sortie.idle');
   $('#party-stop').hidden = !party.running;
 }
 
@@ -242,7 +250,7 @@ export function pollParty(now = false) {
         const was = party.running;
         party = { running: !!p.running, code: p.code ?? null, log: p.log || '' };
         renderPartyStatus();
-        if (was && !party.running) ctx.toast({ text: `パーティが帰ってきました: ${party.log.split('\n').filter(Boolean).slice(-1)[0] || ''}`, ok: party.code === 0 ? true : null });
+        if (was && !party.running) ctx.toast({ text: t('sortie.back', party.log.split('\n').filter(Boolean).slice(-1)[0] || ''), ok: party.code === 0 ? true : null });
       }
     } catch {}
     partyTimer = setTimeout(tick, party.running ? 1500 : 5000);
@@ -264,6 +272,7 @@ export function noteSorties(view) {
 let gitSeq = 0;
 let gitPushing = false;
 let gitState = null;
+let gitLast = null;
 
 /** GET /api/git の様子から、欄の状態（outside / no-remote / unpushed / synced） */
 function gitStateOf(g) {
@@ -292,6 +301,7 @@ export async function refreshGit() {
 }
 
 function renderGit(g) {
+  gitLast = g;
   const panel = $('#git-panel');
   const state = gitStateOf(g);
   gitState = state;
@@ -307,19 +317,20 @@ function renderGit(g) {
         .join('')
     : '';
   $('#git-sub').textContent =
-    state === 'outside' ? 'ここはまだ Git の作業ツリーではありません'
-    : state === 'no-remote' ? 'GitHub につなぐ手引き（上から順に）'
-    : g.branch ? `ブランチ ${g.branch}` : '';
+    state === 'outside' ? t('git.outside')
+    : state === 'no-remote' ? t('git.guide')
+    : g.branch ? t('git.branch', g.branch) : '';
   const remote = $('#git-remote');
   remote.hidden = !g.remote;
   remote.textContent = g.remote ? `${g.remote.name || 'origin'}: ${g.remote.url || ''}` : '';
   const ahead = $('#git-ahead');
   ahead.hidden = !(state === 'unpushed' || state === 'synced');
-  ahead.textContent = state === 'synced' ? 'GitHub に送っていないセーブ: 0' : !g.upstream ? 'まだ一度も送っていない' : `GitHub に送っていないセーブ: ${g.ahead}`;
+  ahead.textContent = state === 'synced' ? t('git.synced') : !g.upstream ? t('git.noupstream') : t('git.ahead', g.ahead);
   const btn = $('#git-push');
   btn.hidden = !(state === 'unpushed' || state === 'synced');
   btn.disabled = gitPushing || state !== 'unpushed';
-  btn.title = state === 'synced' ? 'GitHub と同じです（送るものはありません）' : '町でセーブしたコミットを GitHub に送る（git push。force push はしない）';
+  btn.textContent = gitPushing ? t('git.pushing') : t('git.push');
+  btn.title = state === 'synced' ? t('git.push.title.synced') : t('git.push.title');
   // 町でセーブしたら GitHub に送る（§59.6）。初めはオフ
   const auto = $('#git-auto');
   auto.closest('label').hidden = state === 'outside';
@@ -337,8 +348,8 @@ function renderLastPush(push) {
   if (!valid) return;
   last.dataset.ok = String(push.ok);
   last.textContent = push.ok
-    ? `GitHub に送った（commit ${String(push.commit ?? '').slice(0, 7)}）`
-    : `GitHub に送れなかった: ${push.error ?? '不明'}`;
+    ? t('git.last.ok', String(push.commit ?? '').slice(0, 7))
+    : t('git.last.ng', push.error ?? '不明');
 }
 
 let gitAutoBusy = false;
@@ -350,7 +361,7 @@ async function setAutoPush() {
   auto.disabled = true;
   const on = auto.checked;
   const j = await ctx.post('api/git/auto', { auto_push: on });
-  if (j && j.ok !== false) ctx.toast({ text: `町でセーブしたら GitHub に送る: ${j.auto_push ? 'オン' : 'オフ'}`, ok: true });
+  if (j && j.ok !== false) ctx.toast({ text: t('git.auto.toast', j.auto_push === true), ok: true });
   gitAutoBusy = false;
   await refreshGit();
 }
@@ -361,10 +372,17 @@ export async function pushGit() {
   if (gitPushing || gitState !== 'unpushed') return;
   gitPushing = true;
   btn.disabled = true;
-  btn.textContent = '送っています…';
+  btn.textContent = t('git.pushing');
   const j = await ctx.post('api/git/push', {});
-  if (j && j.ok !== false) ctx.toast({ text: `GitHub に送った: ${j.remote ?? ''} ${j.branch ?? ''}${j.commit ? `（commit ${String(j.commit).slice(0, 7)}）` : ''}`, ok: true });
+  if (j && j.ok !== false) ctx.toast({ text: t('git.pushed', j.remote ?? '', j.branch ?? '', j.commit ? String(j.commit).slice(0, 7) : ''), ok: true });
   gitPushing = false;
-  btn.textContent = 'GitHub に送る';
+  btn.textContent = t('git.push');
   await refreshGit();
+}
+
+/** ことばが切り替わったら、窓口を読み直さずに、手元にあるもので描き直す（§75） */
+export function rewordsCommand() {
+  if ($('#party-status')) renderPartyStatus();
+  if (gitLast && ctx?.live) renderGit(gitLast);
+  if (lastQuest && !$('#lobby').hidden) renderQuestProgress(lastQuest);
 }

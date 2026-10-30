@@ -1,4 +1,4 @@
-// GOAL14「あがり（第14章）: リリースの支度」— CONTRACTS §62・§63。公開（npm publish・タグ・Release）はしない。
+// GOAL14「あがり（第14章）: リリースの支度」— CONTRACTS §62・§63。公開（タグ・Release）はしない。§77 で、配る支度からパッケージの道具を外した（package.json の files は見ない）。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
@@ -26,7 +26,7 @@ test('第1章〜第14章のすべての判定が、まとめて本当に通る',
   assert.equal(fail, 0, tail);
 });
 
-test('すべての冒険の書が正常。地図と package.json は第14章（版 0.3.0・engines >=22・files・MIT）', () => {
+test('すべての冒険の書が正常。地図と package.json は第14章（版 0.3.0・engines >=22・MIT。files は持たない §77）', () => {
   for (const d of ['.', 'examples/omikuji', 'examples/kakeibo', 'examples/memo', 'demos/mcp-tutorial']) {
     const r = masume(['verify', '--dir', join(ROOT, d)]);
     assert.equal(r.code, 0, `${d}: ${r.all}`);
@@ -36,10 +36,8 @@ test('すべての冒険の書が正常。地図と package.json は第14章（�
   assert.equal(pkg.version, '0.3.0');
   assert.equal(pkg.engines?.node, '>=22');
   assert.equal(pkg.license, 'MIT');
-  assert.ok(Array.isArray(pkg.files), 'files で包みの中身を絞る');
-  for (const f of ['bin/', 'src/', 'web/', 'quests/tutorial/', 'CHANGELOG.md']) assert.ok(pkg.files.includes(f), `files に ${f}`);
-  assert.ok(pkg.files.some((f) => /^docs\/\*\.md$/.test(f)), 'files に docs/*.md');
-  assert.ok(!pkg.files.some((f) => /^(\.masume|tests|examples|demos)\b|^docs\/?$|^docs\/\*\*?$|^quests\/?$/.test(f)), `files に入れないもの: ${pkg.files.join(' ')}`);
+  assert.equal(pkg.files, undefined, 'パッケージの道具で配るための files は持たない（§77.1）');
+  assert.equal(pkg.bin, undefined, 'パッケージの道具で入れるための bin は持たない（§77.1）');
   assert.equal(pkg.scripts['test:goal'], 'node --test tests/e2e/GOAL14.test.mjs');
   assert.doesNotMatch(pkg.scripts.test, /GOAL/);
   const v = masume(['--version']);
