@@ -25,6 +25,7 @@ const COMMANDS = {
   load: ['書記', '過去の時点（冒険の書の seq か Git のコミット）の盤面に戻る', 'load <seq|commit>'],
   remote: ['書記', 'Git と GitHub の様子と、GitHub につなぐ手引き', 'remote [--auto-push on|off] [--json]'],
   push: ['書記', 'いまのブランチを GitHub（リモート）に送る（force はしない）', 'push [--json]'],
+  me: ['書記', '勇者の手帳（ランク・続いた日数・今日のお題・シール帳・称号）', 'me [--json]'],
   sortie: ['書記', 'エージェントの出撃を記録する', 'sortie <characterId> --agent <name> [--model M]'],
   return: ['書記', 'エージェントの帰還を記録する', 'return <characterId> --sortie <seq> --code <n> [--log file]'],
   wish: ['書記', '冒険の始まりの願いを記録する', 'wish <text> [--gm G] [--model M]'],
@@ -55,7 +56,7 @@ const COMMON = [
   '                 step・check・note はコマンドに渡したキャラクターID、それ以外（seal・amend・load など）は gm',
   '  --json         結果を JSON で出す',
 ];
-const DIR_JSON = [COMMON[0], COMMON[2]];
+const DIR_JSON = [COMMON[0], COMMON[3]];
 // 共通のオプションを使わないコマンドの、そのコマンドだけのオプション
 const OPTIONS = {
   serve: [
@@ -67,8 +68,13 @@ const OPTIONS = {
     '  --lifeline     標準入力が閉じたら止まる（アプリから起こすとき用。アプリが落ちてもサーバーを残さない）',
   ],
   mcp: ['  --dir D        冒険の書のあるフォルダ（省略すると環境変数 MASUME_DIR か、今いる場所から上へ探す）'],
+  me: [
+    '  --dir D        いまの冒険（「前に見てから」を出す。省略すると、今いる場所から上へ探す。無くてもよい）',
+    '  --home D       手帳を置く場所（既定: GRIDHUB_APP_HOME、macOS は ~/Library/Application Support/GridHub）',
+    COMMON[3],
+  ],
   export: ['  --format json|csv  書き出す形（既定 json）', '  --out <file>       出力先（省略すると標準出力）', ...DIR_JSON],
-  import: ['  --out <map.json>   地図の下書きの出力先（必須）', '  --quest-id KEY     冒険の ID', '  --title T          冒険の題', COMMON[2]],
+  import: ['  --out <map.json>   地図の下書きの出力先（必須）', '  --quest-id KEY     冒険の ID', '  --title T          冒険の題', COMMON[3]],
   linear: [
     '  push: --team KEY [--project NAME] [--dry-run]                       盤面の状態を Linear の issue に送る',
     '  pull: --team KEY [--project NAME] --out <map.json> [--quest-id KEY] [--title T]   Linear の issue から地図の下書きをつくる',
@@ -100,6 +106,7 @@ const DETAIL = {
   load: ['その時点の盤面に戻る（戻したことも記録される）。コードは git checkout <commit> で戻す。'],
   remote: ['Git と GitHub の様子と、まだの手引き（gh の導入・ログイン・リポジトリ・送る）。', '--auto-push on|off: 町でセーブしたら GitHub に送る（初めはオフ）。'],
   push: ['いまのブランチを git push する（force はしない。GitHub のほうが先に進んでいたら止まる）。'],
+  me: ['遊ぶ人（勇者）の積み上げ。冒険をまたいで残る（盤面の「手帳」と同じ）。中身はすべて冒険の書から導く。', 'シール袋は盤面の「手帳」で開ける。ここでは数だけ出す。'],
   sortie: ['（軍師が使う）エージェントの出撃を冒険の書に記録する。ふつうは gridhub party が打つ。'],
   return: ['（軍師が使う）出撃の帰還を記録する。止まったままの出撃を閉じるときにも使う。'],
   wish: ['（語り部が使う）冒険の始まりの願いを記録する。ふつうは gridhub quest が打つ。'],

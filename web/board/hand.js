@@ -2,6 +2,7 @@
 // 人間が、キャラクターの役を盤面から手で演じる: 指令書を読む・縄張りのファイルを書く・歩く・宣言判定・ハンコ・ボス戦。
 // #hand はキャラクターシート（#drawer）とは別の欄。盤面が新しくなっても書きかけを消さない（いまのマスが変わったら空にする。§74.3）。
 import { wordsFor } from './words.js';
+import { speciesOf } from './draw.js';
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -170,8 +171,25 @@ export function initHand({ live, post, toast, app = false }) {
     }
   }
 
+  /** テスト1件ずつ: モンスターの絵・倒したら「撃破」・いちばん手前の落ちているものに「いま戦う」（§76.26） */
   function renderCases(cases) {
-    $('#hand-result').replaceChildren(...cases.map((c) => el('li', { class: c.ok === true ? 'ok' : c.ok === false ? 'ng' : 'unknown', text: `${c.ok === true ? '✔' : c.ok === false ? '✖' : '・'} ${c.name}` })));
+    const target = cases.findIndex((c) => c.ok !== true);
+    $('#hand-result').replaceChildren(...cases.map((c, i) => {
+      const state = c.ok === true ? 'ok' : c.ok === false ? 'ng' : 'unknown';
+      const li = el('li', { class: `${state}${i === target ? ' target' : ''}` });
+      li.style.setProperty('--d', `${i * 90}ms`);
+      const art = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      art.setAttribute('viewBox', '0 0 64 64');
+      art.setAttribute('aria-hidden', 'true');
+      art.setAttribute('class', 'hr-mon');
+      const use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+      use.setAttribute('href', `#mon-${speciesOf(c.name, i)}`);
+      art.append(use);
+      li.append(art, el('span', { class: 'hr-name', text: `${c.ok === true ? '✔' : c.ok === false ? '✖' : '・'} ${c.name}` }));
+      if (state === 'ok') li.append(el('em', { class: 'hr-slain', text: '撃破' }));
+      else if (i === target) li.append(el('em', { class: 'hr-next', text: 'いま戦う' }));
+      return li;
+    }));
   }
 
   panel.addEventListener('click', async (e) => {
@@ -212,6 +230,19 @@ export function initHand({ live, post, toast, app = false }) {
         return;
       }
       await act('api/file', { character, path, content: $('#hand-content').value }, (j) => message(`保存しました: ${j.path}（${j.bytes} バイト）`, true));
+      return;
+    }
+    if (t.id === 'hand-note-save') {
+      const input = $('#hand-note-text');
+      const text = input.value.trim();
+      if (!text) {
+        message('日誌に書くことを入れてください', false);
+        return;
+      }
+      await act('api/note', { character, text }, () => {
+        input.value = '';
+        message('日誌を書きました。次の自分（次の代）の指令書に出ます。', true);
+      });
       return;
     }
     if (t.id === 'hand-step') {

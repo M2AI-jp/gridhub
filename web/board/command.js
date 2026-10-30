@@ -217,10 +217,15 @@ function fillSortieChoices() {
   $('#sortie-go').disabled = !agents.length;
 }
 
+/** 軍師の出力の行。ターミナル向けの「ハンコは: node …」は盤面では見せない（盤面には「あなたの番！」のボタンがある。§76.32） */
+function partyLines() {
+  return (party.log || '').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('ハンコは:'));
+}
+
 function renderPartyStatus() {
   const el = $('#party-status');
   el.dataset.running = String(!!party.running);
-  const lines = (party.log || '').split('\n').map((l) => l.trim()).filter(Boolean);
+  const lines = partyLines();
   const last = lines.slice(-2).join(' / ');
   // 盤面からではなく CLI（gridhub party）や外の指揮役から出撃していることもあるので、冒険の書の「出撃中」も数えて見せる
   const outside = !party.running && openSorties > 0 ? `⏳ 出撃中のエージェント ${openSorties}人` : '';
@@ -242,7 +247,7 @@ export function pollParty(now = false) {
         const was = party.running;
         party = { running: !!p.running, code: p.code ?? null, log: p.log || '' };
         renderPartyStatus();
-        if (was && !party.running) ctx.toast({ text: `パーティが帰ってきました: ${party.log.split('\n').filter(Boolean).slice(-1)[0] || ''}`, ok: party.code === 0 ? true : null });
+        if (was && !party.running) ctx.toast({ text: `パーティが帰ってきました: ${partyLines().slice(-1)[0] || ''}`, ok: party.code === 0 ? true : null });
       }
     } catch {}
     partyTimer = setTimeout(tick, party.running ? 1500 : 5000);

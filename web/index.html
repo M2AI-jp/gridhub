@@ -11,6 +11,7 @@
   <!-- 外の字は描画を止めないよう、最初は読まない（disabled・print）。盤面を描いたあとで board/app.js が読みはじめ、届いたら全部の画面に効かせる（§37） -->
   <link id="hand-fonts" disabled href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Yomogi&family=Yusei+Magic&display=swap" rel="stylesheet" media="print">
   <link rel="stylesheet" href="board/board.css">
+  <link rel="stylesheet" href="board/hero.css">
 </head>
 <body data-view="board">
   <!-- 手元の書体の予熱: 日本語の代わりの書体を、大きな盤面を描く前に読み込ませる（書体が届くたびの描き直しを小さく済ませる） -->
@@ -25,6 +26,7 @@
       <button role="tab" data-view="board" aria-selected="true">盤面</button>
       <button role="tab" data-view="list" aria-selected="false">一覧</button>
       <button role="tab" data-view="rules" aria-selected="false">ルール</button>
+      <button id="techo-tab" role="tab" data-view="techo" aria-selected="false" hidden title="勇者の手帳: ランク・今日のお題・スタンプカード・シール帳・称号">手帳<span id="bag-badge" class="bag-badge" hidden></span></button>
     </nav>
     <div class="save">
       <div class="record-box" title="いまの記録の番号（seq）と、その記録が見ていた Git のコミット。gridhub load &lt;seq&gt; か gridhub load &lt;commit&gt; でこの時点の盤面に戻せる">
@@ -44,6 +46,8 @@
     <section id="stage">
       <div id="view-board" class="view active">
         <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GridHub の世界地図（縦の5mm方眼ノートの見開き）"></svg>
+        <button id="boss-meter" class="boss-meter" type="button" hidden data-node="" data-near="false"></button>
+        <button id="your-turn" class="your-turn" type="button" hidden data-node="" data-char="" data-kind=""></button>
         <nav class="pager" aria-label="ページをめくる">
           <button id="page-prev" type="button" aria-label="前の見開き">◀ まえ</button>
           <span id="page-no" aria-live="polite">— / —</span>
@@ -67,6 +71,8 @@
 
       <div id="view-list" class="view"><div id="ledger"></div></div>
 
+      <div id="view-techo" class="view"><article id="techo" class="techo" aria-label="勇者の手帳"></article></div>
+
       <div id="view-rules" class="view">
         <article id="rules" class="rules">
           <h2>あそびかた</h2>
@@ -87,6 +93,16 @@
             <li><b>強敵と技</b>: 2回以上負けたテストを倒すと「強敵を倒した」。その直後の日誌が<b>技</b>になり、次の代（出撃）に受け継がれる。</li>
             <li><b>ちいさなメダル</b> ◎: ダンジョンの出口を一発で抜けた数。<b>モンスター図鑑</b>: 計画したテストのうち、いま通っている数。</li>
             <li><b>作戦</b>: いのちだいじに / バッチリがんばれ / ガンガンいこうぜ。エージェントの動き方が変わる（ルールは変わらない）。</li>
+            <li><b>駒の装備</b>: レベル（信頼）が上がると、駒に剣（Lv3）・マント（Lv5）・足もとの光（Lv7）・王冠（Lv9）。今週いちばんテストを倒した仲間（MVP）は金色に光る。</li>
+          </ul>
+          <h3>勇者の手帳（あなたの積み上げ）</h3>
+          <p>エージェントが道を進むあいだ、遊ぶあなたにも、冒険をまたいで残る手帳があります（見出しの「手帳」と、なかまの欄の上の勇者のカード。ターミナルなら <code>gridhub me</code>）。中身はすべて冒険の書から導いたもので、ルールは変えません。</p>
+          <ul>
+            <li><b>シール袋</b>: テストが1件通るたびに1つ（一発合格・リグレッションを直す・セーブ・結合・あがりでも）。自分の手で開けます。キラ・ホロ・金が出るかは、そのテストを倒した記録のハッシュで決まっていて、引き直せません。</li>
+            <li><b>シール帳</b>: 39 枠。シールを押すと、どのテストを・だれが・いつ倒したかが出ます。1列そろえると経験値 +200。<b>交換所</b>で、同じシール6枚のうち5枚を1つ上のレア度1枚と換えられます。<b>ノートに貼る</b>で、盤面の好きな所に貼れます（押せばはがせる）。</li>
+            <li><b>勇者ランク・称号</b>: テスト・宣言・メダル・結合・あがりで経験値。称号は 44 個で、1つ名乗れます。</li>
+            <li><b>毎日</b>: テストを1件でも倒した日にスタンプカードのハンコ。毎日かわる3つの<b>今日のお題</b>。<b>自己ベスト</b>を超えるとお祝い。</li>
+            <li><b>盤面で</b>: 「撃破！」「N体まとめて撃破！」、ホロ・金の気配、仲間のひとこと、ボス戦のカットイン、右上に「ボス戦 G1 まで あと N体」。出撃中は勇者のカードに「出撃中 N体撃破」。</li>
           </ul>
           <p class="foot">くわしくは <code>docs/GAME_DESIGN.md</code> と <code>docs/RULEBOOK.md</code>。CLI は <code>gridhub</code>（<code>masume</code> も同じ）。</p>
         </article>
@@ -128,6 +144,10 @@
         </div>
       </section>
       <div id="toast" aria-live="polite"></div>
+      <div id="fanfare" aria-live="polite"></div>
+      <aside id="welcome" class="welcome" hidden aria-label="留守のあいだの戦果"></aside>
+      <div id="rank-up" class="rank-up" hidden aria-live="polite"></div>
+      <div id="boss-cut" class="boss-cut" hidden aria-live="polite"></div>
     </section>
 
     <aside id="hand" class="hand-panel" hidden aria-labelledby="hand-title" data-char="" data-loaded="false" data-busy="false">
@@ -144,6 +164,13 @@
       </div>
       <p id="hand-msg" class="hand-msg" role="status" hidden></p>
       <ol id="hand-result" class="hand-result" aria-label="テスト1件ずつ"></ol>
+      <section class="hand-note" aria-label="日誌">
+        <label for="hand-note-text">日誌（次の自分への申し送り。強敵を倒した直後の日誌は「技」になる）</label>
+        <div class="hand-note-row">
+          <input id="hand-note-text" type="text" maxlength="2000" autocomplete="off" placeholder="分かったこと・次にやること">
+          <button id="hand-note-save" class="mini-btn" type="button">日誌を書く</button>
+        </div>
+      </section>
       <section class="hand-edit" aria-label="縄張りのファイル">
         <h4>縄張りのファイル</h4>
         <ul id="hand-files" class="hand-files"></ul>
@@ -164,6 +191,7 @@
 
     <div id="rail">
       <aside id="party" class="slip" aria-label="なかま">
+        <section id="hero-card" class="hero-card" hidden aria-label="勇者のカード"></section>
         <div id="party-list-wrap"></div>
         <section id="bestiary" aria-label="モンスター図鑑"></section>
         <div id="party-controls">
@@ -240,9 +268,33 @@
       <h2 id="ending-title"></h2>
       <div id="ending-text"></div>
       <div id="ending-stats"></div>
+      <div id="ending-loot" class="ending-loot" hidden></div>
       <button id="ending-close" type="button" class="act">盤面にもどる</button>
     </div>
   </div>
+
+  <div id="bag-room" class="bag-room" role="dialog" aria-modal="true" aria-labelledby="bag-title" hidden data-state="idle">
+    <div class="bag-stage">
+      <header class="bag-head">
+        <h2 id="bag-title">シール袋 <b id="bag-count">0</b></h2>
+        <button id="bag-close" class="close" type="button" aria-label="閉じる">✕</button>
+      </header>
+      <p class="bag-lead">テストを倒すたびに、シール袋が1つ落ちます。中身は、そのとき冒険の書に書かれた記録のハッシュで決まっています。</p>
+      <button id="bag-pile" class="bag-pile" type="button" aria-label="いちばん上の袋をあける"></button>
+      <div id="bag-reveal" class="bag-reveal" aria-live="polite"></div>
+      <p id="bag-sum" class="bag-sum"></p>
+      <div class="bag-actions">
+        <button id="bag-one" class="act" type="button">1枚あける</button>
+        <button id="bag-ten" class="act plain" type="button">10枚まとめて</button>
+        <button id="bag-all" class="mini-btn" type="button" hidden>ぜんぶ</button>
+        <button class="mini-btn" type="button" data-hero="techo-from-room">シール帳を見る</button>
+      </div>
+    </div>
+  </div>
+  <div id="slot-pop" class="slot-pop" hidden></div>
+  <div id="paste-ghost" class="paste-ghost" hidden aria-hidden="true"></div>
+  <p id="paste-hint" class="paste-hint" hidden role="status"></p>
+  <div id="peel-menu" class="peel-menu" hidden></div>
 
   <script type="module" src="board/app.js"></script>
 </body>

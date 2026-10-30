@@ -139,6 +139,65 @@ $('#recent').addEventListener('click', async (e) => {
   if (e.target.closest('button.open-recent')) openFolder(li.dataset.dir);
 });
 
+/** 勇者の手帳（§76.7）: ランク・続いた日数・今日のお題・未開封のシール袋。冒険をまたいだまとめ（読むだけ） */
+function renderHero(j) {
+  const box = $('#start-hero');
+  if (!j || j.ok !== true || j.hero !== 1) return;
+  const el = (tag, cls, text) => {
+    const node = document.createElement(tag);
+    if (cls) node.className = cls;
+    if (text !== undefined) node.textContent = String(text);
+    return node;
+  };
+  const { rank, streak, daily, bags, album, achievements } = j;
+  const badge = el('div', 'sh-rank');
+  badge.append(el('small', '', 'ランク'), el('b', '', rank.level));
+  const who = el('div', 'sh-who');
+  const bar = el('div', 'hc-xp');
+  const fill = el('i');
+  fill.style.width = `${Math.round((rank.into / rank.need) * 100)}%`;
+  bar.append(fill);
+  who.append(el('b', '', rank.title), el('small', '', `経験値 ${rank.xp}・次のランクまで ${rank.next - rank.xp}`), bar);
+  const fire = el('div', `sh-streak${streak.today ? ' lit' : ''}`);
+  fire.append(el('b', '', streak.current), el('small', '', '日連続'));
+  const top = el('div', 'sh-top');
+  top.append(badge, who, fire);
+
+  const missions = el('ul', 'sh-missions');
+  for (const m of daily.missions) {
+    const li = el('li', m.done ? 'done' : '');
+    li.append(el('span', 'sh-check', m.done ? '✔' : ''), el('span', '', m.text), el('em', '', `${m.now}/${m.goal}`));
+    missions.append(li);
+  }
+  // いちばん効く次の一歩を1行で
+  const nudge = !streak.today && streak.current > 0 ? `今日テストを1件倒せば、${streak.current + 1}日連続！`
+    : bags.count > 0 ? `未開封のシール袋が ${bags.count} 個。冒険を開いて「手帳」で開けよう`
+      : (j.quests ?? []).length > 0 && j.quests.every((q) => q.finished) ? 'あがり！ 次は本当の冒険を。「フォルダを選ぶ」で、作りたいものの願いを書こう'
+      : !daily.done ? `今日のお題 ${daily.missions.filter((m) => m.done).length}/3。3つで「${daily.reward}」`
+        : '今日のお題はぜんぶこなした。また明日！';
+  const foot = el('p', 'sh-foot');
+  foot.append(el('span', 'sh-nudge', nudge), el('small', '', `シール帳 ${album.owned}/${album.total}・称号 ${achievements.filter((a) => a.done).length}/${achievements.length}`));
+  const head = el('h2', 'sh-h', '勇者の手帳');
+  head.append(el('small', '', `今日のお題（${daily.date}）`));
+  box.replaceChildren(top, head, missions, foot);
+  box.hidden = false;
+  document.documentElement.dataset.notebook = j.theme ?? 'note';
+  // 最近のフォルダに、その冒険の未開封のシール袋の数
+  for (const q of j.quests ?? []) {
+    if (!q.bags) continue;
+    const li = [...document.querySelectorAll('#recent li[data-dir]')].find((x) => x.dataset.dir === q.dir);
+    const open = li?.querySelector('button.open-recent');
+    if (!open || open.querySelector('.recent-bags')) continue;
+    open.append(el('span', 'recent-bags', `シール袋 ${q.bags}`));
+  }
+  // アプリの中なら、Dock のアイコンに未開封のシール袋の数（§76.14）
+  try {
+    bridge?.postMessage({ type: 'badge', count: bags.count });
+  } catch {
+    // 橋が無い
+  }
+}
+
 function askHandFonts() {
   const link = $('#hand-fonts');
   if (!link) return;
@@ -154,6 +213,7 @@ function askHandFonts() {
     const info = await r.json();
     renderRecent(Array.isArray(info.recent) ? info.recent : []);
     renderEnv(info);
+    fetch('api/hero', { cache: 'no-store' }).then((h) => (h.ok ? h.json() : null)).then(renderHero).catch(() => {});
   } catch {
     renderRecent([]);
     showError('GridHub に届きません。アプリを開き直してください');

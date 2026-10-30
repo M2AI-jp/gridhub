@@ -417,6 +417,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
             start()
         case "openExternal":
             if let text = body["url"] as? String, let url = URL(string: text) { NSWorkspace.shared.open(url) }
+        case "badge":
+            // 勇者の手帳（§76.14）: 未開封のシール袋の数を Dock のアイコンに
+            let count = (body["count"] as? NSNumber)?.intValue ?? 0
+            NSApp.dockTile.badgeLabel = count > 0 ? (count > 999 ? "999+" : String(count)) : nil
+        case "attention":
+            // 窓が後ろにあるあいだに、帰還・ボス戦・あがり・称号があったら Dock で知らせる（前にあれば何もしない）
+            if !NSApp.isActive { NSApp.requestUserAttention(.informationalRequest) }
         default:
             break
         }

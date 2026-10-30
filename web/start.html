@@ -9,6 +9,7 @@
   <!-- 外の字は、はじめの画面を描いたあとで読む（届かなくても待たない。§37） -->
   <link id="hand-fonts" disabled href="https://fonts.googleapis.com/css2?family=Klee+One:wght@400;600&family=Yomogi&family=Yusei+Magic&display=swap" rel="stylesheet" media="print">
   <link rel="stylesheet" href="board/board.css">
+  <link rel="stylesheet" href="board/hero.css">
 </head>
 <body class="start-page">
   <main id="start" class="start-sheet" aria-labelledby="start-title">
@@ -16,6 +17,8 @@
       <h1 id="start-title" class="logo" aria-label="GridHub"><span class="lg-cell">G</span><span class="lg-cell">r</span><span class="lg-cell">i</span><span class="lg-cell">d</span><span class="lg-hub">Hub</span></h1>
       <p class="start-tagline">テスト1件 = 1マス。通ったぶんだけ進む開発すごろく</p>
     </header>
+
+    <section id="start-hero" class="start-hero" hidden aria-label="勇者の手帳"></section>
 
     <section class="start-actions" aria-label="はじめる">
       <div class="start-card">

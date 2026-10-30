@@ -197,7 +197,8 @@ export async function serveStatic(response, root, pathname) {
       return;
     }
     const content = await readFile(realFile);
-    send(response, 200, content, MIME[extname(file).toLowerCase()] ?? 'application/octet-stream');
+    // 版を上げたあとも古い盤面（JS・CSS）を使い続けないよう、毎回確かめさせる（手元のサーバーなので軽い）
+    send(response, 200, content, MIME[extname(file).toLowerCase()] ?? 'application/octet-stream', { 'Cache-Control': 'no-cache' });
   } catch (error) {
     if (['ENOENT', 'ENOTDIR', 'ELOOP'].includes(error.code)) {
       sendText(response, 404, 'ファイルが見つかりません');
@@ -214,7 +215,8 @@ export function createServer({
   webRoot, getView, watchFile, onStamp, onBattle, outputFor,
   onQuest, getQuest, onSortie, getParty, onPartyStop,
   getGit, onPush, onAutoPush,
-  getHand, getFile, onFile, onStep, onCheck,
+  getHand, getFile, onFile, onStep, onCheck, onNote,
+  getHero, onHeroOpen, onHeroSeen, onHeroPaste, onHeroPeel, onHeroTrade, onHeroTitle, onHeroTheme,
 }) {
   const root = resolve(webRoot);
   const watchedPath = watchFile == null ? null : resolve(watchFile);
@@ -329,11 +331,105 @@ export function createServer({
       maxBytes: HAND_FILE_POST_BYTES,
     };
   }
+  // 日誌（§76.31）: 盤面から書く。強敵のあとの日誌は技になる
+  if (typeof onNote === 'function') {
+    postRoutes['/api/note'] = {
+      parse(body) {
+        const character = characterOf(body);
+        if (typeof body.text !== 'string') throw badRequest('text を文字列で指定してください');
+        const text = body.text.trim();
+        if ([...text].length < 1 || [...text].length > 2000 || text.includes('\0')) throw badRequest('text は 1〜2000 文字で書いてください');
+        return { character, text };
+      },
+      call: (value) => onNote(value),
+      status: 200,
+    };
+  }
   if (typeof onStep === 'function') {
     postRoutes['/api/step'] = { parse: (body) => ({ character: characterOf(body) }), call: (value) => onStep(value), status: 200 };
   }
   if (typeof onCheck === 'function') {
     postRoutes['/api/check'] = { parse: (body) => ({ character: characterOf(body) }), call: (value) => onCheck(value), status: 200 };
+  }
+  // 勇者の手帳（§76）: シール袋を開ける・読んだと覚える
+  if (typeof onHeroOpen === 'function') {
+    postRoutes['/api/hero/open'] = {
+      parse(body) {
+        const count = body.count ?? 1;
+        if (!Number.isInteger(count) || count < 1 || count > 5000) throw badRequest('count は 1〜5000 の整数で指定してください');
+        return { count };
+      },
+      call: (value) => onHeroOpen(value),
+      status: 200,
+      optionalBody: true,
+    };
+  }
+  if (typeof onHeroSeen === 'function') {
+    postRoutes['/api/hero/seen'] = {
+      parse(body) {
+        if (body.seq !== undefined && (!Number.isInteger(body.seq) || body.seq < 0)) throw badRequest('seq は 0 以上の整数で指定してください');
+        return { seq: body.seq };
+      },
+      call: (value) => onHeroSeen(value),
+      status: 200,
+      optionalBody: true,
+    };
+  }
+  // シールをノートに貼る・はがす（§76.11）
+  if (typeof onHeroPaste === 'function') {
+    postRoutes['/api/hero/paste'] = {
+      parse(body) {
+        if (typeof body.slot !== 'string' || !/^[a-z]+(:[a-z]+)?$/u.test(body.slot)) throw badRequest('slot をシールの枠（例 slime:kira）で指定してください');
+        if (!Number.isInteger(body.page)) throw badRequest('page を整数で指定してください');
+        for (const k of ['x', 'y']) if (typeof body[k] !== 'number' || !Number.isFinite(body[k])) throw badRequest(`${k} を数で指定してください`);
+        const r = body.r ?? 0;
+        if (typeof r !== 'number' || !Number.isFinite(r)) throw badRequest('r を数で指定してください');
+        return { slot: body.slot, page: body.page, x: body.x, y: body.y, r };
+      },
+      call: (value) => onHeroPaste(value),
+      status: 200,
+    };
+  }
+  // 交換所・名乗る称号（§76.16・§76.18）
+  if (typeof onHeroTrade === 'function') {
+    postRoutes['/api/hero/trade'] = {
+      parse(body) {
+        if (typeof body.slot !== 'string' || !/^[a-z]+(:[a-z]+)?$/u.test(body.slot)) throw badRequest('slot をシールの枠（例 slime:normal）で指定してください');
+        return { slot: body.slot };
+      },
+      call: (value) => onHeroTrade(value),
+      status: 200,
+    };
+  }
+  if (typeof onHeroTitle === 'function') {
+    postRoutes['/api/hero/title'] = {
+      parse(body) {
+        if (body.id !== null && (typeof body.id !== 'string' || !/^[a-z0-9-]{1,40}$/u.test(body.id))) throw badRequest('id を称号の id（または null）で指定してください');
+        return { id: body.id };
+      },
+      call: (value) => onHeroTitle(value),
+      status: 200,
+    };
+  }
+  if (typeof onHeroTheme === 'function') {
+    postRoutes['/api/hero/theme'] = {
+      parse(body) {
+        if (typeof body.id !== 'string' || !/^[a-z]{1,20}$/u.test(body.id)) throw badRequest('id をノートの模様の id で指定してください');
+        return { id: body.id };
+      },
+      call: (value) => onHeroTheme(value),
+      status: 200,
+    };
+  }
+  if (typeof onHeroPeel === 'function') {
+    postRoutes['/api/hero/peel'] = {
+      parse(body) {
+        if (!Number.isInteger(body.index) || body.index < 0) throw badRequest('index を 0 以上の整数で指定してください');
+        return { index: body.index };
+      },
+      call: (value) => onHeroPeel(value),
+      status: 200,
+    };
   }
   const postLimit = (pathname) => (Object.hasOwn(postRoutes, pathname) ? postRoutes[pathname].maxBytes : undefined) ?? MAX_POST_BYTES;
 
@@ -343,6 +439,7 @@ export function createServer({
   if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
   if (typeof getParty === 'function') getRoutes['/api/party'] = getParty;
   if (typeof getGit === 'function') getRoutes['/api/git'] = getGit;
+  if (typeof getHero === 'function') getRoutes['/api/hero'] = getHero;
 
   async function handlePost(request, response, pathname) {
     if (request.headers['x-masume'] !== '1' || !allowedOrigin(request)) {
@@ -542,9 +639,12 @@ function settled(promise, ms) {
  * 冒険の書がまだ無い場所でも開く（ロビー）。願いを受けて語り部（masume quest）を、出撃の合図を受けて軍師（masume party）を、
  * 別プロセスで起こす。stop() で HTTP と子プロセスをまとめて片付ける。
  */
-export async function startServer({ root, port = 5005, host = '127.0.0.1', webRoot }) {
+export async function startServer({ root, port = 5005, host = '127.0.0.1', webRoot, home }) {
   // createServer 単体は engine の存在や実装状況に依存させない。
   const engine = await import('../engine/index.js');
+  const hero = await import('../engine/hero.js');
+  // 勇者の手帳を置く場所（§76.1）。起動役から開いたときは起動役と同じ場所
+  const heroHome = home ?? (await import('../engine/home.js')).appHome(process.env);
   const gameRoot = resolve(root);
   const bin = fileURLToPath(new URL('../../bin/masume.js', import.meta.url));
   const questLog = join(gameRoot, 'quest.log');
@@ -584,6 +684,16 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       throw error;
     }
   }
+
+  // 勇者の手帳のエラーを HTTP の状態に（§76.11）
+  const HERO_STATUS = { E_USAGE: 400, E_NO_GAME: 404, E_HERO: 409 };
+  const heroCall = (fn) => {
+    try {
+      return fn();
+    } catch (error) {
+      throw typeof error?.code === 'string' ? apiError(error.code, error.message, HERO_STATUS[error.code] ?? 409) : error;
+    }
+  };
 
   // ---- 手で演じる窓口（§69）----
   const handBusy = new Set();
@@ -719,6 +829,12 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       requireGame();
       return { ok: true, ...handCall(() => engine.writeHandFile(gameRoot, character, path, content)) };
     },
+    onNote: ({ character, text }) => {
+      requireOpen();
+      requireGame();
+      const event = handCall(() => engine.writeNote(gameRoot, character, text, { actor: character }));
+      return { ok: true, seq: event.seq };
+    },
     onStep: ({ character }) => handJob(character, async () => {
       const { code, result } = await runJson(['step', '--dir', gameRoot, '--as', character, '--json', '--', character]);
       const event = result.events?.[0];
@@ -799,6 +915,42 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       return { ...status, ...defaults };
     },
     onPartyStop: () => ({ ok: true, stopped: party.interrupt() }),
+
+    // ---- 勇者の手帳（§76）----
+    // 読むだけ（手帳のファイルには書かない）。書くのは、遊ぶ人がシール袋を開けたとき・知らせを閉じたときだけ
+    getHero: () => hero.heroJournal(heroHome, { current: hasGame() ? gameRoot : null }),
+    onHeroOpen: ({ count }) => {
+      requireOpen();
+      const { opened, journal } = hero.openBags(heroHome, { current: hasGame() ? gameRoot : null, count });
+      return { ok: true, opened, journal };
+    },
+    onHeroSeen: ({ seq }) => {
+      requireOpen();
+      return { ok: true, journal: hero.markSeen(heroHome, { current: hasGame() ? gameRoot : null, seq }) };
+    },
+    onHeroPaste: (value) => {
+      requireOpen();
+      requireGame();
+      return { ok: true, journal: heroCall(() => hero.pasteSticker(heroHome, { current: gameRoot, ...value })) };
+    },
+    onHeroTrade: ({ slot }) => {
+      requireOpen();
+      const { got, journal } = heroCall(() => hero.tradeSticker(heroHome, { current: hasGame() ? gameRoot : null, slot }));
+      return { ok: true, got, journal };
+    },
+    onHeroTheme: ({ id }) => {
+      requireOpen();
+      return { ok: true, journal: heroCall(() => hero.setTheme(heroHome, { current: hasGame() ? gameRoot : null, id })) };
+    },
+    onHeroTitle: ({ id }) => {
+      requireOpen();
+      return { ok: true, journal: heroCall(() => hero.setTitle(heroHome, { current: hasGame() ? gameRoot : null, id })) };
+    },
+    onHeroPeel: ({ index }) => {
+      requireOpen();
+      requireGame();
+      return { ok: true, journal: heroCall(() => hero.peelSticker(heroHome, { current: gameRoot, index })) };
+    },
 
     // ---- GitHub につなぐ導線（§56.3）----
     // Git の様子と手引き（gridhub remote --json と同じ）。ビュー（冒険の書）には入れない
