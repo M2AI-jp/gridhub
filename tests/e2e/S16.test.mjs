@@ -140,7 +140,7 @@ test('§79.16・§79.18 POST /api/hero/trade と /api/hero/title', { timeout: 60
     assert.equal((await postJson(`${url}/api/hero/trade`, { slot: 'map' })).status, 409, '出来事のシールは換えられない');
     const title = await postJson(`${url}/api/hero/title`, { id: 'first-blood' });
     assert.equal(title.status, 200, title.text);
-    assert.deepEqual(title.body.journal.epithet, { id: 'first-blood', name: 'はじめの一歩' });
+    assert.deepEqual(title.body.journal.epithet, { id: 'first-blood', name: 'はじめの一歩', dev: { name: 'はじめの一歩' } });
     assert.equal((await postJson(`${url}/api/hero/title`, { id: 'album-full' })).status, 409);
     assert.equal((await postJson(`${url}/api/hero/title`, { id: '<x>' })).status, 400);
     assert.equal((await postJson(`${url}/api/hero/title`, { id: null })).body.journal.epithet, null);

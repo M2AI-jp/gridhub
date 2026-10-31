@@ -2,6 +2,7 @@
 // 中身はすべてサーバーの GET /api/hero（冒険の書から導いたもの）。書くのは、シール袋を開けた・知らせを閉じた、の2つだけ。
 // 字はすべてテキストとして入れる（冒険の書から来た字を HTML として解釈しない）。
 import { U, PAGE, pageOrigin } from './world.js';
+import { pair, said } from './words.js';
 
 const $ = (sel) => document.querySelector(sel);
 const NS = 'http://www.w3.org/2000/svg';
@@ -58,10 +59,10 @@ export function stickerEl(f, { count = null, fresh = false, big = false } = {}) 
     class: `sticker r-${f.rarity}${big ? ' big' : ''}`,
     'data-kind': f.kind, 'data-slot': f.slot,
     style: `--tint:${TINT[f.species] ?? '#fff6c7'}`,
-    title: `${f.name}（${f.rarity_ja}）`,
+    title: `${said(f, 'name')}（${f.rarity_ja}）`,
   });
   card.append(el('span', { class: 'st-face' }, svgUse(sym, 'st-art'), el('span', { class: 'st-shine', 'aria-hidden': 'true' })));
-  card.append(el('span', { class: 'st-name', text: f.name }));
+  card.append(el('span', { class: 'st-name', text: said(f, 'name') }));
   card.append(el('span', { class: 'st-rar', text: f.rarity_ja }));
   if (count !== null && count > 1) card.append(el('span', { class: 'st-count', text: `×${count}` }));
   if (fresh) card.append(el('span', { class: 'st-new', text: 'NEW' }));
@@ -244,7 +245,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const top = journal.current?.mvp?.[0];
     const id = top && /^[a-z][a-z0-9-]*$/u.test(top.id) ? top.id : null;
     style.textContent = id ? [
-      `.party-card[data-char="${id}"]::after { content: '今週のMVP ${top.n}体'; }`,
+      `.party-card[data-char="${id}"]::after { content: '今週のMVP ${top.n}${pair('体', '件')}'; }`,
       `.tr-row[data-char="${id}"] .tr-name { fill: #a16207; font-weight: 700; }`,
       `.pawn[data-char="${id}"] .pawn-body { filter: drop-shadow(0 0 3px #f5c542) drop-shadow(0 0 6px rgba(245, 197, 66, 0.8)); }`,
     ].join('\n') : '';
@@ -257,7 +258,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     if (!box) return;
     const { rank, bags } = journal;
     box.replaceChildren(...[
-      el('span', { class: 'el-rank' }, el('small', { text: '勇者ランク' }), el('b', { text: rank.level }), el('span', { text: `「${rank.title}」` })),
+      el('span', { class: 'el-rank' }, el('small', { text: pair('勇者ランク', 'ランク') }), el('b', { text: rank.level }), el('span', { text: `「${said(rank, 'title')}」` })),
       el('span', { class: 'el-bags', text: bags.count ? `未開封のシール袋 ${bags.count}` : 'シール袋はぜんぶ開けた' }),
       bags.count ? el('button', { type: 'button', class: 'mini-btn el-open', 'data-hero': 'bags-from-ending', text: 'シール袋をあける' }) : null,
     ].filter(Boolean));
@@ -272,9 +273,9 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     if (!out.length || !s) return null;
     const min = Math.max(0, Math.round((Date.now() - new Date(s.ts).getTime()) / 60000));
     return el('div', { class: 'hc-sortie', role: 'status' },
-      el('span', { class: 'hc-live', text: '出撃中' }),
-      el('b', { text: `${s.defeats}体撃破` }),
-      el('small', { text: `${s.clears ? `ダンジョン ${s.clears}・` : ''}${min}分・${out.map((c) => c.name).join('、')}` }));
+      el('span', { class: 'hc-live', text: pair('出撃中', '起動中') }),
+      el('b', { text: pair(`${s.defeats}体撃破`, `テスト ${s.defeats}件 通過`) }),
+      el('small', { text: `${s.clears ? `${pair('ダンジョン', 'タスク')} ${s.clears}・` : ''}${min}分・${out.map((c) => c.name).join('、')}` }));
   }
 
   // ---- なかまの欄の上の、勇者のカード ----
@@ -285,19 +286,19 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const dailyDone = daily.missions.filter((m) => m.done).length;
     card.replaceChildren(...[
       el('div', { class: 'hc-top' },
-        el('span', { class: 'hc-rank', title: `勇者ランク ${rank.level}` }, el('small', { text: 'ランク' }), el('b', { text: rank.level })),
-        el('span', { class: 'hc-title' }, el('b', { text: `${rank.title}${journal.epithet ? `「${journal.epithet.name}」` : ''}` }), el('small', { text: `経験値 ${rank.xp}・次まで ${rank.next - rank.xp}` })),
-        el('span', { class: `hc-streak${streak.today ? ' lit' : ''}`, title: streak.today ? `${streak.current}日つづけてテストを倒した` : '今日はまだ。1件倒すとスタンプが押せる' },
+        el('span', { class: 'hc-rank', title: `${pair('勇者ランク', 'ランク')} ${rank.level}` }, el('small', { text: 'ランク' }), el('b', { text: rank.level })),
+        el('span', { class: 'hc-title' }, el('b', { text: `${said(rank, 'title')}${journal.epithet ? `「${said(journal.epithet, 'name')}」` : ''}` }), el('small', { text: `${pair('経験値', 'XP')} ${rank.xp}・次まで ${rank.next - rank.xp}` })),
+        el('span', { class: `hc-streak${streak.today ? ' lit' : ''}`, title: streak.today ? pair(`${streak.current}日つづけてテストを倒した`, `${streak.current}日続けてテストを通した`) : pair('今日はまだ。1件倒すとスタンプが押せる', '今日はまだ。1件通すと記録される') },
           el('b', { text: streak.current }), el('small', { text: '日連続' }))),
       el('div', { class: 'hc-xp', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': rank.need, 'aria-valuenow': rank.into, 'aria-label': '次のランクまで' }, el('i', { style: `width:${pct}%` })),
       el('div', { class: 'hc-row' },
-        el('button', { type: 'button', class: 'hc-daily', 'data-hero': 'techo', title: daily.missions.map((m) => `${m.done ? '☑' : '☐'} ${m.text} ${m.now}/${m.goal}`).join('\n') },
-          el('span', { text: 'お題' }), el('span', { class: 'hc-dots' }, ...daily.missions.map((m) => el('i', { class: m.done ? 'on' : '' }))), el('b', { text: `${dailyDone}/3` })),
+        el('button', { type: 'button', class: 'hc-daily', 'data-hero': 'techo', title: daily.missions.map((m) => `${m.done ? '☑' : '☐'} ${said(m, 'text')} ${m.now}/${m.goal}`).join('\n') },
+          el('span', { text: pair('お題', '目標') }), el('span', { class: 'hc-dots' }, ...daily.missions.map((m) => el('i', { class: m.done ? 'on' : '' }))), el('b', { text: `${dailyDone}/3` })),
         el('button', { type: 'button', class: `hc-bags${bags.count ? ' has' : ''}`, 'data-hero': 'bags', disabled: bags.count === 0 },
           el('span', { class: 'hc-bag-icon', 'aria-hidden': 'true' }), el('span', { text: bags.count ? `シール袋 ${bags.count}` : 'シール袋 0' }))),
       sortieLine(),
-      journal.next_achievement ? el('button', { type: 'button', class: 'hc-next', 'data-hero': 'techo', title: journal.next_achievement.desc },
-        el('span', { text: '次の称号' }), el('b', { text: journal.next_achievement.name }),
+      journal.next_achievement ? el('button', { type: 'button', class: 'hc-next', 'data-hero': 'techo', title: said(journal.next_achievement, 'desc') },
+        el('span', { text: pair('次の称号', '次の実績') }), el('b', { text: said(journal.next_achievement, 'name') }),
         el('span', { class: 'hc-next-bar' }, el('i', { style: `width:${Math.round((journal.next_achievement.now / journal.next_achievement.goal) * 100)}%` })),
         el('small', { text: `${journal.next_achievement.now}/${journal.next_achievement.goal}` })) : null,
     ].filter(Boolean));
@@ -313,68 +314,68 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const pct = Math.round((rank.into / rank.need) * 100);
 
     const profile = el('section', { class: 'tc-card tc-profile' },
-      el('h2', { class: 'tc-h' }, '冒険者カード'),
+      el('h2', { class: 'tc-h' }, pair('冒険者カード', 'プロフィール')),
       el('div', { class: 'tc-rankline' },
-        el('div', { class: 'tc-rankbadge' }, el('small', { text: '勇者ランク' }), el('b', { text: rank.level })),
-        el('div', { class: 'tc-rankname' }, el('b', { text: rank.title }), journal.epithet ? el('em', { class: 'tc-epithet', text: `「${journal.epithet.name}」を名乗っている` }) : el('em', { class: 'tc-epithet none', text: '称号の「名乗る」で、名前に添えられる' }), el('span', { text: `経験値 ${rank.xp}（次のランクまで ${rank.next - rank.xp}）` }),
+        el('div', { class: 'tc-rankbadge' }, el('small', { text: pair('勇者ランク', 'ランク') }), el('b', { text: rank.level })),
+        el('div', { class: 'tc-rankname' }, el('b', { text: said(rank, 'title') }), journal.epithet ? el('em', { class: 'tc-epithet', text: pair(`「${journal.epithet.name}」を名乗っている`, `「${said(journal.epithet, 'name')}」を表示中`) }) : el('em', { class: 'tc-epithet none', text: pair('称号の「名乗る」で、名前に添えられる', '実績の「表示する」で、名前に添えられる') }), el('span', { text: `${pair('経験値', 'XP')} ${rank.xp}（次のランクまで ${rank.next - rank.xp}）` }),
           el('div', { class: 'hc-xp big' }, el('i', { style: `width:${pct}%` })))),
       el('dl', { class: 'tc-stats' },
-        ...[['倒したテスト', totals.defeats], ['ダンジョン', totals.clears], ['結合ゲート', totals.gates], ['あがり', totals.goals], ['メダル', totals.medals], ['技', totals.skills], ['出撃', totals.sorties], ['冒険', totals.quests]]
+        ...[[pair('倒したテスト', '通ったテスト'), totals.defeats], [pair('ダンジョン', 'タスク'), totals.clears], [pair('結合ゲート', '結合テスト'), totals.gates], [pair('あがり', '完了した章'), totals.goals], [pair('メダル', '一発合格'), totals.medals], [pair('技', '学び'), totals.skills], [pair('出撃', '起動'), totals.sorties], [pair('冒険', 'プロジェクト'), totals.quests]]
           .map(([k, v]) => el('div', {}, el('dt', { text: k }), el('dd', { text: v })))),
       el('div', { class: 'tc-share' },
         el('button', { type: 'button', class: 'mini-btn', 'data-hero': 'card-copy', text: 'カードを画像でコピー' }),
         el('button', { type: 'button', class: 'mini-btn', 'data-hero': 'card-save', text: '画像で保存' })),
-      el('p', { class: 'tc-note', text: '手帳は冒険をまたいで残ります。中身はすべて冒険の書（ハッシュの鎖）から導いたもの。シールのレア度も、そのテストを倒したときの記録のハッシュで決まります。' }));
+      el('p', { class: 'tc-note', text: pair('手帳は冒険をまたいで残ります。中身はすべて冒険の書（ハッシュの鎖）から導いたもの。シールのレア度も、そのテストを倒したときの記録のハッシュで決まります。', '手帳はプロジェクトをまたいで残ります。中身はすべてセーブデータ（ハッシュの鎖）から導いたもの。シールのレア度も、そのテストが通ったときの記録のハッシュで決まります。') }));
 
     const missions = el('section', { class: `tc-card tc-daily${daily.done ? ' done' : ''}` },
-      el('h2', { class: 'tc-h' }, '今日のお題', el('small', { text: daily.date })),
+      el('h2', { class: 'tc-h' }, pair('今日のお題', '今日の目標'), el('small', { text: daily.date })),
       el('ul', { class: 'tc-missions' }, ...daily.missions.map((m) => el('li', { class: m.done ? 'done' : '' },
         el('span', { class: 'tc-check', 'aria-hidden': 'true', text: m.done ? '✔' : '' }),
-        el('span', { class: 'tc-mtext', text: m.text }),
+        el('span', { class: 'tc-mtext', text: said(m, 'text') }),
         el('span', { class: 'tc-mnum', text: `${m.now}/${m.goal}` })))),
-      el('p', { class: 'tc-reward' }, daily.done ? 'ぜんぶこなした！ お題のランタンを手に入れた' : `3つこなすと「${daily.reward}」のシールと経験値 ${daily.xp}。お題は毎日かわります。`));
+      el('p', { class: 'tc-reward' }, daily.done ? pair('ぜんぶこなした！ お題のランタンを手に入れた', 'ぜんぶ達成！ 「今日の目標」のシールを手に入れた') : pair(`3つこなすと「${daily.reward}」のシールと経験値 ${daily.xp}。お題は毎日かわります。`, `3つ達成すると「${said(daily, 'reward')}」のシールと XP ${daily.xp}。目標は毎日かわります。`)));
 
     const stampCard = renderStampCard(streak, journal.calendar, journal.today);
     const week = renderWeek(journal.calendar, journal.today);
     const best = renderRecords(journal.records);
     const themes = journal.themes ? el('section', { class: 'tc-card tc-themes' },
-      el('h2', { class: 'tc-h' }, 'ノートの模様', el('small', { text: '勇者ランクで増える' })),
+      el('h2', { class: 'tc-h' }, 'ノートの模様', el('small', { text: pair('勇者ランクで増える', 'ランクで増える') })),
       el('div', { class: 'th-grid' }, ...journal.themes.map((t) => el('button', {
         type: 'button', class: `th-swatch${t.id === journal.theme ? ' on' : ''}${t.unlocked ? '' : ' locked'}`, 'data-hero': 'theme', 'data-id': t.id, 'data-notebook': t.id, disabled: !t.unlocked,
-        title: t.unlocked ? t.name : `勇者ランク ${t.rank} で使える`,
+        title: t.unlocked ? t.name : `${pair('勇者ランク', 'ランク')} ${t.rank} で使える`,
       }, el('span', { class: 'th-paper', 'aria-hidden': 'true' }), el('b', { text: t.name }), el('small', { text: t.unlocked ? (t.id === journal.theme ? '使っている' : '使う') : `ランク ${t.rank}` }))))) : null;
     const mvp = journal.current?.mvp?.length ? el('section', { class: 'tc-card tc-mvp' },
-      el('h2', { class: 'tc-h' }, '今週のMVP', el('small', { text: 'この7日・この冒険' })),
-      el('ol', {}, ...journal.current.mvp.slice(0, 5).map((m, i) => el('li', { class: i === 0 ? 'top' : '' }, el('span', { class: 'mvp-rank', text: i === 0 ? '👑' : `${i + 1}` }), el('b', { text: m.name }), el('span', { text: `${m.n}体` }))))) : null;
+      el('h2', { class: 'tc-h' }, '今週のMVP', el('small', { text: pair('この7日・この冒険', 'この7日・このプロジェクト') })),
+      el('ol', {}, ...journal.current.mvp.slice(0, 5).map((m, i) => el('li', { class: i === 0 ? 'top' : '' }, el('span', { class: 'mvp-rank', text: i === 0 ? '👑' : `${i + 1}` }), el('b', { text: m.name }), el('span', { text: `${m.n}${pair('体', '件')}` }))))) : null;
 
     const albumSec = el('section', { class: 'tc-card tc-album' },
       el('h2', { class: 'tc-h' }, 'シール帳', el('small', { text: `${album.owned}/${album.total}` })),
       el('div', { class: 'tc-album-head' },
         el('div', { class: 'bt-bar' }, el('i', { style: `width:${Math.round((album.owned / album.total) * 100)}%` })),
         el('button', { type: 'button', class: 'act tc-open', 'data-hero': 'bags', disabled: bags.count === 0, text: bags.count ? `シール袋をあける（${bags.count}）` : 'シール袋はありません' })),
-      el('p', { class: 'tc-note', text: `シールを押すと、どのテストを倒して手に入れたかが出ます。「ノートに貼る」で、この冒険のノートの好きな所に貼れます（貼ったシール ${journal.current?.pasted?.length ?? 0}枚。貼ったシールを押すと、はがせます）。` }),
+      el('p', { class: 'tc-note', text: pair(`シールを押すと、どのテストを倒して手に入れたかが出ます。「ノートに貼る」で、この冒険のノートの好きな所に貼れます（貼ったシール ${journal.current?.pasted?.length ?? 0}枚。貼ったシールを押すと、はがせます）。`, `シールを押すと、どのテストで手に入れたかが出ます。「ノートに貼る」で、このプロジェクトのノートの好きな所に貼れます（貼ったシール ${journal.current?.pasted?.length ?? 0}枚。貼ったシールを押すと、はがせます）。`) }),
       ...albumGroups(album.slots));
 
     const titles = el('section', { class: 'tc-card tc-titles' },
-      el('h2', { class: 'tc-h' }, '称号', el('small', { text: `${done}/${achievements.length}` })),
+      el('h2', { class: 'tc-h' }, pair('称号', '実績'), el('small', { text: `${done}/${achievements.length}` })),
       el('ul', { class: 'tc-ach' }, ...[...achievements].sort((a, b) => Number(b.done) - Number(a.done) || b.now / b.goal - a.now / a.goal).map((a) => el('li', { class: a.done ? 'done' : '', title: a.at ? `${localTime(a.at)} に手に入れた` : '' },
         el('span', { class: 'ach-medal', 'aria-hidden': 'true', text: a.done ? '★' : '☆' }),
-        el('span', { class: 'ach-body' }, el('b', { text: a.name }), el('small', { text: a.desc }),
+        el('span', { class: 'ach-body' }, el('b', { text: said(a, 'name') }), el('small', { text: said(a, 'desc') }),
           a.done ? null : el('span', { class: 'ach-bar' }, el('i', { style: `width:${Math.round((a.now / a.goal) * 100)}%` }), el('em', { text: `${a.now}/${a.goal}` }))),
-        a.done ? el('button', { type: 'button', class: `ach-wear${journal.epithet?.id === a.id ? ' on' : ''}`, 'data-hero': 'title', 'data-id': journal.epithet?.id === a.id ? '' : a.id, text: journal.epithet?.id === a.id ? '名乗っている' : '名乗る' }) : null))));
+        a.done ? el('button', { type: 'button', class: `ach-wear${journal.epithet?.id === a.id ? ' on' : ''}`, 'data-hero': 'title', 'data-id': journal.epithet?.id === a.id ? '' : a.id, text: journal.epithet?.id === a.id ? pair('名乗っている', '表示中') : pair('名乗る', '表示する') }) : null))));
 
     const quests = journal.quests.length > 1 ? el('section', { class: 'tc-card tc-quests' },
-      el('h2', { class: 'tc-h' }, 'これまでの冒険', el('small', { text: `${journal.quests.length}` })),
-      el('ul', {}, ...journal.quests.map((q) => el('li', {}, el('b', { text: q.title }), el('small', { text: `${q.name}・テスト ${q.defeats}${q.finished ? '・あがり' : ''}` }))))) : null;
+      el('h2', { class: 'tc-h' }, pair('これまでの冒険', 'これまでのプロジェクト'), el('small', { text: `${journal.quests.length}` })),
+      el('ul', {}, ...journal.quests.map((q) => el('li', {}, el('b', { text: q.title }), el('small', { text: `${q.name}・テスト ${q.defeats}${q.finished ? pair('・あがり', '・完了') : ''}` }))))) : null;
 
     const guide = el('details', { class: 'tc-guide', open: journal.totals.opened === 0 ? true : null },
-      el('summary', { text: '手帳の遊び方' }),
+      el('summary', { text: pair('手帳の遊び方', '手帳の使い方') }),
       el('ol', {},
-        el('li', { text: 'テストが1件通るたびに、シール袋が1つ落ちます（エージェントが倒しても、あなたが手で倒しても）。' }),
+        el('li', { text: pair('テストが1件通るたびに、シール袋が1つ落ちます（エージェントが倒しても、あなたが手で倒しても）。', 'テストが1件通るたびに、シール袋が1つ増えます（エージェントが通しても、あなたが手で通しても）。') }),
         el('li', { text: '「シール袋をあける」で開けると、シール帳に貼られます。キラ・ホロ・金は記録のハッシュで決まっています。' }),
-        el('li', { text: '同じシールが6枚たまったら、シールを押して「交換所」へ。1列そろえると経験値 +200。' }),
+        el('li', { text: `同じシールが6枚たまったら、シールを押して「交換所」へ。1列そろえると${pair('経験値', ' XP')} +200。` }),
         el('li', { text: 'シールを押して「ノートに貼る」で、盤面の好きな所に貼れます。' }),
-        el('li', { text: '毎日1件でも倒すとスタンプカードにハンコ。今日のお題を3つこなすと、お題のランタン。' })));
+        el('li', { text: pair('毎日1件でも倒すとスタンプカードにハンコ。今日のお題を3つこなすと、お題のランタン。', '毎日1件でも通すと活動カレンダーに記録。今日の目標を3つ達成すると、シールが1枚。') })));
     root.replaceChildren(guide, el('div', { class: 'tc-cols' },
       el('div', { class: 'tc-col' }, profile, missions, week, mvp, best, themes, stampCard, quests),
       el('div', { class: 'tc-col wide' }, albumSec, titles)));
@@ -388,10 +389,10 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const beat = r.day.before && r.day.today > r.day.before.n;
     return el('section', { class: 'tc-card tc-records' },
       el('h2', { class: 'tc-h' }, '自己ベスト'),
-      row('1日に倒したテスト', r.day.best ? `${r.day.best.n}件` : '—', r.day.best ? `${md(r.day.best.date)}${beat ? '（今日、更新！）' : `・今日 ${r.day.today}件`}` : '', beat),
-      row('1回の判定でまとめて', r.combo.best ? `${r.combo.best}体` : '—', r.combo.at ? md(localYmd(r.combo.at)) : ''),
-      row('続けた日数', `${r.streak}日`, 'スタンプカード'),
-      row('1日のメダル', `${r.medals}枚`, '一発で抜けたダンジョン'));
+      row(pair('1日に倒したテスト', '1日に通したテスト'), r.day.best ? `${r.day.best.n}件` : '—', r.day.best ? `${md(r.day.best.date)}${beat ? '（今日、更新！）' : `・今日 ${r.day.today}件`}` : '', beat),
+      row('1回の判定でまとめて', r.combo.best ? `${r.combo.best}${pair('体', '件')}` : '—', r.combo.at ? md(localYmd(r.combo.at)) : ''),
+      row('続けた日数', `${r.streak}日`, pair('スタンプカード', '活動カレンダー')),
+      row(pair('1日のメダル', '1日の一発合格'), `${r.medals}${pair('枚', '件')}`, pair('一発で抜けたダンジョン', '一発で完了したタスク')));
   }
 
   /** 今週のふりかえり: この7日に倒したテストの数（棒）と、その前の7日とくらべて */
@@ -411,8 +412,8 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
           el('span', { class: 'wk-n', text: d.n || '' }),
           el('i', { style: `height:${Math.round((d.n / max) * 100)}%` }),
           el('small', { text: youbi(d.date) })))),
-      el('p', { class: 'tc-note', text: sum === 0 ? 'この7日はまだ。1件倒すと、スタンプカードにハンコが押せます。'
-        : `その前の7日（${prev}件）より ${diff >= 0 ? `+${diff}` : diff}件。いちばん倒したのは ${Number(best.date.slice(5, 7))}/${Number(best.date.slice(8))}（${best.n}件）。` }));
+      el('p', { class: 'tc-note', text: sum === 0 ? pair('この7日はまだ。1件倒すと、スタンプカードにハンコが押せます。', 'この7日はまだ。1件通すと、活動カレンダーに記録されます。')
+        : `その前の7日（${prev}件）より ${diff >= 0 ? `+${diff}` : diff}件。${pair('いちばん倒したのは', 'いちばん通したのは')} ${Number(best.date.slice(5, 7))}/${Number(best.date.slice(8))}（${best.n}件）。` }));
   }
 
   /** ラジオ体操のスタンプカード（この5週）。テストを倒した日にハンコ */
@@ -424,15 +425,15 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     for (let i = 0; i < pad; i++) cells.push(el('span', { class: 'sc-cell blank' }));
     for (const d of days) {
       const dd = Number(d.date.slice(8));
-      cells.push(el('span', { class: `sc-cell${d.played ? ' stamped' : ''}${d.date === today ? ' today' : ''}${d.daily ? ' daily' : ''}`, title: `${d.date}${d.played ? `・テスト ${d.n}` : ''}${d.daily ? '・お題クリア' : ''}` },
+      cells.push(el('span', { class: `sc-cell${d.played ? ' stamped' : ''}${d.date === today ? ' today' : ''}${d.daily ? ' daily' : ''}`, title: `${d.date}${d.played ? `・テスト ${d.n}` : ''}${d.daily ? pair('・お題クリア', '・目標達成') : ''}` },
         el('small', { text: dd === 1 || d === days[0] ? `${Number(d.date.slice(5, 7))}/${dd}` : dd }),
         d.played ? el('i', { class: 'sc-hanko', 'aria-hidden': 'true', text: d.daily ? '花' : '済' }) : null));
     }
     return el('section', { class: 'tc-card tc-stamps' },
-      el('h2', { class: 'tc-h' }, 'スタンプカード', el('small', { text: streak.today ? `${streak.current}日つづけて` : streak.current ? `${streak.current}日つづけて（今日はまだ）` : '今日から' })),
+      el('h2', { class: 'tc-h' }, pair('スタンプカード', '活動カレンダー'), el('small', { text: streak.today ? `${streak.current}日つづけて` : streak.current ? `${streak.current}日つづけて（今日はまだ）` : '今日から' })),
       el('div', { class: 'sc-week' }, ...['月', '火', '水', '木', '金', '土', '日'].map((w) => el('span', { text: w }))),
       el('div', { class: 'sc-grid' }, ...cells),
-      el('p', { class: 'tc-note', text: `テストを1件でも倒した日にハンコ。お題をこなした日は花まる。いちばん長く続いたのは ${streak.best}日。3・7・14・30日で「皆勤の鐘」のシール。` }));
+      el('p', { class: 'tc-note', text: pair(`テストを1件でも倒した日にハンコ。お題をこなした日は花まる。いちばん長く続いたのは ${streak.best}日。3・7・14・30日で「皆勤の鐘」のシール。`, `テストを1件でも通した日に記録。目標を達成した日は花まる。いちばん長く続いたのは ${streak.best}日。3・7・14・30日で「連続記録」のシール。`) }));
   }
 
   function groupHead(label, id) {
@@ -443,10 +444,10 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
   function albumGroups(slots) {
     const slotButton = (s) => {
       if (!s.count) {
-        return el('button', { type: 'button', class: `al-slot empty r-${s.rarity}`, 'data-slot': s.slot, title: `${s.name}（${s.rarity_ja}）: ${s.how}` },
+        return el('button', { type: 'button', class: `al-slot empty r-${s.rarity}`, 'data-slot': s.slot, title: `${said(s, 'name')}（${s.rarity_ja}）: ${said(s, 'how')}` },
           svgUse(symbolOf(s), 'al-ghost'), el('span', { class: 'al-q', text: '？' }), el('small', { text: s.rarity_ja }));
       }
-      const b = el('button', { type: 'button', class: `al-slot${s.trade?.can ? ' tradable' : ''}`, 'data-slot': s.slot, title: `${s.name}（${s.rarity_ja}）×${s.count}${s.trade?.can ? '・交換所で換えられる' : ''}` });
+      const b = el('button', { type: 'button', class: `al-slot${s.trade?.can ? ' tradable' : ''}`, 'data-slot': s.slot, title: `${said(s, 'name')}（${s.rarity_ja}）×${s.count}${s.trade?.can ? '・交換所で換えられる' : ''}` });
       b.append(stickerEl(s, { count: s.count }));
       if (s.trade?.can) b.append(el('span', { class: 'al-trade', text: '交換' }));
       return b;
@@ -459,12 +460,12 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
       ...species.flatMap((sp) => {
         const row = monsters.filter((s) => s.species === sp);
         const owned = row.filter((s) => s.count).length;
-        return [el('span', { class: `al-rowhead${owned === 4 ? ' comp' : ''}` }, el('b', { text: row[0].name }), el('small', { text: `${owned}/4` }), owned === 4 ? el('i', { class: 'al-comp', text: 'コンプ' }) : null), ...row.map(slotButton)];
+        return [el('span', { class: `al-rowhead${owned === 4 ? ' comp' : ''}` }, el('b', { text: said(row[0], 'name') }), el('small', { text: `${owned}/4` }), owned === 4 ? el('i', { class: 'al-comp', text: 'コンプ' }) : null), ...row.map(slotButton)];
       }));
     return [
-      el('div', { class: 'al-group' }, el('h3', { text: `道のモンスター（テスト1件。種類はテストの名前で決まる）。1列そろえると経験値 +${journal.album.set_xp}` }), table),
-      el('div', { class: 'al-group' }, groupHead('ボス（結合ゲート・魔王の城）', 'boss'), el('div', { class: 'al-grid' }, ...slots.filter((s) => s.kind === 'boss' || s.kind === 'maou').map(slotButton))),
-      el('div', { class: 'al-group' }, groupHead('出来事（開発の節目）', 'items'), el('div', { class: 'al-grid' }, ...slots.filter((s) => s.kind === 'item').map(slotButton))),
+      el('div', { class: 'al-group' }, el('h3', { text: pair(`道のモンスター（テスト1件。種類はテストの名前で決まる）。1列そろえると経験値 +${journal.album.set_xp}`, `テスト（1件1枚。色はテストの名前で決まる）。1列そろえると XP +${journal.album.set_xp}`) }), table),
+      el('div', { class: 'al-group' }, groupHead(pair('ボス（結合ゲート・魔王の城）', '結合テスト・最終結合テスト'), 'boss'), el('div', { class: 'al-grid' }, ...slots.filter((s) => s.kind === 'boss' || s.kind === 'maou').map(slotButton))),
+      el('div', { class: 'al-group' }, groupHead(pair('出来事（開発の節目）', '開発の節目'), 'items'), el('div', { class: 'al-grid' }, ...slots.filter((s) => s.kind === 'item').map(slotButton))),
     ];
   }
 
@@ -472,11 +473,11 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const s = journal?.album.slots.find((x) => x.slot === slotId);
     if (!s) return;
     const pop = $('#slot-pop');
-    const body = [el('h3', { text: `${s.name}（${s.rarity_ja}）` }), s.lore ? el('p', { class: 'sp-lore', text: s.lore }) : null, el('p', { class: 'sp-how', text: `手に入れ方: ${s.how}` })].filter(Boolean);
+    const body = [el('h3', { text: `${said(s, 'name')}（${s.rarity_ja}）` }), said(s, 'lore') ? el('p', { class: 'sp-lore', text: said(s, 'lore') }) : null, el('p', { class: 'sp-how', text: `手に入れ方: ${said(s, 'how')}` })].filter(Boolean);
     if (s.count) {
       body.unshift(stickerEl(s, { big: true }));
       body.push(el('p', { text: `持っている数: ${s.count}` }));
-      const line = (label, f) => el('p', { class: 'sp-src' }, el('b', { text: label }), ` ${f.what}${f.where ? ` — ${f.where}` : ''}${f.who ? `（${f.who}）` : ''}`, el('small', { text: ` ${localTime(f.ts)}${f.seq !== null ? `・seq ${f.seq}` : ''}${f.title ? `・${f.title}` : ''}` }));
+      const line = (label, f) => el('p', { class: 'sp-src' }, el('b', { text: label }), ` ${said(f, 'what')}${f.where ? ` — ${f.where}` : ''}${f.who ? `（${f.who}）` : ''}`, el('small', { text: ` ${localTime(f.ts)}${f.seq !== null ? `・seq ${f.seq}` : ''}${f.title ? `・${f.title}` : ''}` }));
       body.push(line('はじめて:', s.first));
       if (s.count > 1) body.push(line('いちばん新しい:', s.last));
       if (s.trade) {
@@ -565,7 +566,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
       const wrap = el('div', { class: 'reveal-card', style: `--d:${reduced() ? 0 : i * (show.length > 10 ? 70 : 160)}ms` });
       wrap.append(stickerEl(f, { fresh: f.new, big: show.length === 1 }));
       if (show.length === 1) {
-        wrap.append(el('p', { class: 'rv-what', text: f.what }));
+        wrap.append(el('p', { class: 'rv-what', text: said(f, 'what') }));
         wrap.append(el('p', { class: 'rv-where', text: [f.where, f.who, f.title].filter(Boolean).join(' ・ ') }));
         wrap.append(el('p', { class: 'rv-when', text: `${localTime(f.ts)}${f.seq !== null && f.seq !== undefined ? `・seq ${f.seq}` : ''}` }));
       }
@@ -620,15 +621,15 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const card = $('#welcome');
     const stat = (label, n) => (n ? el('div', {}, el('b', { text: n }), el('small', { text: label })) : null);
     card.replaceChildren(...[
-      el('p', { class: 'wl-kicker', text: since.first ? 'ようこそ、勇者' : 'おかえりなさい' }),
-      el('h2', { text: since.first ? 'この冒険の、これまでの戦果' : '留守のあいだの戦果' }),
+      el('p', { class: 'wl-kicker', text: since.first ? pair('ようこそ、勇者', 'ようこそ') : 'おかえりなさい' }),
+      el('h2', { text: since.first ? pair('この冒険の、これまでの戦果', 'このプロジェクトの、これまでの進み') : pair('留守のあいだの戦果', '前回から進んだこと') }),
       since.from ? el('p', { class: 'wl-from', text: `前に見たのは ${localTime(since.from)}` }) : null,
-      el('div', { class: 'wl-stats' }, stat('テスト撃破', since.defeats), stat('ダンジョン', since.clears), stat('メダル', since.medals), stat('結合ゲート', since.gates), stat('あがり', since.goals), stat('経験値', since.xp ? `+${since.xp}` : 0)),
-      since.by.length ? el('p', { class: 'wl-by' }, 'よく戦った: ', ...since.by.slice(0, 4).map((b, i) => el('span', {}, i ? '、' : '', el('b', { text: b.name }), ` ${b.n}体`))) : null,
-      rankUp ? el('p', { class: 'wl-rank' }, `勇者ランクが ${journal.rank_seen} → `, el('b', { text: journal.rank.level }), `「${journal.rank.title}」に上がった！`) : null,
-      freshAch.length ? el('div', { class: 'wl-ach' }, el('small', { text: '新しい称号' }), ...freshAch.slice(0, 6).map((a) => el('span', { class: 'chip-ach', text: `★ ${a.name}` })), freshAch.length > 6 ? el('small', { text: `ほか ${freshAch.length - 6}` }) : null) : null,
+      el('div', { class: 'wl-stats' }, stat(pair('テスト撃破', '通ったテスト'), since.defeats), stat(pair('ダンジョン', 'タスク'), since.clears), stat(pair('メダル', '一発合格'), since.medals), stat(pair('結合ゲート', '結合テスト'), since.gates), stat(pair('あがり', '完了した章'), since.goals), stat(pair('経験値', 'XP'), since.xp ? `+${since.xp}` : 0)),
+      since.by.length ? el('p', { class: 'wl-by' }, pair('よく戦った: ', 'よく進めた: '), ...since.by.slice(0, 4).map((b, i) => el('span', {}, i ? '、' : '', el('b', { text: b.name }), ` ${b.n}${pair('体', '件')}`))) : null,
+      rankUp ? el('p', { class: 'wl-rank' }, `${pair('勇者ランク', 'ランク')}が ${journal.rank_seen} → `, el('b', { text: journal.rank.level }), `「${said(journal.rank, 'title')}」に上がった！`) : null,
+      freshAch.length ? el('div', { class: 'wl-ach' }, el('small', { text: pair('新しい称号', '新しい実績') }), ...freshAch.slice(0, 6).map((a) => el('span', { class: 'chip-ach', text: `★ ${said(a, 'name')}` })), freshAch.length > 6 ? el('small', { text: `ほか ${freshAch.length - 6}` }) : null) : null,
       el('div', { class: 'wl-actions' },
-        sound.on ? null : el('button', { type: 'button', class: 'mini-btn wl-sound', 'data-hero': 'sound-on', title: '撃破・シール・称号の効果音（見出しの ♪ でも切りかえられます）', text: '♪ 音を出す' }),
+        sound.on ? null : el('button', { type: 'button', class: 'mini-btn wl-sound', 'data-hero': 'sound-on', title: pair('撃破・シール・称号の効果音（見出しの ♪ でも切りかえられます）', 'テスト通過・シール・実績の効果音（見出しの ♪ でも切りかえられます）'), text: '♪ 音を出す' }),
         journal.bags.count ? el('button', { type: 'button', class: 'act wl-open', 'data-hero': 'welcome-bags', text: `シール袋をあける（${journal.bags.count}）` }) : null,
         el('button', { type: 'button', class: 'mini-btn', 'data-hero': 'welcome-close', text: '盤面を見る' })),
     ].filter(Boolean));
@@ -660,8 +661,8 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     setTimeout(() => item.remove(), 5400);
   }
   function celebrateAchievements(list) {
-    list.slice(0, 4).forEach((a, i) => setTimeout(() => fanfare('ach', `称号「${a.name}」`, a.desc, 'achieve'), i * 700));
-    if (list.length > 4) setTimeout(() => fanfare('ach', `ほかに称号を ${list.length - 4} つ`, '手帳の「称号」で見られます', null), 4 * 700);
+    list.slice(0, 4).forEach((a, i) => setTimeout(() => fanfare('ach', `${pair('称号', '実績')}「${said(a, 'name')}」`, said(a, 'desc'), 'achieve'), i * 700));
+    if (list.length > 4) setTimeout(() => fanfare('ach', `ほかに${pair('称号', '実績')}を ${list.length - 4} つ`, `手帳の「${pair('称号', '実績')}」で見られます`, null), 4 * 700);
     for (const a of list) shownAch.add(a.id);
     if (list.length) attention();
   }
@@ -671,7 +672,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     celebrateAchievements(b.achievements.filter((x) => x.done && !was.has(x.id) && !shownAch.has(x.id)));
     const setWas = new Set((a.album.sets ?? []).filter((x) => x.done).map((x) => x.id));
     for (const set of (b.album.sets ?? []).filter((x) => x.done && !setWas.has(x.id))) {
-      fanfare('ach', `シール帳「${set.name}」の列、コンプリート！`, `経験値 +${b.album.set_xp}`, 'gold');
+      fanfare('ach', `シール帳「${said(set, 'name')}」の列、コンプリート！`, `${pair('経験値', 'XP')} +${b.album.set_xp}`, 'gold');
     }
     if (b.rank.level > a.rank.level) {
       rankBanner(a.rank.level, b.rank);
@@ -683,18 +684,18 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
   }
   function celebrateDiff(a, b) {
     celebrateCollection(a, b);
-    if (b.daily.done && !a.daily.done && b.daily.date === a.daily.date) fanfare('daily', '今日のお題をぜんぶこなした！', `「${b.daily.reward}」のシールと経験値 ${b.daily.xp}`, 'achieve');
+    if (b.daily.done && !a.daily.done && b.daily.date === a.daily.date) fanfare('daily', pair('今日のお題をぜんぶこなした！', '今日の目標をぜんぶ達成！'), `「${said(b.daily, 'reward')}」のシールと${pair('経験値', ' XP')} ${b.daily.xp}`, 'achieve');
     // 自己ベスト更新（前の日までの記録を、今日はじめて超えた瞬間）
     const before = b.records?.day.before;
     if (before && a.records && b.records.day.today > before.n && a.records.day.today <= before.n) {
-      fanfare('rank', '自己ベスト更新！', `1日に倒したテスト ${b.records.day.today}件（これまで ${before.n}件）`, 'fanfare');
+      fanfare('rank', '自己ベスト更新！', `${pair('1日に倒したテスト', '1日に通したテスト')} ${b.records.day.today}件（これまで ${before.n}件）`, 'fanfare');
       attention();
     }
-    if (a.records && a.records.combo.best > 0 && b.records.combo.best >= 5 && b.records.combo.best > a.records.combo.best) fanfare('rank', `まとめ斬りの記録更新！ ${b.records.combo.best}体`, `これまで ${a.records.combo.best}体`, 'achieve');
+    if (a.records && a.records.combo.best > 0 && b.records.combo.best >= 5 && b.records.combo.best > a.records.combo.best) fanfare('rank', pair(`まとめ斬りの記録更新！ ${b.records.combo.best}体`, `一括通過の記録更新！ ${b.records.combo.best}件`), `これまで ${a.records.combo.best}${pair('体', '件')}`, 'achieve');
     const mvpA = a.current?.mvp?.[0];
     const mvpB = b.current?.mvp?.[0];
-    if (mvpA && mvpB && a.current.key === b.current.key && mvpA.id !== mvpB.id) fanfare('rank', `MVP交代！ ${mvpB.name}`, `今週 ${mvpB.n}体（${mvpA.name} ${b.current.mvp.find((m) => m.id === mvpA.id)?.n ?? mvpA.n}体を追いこした）`, 'achieve');
-    if (b.streak.today && !a.streak.today) fanfare('stamp', b.streak.current >= 2 ? `スタンプカードにハンコ（${b.streak.current}日つづけて）` : 'スタンプカードにハンコ！', b.streak.current >= 2 ? 'あしたも1件倒せば、記録がのびる' : 'あしたも1件倒せば、2日つづけて', 'drop');
+    if (mvpA && mvpB && a.current.key === b.current.key && mvpA.id !== mvpB.id) fanfare('rank', `MVP交代！ ${mvpB.name}`, `今週 ${mvpB.n}${pair('体', '件')}（${mvpA.name} ${b.current.mvp.find((m) => m.id === mvpA.id)?.n ?? mvpA.n}${pair('体', '件')}を追いこした）`, 'achieve');
+    if (b.streak.today && !a.streak.today) fanfare('stamp', b.streak.current >= 2 ? pair(`スタンプカードにハンコ（${b.streak.current}日つづけて）`, `活動を記録（${b.streak.current}日連続）`) : pair('スタンプカードにハンコ！', '今日の活動を記録！'), b.streak.current >= 2 ? pair('あしたも1件倒せば、記録がのびる', 'あしたも1件通せば、連続記録がのびる') : pair('あしたも1件倒せば、2日つづけて', 'あしたも1件通せば、2日連続'), 'drop');
     const added = b.bags.count - a.bags.count;
     if (added > 0) {
       const fresh = (b.bags.latest ?? []).filter((f) => !prevBagIds.has(f.id)).slice(-12);
@@ -707,7 +708,8 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
   }
   /** ボス戦のカットインが出ていれば、消えるまで待ってから（大きな知らせは重ねない） */
   function whenStageFree(fn, tries = 40) {
-    if ($('#boss-cut')?.hidden === false && tries > 0) return void setTimeout(() => whenStageFree(fn, tries - 1), 300);
+    // 進軍の戦場（§80.11）が終わるまでも待つ
+    if (($('#boss-cut')?.hidden === false || document.body.classList.contains('march-battle')) && tries > 0) return void setTimeout(() => whenStageFree(fn, tries - 1), 300);
     fn();
   }
   function rankBanner(from, rank) {
@@ -716,7 +718,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
   }
   function showRank(from, rank) {
     const el2 = $('#rank-up');
-    el2.replaceChildren(el('small', { text: '勇者ランク アップ！' }), el('b', { text: `${from} → ${rank.level}` }), el('span', { text: `「${rank.title}」` }));
+    el2.replaceChildren(el('small', { text: pair('勇者ランク アップ！', 'ランク アップ！') }), el('b', { text: `${from} → ${rank.level}` }), el('span', { text: `「${said(rank, 'title')}」` }));
     el2.hidden = false;
     el2.classList.remove('show');
     void el2.offsetWidth;
@@ -772,7 +774,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
       const sym = p.kind === 'item' ? `hs-${p.item}` : `mon-${p.species}`;
       const tint = TINT[p.species] ?? '#fff6c7';
       const face = p.rarity === 'gold' ? 'url(#ps-gold)' : p.rarity === 'holo' ? 'url(#ps-holo)' : tint;
-      const label = `${p.name}（${{ normal: 'ノーマル', kira: 'キラ', holo: 'ホロ', gold: '金' }[p.rarity]}）のシール`;
+      const label = `${said(p, 'name')}（${{ normal: 'ノーマル', kira: 'キラ', holo: 'ホロ', gold: '金' }[p.rarity]}）のシール`;
       out += `<g class="pasted r-${escAttr(p.rarity)}" data-index="${p.index}" transform="translate(${cx} ${cy}) rotate(${Number(p.r) || 0})" role="img" aria-label="${escAttr(label)}"><title>${escAttr(label)}（押すとはがせる）</title>`
         + `<rect class="ps-edge" x="${-h}" y="${-h}" width="${S}" height="${S}" rx="10"/>`
         + `<rect class="ps-face" x="${-h + 4}" y="${-h + 4}" width="${S - 8}" height="${S - 8}" rx="7" fill="${face}"/>`
@@ -797,7 +799,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     ghost.hidden = false;
     ghost.style.setProperty('--r', `${pasting.r}deg`);
     const hint = $('#paste-hint');
-    hint.textContent = `「${s.name}（${s.rarity_ja}）」を、ノートの好きな所を押して貼る（Esc でやめる）`;
+    hint.textContent = `「${said(s, 'name')}（${s.rarity_ja}）」を、ノートの好きな所を押して貼る（Esc でやめる）`;
     hint.hidden = false;
   }
   function endPaste() {
@@ -842,7 +844,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const menu = $('#peel-menu');
     const p = journal?.current?.pasted?.[Number(g.dataset.index)];
     if (!p) return;
-    menu.replaceChildren(el('span', { text: `${p.name}のシール` }),
+    menu.replaceChildren(el('span', { text: `${said(p, 'name')}のシール` }),
       el('button', { type: 'button', class: 'mini-btn', 'data-hero': 'peel', 'data-index': p.index, text: 'はがす' }),
       el('button', { type: 'button', class: 'mini-btn plain', 'data-hero': 'peel-cancel', text: 'そのまま' }));
     menu.style.left = `${Math.min(e.clientX, innerWidth - 220)}px`;
@@ -882,16 +884,16 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     const ids = new Set(owned.map(symbolOf));
     const symbols = [...document.querySelectorAll('#hero-defs symbol')].filter((sym) => ids.has(sym.id.slice(3))).map((sym) => sym.outerHTML).join('');
     const rarityStroke = { normal: '#c7cbd6', kira: '#38bdf8', holo: '#a78bfa', gold: '#b8860b' };
-    const stats = [['倒したテスト', t.defeats], ['ダンジョン', t.clears], ['結合ゲート', t.gates], ['あがり', t.goals], ['メダル', t.medals], ['続けた日数', j.streak.best]];
+    const stats = [[pair('倒したテスト', '通ったテスト'), t.defeats], [pair('ダンジョン', 'タスク'), t.clears], [pair('結合ゲート', '結合テスト'), t.gates], [pair('あがり', '完了した章'), t.goals], [pair('メダル', '一発合格'), t.medals], ['続けた日数', j.streak.best]];
     const font = `'Hiragino Maru Gothic ProN','Klee One','Yu Gothic',sans-serif`;
     let out = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><defs>${symbols}<pattern id="g" width="20" height="20" patternUnits="userSpaceOnUse"><path d="M20 0H0V20" fill="none" stroke="#a6d2e4" stroke-width="1"/></pattern></defs>`;
     out += `<rect width="${W}" height="${H}" fill="#fdfaf0"/><rect width="${W}" height="${H}" fill="url(#g)"/><rect x="18" y="18" width="${W - 36}" height="${H - 36}" fill="none" stroke="#1d2b5c" stroke-width="4" rx="18"/>`;
-    out += `<text x="60" y="92" font-family="${font}" font-size="40" font-weight="700" fill="#1d2b5c">GridHub 勇者の手帳</text>`;
+    out += `<text x="60" y="92" font-family="${font}" font-size="40" font-weight="700" fill="#1d2b5c">GridHub ${pair('勇者の手帳', '手帳')}</text>`;
     out += `<text x="${W - 60}" y="92" text-anchor="end" font-family="${font}" font-size="22" fill="#45517a">${escAttr(j.today)}</text>`;
     out += `<circle cx="150" cy="230" r="86" fill="#1d2b5c" stroke="#ffe45c" stroke-width="8"/><text x="150" y="208" text-anchor="middle" font-family="${font}" font-size="22" fill="#fff">ランク</text><text x="150" y="268" text-anchor="middle" font-family="${font}" font-size="72" font-weight="700" fill="#ffe45c">${j.rank.level}</text>`;
-    out += `<text x="270" y="210" font-family="${font}" font-size="52" font-weight="700" fill="#1d2b5c">${escAttr(j.rank.title)}</text>`;
-    if (j.epithet) out += `<text x="272" y="258" font-family="${font}" font-size="30" font-weight="700" fill="#d94a3a">「${escAttr(j.epithet.name)}」</text>`;
-    out += `<text x="272" y="300" font-family="${font}" font-size="22" fill="#45517a">経験値 ${j.rank.xp}・称号 ${j.achievements.filter((a) => a.done).length}/${j.achievements.length}・シール帳 ${j.album.owned}/${j.album.total}</text>`;
+    out += `<text x="270" y="210" font-family="${font}" font-size="52" font-weight="700" fill="#1d2b5c">${escAttr(said(j.rank, 'title'))}</text>`;
+    if (j.epithet) out += `<text x="272" y="258" font-family="${font}" font-size="30" font-weight="700" fill="#d94a3a">「${escAttr(said(j.epithet, 'name'))}」</text>`;
+    out += `<text x="272" y="300" font-family="${font}" font-size="22" fill="#45517a">${pair('経験値', 'XP')} ${j.rank.xp}・${pair('称号', '実績')} ${j.achievements.filter((a) => a.done).length}/${j.achievements.length}・シール帳 ${j.album.owned}/${j.album.total}</text>`;
     stats.forEach(([k, v], i) => {
       const x = 60 + i * 183;
       out += `<rect x="${x}" y="350" width="168" height="104" rx="12" fill="#fffefa" stroke="#1d2b5c" stroke-width="2"/><text x="${x + 84}" y="414" text-anchor="middle" font-family="${font}" font-size="44" font-weight="700" fill="#d94a3a">${v}</text><text x="${x + 84}" y="440" text-anchor="middle" font-family="${font}" font-size="18" fill="#45517a">${k}</text>`;
@@ -935,7 +937,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     if (how === 'copy' && blob.type === 'image/png' && navigator.clipboard?.write && window.ClipboardItem) {
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
-        toast({ text: '冒険者カードを画像でコピーしました（チャットや SNS に貼れます）', ok: true });
+        toast({ text: `${pair('冒険者カード', 'プロフィール')}を画像でコピーしました（チャットや SNS に貼れます）`, ok: true });
         return;
       } catch {
         // コピーできなければ保存する
@@ -948,7 +950,7 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 5000);
-    toast({ text: `冒険者カードを保存しました: ${a.download}`, ok: true });
+    toast({ text: `${pair('冒険者カード', 'プロフィール')}を保存しました: ${a.download}`, ok: true });
   }
 
   // ---- 操作 ----
@@ -1051,6 +1053,18 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     /** 盤面が描き直されたら、勇者のカードの「出撃中」を合わせる（手帳は読み直さない） */
     viewChanged() {
       if (available && journal) renderCard();
+    },
+    /** ことばを切り替えた（§79.33）: 手元の手帳のまま、字だけ描き直す */
+    rewords() {
+      if (!available || !journal) return;
+      renderCard();
+      renderEndingLoot();
+      renderMvp();
+      const layer = document.querySelector('#sticker-layer');
+      if (layer) layer.dataset.key = '';
+      renderPasted();
+      if (document.body.dataset.view === 'techo') renderTecho();
+      else $('#techo').dataset.stale = '1';
     },
     /** 手帳のタブを開いた */
     shown() {

@@ -251,6 +251,41 @@ body.drawer-open #rail > #party { display: none; }
 .view.active { display: block; }
 #board { --dock: 54px; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; user-select: none; }
 #board.dragging { cursor: grabbing; }
+/* 進軍（§80）: 盤面の上に重ねる。ノートはその下で描かれたまま */
+#march { position: absolute; inset: 0; z-index: 2; background: #0c0c14; display: flex; flex-direction: column; font-family: "DotGothic16", var(--marker), sans-serif; }
+#march[hidden] { display: none; }
+#march-lanes { position: relative; flex: 1; min-height: 0; overflow: auto; display: flex; align-items: safe center; justify-content: center; }
+#march-cmds { position: absolute; pointer-events: none; }
+.march-cmd { position: absolute; right: 8px; pointer-events: auto; font: inherit; font-size: 15px; min-height: 28px; padding: 3px 12px; color: #fff; background: #2a2060; border: 2px solid #c8c4dc; cursor: pointer; box-shadow: 0 2px 0 #10101c; }
+.march-cmd:hover { background: #3c30a0; }
+.march-cmd:disabled { opacity: 0.5; cursor: wait; }
+.march-cmd.sub { background: #14121f; border-color: #6c6888; color: #c8c4dc; font-size: 13px; }
+.march-cmd[data-kind="watch"] { background: #14121f; border-color: #6c6888; color: #c8c4dc; }
+.march-cmd[data-next="true"] { background: #ffd84a; color: #14121f; border-color: #fff; animation: march-pulse 0.9s steps(2) infinite; }
+.march-cmd[data-kind="battle"] { background: #d8342c; color: #fff; border-color: #ffd84a; }
+@keyframes march-pulse { 50% { transform: translateY(-2px); box-shadow: 0 4px 0 #10101c, 0 0 0 3px rgba(255, 216, 74, 0.45); } }
+@media (prefers-reduced-motion: reduce) { .march-cmd[data-next="true"] { animation: none; } }
+#march-bar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; background: #14121f; border-top: 1px solid #3c3858; }
+.march-btn { font: inherit; font-size: 14px; min-height: 30px; padding: 3px 12px; color: #fff; background: #2a2640; border: 1px solid #6c6888; cursor: pointer; }
+.march-btn.primary { background: #d8342c; border-color: #ffd84a; }
+.march-btn:disabled { background: #1c1a2c; color: #6c6888; border-color: #3c3858; cursor: default; }
+.march-btn.march-bag { margin-left: auto; background: #ff72b4; color: #14121f; border-color: #fff; }
+#march-tactic { display: flex; }
+#march-tactic button { font: inherit; font-size: 13px; min-height: 30px; padding: 3px 8px; background: #1c1a2c; color: #c8c4dc; border: 1px solid #3c3858; cursor: pointer; }
+#march-tactic button + button { border-left: 0; }
+#march-tactic button[aria-pressed="true"] { background: #5ac8ff; color: #14121f; border-color: #5ac8ff; }
+#march-canvas { display: block; flex: none; image-rendering: pixelated; cursor: pointer; }
+.mode-switch { position: absolute; top: 6px; right: 8px; z-index: 4; display: flex; font-family: "DotGothic16", var(--marker), sans-serif; font-size: 14px; }
+.mode-switch button { font: inherit; padding: 4px 10px; min-height: 30px; background: #14121f; color: #c8c4dc; border: 1px solid #3c3858; cursor: pointer; }
+.mode-switch button + button { border-left: 0; }
+.mode-switch button[aria-pressed="true"] { background: #ffd84a; color: #14121f; border-color: #ffd84a; }
+body[data-mode="note"] .mode-switch button { background: var(--card, #fffef5); color: var(--ink, #222); border-color: var(--ink, #222); }
+body[data-mode="note"] .mode-switch button[aria-pressed="true"] { background: var(--ink, #222); color: var(--card, #fffef5); }
+body[data-mode="march"] .your-turn { display: none; }
+/* 進軍では知らせを左下（札の上）に寄せて、戦場を隠さない */
+body[data-mode="march"] #toast { top: auto; bottom: 58px; left: 8px; transform: none; align-items: flex-start; gap: 4px; max-width: 250px; }
+body[data-mode="march"] .toast { font-size: 12px; padding: 4px 8px; }
+body[data-mode="march"] .pager, body[data-mode="march"] .zoom, body[data-mode="march"] .legend, body[data-mode="march"] #boss-meter { display: none; }
 .zoom { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 6px; z-index: 3; align-items: center; }
 .zoom button {
   background: var(--card);
@@ -882,6 +917,7 @@ body.in-lobby #stage { min-height: 70vh; }
 @media print {
   .cover, #party, #side, .zoom, .legend, #toast, #lobby { display: none !important; }
   body, #stage { overflow: visible; background: #fff; }
+  #march, .mode-switch { display: none !important; }
   .desk { display: block; padding: 0; height: auto; }
   #stage { position: static; box-shadow: none; border-radius: 0; height: 100vh; }
   .view { position: static; }

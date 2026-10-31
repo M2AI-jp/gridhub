@@ -5,11 +5,12 @@ import { Pawns } from './pawns.js';
 import { Book } from './book.js';
 import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderMarginDrawer, renderNews, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
-import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit, rewordsCommand } from './command.js';
+import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit, rewordsCommand, quickSortie, partyRunning } from './command.js';
 import { own } from './sketch.js';
 import { initHand } from './hand.js';
 import { initHero, nextBoss } from './hero.js';
 import { showBoss } from './boss.js';
+import { createMarch } from './march.js';
 import { t, initWords, onWords, adoptServerWords, isDev } from './words.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
@@ -79,7 +80,7 @@ async function loadArt(dir, key) {
 let pawns;
 let book;
 let hand = { open() {}, refresh() {}, rewords() {} };
-let hero = { start() {}, changed() {}, shown() {}, attention() {}, viewChanged() {} };
+let hero = { start() {}, changed() {}, shown() {}, attention() {}, viewChanged() {}, rewords() {} };
 function ensureSvg() {
   if (svg.dataset.init) return;
   svg.innerHTML = `${defs(state.monsters)}<g id="world"><g id="paper-layer"></g><g id="scenery-layer"></g><g id="sticker-layer"></g><g id="road-layer"></g><g id="monster-layer"></g><g id="node-layer"></g><g id="margin-layer"></g><g id="head-layer"></g><g id="pawns"></g></g>`;
@@ -218,9 +219,11 @@ function render(input) {
   // 手帳を読み直す: 同じ冒険で記録が進んだとき・別の冒険に切りかわったとき（入口から生まれた冒険・作り直した冒険）
   if (view.head && (!sameQuest || !prev?.head || seqOf(view) > seqOf(prev))) hero.changed();
   hero.viewChanged();
+  march?.update(view, prev);
   renderEnding(view);
   renderBossMeter(view);
   renderYourTurn(view);
+  renderMarchBar();
   window.__masume.ready = true;
   askHandFonts();
   window.__masume.view = view;
@@ -487,8 +490,13 @@ function renderEnding(view) {
     el.hidden = true; // 前に見たエンディング。見出しの「🏁 エンディング」で読み直せる
     return;
   }
-  openEnding();
   if (key) rememberEnding(key, e.seq);
+  // 進軍では、魔王が倒れるところを見せてから開く（§80.11）
+  const whenFree = (tries) => {
+    if (document.body.classList.contains('march-battle') && tries > 0) return void setTimeout(() => whenFree(tries - 1), 200);
+    openEnding();
+  };
+  whenFree(60);
 }
 
 // ---- 演出（新しく書かれた冒険の書を読み上げる） ----
@@ -498,7 +506,8 @@ function announce(prev, view) {
   let tone = null;
   // ボス戦（結合ゲート・魔王の城）はカットインで見せる（いちばん新しい1つ）
   const battle = news.filter((e) => e.type === 'gate_cleared' || e.type === 'gate_failed').at(-1);
-  if (battle && !view.finished) setTimeout(() => showBoss(battle, view, state.sprites, sound), 250);
+  // 進軍では、戦場そのものがボス戦を見せる（§80.11）
+  if (battle && !view.finished && document.body.dataset.mode !== 'march') setTimeout(() => showBoss(battle, view, state.sprites, sound), 250);
   quips(news);
   if (news.some((e) => ['returned', 'gate_cleared', 'gate_failed'].includes(e.type)) || (view.finished && !prev.finished)) hero.attention();
   for (const e of news.slice(-3)) {
@@ -1092,6 +1101,125 @@ function rewords() {
   if ($('#curse')) renderCurse(state.view ?? {}, false);
   hand.rewords();
   rewordsCommand();
+  hero.rewords();
+  march?.rewords();
+  renderMarchBar();
+}
+
+// ---- 進軍とノート（§80）: 同じビューの2つの見方。盤面を開くと進軍。選んだほうをブラウザに覚える ----
+const MODE_KEY = 'gridhub.boardMode';
+let march = null;
+function savedMode() {
+  const q = params.get('mode');
+  if (q === 'march' || q === 'note') return q;
+  try {
+    const s = localStorage.getItem(MODE_KEY);
+    return s === 'note' ? 'note' : 'march';
+  } catch {
+    return 'march';
+  }
+}
+function setMode(mode, { save = true } = {}) {
+  document.body.dataset.mode = mode;
+  document.querySelectorAll('#mode-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  $('#march').hidden = mode !== 'march';
+  march?.show(mode === 'march');
+  window.__masume.mode = mode;
+  if (save) {
+    try {
+      localStorage.setItem(MODE_KEY, mode);
+    } catch {
+      /* 覚えられない所では、開くたびに進軍から */
+    }
+  }
+  if (mode === 'note' && book?.cam) requestAnimationFrame(() => (book.cam.auto ? book.fit() : book.apply()));
+}
+const TACTIC_KEY = 'gridhub.tactic';
+function savedTactic() {
+  try {
+    const s = localStorage.getItem(TACTIC_KEY);
+    return ['careful', 'balanced', 'bold'].includes(s) ? s : 'balanced';
+  } catch {
+    return 'balanced';
+  }
+}
+function setTactic(value) {
+  document.querySelectorAll('#march-tactic button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.tactic === value)));
+  try {
+    localStorage.setItem(TACTIC_KEY, value);
+  } catch {
+    /* 覚えられない所では、開くたびに既定 */
+  }
+}
+const currentTactic = () => $('#march-tactic button[aria-pressed="true"]')?.dataset.tactic ?? 'balanced';
+
+/** レーンの一手（§80.8）: どれも本物の窓口を呼ぶ */
+async function marchCommand(id, cmd, button) {
+  if (cmd.kind === 'watch') return select('char', id);
+  if (cmd.kind === 'hand') {
+    select('char', id);
+    return hand.open(id);
+  }
+  // ハンコは、マスの説明を読んでから押す（お願いのファイルを書くマスもある）。手で書く欄もいっしょに開く
+  if (cmd.kind === 'stamp') {
+    select('node', cmd.node);
+    return hand.open(id);
+  }
+  if (button) button.disabled = true;
+  try {
+    if (cmd.kind === 'sortie' || cmd.kind === 'resortie') {
+      sound.play('up');
+      await quickSortie([id], currentTactic());
+    } else if (cmd.kind === 'battle') {
+      const j = await post('api/battle', { gate: cmd.node });
+      if (j?.ok) toast({ text: t('toast.battle', cmd.node), ok: null, type: 'battle' });
+    }
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+/** 下の帯: 全員出撃・作戦・撤退・シール袋 */
+function renderMarchBar() {
+  const view = state.view;
+  if (!view) return;
+  const waiting = view.characters.filter((c) => {
+    const l = window.__masume.march?.lanes.find((x) => x.id === c.id);
+    return l?.cmd === 'sortie' || l?.cmd === 'resortie';
+  }).map((c) => c.id);
+  const all = $('#march-all');
+  all.disabled = !waiting.length;
+  all.dataset.ids = waiting.join(',');
+  all.textContent = t('march.all', waiting.length);
+  const running = partyRunning() || view.characters.some((c) => c.sortie);
+  $('#march-stop').hidden = !running;
+  const bags = window.__masume.hero?.bags ?? 0;
+  const bag = $('#march-bag');
+  bag.hidden = !window.__masume.hero;
+  bag.textContent = t('march.bag', bags);
+  bag.dataset.count = String(bags);
+}
+
+function setupMarch() {
+  march = createMarch({ host: $('#march-lanes'), reserve: 150, sound, onPick: (id) => select('char', id), onCommand: marchCommand });
+  setTactic(savedTactic());
+  document.querySelectorAll('#march-tactic button').forEach((b) => b.addEventListener('click', () => setTactic(b.dataset.tactic)));
+  $('#march-all').addEventListener('click', async (e) => {
+    const ids = (e.currentTarget.dataset.ids || '').split(',').filter(Boolean);
+    if (!ids.length) return;
+    sound.play('fanfare');
+    await quickSortie(ids, currentTactic());
+  });
+  $('#march-stop').addEventListener('click', async () => {
+    await post('api/party/stop', {});
+    pollParty(true);
+  });
+  $('#march-bag').addEventListener('click', () => {
+    setView('techo');
+  });
+  setInterval(renderMarchBar, 1000);
+  document.querySelectorAll('#mode-switch button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  setMode(savedMode(), { save: false });
 }
 
 (async () => {
@@ -1102,6 +1230,7 @@ function rewords() {
   book = new Book(svg, $('#view-board'), { onChange: updatePageNav });
   setupCamera();
   setupInteractions();
+  setupMarch();
   initCommand({ live: LIVE, post, refresh: liveRefresh, toast, getView: () => state.view });
   hand = initHand({ live: LIVE, post, toast, app: APP });
   $('#export-notebook').addEventListener('click', downloadNotebook);

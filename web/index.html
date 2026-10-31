@@ -50,6 +50,23 @@
     <section id="stage">
       <div id="view-board" class="view active">
         <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GridHub の世界地図（縦の5mm方眼ノートの見開き）"></svg>
+        <div id="march" hidden>
+          <div id="march-lanes"></div>
+          <div id="march-bar">
+            <button id="march-all" type="button" class="march-btn primary">全員出撃</button>
+            <div id="march-tactic" role="group" data-t-aria="march.tactic" aria-label="作戦">
+              <button type="button" data-tactic="careful" aria-pressed="false" data-t="tactic.careful">いのちだいじに</button>
+              <button type="button" data-tactic="balanced" aria-pressed="true" data-t="tactic.balanced">バッチリがんばれ</button>
+              <button type="button" data-tactic="bold" aria-pressed="false" data-t="tactic.bold">ガンガンいこうぜ</button>
+            </div>
+            <button id="march-stop" type="button" class="march-btn" hidden data-t="march.stop">撤退</button>
+            <button id="march-bag" type="button" class="march-btn march-bag" hidden>シール袋</button>
+          </div>
+        </div>
+        <div id="mode-switch" class="mode-switch" role="group" data-t-aria="mode.aria" aria-label="盤面の見方">
+          <button type="button" data-mode="march" aria-pressed="true" data-t="mode.march">進軍</button>
+          <button type="button" data-mode="note" aria-pressed="false" data-t="mode.note">ノート</button>
+        </div>
         <button id="boss-meter" class="boss-meter" type="button" hidden data-node="" data-near="false"></button>
         <button id="your-turn" class="your-turn" type="button" hidden data-node="" data-char="" data-kind=""></button>
         <nav class="pager" aria-label="ページをめくる">
@@ -125,7 +142,7 @@
               <section><h3>7. 承認（stamp）</h3><p><code>check.kind: "stamp"</code> のマスは、指定された人間のハンコで通ります。契約・本番鍵・デザイン承認など、人間が決めるべきことだけに使います。</p></section>
               <section><h3>8. 冒険の書（セーブデータ）</h3><p>すべてのイベントは <code>.masume/log.jsonl</code> に追記され、各行が前の行のハッシュを含みます（ハッシュの鎖）。判定ファイルは GM が<b>封印</b>（ハッシュを記録）し、変更すると判定できません。改ざんは <code>gridhub verify</code> で見つかり、<code>gridhub repair</code> で直せます。時点は<b>記録の番号</b>（<code>seq 42</code>）と Git のコミットで指し、<code>gridhub load &lt;seq|commit&gt;</code> でその時点の盤面に戻れます。</p></section>
               <h3>手帳（使う人の記録）</h3>
-            <p>担当が作業を進めるあいだの、プロジェクトをまたいだ記録です（見出しの「手帳」となかまの欄の上のカード。ターミナルなら <code>gridhub me</code>）。手帳の中はゲームの言い方のままです。</p>
+            <p>担当が作業を進めるあいだの、プロジェクトをまたいだ記録です（見出しの「手帳」となかまの欄の上のカード。ターミナルなら <code>gridhub me</code>）。</p>
             <ul>
               <li><b>シール</b>: テストがはじめて通るたびに1枚（一発合格・セーブ・結合テスト・完了でも）。レア度は、その記録のハッシュで決まります。シールを押すと、どのテストが・いつ通ったかが出ます。</li>
               <li><b>ランク・称号・連続日数・今日のお題・自己ベスト</b>: すべてセーブデータから導きます。ルール（判定・レベル・差し戻し）は変えません。</li>
@@ -319,7 +336,8 @@
         <h2 id="bag-title">シール袋 <b id="bag-count">0</b></h2>
         <button id="bag-close" class="close" type="button" aria-label="閉じる">✕</button>
       </header>
-      <p class="bag-lead">テストを倒すたびに、シール袋が1つ落ちます。中身は、そのとき冒険の書に書かれた記録のハッシュで決まっています。</p>
+      <p class="bag-lead" data-say="game">テストを倒すたびに、シール袋が1つ落ちます。中身は、そのとき冒険の書に書かれた記録のハッシュで決まっています。</p>
+      <p class="bag-lead" data-say="dev">テストが通るたびに、シール袋が1つ増えます。中身は、そのときセーブデータに書かれた記録のハッシュで決まっています。</p>
       <button id="bag-pile" class="bag-pile" type="button" aria-label="いちばん上の袋をあける"></button>
       <div id="bag-reveal" class="bag-reveal" aria-live="polite"></div>
       <p id="bag-sum" class="bag-sum"></p>

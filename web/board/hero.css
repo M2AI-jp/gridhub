@@ -566,6 +566,10 @@ body.pasting #board { cursor: copy; }
 /* ---------- はじめの画面の勇者の手帳 ---------- */
 .start-hero { margin: 0 0 18px; padding: 14px 18px 12px; background: linear-gradient(135deg, #fffdf4, #fff3c4); border: 1.8px solid var(--ink); border-radius: var(--wobbly-2); box-shadow: 3px 4px 0 rgba(29, 43, 92, 0.25); font-family: var(--hand); }
 .start-hero[hidden] { display: none; }
+.sh-cta { display: grid; width: 100%; justify-items: start; gap: 2px; margin: 0 0 14px; padding: 12px 18px; text-align: left; }
+.sh-cta b { font-size: 28px; }
+.sh-cta-name { font-size: 15px; font-family: var(--hand, inherit); }
+.sh-cta small { font-size: 13px; color: var(--red); font-weight: 700; }
 .sh-top { display: flex; align-items: center; gap: 12px; }
 .sh-rank { flex: none; display: grid; place-items: center; width: 58px; height: 58px; border-radius: 50%; background: var(--ink); color: #ffe45c; line-height: 1; box-shadow: inset 0 0 0 2.5px #ffe45c, 0 2px 0 rgba(0, 0, 0, 0.2); }
 .sh-rank small { color: #fff; font-size: 9.5px; margin-top: 6px; }
