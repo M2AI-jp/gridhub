@@ -5,12 +5,14 @@ import { Pawns } from './pawns.js';
 import { Book } from './book.js';
 import { renderParty, renderBestiary, renderLog, renderNodeDrawer, renderCharDrawer, renderMarginDrawer, renderNews, renderLedger } from './panels.js';
 import { Sound } from './sound.js';
-import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit, rewordsCommand, quickSortie, partyRunning } from './command.js';
+import { initCommand, showLobby, hideLobby, pollParty, noteSorties, questBrewing, refreshGit, rewordsCommand, pushGit, unpushed, quickSortie, partyRunning } from './command.js';
 import { own } from './sketch.js';
 import { initHand } from './hand.js';
 import { initHero, nextBoss } from './hero.js';
 import { showBoss } from './boss.js';
 import { createMarch } from './march.js';
+import { createPrs } from './march-prs.js';
+import { nextBarAction } from './march-status.js';
 import { t, initWords, onWords, adoptServerWords, isDev } from './words.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
@@ -544,6 +546,7 @@ function quips(news) {
     if (!sp) continue;
     const line = lines[e.seq % lines.length].replace('{node}', e.node ?? '');
     pawns.float({ x: wx(sp.page, sp.x), y: wy(sp.y) - 0.6 * U }, line, 'quip', 900 + n * 700);
+    march?.say(e.character, line);
     n++;
   }
 }
@@ -1103,12 +1106,14 @@ function rewords() {
   rewordsCommand();
   hero.rewords();
   march?.rewords();
+  prs?.rewords();
   renderMarchBar();
 }
 
 // ---- 進軍とノート（§80）: 同じビューの2つの見方。盤面を開くと進軍。選んだほうをブラウザに覚える ----
 const MODE_KEY = 'gridhub.boardMode';
 let march = null;
+let prs = null;
 function savedMode() {
   const q = params.get('mode');
   if (q === 'march' || q === 'note') return q;
@@ -1167,7 +1172,18 @@ async function marchCommand(id, cmd, button) {
   }
   if (button) button.disabled = true;
   try {
-    if (cmd.kind === 'sortie' || cmd.kind === 'resortie') {
+    // テスト実行と判定はこの場で走る。結果は記録から盤面に映り、知らせにも出る
+    if (cmd.kind === 'step') {
+      const j = await post('api/step', { character: id });
+      if (j?.ok !== false && j) {
+        const cases = j.cases ?? [];
+        const won = cases.filter((c) => c.ok === true).length;
+        toast({ text: j.exit === 0 ? t('hand.msg.step.ok', j.node) : t('hand.msg.step.ng', j.node, won, cases.length), ok: j.exit === 0, type: 'step' });
+      }
+    } else if (cmd.kind === 'check') {
+      const j = await post('api/check', { character: id });
+      if (j?.ok !== false && j) toast({ text: j.passed ? t('hand.msg.check.ok', j.ready) : t('hand.msg.check.ng'), ok: !!j.passed, type: 'check' });
+    } else if (cmd.kind === 'sortie' || cmd.kind === 'resortie') {
       sound.play('up');
       await quickSortie([id], currentTactic());
     } else if (cmd.kind === 'battle') {
@@ -1198,10 +1214,34 @@ function renderMarchBar() {
   bag.hidden = !window.__masume.hero;
   bag.textContent = t('march.bag', bags);
   bag.dataset.count = String(bags);
+  const ahead = unpushed();
+  const push = $('#march-push');
+  push.hidden = ahead === null;
+  if (ahead !== null) push.textContent = t('march.push', ahead);
+  // 先に送ってから PR
+  $('#march-open-pr').hidden = ahead !== null || !prs?.canOpen();
+  // レーンに押すものが無ければ、帯か札の次の一手を光らせる
+  const barNext = nextBarAction({ laneNext: window.__masume.marchNext, ahead, canOpen: !$('#march-open-pr').hidden, prs: prs?.prs() });
+  push.dataset.next = String(barNext === 'push');
+  $('#march-open-pr').dataset.next = String(barNext === 'open-pr');
+  prs?.highlight(barNext?.startsWith('merge:') ? Number(barNext.slice(6)) : null);
 }
 
 function setupMarch() {
   march = createMarch({ host: $('#march-lanes'), reserve: 150, sound, onPick: (id) => select('char', id), onCommand: marchCommand });
+  if (LIVE) {
+    prs = createPrs({
+      host: $('#march-prs'),
+      march,
+      load: async () => {
+        const r = await fetch('api/prs', { cache: 'no-store' });
+        return r.ok ? r.json() : null;
+      },
+      merge: (number) => post('api/prs/merge', { number }),
+      open: () => post('api/prs/create', {}),
+    });
+    prs.start();
+  }
   setTactic(savedTactic());
   document.querySelectorAll('#march-tactic button').forEach((b) => b.addEventListener('click', () => setTactic(b.dataset.tactic)));
   $('#march-all').addEventListener('click', async (e) => {
@@ -1209,6 +1249,21 @@ function setupMarch() {
     if (!ids.length) return;
     sound.play('fanfare');
     await quickSortie(ids, currentTactic());
+  });
+  $('#march-push').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    const j = await pushGit();
+    btn.disabled = false;
+    if (j) march.pushed(j.ok !== false, j.branch);
+    renderMarchBar();
+  });
+  $('#march-open-pr').addEventListener('click', async (e) => {
+    const btn = e.currentTarget;
+    btn.disabled = true;
+    await prs?.open();
+    btn.disabled = false;
+    renderMarchBar();
   });
   $('#march-stop').addEventListener('click', async () => {
     await post('api/party/stop', {});

@@ -417,6 +417,13 @@ export async function pushGit() {
   gitPushing = false;
   btn.textContent = t('git.push');
   await refreshGit();
+  return j;
+}
+
+/** 進軍の帯の git push（§80.8）: まだ送っていないセーブがあるときだけ、その数を返す。無ければ null */
+export function unpushed() {
+  if (gitState !== 'unpushed') return null;
+  return gitLast?.ahead ?? 0;
 }
 
 /** ことばが切り替わったら、窓口を読み直さずに、手元にあるもので描き直す（§75） */

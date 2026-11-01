@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { join } from 'node:path';
 import { ROOT, openBrowser, serveStatic } from '../helpers8.mjs';
-import { laneStatus, foesOf, commandOf, nextCommand, routeOf, foesToGate, arenasOf, laneOrder, travelOf } from '../../web/board/march-status.js';
+import { laneStatus, foesOf, commandOf, nextCommand, routeOf, foesToGate, arenasOf, laneOrder, travelOf, chainNameOf, toolsOf, streakOf, prEvents, prsToShow, canMerge, nextBarAction } from '../../web/board/march-status.js';
 import { CREW, POSES, compose, bust, boss, mob, flies } from '../../web/board/march-art.js';
 
 const READY = 'window.__masume && window.__masume.ready && window.__masume.march';
@@ -48,6 +48,8 @@ test('§80.8・§80.9 レーンの一手と、光らせる1つ', () => {
   assert.deepEqual(commandOf(c({ id: 'me', kind: 'human', at: 'S' }), view, 'turn'), { kind: 'stamp', node: 'S', as: 'me' });
   assert.equal(commandOf(c({ kind: 'human' }), view, 'turn').kind, 'hand');
   assert.equal(commandOf(c({ kind: 'human' }), view, 'ready'), null, '人は出撃しない');
+  assert.deepEqual(commandOf(c({ id: 'me', kind: 'human', at: 'S' }), view, 'down'), { kind: 'stamp', node: 'S', as: 'me' }, '人が失敗しても押せるものが残る');
+  assert.equal(commandOf(c({ kind: 'human' }), view, 'down').kind, 'hand');
   assert.deepEqual(commandOf(c({ at: 'G' }), view, 'waiting'), { kind: 'battle', node: 'G' });
   assert.equal(commandOf(c({ id: 'b', at: 'G' }), view, 'waiting'), null, 'ボス戦のボタンは先頭のレーンに1つ');
   assert.equal(commandOf(c({ at: 'W' }), view, 'waiting'), null, 'そろうまでは押せない');
@@ -110,6 +112,58 @@ test('§80.7 地図で選べる職業はすべて、どのポーズでも描け�
   assert.equal(flies('bat'), true);
   assert.equal(flies('slime'), false);
   assert.ok(boss('demon').length > boss('golem').length, '魔王は門番より大きい');
+});
+
+test('§80.8 レーンの小さな手: 判定のあるタスクではテスト実行と判定を押せる', () => {
+  const view = { nodes: { T: { type: 'task', check: { kind: 'cmd' } }, S: { type: 'task', check: { kind: 'stamp', by: 'me' } }, C: { type: 'camp' } } };
+  assert.deepEqual(toolsOf({ at: 'T' }, view, 'ready', { kind: 'sortie' }), ['hand', 'step', 'check']);
+  assert.deepEqual(toolsOf({ at: 'T' }, view, 'down', { kind: 'resortie' }), ['hand', 'step', 'check']);
+  assert.deepEqual(toolsOf({ at: 'C' }, view, 'camp', { kind: 'sortie' }), ['hand']);
+  assert.deepEqual(toolsOf({ at: 'T' }, view, 'turn', { kind: 'hand' }), ['step', 'check']);
+  assert.deepEqual(toolsOf({ at: 'S' }, view, 'turn', { kind: 'stamp' }), []);
+  assert.deepEqual(toolsOf({ at: 'T' }, view, 'working', { kind: 'watch' }), [], '実行中は押さない');
+});
+
+test('§80.17 連続 PASS は記録から数える。歩いただけでは切れず、失敗で切れる', () => {
+  const ev = (type) => ({ type });
+  assert.equal(streakOf([]), 0);
+  assert.equal(streakOf([ev('check_passed'), ev('stepped'), ev('gate_cleared')]), 2);
+  assert.equal(streakOf([ev('check_passed'), ev('check_failed'), ev('check_passed')]), 1);
+  assert.equal(streakOf([ev('check_passed'), ev('gate_failed')]), 0);
+});
+
+test('§80.16 PR の札: 変化を出来事にする。はじめて読んだときは何も出さない', async () => {
+  const { prOf } = await import('../../src/server/index.js');
+  const p = (o) => ({ number: 1, state: 'OPEN', draft: false, review: null, checks: null, note: null, ...o });
+  assert.deepEqual(prEvents(null, [p({})]), []);
+  const kinds = (a, b) => prEvents([a], [b]).map((e) => e.kind);
+  assert.deepEqual(kinds(p({}), p({ state: 'MERGED' })), ['merged']);
+  assert.deepEqual(kinds(p({ checks: 'running' }), p({ checks: 'fail' })), ['ci_failed']);
+  assert.deepEqual(kinds(p({}), p({ review: 'APPROVED' })), ['approved']);
+  assert.deepEqual(kinds(p({}), p({ note: { who: 'a', text: 'LGTM', at: 't1' } })), ['comment']);
+  assert.deepEqual(kinds(p({ note: { who: 'a', text: 'x', at: 't1' } }), p({ note: { who: 'a', text: 'x', at: 't1' } })), [], '同じコメントは2度出さない');
+  assert.equal(canMerge(p({ checks: 'fail' })), false);
+  assert.equal(canMerge(p({ checks: 'pass' })), true);
+  assert.equal(canMerge(p({ draft: true })), false);
+  assert.deepEqual(prsToShow([p({ number: 2, state: 'MERGED' }), p({ number: 3 })]).map((x) => x.number), [3, 2], '開いているものが先');
+  const pr = prOf({ number: 5, title: 't', state: 'OPEN', comments: [{ author: { login: 'old' }, body: '古い', createdAt: '2026-01-01' }], latestReviews: [{ author: { login: 'rev' }, body: '境界値を足して\n詳細', submittedAt: '2026-01-02' }], statusCheckRollup: [{ name: 'lint', conclusion: 'FAILURE' }] });
+  assert.deepEqual(pr.note, { who: 'rev', text: '境界値を足して', at: '2026-01-02' });
+  assert.equal(pr.job, 'lint');
+  assert.equal(prOf({ number: 6, state: 'OPEN' }).note, null);
+});
+
+test('§80.9 下の帯の次の一手: レーンが先。push → PR → 承認済みのマージ', () => {
+  const ok = { number: 3, state: 'OPEN', draft: false, review: 'APPROVED', checks: 'pass' };
+  assert.equal(nextBarAction({ laneNext: 'a', ahead: 2, canOpen: true, prs: [ok] }), null);
+  assert.equal(nextBarAction({ laneNext: null, ahead: 2, canOpen: true, prs: [ok] }), 'push');
+  assert.equal(nextBarAction({ laneNext: null, ahead: null, canOpen: true, prs: [ok] }), 'open-pr');
+  assert.equal(nextBarAction({ laneNext: null, ahead: 0, canOpen: false, prs: [ok] }), 'merge:3');
+  assert.equal(nextBarAction({ laneNext: null, ahead: 0, canOpen: false, prs: [{ ...ok, review: null }] }), null, 'レビュー待ちは光らせない');
+});
+
+test('§80.11 連携の名前は、顔ぶれで決まる', () => {
+  assert.match(chainNameOf(['hero', 'sage', 'scribe']), /剣星墨三連撃/);
+  assert.match(chainNameOf(['constructor', 'hero']), /剣二連撃/);
 });
 
 test('§80.1 盤面を開くと進軍。レーンを押すと欄が開き、ノートに切り替えると覚える', async () => {

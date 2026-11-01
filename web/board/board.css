@@ -257,6 +257,7 @@ body.drawer-open #rail > #party { display: none; }
 #march-lanes { position: relative; flex: 1; min-height: 0; overflow: auto; display: flex; align-items: safe center; justify-content: center; }
 #march-cmds { position: absolute; pointer-events: none; }
 .march-cmd { position: absolute; right: 8px; pointer-events: auto; font: inherit; font-size: 15px; min-height: 28px; padding: 3px 12px; color: #fff; background: #2a2060; border: 2px solid #c8c4dc; cursor: pointer; box-shadow: 0 2px 0 #10101c; }
+.march-cmd[hidden] { display: none; }
 .march-cmd:hover { background: #3c30a0; }
 .march-cmd:disabled { opacity: 0.5; cursor: wait; }
 .march-cmd.sub { background: #14121f; border-color: #6c6888; color: #c8c4dc; font-size: 13px; }
@@ -269,6 +270,24 @@ body.drawer-open #rail > #party { display: none; }
 .march-btn { font: inherit; font-size: 14px; min-height: 30px; padding: 3px 12px; color: #fff; background: #2a2640; border: 1px solid #6c6888; cursor: pointer; }
 .march-btn.primary { background: #d8342c; border-color: #ffd84a; }
 .march-btn:disabled { background: #1c1a2c; color: #6c6888; border-color: #3c3858; cursor: default; }
+.march-btn[data-next="true"], .pr-merge[data-next="true"] { background: linear-gradient(#f4dc98, #d8a848); color: #14121f; border-color: #fff; animation: march-pulse 0.9s steps(2) infinite; }
+@media (prefers-reduced-motion: reduce) { .march-btn[data-next="true"], .pr-merge[data-next="true"] { animation: none; } }
+#march-prs { flex: none; display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px; background: #14121f; border-top: 1px solid #3c3858; }
+#march-prs[hidden] { display: none; }
+.pr-chip { display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; padding: 2px 6px; font-size: 13px; color: #fff; background: #1c1a2c; border: 1px solid #3c3858; }
+.pr-chip[data-state="OPEN"] { border-color: #46c868; }
+.pr-chip[data-state="MERGED"] { border-color: #7a5ae6; color: #c8c4dc; }
+.pr-name { max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-badge { padding: 0 4px; font-size: 12px; color: #14121f; background: #c8c4dc; white-space: nowrap; }
+.pr-badge[data-kind="pass"] { background: #5ae0a0; }
+.pr-badge[data-kind="fail"] { background: #ff7a5a; }
+.pr-badge[data-kind="running"], .pr-badge[data-kind="wait"] { background: #ffd84a; }
+.pr-badge[data-kind="merged"] { background: #a48cf0; }
+.pr-merge { font: inherit; font-size: 12px; min-height: 22px; padding: 0 8px; color: #fff; background: #7a5ae6; border: 1px solid #fff; cursor: pointer; }
+.pr-merge[data-armed="true"] { background: #d8342c; }
+.pr-merge:disabled { opacity: .5; cursor: wait; }
+#march-open-pr { background: linear-gradient(#8c6cf0, #5a3cc0); border-color: #e8e0ff; }
+#march-push { background: linear-gradient(#3cb878, #1c7c4c); border-color: #d8f4e0; }
 .march-btn.march-bag { margin-left: auto; background: #ff72b4; color: #14121f; border-color: #fff; }
 #march-tactic { display: flex; }
 #march-tactic button { font: inherit; font-size: 13px; min-height: 30px; padding: 3px 8px; background: #1c1a2c; color: #c8c4dc; border: 1px solid #3c3858; cursor: pointer; }
@@ -282,6 +301,8 @@ body.drawer-open #rail > #party { display: none; }
 body[data-mode="note"] .mode-switch button { background: var(--card, #fffef5); color: var(--ink, #222); border-color: var(--ink, #222); }
 body[data-mode="note"] .mode-switch button[aria-pressed="true"] { background: var(--ink, #222); color: var(--card, #fffef5); }
 body[data-mode="march"] .your-turn { display: none; }
+/* ノートのページめくりは、進軍の裏で済ませる */
+body[data-mode="march"] .flip-stage { display: none; }
 /* 進軍では知らせを左下（札の上）に寄せて、戦場を隠さない */
 body[data-mode="march"] #toast { top: auto; bottom: 58px; left: 8px; transform: none; align-items: flex-start; gap: 4px; max-width: 250px; }
 body[data-mode="march"] .toast { font-size: 12px; padding: 4px 8px; }

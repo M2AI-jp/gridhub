@@ -52,6 +52,7 @@
         <svg id="board" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="GridHub の世界地図（縦の5mm方眼ノートの見開き）"></svg>
         <div id="march" hidden>
           <div id="march-lanes"></div>
+          <div id="march-prs" hidden></div>
           <div id="march-bar">
             <button id="march-all" type="button" class="march-btn primary">全員出撃</button>
             <div id="march-tactic" role="group" data-t-aria="march.tactic" aria-label="作戦">
@@ -59,6 +60,8 @@
               <button type="button" data-tactic="balanced" aria-pressed="true" data-t="tactic.balanced">バッチリがんばれ</button>
               <button type="button" data-tactic="bold" aria-pressed="false" data-t="tactic.bold">ガンガンいこうぜ</button>
             </div>
+            <button id="march-push" type="button" class="march-btn" hidden>git push</button>
+            <button id="march-open-pr" type="button" class="march-btn" hidden data-t="pr.create">PR を作成</button>
             <button id="march-stop" type="button" class="march-btn" hidden data-t="march.stop">撤退</button>
             <button id="march-bag" type="button" class="march-btn march-bag" hidden>シール袋</button>
           </div>

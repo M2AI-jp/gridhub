@@ -46,10 +46,39 @@ export function commandOf(c, view, status) {
     if (node?.check?.kind === 'stamp') return { kind: 'stamp', node: node.id, as: node.check.by };
     return { kind: 'hand', node: node?.id };
   }
-  if (c.kind === 'human') return null;
+  if (c.kind === 'human') {
+    // 人が失敗したら、もう一度自分で。押せるものを無くさない
+    if (status !== 'down') return null;
+    if (node?.check?.kind === 'stamp' && node.check.by === c.id) return { kind: 'stamp', node: node.id, as: c.id };
+    return { kind: 'hand', node: node?.id };
+  }
   if (status === 'down') return { kind: 'resortie', node: c.at };
   if (status === 'ready' || status === 'camp') return { kind: 'sortie', node: c.at };
   return null;
+}
+
+/**
+ * レーンの一手の横に並ぶ小さな手（§80.8）。どれも本物の窓口を呼ぶ。
+ * hand 手で作業 / step テストを実行（POST /api/step。何度でも・罰なし）/ check 判定（POST /api/check。落ちると戻される）
+ */
+export function toolsOf(c, view, status, cmd) {
+  const node = own(view.nodes, c.at);
+  const runnable = node?.type === 'task' && node.check?.kind === 'cmd';
+  if (cmd?.kind === 'sortie' || cmd?.kind === 'resortie') return runnable ? ['hand', 'step', 'check'] : ['hand'];
+  if (cmd?.kind === 'hand' && runnable) return ['step', 'check'];
+  return [];
+}
+
+/**
+ * 下の帯で次に押すもの（§80.9）: レーンに押すものが無いときだけ1つ光らせる。
+ * 送っていないセーブがあれば push、次に PR、最後に承認済みの PR のマージ
+ */
+export function nextBarAction({ laneNext, ahead, canOpen, prs }) {
+  if (laneNext) return null;
+  if (ahead) return 'push';
+  if (canOpen) return 'open-pr';
+  const ready = (Array.isArray(prs) ? prs : []).find((p) => canMerge(p) && p.review === 'APPROVED' && p.checks === 'pass');
+  return ready ? `merge:${ready.number}` : null;
 }
 
 const NEXT_ORDER = ['battle', 'stamp', 'hand', 'resortie', 'sortie'];
@@ -123,5 +152,60 @@ export function travelOf(was, now, view) {
     if (n?.type === 'camp') return { kind: 'inn', node: n.id };
   }
   return null;
+}
+
+/** 連続 PASS（§80.17）: 判定と結合テストが、新しいほうから何回続けて通っているか */
+export function streakOf(log) {
+  const list = Array.isArray(log) ? log : [];
+  let n = 0;
+  for (let i = list.length - 1; i >= 0; i--) {
+    const type = list[i]?.type;
+    if (type === 'check_passed' || type === 'gate_cleared') n++;
+    else if (type === 'check_failed' || type === 'gate_failed') break;
+  }
+  return n;
+}
+
+// ---- PR の札（§80.16）----
+const SHOW = 5;
+
+/** 見せる順: 開いている PR が先、残りの枠に最近マージされたもの */
+export function prsToShow(prs) {
+  const list = Array.isArray(prs) ? prs : [];
+  const open = list.filter((p) => p.state === 'OPEN');
+  const done = list.filter((p) => p.state === 'MERGED');
+  return [...open, ...done].slice(0, SHOW);
+}
+
+/** いまマージしてよい PR か。止める理由があるときはボタンを出さない */
+export const canMerge = (p) => p.state === 'OPEN' && !p.draft && p.checks !== 'fail' && p.checks !== 'running' && p.review !== 'CHANGES_REQUESTED';
+
+/** 前の一覧と比べて、盤面で見せる出来事にする（はじめて読んだときは何も出さない） */
+export function prEvents(before, after) {
+  if (!before) return [];
+  const was = new Map(before.map((p) => [p.number, p]));
+  const out = [];
+  for (const p of after) {
+    const old = was.get(p.number);
+    if (!old) {
+      if (p.state === 'OPEN') out.push({ kind: 'opened', pr: p });
+      continue;
+    }
+    if (old.state !== 'MERGED' && p.state === 'MERGED') out.push({ kind: 'merged', pr: p });
+    if (old.checks !== 'fail' && p.checks === 'fail') out.push({ kind: 'ci_failed', pr: p });
+    if (old.checks !== 'pass' && p.checks === 'pass' && p.state === 'OPEN') out.push({ kind: 'ci_passed', pr: p });
+    if (old.review !== 'APPROVED' && p.review === 'APPROVED') out.push({ kind: 'approved', pr: p });
+    if (old.review !== 'CHANGES_REQUESTED' && p.review === 'CHANGES_REQUESTED') out.push({ kind: 'changes', pr: p });
+    if (p.note && p.note.at !== old.note?.at && p.state === 'OPEN') out.push({ kind: 'comment', pr: p });
+  }
+  return out;
+}
+
+const CHAIN_WORD = { hero: '剣', warrior: '鉄', sage: '星', mage: '雷', priest: '光', scribe: '墨', herald: '風', villager: '土', cartographer: '標', merchant: '金', painter: '彩' };
+const COUNT_WORD = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九'];
+/** 連携の名前（メンバーの職業の字を順に並べる）。同じ顔ぶれなら同じ名前 */
+export function chainNameOf(jobs) {
+  const words = [...new Set(jobs.map((j) => (Object.hasOwn(CHAIN_WORD, j ?? '') ? CHAIN_WORD[j] : '')).filter(Boolean))].join('');
+  return `連携「${words}${COUNT_WORD[Math.min(9, jobs.length)] ?? ''}連撃」`;
 }
 

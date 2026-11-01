@@ -1,8 +1,8 @@
 // 盤面のことば（CONTRACTS §74.3・§75）。盤面の担当。
 //
 // 盤面の字には2つの言い方がある。1つのボタン（#words-toggle）で切り替え、選んだほうを localStorage と URL（?words=）に残す。
-//   game … 冒険のことば。日本の RPG・すごろくでなじみのある言い方（モンスター・ダンジョン・町・ハンコ・全滅）。はじめての人向け。既定
-//   dev  … 開発のことば。テスト・タスク・コミット・承認・リグレッション。エンジニア向け
+//   game … 冒険のことば。日本の RPG・すごろくでなじみのある言い方（モンスター・ダンジョン・町・ハンコ・全滅）
+//   dev  … 開発のことば。テスト・タスク・コミット・承認・リグレッション。既定（ユーザーの指示: 字は開発用語、体験だけゲーム）
 // 1つの文の中で2つの言い方を「町 = commit」のように並べない。もう一方の言い方は、マウスを乗せたときの補足（title）にだけ出す。
 //
 // 使い方:
@@ -40,7 +40,7 @@ function initialMode() {
   } catch {
     /* localStorage が使えなければ既定 */
   }
-  return 'game';
+  return 'dev';
 }
 
 let mode = initialMode();
@@ -162,10 +162,34 @@ const T = {
   'march.cmd.sortie': { game: '▶ 出撃', dev: '▶ 起動' },
   'march.cmd.resortie': { game: '▶ 再出撃', dev: '▶ 再起動' },
   'march.cmd.hand': { game: '▶ 手で戦う', dev: '▶ 手で作業' },
+  'march.cmd.step': { game: '▶ 歩く', dev: '▶ テスト実行' },
+  'march.cmd.check': { game: '▶ 判定', dev: '▶ 判定' },
   'march.cmd.stamp': { game: '▶ ハンコを押す', dev: '▶ 承認する' },
   'march.cmd.battle': { game: '▶ ボス戦！', dev: '▶ 結合テスト' },
   'march.cmd.watch': { game: '戦況', dev: '状況' },
   'march.all': { game: (n) => (n ? `全員出撃（${n}人）` : '出撃できる仲間なし'), dev: (n) => (n ? `全員起動（${n}件）` : '起動できる担当なし') },
+  'march.push': { game: (n) => `GitHub へ送る${n ? `（${n}）` : ''}`, dev: (n) => `git push${n ? `（${n}）` : ''}` },
+  'pr.create': { game: 'PR を作る', dev: 'PR を作成' },
+  'pr.ev.created': { game: 'PR を作った！', dev: 'PR created!' },
+  'pr.merged': { game: 'マージ済み', dev: 'merged' },
+  'pr.draft': { game: '下書き', dev: 'draft' },
+  'pr.ci.pass': { game: 'CI 通過', dev: 'CI pass' },
+  'pr.ci.fail': { game: 'CI 失敗', dev: 'CI fail' },
+  'pr.ci.running': { game: 'CI 実行中', dev: 'CI running' },
+  'pr.approved': { game: '承認済み', dev: 'approved' },
+  'pr.changes': { game: '修正依頼', dev: 'changes requested' },
+  'pr.review': { game: 'レビュー待ち', dev: 'review待ち' },
+  'pr.merge': { game: 'マージ', dev: 'merge' },
+  'pr.merge.sure': { game: 'もう一度押すとマージ', dev: 'もう一度押すと merge' },
+  'pr.ev.merged': { game: (n) => `PR #${n} をマージした！`, dev: (n) => `PR #${n} merged!` },
+  'pr.ev.ci_failed': { game: (n, job) => `PR #${n} の ${job || 'CI'} が落ちた！`, dev: (n, job) => `PR #${n} ${job || 'CI'} failed` },
+  'pr.ev.opened': { game: (n) => `PR #${n} が開いた`, dev: (n) => `PR #${n} opened` },
+  'pr.ev.ci_passed': { game: (n) => `PR #${n} の CI が通った`, dev: (n) => `PR #${n} CI passed` },
+  'pr.ev.approved': { game: (n) => `PR #${n} が承認された！`, dev: (n) => `PR #${n} approved` },
+  'pr.ev.changes': { game: (n) => `PR #${n} に修正依頼`, dev: (n) => `PR #${n} changes requested` },
+  'march.streak': { game: (n) => `${n}連勝`, dev: (n) => `${n}連続 PASS` },
+  'march.streak.up': { game: (n) => `${n}連勝！`, dev: (n) => `${n}連続 PASS！` },
+  'march.streak.lost': { game: (n) => `${n}連勝が止まった…`, dev: (n) => `${n}連続 PASS が途切れた` },
   'march.stop': { game: '撤退', dev: '停止' },
   'march.bag': { game: (n) => `シール袋 ×${n}`, dev: (n) => `報酬 ×${n}` },
   'march.tactic': { game: '作戦', dev: '方針' },
@@ -181,16 +205,25 @@ const T = {
   'march.medal': { game: '一発合格！', dev: '一発で通過' },
   'march.join': { game: (names) => `${names} が合流！`, dev: (names) => `${names} が結合待ちに到着` },
   'march.wipe': { game: '全滅…！ 中ボスに負けた', dev: '結合テスト失敗' },
+  'march.bossin.gate': { game: '中ボスが現れた！', dev: '結合テストの準備完了' },
+  'march.bossin.goal': { game: '魔王が現れた！', dev: '最終テストの準備完了' },
   'march.allset': { game: '全員そろった！ ボス戦だ', dev: '全担当の準備完了。結合テストを実行できます' },
   'march.bossname.gate': { game: (id, name) => `中ボス ${id} ${name}`, dev: (id, name) => `結合テスト ${id} ${name}` },
   'march.bossname.goal': { game: (id, name) => `魔王 ${id} ${name}`, dev: (id, name) => `最終テスト ${id} ${name}` },
-  'march.inn': { game: (name) => `${name} で休憩・セーブ`, dev: (name) => `チェックポイント ${name} に到達` },
+  'march.inn': { game: (name) => `${name} で休憩・セーブ`, dev: (name) => `セーブ: ${name}` },
+  'march.inn.morning': { game: 'おはよう！ セーブしました', dev: 'チェックポイントを保存しました' },
+  'march.push.ok': { game: (b) => `GitHub に送った${b ? ` ${b}` : ''}`, dev: (b) => `git push 完了${b ? ` ${b}` : ''}` },
+  'march.push.ng': { game: 'GitHub に送れなかった', dev: 'git push 失敗' },
   'march.back': { game: (name) => `${name} まで戻された…`, dev: (name) => `${name} までロールバック` },
   'march.start': { game: 'ふりだし', dev: '先頭' },
+  'march.idea': { game: '閃いた！', dev: '学びを記録' },
+  'march.inherit': { game: (n) => `${n}代目が受け継いだ`, dev: (n) => `${n}回目の起動。前回の記録を引き継ぎ` },
+  'march.chest': { game: '宝箱！ 判定のほころびが直された', dev: 'テストの不具合が修正された' },
+  'march.trap': { game: '罠！ 封印が破られた', dev: '判定ファイルの改変を検出' },
   'march.working': { game: '戦闘中', dev: '実行中' },
   'march.ready': { game: '出撃待ち', dev: '未実行' },
   'march.turn': { game: 'あなたの番', dev: 'あなたの番' },
-  'march.camp': { game: '町で休憩', dev: '通過点' },
+  'march.camp': { game: '町で休憩', dev: 'セーブ中' },
   'march.waiting': { game: '門で待機', dev: '結合待ち' },
   'march.down': { game: 'ダウン', dev: '失敗' },
   'march.done': { game: 'あがり', dev: '完了' },

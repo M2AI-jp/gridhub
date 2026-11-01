@@ -1,9 +1,9 @@
 // 進軍（CONTRACTS §80）: 担当ごとの横レーン。まだ通っていないテスト1件が、レーンを塞ぐ敵1体。
 // 状態はすべてビューと記録から導く。ここは見せ方だけで、書き込まない。盤面の担当
 import { compose, POSES, toCanvas, bust, BUST, mob, flies, boss, FOOT, CENTER } from './march-art.js';
-import { t, isDev } from './words.js';
+import { t } from './words.js';
 import { own } from './sketch.js';
-import { laneStatus, foesOf, commandOf, nextCommand, routeOf, foesToGate, arenasOf, laneOrder, travelOf } from './march-status.js';
+import { laneStatus, foesOf, commandOf, nextCommand, routeOf, foesToGate, arenasOf, laneOrder, travelOf, chainNameOf, toolsOf, streakOf } from './march-status.js';
 
 const TOP = 24;
 const PLATE = 136;
@@ -496,6 +496,10 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
   let tick = 0;
   let spare = 0;
   let bossNote = '';
+  const notices = [];
+  let noticeAt = 0;
+  let noticeNow = null;
+  let streak = null;
   let scale = 1;
   let arenas = [];
   let lastArenas = [];
@@ -540,9 +544,9 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const dpr = devicePixelRatio || 1;
     const n = Math.max(1, lanes.length);
     // 1ドットが画面の整数ピクセルになる範囲で、いちばん大きく描く（レーンが少なければ人物も大きい）
-    const k = Math.max(1, Math.min(3, Math.floor(Math.min(r.width / 480, r.height / (TOP + n * 50)) * dpr) / dpr));
+    const k = Math.max(1, Math.min(3, Math.floor(Math.min(r.width / 480, r.height / (TOP + n * 44)) * dpr) / dpr));
     W = Math.min(LW, Math.floor(r.width / k));
-    LH = Math.max(46, Math.min(130, Math.floor((r.height / k - TOP) / n)));
+    LH = Math.max(44, Math.min(200, Math.floor((r.height / k - TOP) / n)));
     H = TOP + n * LH;
     spare = Math.ceil(reserve / k);
     canvas.width = W;
@@ -578,14 +582,16 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     for (const l of lanes) {
       if (!l.button) continue;
       l.button.style.top = `${(l.y + LH - 8) * k - 34}px`;
-      if (l.sub) {
-        l.sub.style.top = l.button.style.top;
-        l.sub.style.right = `${l.button.offsetWidth + 14}px`;
+      let right = l.button.offsetWidth + 14;
+      for (const b of l.subs ?? []) {
+        b.style.top = l.button.style.top;
+        b.style.right = `${right}px`;
+        right += b.offsetWidth + 4;
       }
     }
   }
 
-  const CMD_KEY = { sortie: 'march.cmd.sortie', resortie: 'march.cmd.resortie', hand: 'march.cmd.hand', stamp: 'march.cmd.stamp', battle: 'march.cmd.battle', watch: 'march.cmd.watch' };
+  const CMD_KEY = { sortie: 'march.cmd.sortie', resortie: 'march.cmd.resortie', hand: 'march.cmd.hand', step: 'march.cmd.step', check: 'march.cmd.check', stamp: 'march.cmd.stamp', battle: 'march.cmd.battle', watch: 'march.cmd.watch' };
   function syncCommands() {
     const next = nextCommand(lanes);
     window.__masume.marchNext = next;
@@ -594,8 +600,8 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       if (!cmd) {
         l.button?.remove();
         l.button = null;
-        l.sub?.remove();
-        l.sub = null;
+        for (const x of l.subs ?? []) x.remove();
+        l.subs = [];
         continue;
       }
       if (!l.button) {
@@ -609,26 +615,27 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         cmdLayer.append(b);
         l.button = b;
       }
-      // 出撃のかわりに、自分の手で戦うこともできる
-      const canHand = cmd.kind === 'sortie' || cmd.kind === 'resortie';
-      if (canHand && !l.sub) {
-        const b = document.createElement('button');
-        b.type = 'button';
-        b.className = 'march-cmd sub';
-        b.addEventListener('click', (e) => {
-          e.stopPropagation();
-          onCommand(l.id, { kind: 'hand', node: l.cmd?.node }, b);
+      // 起動のかわりに、自分の手で進めることもできる
+      const tools = toolsOf(l.c, view, l.status, cmd);
+      if ((l.subs ?? []).map((x) => x.dataset.kind).join() !== tools.join()) {
+        for (const x of l.subs ?? []) x.remove();
+        l.subs = tools.map((kind) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'march-cmd sub';
+          b.dataset.kind = kind;
+          b.addEventListener('click', (e) => {
+            e.stopPropagation();
+            onCommand(l.id, { kind, node: l.cmd?.node }, b);
+          });
+          cmdLayer.append(b);
+          return b;
         });
-        cmdLayer.append(b);
-        l.sub = b;
-      } else if (!canHand && l.sub) {
-        l.sub.remove();
-        l.sub = null;
       }
-      if (l.sub) {
-        l.sub.textContent = t('march.cmd.hand');
-        l.sub.dataset.char = l.id;
-        l.sub.setAttribute('aria-label', `${l.c.name}: ${t('march.cmd.hand')}`);
+      for (const b of l.subs ?? []) {
+        b.textContent = t(CMD_KEY[b.dataset.kind]);
+        b.dataset.char = l.id;
+        b.setAttribute('aria-label', `${l.c.name}: ${t(CMD_KEY[b.dataset.kind])}`);
       }
       l.button.textContent = t(CMD_KEY[cmd.kind]);
       l.button.dataset.kind = cmd.kind;
@@ -702,7 +709,8 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       if (want.some((w) => w.key === foe.key)) keep.push(foe);
       else if (animate && foe.key.startsWith(`${c.at}:`)) {
         burst(foe.x + 8, gy - 12, ['#ffffff', '#ffd84a', '#ff9a3c'], 16, 2.4);
-        float(foe.x, gy - 28, t('march.slain'), '#ffd84a');
+        if (!calm) parts.push({ corpse: mobOf(foe.kind, foe.tint)[0], x: foe.x, y: gy - 18, vx: 2.4, vy: -3.2, g: 0.2, rot: 0, life: 34 });
+        float(foe.x, gy - 22, t('march.slain'), '#ffd84a', 30);
         l.atk = l.atk > 0 ? l.atk : 16;
         hitStop = Math.max(hitStop, calm ? 0 : 3);
       }
@@ -768,6 +776,36 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     ctx.drawImage(sp, hx - CENTER + dx, gy - FOOT + dy);
   }
 
+  const VILLAGER = { job: 'villager', color: 'gray' };
+  const idles = new Map();
+  const idleOf = (c) => {
+    const key = `${c.job}/${c.color}`;
+    if (!idles.has(key)) idles.set(key, toCanvas(compose(c.job, POSES.idle0, c.color)));
+    return idles.get(key);
+  };
+  function drawChest(x, gy, open) {
+    const y0 = gy - 12;
+    ctx.fillStyle = '#10101c';
+    ctx.fillRect(x - 1, y0 - 1, 20, 15);
+    ctx.fillStyle = '#a8602c';
+    ctx.fillRect(x, y0 + 5, 18, 8);
+    ctx.fillStyle = '#d88c3c';
+    ctx.fillRect(x + 1, y0 + 5, 16, 2);
+    if (open) {
+      ctx.fillStyle = '#10101c';
+      ctx.fillRect(x - 1, y0 - 7, 20, 7);
+      ctx.fillStyle = '#7c4420';
+      ctx.fillRect(x, y0 - 6, 18, 5);
+      ctx.fillStyle = '#ffe27a';
+      ctx.fillRect(x + 2, y0 + 2, 14, 3);
+    } else {
+      ctx.fillStyle = '#d88c3c';
+      ctx.fillRect(x, y0, 18, 5);
+      ctx.fillStyle = '#ffd84a';
+      ctx.fillRect(x + 8, y0 + 3, 3, 5);
+    }
+  }
+
   function d20(x, y, spin, ok) {
     const rows = [[8, 8], [5, 14], [3, 18], [1, 22], [0, 24], [0, 24], [0, 24], [0, 24], [0, 24], [0, 24], [0, 24], [0, 24], [0, 24], [1, 22], [3, 18], [5, 14], [8, 8]];
     const wob = spin && !calm ? Math.round(Math.sin(tick * 0.8) * 2) : 0;
@@ -791,10 +829,10 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const hx = band ? heroX() + 14 + band.members.indexOf(l.id) * 16 : heroX();
     l.hx = hx;
     const gy = y + LH - 8;
-    const resting = !!l.rest;
+    const resting = !!l.rest || !!l.talk || !!l.inherit;
     const front = resting || band ? null : l.foes[0];
     const line = contact();
-    const running = !calm && !band && (l.travel > 0 || (resting && l.rest.t < 50) || (!resting && st !== 'down' && front && front.x > line + 2));
+    const running = !calm && !band && (l.travel > 0 || (l.rest && l.rest.t < 50) || (!resting && st !== 'down' && front && front.x > line + 2));
     if (l.travel > 0) l.travel--;
     l.speed += ((hitStop > 0 ? 0 : running ? 1.5 : 0) - l.speed) * 0.1;
     l.scroll = (l.scroll + l.speed) % LW;
@@ -841,9 +879,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         if (l.rest.t >= 50) {
           // 休む: 癒やしの粒と、セーブの知らせ
           if (!calm && tick % 7 === 0) parts.push({ x: hx - 12 + R() * 24, y: gy - 4, vx: 0, vy: -0.5, g: 0, life: 34, s: 1, c: l.rest.kind === 'inn' ? '#a4e464' : '#9ee8ff' });
-          if (!calm && tick % 50 === 0 && l.rest.kind === 'inn') float(hx + 6, gy - 44, 'Zzz', '#ffffff', 40);
-          const msg = t(l.rest.kind === 'inn' ? 'march.inn' : 'march.back', l.rest.name);
-          text(fit1(msg, Math.floor((W - hx - 40) / 15)), hx + 34, y + 18, l.rest.kind === 'inn' ? '#a4e464' : '#ff9a8a');
+          if (!calm && tick % 50 === 0 && l.rest.kind === 'inn') float(hx + 18, gy - 16, 'Zzz', '#ffffff', 22);
         }
         if (l.rest.t >= (calm ? 90 : REST_LEN)) {
           l.rest = null;
@@ -882,9 +918,14 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       }
     }
     // 門の前: だれを待っているか
-    if (!band && st === 'waiting' && node?.type === 'gate' && node.state !== 'ready') {
+    if (!band && !l.rest && !l.talk && st === 'waiting' && node?.type === 'gate' && node.state !== 'ready') {
       const missing = (node.members ?? []).filter((id) => id !== c.id && view.characters.find((x) => x.id === id)?.at !== node.id).length;
-      if (missing) text(t('march.wait', missing), contact() + 8, y + 22, '#9ee8ff');
+      if (missing) {
+        const waitWord = t('march.wait', missing);
+        ctx.fillStyle = 'rgba(16,14,28,.72)';
+        ctx.fillRect(contact() + 4, y + 21, textW(waitWord) + 8, 18);
+        text(waitWord, contact() + 8, y + 22, '#9ee8ff');
+      }
     }
     // 焚き火（門の前と町）
     if ((st === 'waiting' && !(band && band.ready)) || st === 'camp') {
@@ -931,13 +972,85 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       l.pending = null;
       if (front) {
         front.hit = 8;
+        front.x += calm ? 0 : 6;
         burst(front.x + 8, gy - 10, ['#ffffff', '#ffd84a'], 6, 1.6);
+        if (!l.judge) {
+          const big = R() < 0.18;
+          float(front.x + 2, gy - 24, String((big ? 40 : 8) + Math.floor(R() * 20)), big ? '#ffd84a' : '#ffffff', 34);
+          if (big) hitStop = Math.max(hitStop, calm ? 0 : 4);
+        }
+        sound?.play('hit');
       }
     }
+    if (l.talk && !l.rest && !band) {
+      // 話し相手が向かい合う
+      const other = l.talk.partner ?? VILLAGER;
+      const img = idleOf(other);
+      ctx.save();
+      ctx.translate(hx + 40 + CENTER, gy - FOOT);
+      ctx.scale(-1, 1);
+      ctx.drawImage(img, 0, 0);
+      ctx.restore();
+    }
+    if (l.inherit) {
+      // 先代の姿が薄れて、光が移る
+      const q = Math.min(1, l.inherit.t / 90);
+      ctx.globalAlpha = (1 - q) * 0.6;
+      ctx.drawImage(l.set.idle0, hx - CENTER - 16 - q * 8, gy - FOOT - q * 8);
+      ctx.globalAlpha = 1;
+    }
+    if (l.chest) {
+      l.chest.t++;
+      if (l.chest.t === 31) burst(hx + 44, gy - 12, ['#ffd84a', '#ffffff', '#ff9a3c'], 22, 2.4);
+      drawChest(hx + 34, gy, l.chest.t > 30);
+      if (l.chest.t > 170) l.chest = null;
+    }
+    if (!calm && l.speed > 0.8 && tick % 7 === 0) parts.push({ x: hx - 10, y: gy - 1, vx: -0.7 - R() * 0.5, vy: -0.25, g: 0, life: 14, s: 2, c: 'rgba(240,232,216,.7)' });
     drawActor(l, st, gy);
+    if (!calm && l.rest?.kind === 'inn' && l.rest.t >= 50) {
+      // 宿: 日が暮れて星が出て、朝の光で目を覚ます
+      const n = l.rest.t;
+      const dusk = n < 110 ? (n - 50) / 60 : n < 190 ? 1 : Math.max(0, 1 - (n - 190) / 20);
+      ctx.fillStyle = `rgba(12,12,48,${0.68 * dusk})`;
+      ctx.fillRect(PLATE, y, W - PLATE, LH);
+      if (dusk > 0.5) {
+        for (let k = 0; k < 14; k++) {
+          const sx = PLATE + 20 + ((k * 73 + l.i * 31) % (W - PLATE - 40));
+          const sy = y + 4 + ((k * 37) % Math.max(8, LH - 26));
+          if ((tick + k * 9) % 40 < 30) {
+            ctx.fillStyle = '#fff8d8';
+            ctx.fillRect(sx, sy, 1, 1);
+          }
+        }
+        ctx.fillStyle = '#ffe27a';
+        ctx.fillRect(hx - 26, y + 6, 7, 7);
+        ctx.fillStyle = `rgb(12,12,48)`;
+        ctx.fillRect(hx - 23, y + 5, 5, 6);
+      }
+      if (n === 205) {
+        l.flash = 14;
+        l.flashC = '#fff4c0';
+        l.cheer = 60;
+        sound?.play('achieve');
+      }
+    }
+    if (l.idea) {
+      // 頭の上の電球
+      l.idea.t++;
+      const bx = Math.round(hx - 5);
+      const by = gy - 54 + (calm ? 0 : Math.round(Math.sin(tick * 0.14)));
+      ctx.fillStyle = '#10101c';
+      ctx.fillRect(bx - 1, by - 2, 11, 10);
+      ctx.fillRect(bx + 1, by + 8, 7, 4);
+      ctx.fillStyle = '#ffe27a';
+      ctx.fillRect(bx, by - 1, 9, 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(bx + 1, by, 3, 2);
+      ctx.fillStyle = '#c8c4dc';
+      ctx.fillRect(bx + 2, by + 8, 5, 3);
+      if (!calm && tick % 6 === 0) parts.push({ x: bx + 4, y: by + 2, vx: (R() - 0.5) * 2, vy: (R() - 0.5) * 2, g: 0, life: 18, s: 1, c: '#ffe27a' });
+    }
     if (l.cheer > 0) l.cheer--;
-    // いま戦っているテストの名前
-    if (front && LH >= 50) text(fit1(front.name, Math.floor((W - line - 8) / 14)), line, y + 20, '#ffffff', '#10101c');
     ctx.restore();
     if (l.flash > 0) {
       ctx.fillStyle = l.flashC;
@@ -946,21 +1059,20 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       ctx.globalAlpha = 1;
       l.flash--;
     }
-    // 判定: ダイス → 出目 → 結果（開発のことばでは結果だけ）
+    // 判定: ダイス → 出目 → 結果（開発のことばでは結果だけ）。戦場に入ったら門番を隠さない
+    if (l.judge && band) l.judge = null;
     if (l.judge) {
       const j = l.judge;
       j.t++;
-      const dev = isDev();
-      const spin = !dev && !calm && j.t < 26;
-      if (!dev) {
-        const s = String(spin ? 1 + Math.floor(R() * 20) : j.n);
-        d20(hx + 8, y + 4, spin, j.ok);
-        text(s, hx + 20 - textW(s) / 2, y + 7, '#10101c', null);
-      }
+      const spin = !calm && j.t < 26;
+      const roll = String(spin ? 1 + Math.floor(R() * 20) : j.n);
+      d20(hx + 26, y + 4, spin, j.ok);
+      text(roll, hx + 38 - textW(roll) / 2, y + 7, '#10101c', null);
       if (!spin) {
-        const slide = calm ? 1 : Math.min(1, (j.t - (dev ? 0 : 26)) / 8);
+        const slide = calm ? 1 : Math.min(1, (j.t - 26) / 8);
         const col = j.ok ? '#ffd84a' : '#ff7a5a';
-        const bw = 170;
+        const word = t(j.ok ? (j.medal ? 'march.medal' : 'march.ok') : 'march.ng');
+        const bw = textW(word) * 2 + 48;
         const bx = W - bw * slide;
         ctx.fillStyle = j.ok ? '#2a2060' : '#4c1420';
         ctx.fillRect(bx, y + 8, bw, LH - 18);
@@ -968,9 +1080,47 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         ctx.fillRect(bx, y + 8, bw, 1);
         ctx.fillRect(bx, y + LH - 11, bw, 1);
         ctx.drawImage(l.busts[j.ok ? 'happy' : 'hurt'], bx + 4, y + 10);
-        text(t(j.ok ? 'march.ok' : 'march.ng'), bx + 38, y + 16, col, '#10101c', 2);
+        text(word, bx + 38, y + 16, col, '#10101c', 2);
       }
       if (j.t > 90) l.judge = null;
+    }
+    // 出来事の字（記録に起きたことだけ）
+    let event = null;
+    const note = (str, color) => { event = { str, color }; };
+    if (l.rest?.kind === 'inn' && l.rest.t >= 205) {
+      note(t('march.inn.morning'), '#ffe27a');
+    } else if (l.rest && l.rest.t >= 50) {
+      note(t(l.rest.kind === 'inn' ? 'march.inn' : 'march.back', l.rest.name), l.rest.kind === 'inn' ? '#a4e464' : '#ff9a8a');
+    } else if (l.talk && !l.rest) {
+      const k = l.talk;
+      k.t++;
+      const line = k.lines[k.i];
+      if (line) note(`${line.who ? `${line.who}: ` : ''}${line.text}`, '#ffffff');
+      if (!line || k.t > (calm ? 90 : 170)) {
+        k.t = 0;
+        k.i++;
+        if (k.i >= k.lines.length) {
+          l.talk = null;
+          l.travel = 30;
+        }
+      }
+    } else if (l.inherit) {
+      l.inherit.t++;
+      note(t('march.inherit', l.inherit.gen), '#ffd84a');
+      if (l.inherit.t > 150) l.inherit = null;
+    } else if (l.idea) {
+      note(`${t('march.idea')} ${l.idea.text}`, '#ffe27a');
+      if (l.idea.t > 240) l.idea = null;
+    } else if (l.chest && l.chest.t > 34) {
+      note(t('march.chest'), '#ffd84a');
+    } else if (l.trap) {
+      l.trap.t++;
+      note(t('march.trap'), '#ff9a8a');
+      if (l.trap.t > 170) l.trap = null;
+    } else if (l.say) {
+      l.say.t++;
+      note(l.say.text, '#ffffff');
+      if (l.say.t > 170) l.say = null;
     }
     // 札（顔・名前・様子）
     ctx.fillStyle = '#14121f';
@@ -1018,23 +1168,52 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     // 道のり: ふりだしからあがりまでの点（門は大きく、いまの場所は光る）
     const route = routeOf(c, view);
     if (route.length && !band) {
-      const rx0 = PLATE + 6;
-      const rw = Math.min(W - PLATE - 96, route.length * 14);
-      const ry = y + LH - 6;
+      const rx0 = PLATE + 8;
+      const rw = Math.min(W - PLATE - 96, route.length * 18);
+      const ry = y + LH - 5;
+      const xOf = (i) => rx0 + (route.length > 1 ? Math.round((i * rw) / (route.length - 1)) : 0);
+      // すごろくの道
+      ctx.fillStyle = '#10101c';
+      ctx.fillRect(rx0, ry, rw, 1);
+      const here = route.findIndex((p) => p.here);
+      if (here > 0) {
+        ctx.fillStyle = '#ffd84a';
+        ctx.fillRect(rx0, ry, xOf(here) - rx0, 1);
+      }
       route.forEach((p, i) => {
-        const px = rx0 + (route.length > 1 ? Math.round((i * rw) / (route.length - 1)) : 0);
-        const size = p.gate ? 4 : 2;
-        ctx.fillStyle = '#10101c';
-        ctx.fillRect(px - 1, ry - Math.floor(size / 2) - 1, size + 2, size + 2);
-        ctx.fillStyle = p.here ? (tick % 30 < 15 || calm ? '#ffffff' : '#ffd84a') : p.done ? '#ffd84a' : p.gate ? '#ff7a5a' : p.camp ? '#a4e464' : '#6c6888';
-        ctx.fillRect(px, ry - Math.floor(size / 2), size, size);
+        const px = xOf(i);
+        const lit = p.here && (tick % 30 < 15 || calm);
+        if (p.camp) {
+          // 町: 小さな家
+          ctx.fillStyle = '#10101c';
+          ctx.fillRect(px - 4, ry - 3, 9, 6);
+          ctx.fillRect(px - 2, ry - 5, 5, 2);
+          ctx.fillStyle = p.done ? '#a4e464' : '#f4e4c0';
+          ctx.fillRect(px - 3, ry - 2, 7, 4);
+          ctx.fillStyle = p.done ? '#46a058' : '#c8483a';
+          ctx.fillRect(px - 3, ry - 3, 7, 1);
+          ctx.fillRect(px - 1, ry - 4, 3, 1);
+        } else if (p.gate) {
+          // 門: 赤い扉
+          ctx.fillStyle = '#10101c';
+          ctx.fillRect(px - 4, ry - 6, 9, 9);
+          ctx.fillStyle = lit ? '#ffffff' : p.done ? '#ffd84a' : '#d8342c';
+          ctx.fillRect(px - 3, ry - 5, 7, 7);
+          ctx.fillStyle = '#10101c';
+          ctx.fillRect(px, ry - 5, 1, 7);
+        } else {
+          ctx.fillStyle = '#10101c';
+          ctx.fillRect(px - 2, ry - 2, 5, 5);
+          ctx.fillStyle = lit ? '#ffffff' : p.here ? '#ffd84a' : p.done ? '#ffd84a' : '#8c88a8';
+          ctx.fillRect(px - 1, ry - 1, 3, 3);
+        }
       });
     }
     // マスの名前とテストの数
     const pass = Array.isArray(node?.cases) ? node.cases.filter((k) => k?.ok === true).length : 0;
     const total = Array.isArray(node?.cases) ? node.cases.length : 0;
     const title = node && !band ? `${node.id} ${node.title ?? ''}` : '';
-    const shown = fit1(title, Math.floor((W - PLATE - 120) / 12));
+    const shown = event ? '' : fit1(title, Math.floor((W - PLATE - 120) / 26));
     const tw = shown ? textW(shown) : 0;
     const pw = Math.min(total, 10) * 6;
     if (shown) {
@@ -1044,6 +1223,23 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       for (let k = 0; k < Math.min(total, 10); k++) {
         ctx.fillStyle = k < pass ? '#ffd84a' : '#3c3858';
         ctx.fillRect(W - pw - 3 + k * 6, y + 6, 4, 6);
+      }
+    }
+    // いま戦っているテストの名前（敵の絵に重ねない。上の段の、マスの名前の左）
+    if (event && !band) {
+      // 出来事の字は上の段に1行だけ（テストの名前もマスの名前も、そのあいだは出さない）
+      const line2 = fit1(event.str, Math.floor((W - contact() - pw - 12) / 15));
+      ctx.fillStyle = 'rgba(16,14,28,.82)';
+      ctx.fillRect(contact() - 4, y, textW(line2) + 8, 18);
+      text(line2, contact(), y + 1, event.color);
+    } else if (front && !l.judge) {
+      const room2 = W - tw - pw - 14 - line - 8;
+      const n = Math.floor(room2 / 14);
+      if (n >= 4) {
+        const name = fit1(front.name, n);
+        ctx.fillStyle = 'rgba(16,14,28,.72)';
+        ctx.fillRect(line - 4, y, textW(name) + 8, 18);
+        text(name, line, y + 1);
       }
     }
     ctx.fillStyle = '#0a0a14';
@@ -1074,6 +1270,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const bh = img.height * s;
     const bx = W - bw - 30;
     const by = y0 + h - bh - 10 + (calm || a.dying ? 0 : Math.round(Math.sin(tick * 0.05) * 2));
+    a.bossBox = { x: bx, y: by, w: bw, h: bh };
     // 床の影
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.fillRect(bx + 6, y0 + h - 12, bw - 12, 4);
@@ -1119,7 +1316,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       const missing = a.all.length - a.members.length;
       const msg = a.ready ? t('march.allset') : t('march.wait', missing);
       const blink = a.ready && !calm && tick % 40 < 10;
-      text(msg, PLATE + 12, y0 + 20, blink ? '#ffffff' : a.ready ? '#ffd84a' : '#9ee8ff');
+      if (!banner) text(msg, heroX() + 44 + a.members.length * 16, y0 + 20, blink ? '#ffffff' : a.ready ? '#ffd84a' : '#9ee8ff');
     }
     ctx.restore();
   }
@@ -1127,6 +1324,43 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
   function drawParts() {
     for (let i = parts.length - 1; i >= 0; i--) {
       const p = parts[i];
+      if (p.arrow) {
+        // push: 大きな矢印が、緑の尾を引いて上へ飛ぶ
+        p.y += p.vy;
+        p.life--;
+        const ax = Math.round(p.x);
+        const ay = Math.round(p.y);
+        ctx.fillStyle = '#10101c';
+        ctx.fillRect(ax - 7, ay + 5, 15, 4);
+        ctx.fillRect(ax - 5, ay + 2, 11, 3);
+        ctx.fillRect(ax - 3, ay - 1, 7, 3);
+        ctx.fillRect(ax - 3, ay + 9, 7, 9);
+        ctx.fillStyle = '#7ee8a8';
+        ctx.fillRect(ax - 6, ay + 6, 13, 2);
+        ctx.fillRect(ax - 4, ay + 4, 9, 2);
+        ctx.fillRect(ax - 2, ay + 2, 5, 2);
+        ctx.fillRect(ax - 2, ay + 8, 5, 9);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(ax, ay + 2, 1, 14);
+        if (p.life % 2 === 0) parts.push({ x: ax - 1 + R() * 3, y: ay + 18, vx: 0, vy: 0.4, g: 0, life: 12, s: 2, c: '#7ee8a8' });
+        if (p.life <= 0) parts.splice(i, 1);
+        continue;
+      }
+      if (p.corpse) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += p.g;
+        p.rot += 0.35;
+        p.life--;
+        ctx.save();
+        ctx.translate(Math.round(p.x) + p.corpse.width / 2, Math.round(p.y) + p.corpse.height / 2);
+        ctx.rotate(p.rot);
+        ctx.globalAlpha = Math.min(1, p.life / 12);
+        ctx.drawImage(p.corpse, -p.corpse.width / 2, -p.corpse.height / 2);
+        ctx.restore();
+        if (p.life <= 0) parts.splice(i, 1);
+        continue;
+      }
       if (p.shot) {
         p.t++;
         if (p.t < 0) continue;
@@ -1241,6 +1475,13 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     }
     if (moving) placeCommands();
     document.body.classList.toggle('march-battle', arenas.some((a) => a.cine));
+    sound?.music?.(view.finished ? null : arenas.some((a) => a.cine || a.ready) ? 'boss' : 'march');
+    // ボス戦の再生中は、戦場の上にボタンを出さない
+    for (const l of lanes) {
+      const off = !!arenaOf(l)?.cine;
+      if (l.button) l.button.hidden = off;
+      for (const b of l.subs ?? []) b.hidden = off;
+    }
     arenas.forEach(drawArena);
     for (const l of lanes) drawLane(l);
     for (let i = arenas.length - 1; i >= 0; i--) {
@@ -1251,8 +1492,23 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         break;
       }
     }
+    // 知らせは重ねず、順番に
+    if (notices.length && tick >= noticeAt) {
+      noticeNow = notices.shift();
+      noticeAt = tick + 90;
+    }
+    if (noticeNow && tick >= noticeAt) noticeNow = null;
     drawParts();
     ctx.restore();
+    if (noticeNow) {
+      const nw = textW(noticeNow.str);
+      ctx.fillStyle = '#10101c';
+      // 上の帯の中に出す（レーンの字に重ねない）
+      ctx.fillRect(Math.round(W / 2 - nw / 2) - 8, 1, nw + 16, TOP - 2);
+      ctx.fillStyle = noticeNow.c;
+      ctx.fillRect(Math.round(W / 2 - nw / 2) - 8, TOP - 2, nw + 16, 1);
+      text(noticeNow.str, W / 2 - nw / 2, 3, noticeNow.c);
+    }
     // 上の帯: 冒険の名前と、テスト全体の進み
     const nodes = Object.values(view.nodes ?? {});
     let pass = 0;
@@ -1266,9 +1522,12 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     ctx.fillStyle = '#3c3858';
     ctx.fillRect(0, TOP - 1, W, 1);
     const tw = text(fit1(String(view.quest?.title ?? ''), 14), 8, 3, '#ffffff');
-    const label = t('march.tests', pass, total) + (bossNote ? `　${bossNote}` : '');
-    const lw = textW(label);
     const bx = 8 + tw + 12;
+    // バーを短くしすぎないよう、入らなければ門までの字を省く
+    const streakWord = streak >= 2 ? `　${t('march.streak', streak)}` : '';
+    const wide = t('march.tests', pass, total) + (bossNote ? `　${bossNote}` : '') + streakWord;
+    const label = W - spare - bx - textW(wide) - 16 >= 120 ? wide : t('march.tests', pass, total) + streakWord;
+    const lw = textW(label);
     const bw = Math.max(0, W - spare - bx - lw - 16);
     ctx.fillStyle = '#10101c';
     ctx.fillRect(bx - 1, 7, bw + 2, 10);
@@ -1283,17 +1542,21 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     if (banner) {
       banner.t++;
       const a = calm ? 1 : Math.min(1, banner.t / 8);
-      const by = Math.round(H / 2 - 22);
+      const by = banner.by ?? Math.round(H / 2 - 22);
+      const x0 = banner.x0 ?? 0;
+      const bw2 = (banner.x1 ?? W) - x0;
+      const mid = x0 + bw2 / 2;
       ctx.globalAlpha = a * 0.9;
       ctx.fillStyle = '#10101c';
-      ctx.fillRect(0, by, W, 44);
+      ctx.fillRect(x0, by, bw2, 44);
       ctx.globalAlpha = 1;
       ctx.fillStyle = '#ffd84a';
-      ctx.fillRect(Math.round((W / 2) * (1 - a)), by, Math.round(W * a), 2);
-      ctx.fillRect(Math.round((W / 2) * (1 - a)), by + 42, Math.round(W * a), 2);
+      ctx.fillRect(Math.round(mid - (bw2 / 2) * a), by, Math.round(bw2 * a), 2);
+      ctx.fillRect(Math.round(mid - (bw2 / 2) * a), by + 42, Math.round(bw2 * a), 2);
       const big = textW(banner.text) * 2;
-      if (big < W - 20) text(banner.text, W / 2 - big / 2, by + 3, '#ffd84a', '#7a3c10', 2);
-      else text(banner.text, W / 2 - big / 4, by + 13, '#ffd84a', '#7a3c10');
+      if (big < bw2 - 20) text(banner.text, mid - big / 2, by + 3, '#ffd84a', '#7a3c10', 2);
+      else text(banner.text, mid - big / 4, by + 13, '#ffd84a', '#7a3c10');
+      if (banner.sub) text(banner.sub, W / 2 - textW(banner.sub) / 2, by + 46, '#ffffff');
       if (banner.t >= banner.life) banner = null;
     }
     if (confetti > 0) {
@@ -1316,9 +1579,16 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         const joined = a.members.filter((id) => !old?.members.includes(id));
         // 組ができた瞬間は全員、あとから来た人はその人だけ
         const names = (old ? joined : a.members).map((id) => lanes.find((x) => x.id === id)?.c.name).filter(Boolean);
-        if (names.length) {
-          float(PLATE + 40, TOP + 30 + (a.members.length * LH) / 2, t('march.join', names.join('・').replace(/（あなた）/g, '')), '#ffd84a', 110);
+        if (names.length && !a.ready) {
+          notices.push({ str: t('march.join', names.join('・').replace(/（あなた）/g, '')), c: '#ffd84a' });
           sound?.play('fanfare');
+        }
+        // 全員そろった瞬間に、門番が現れる
+        if (a.ready && !old?.ready) {
+          const top = Math.min(...a.members.map((id) => lanes.find((x) => x.id === id)?.toY ?? TOP));
+          banner = { text: t(a.gate === view.quest?.goal ? 'march.bossin.goal' : 'march.bossin.gate'), t: 0, life: 110, x0: PLATE, x1: W - 190, by: top + Math.round((a.members.length * LH) / 2) - 22 };
+          shake = calm ? 0 : 12;
+          sound?.play('down');
         }
       }
       keep.push(a);
@@ -1328,10 +1598,18 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     layoutLanes(!animate);
   }
 
+  function showPush(who, ok, branch) {
+    if (!who) return;
+    who.say = { t: 0, text: ok ? t('march.push.ok', branch ?? '') : t('march.push.ng') };
+    if (ok && !calm) for (let k = 0; k < 3; k++) parts.push({ arrow: true, x: heroX() + 40 + k * 90, y: who.y + LH - 14 + k * 8, vy: -1.6, life: 30 });
+    sound?.play(ok ? 'kira' : 'down');
+  }
+
   function play(e) {
     const l = lanes.find((x) => x.id === e.character);
     if (e.type === 'check_passed' && l) {
-      l.judge = { t: 0, n: seqRoll(e), ok: true };
+      l.judge = { t: 0, n: seqRoll(e), ok: true, medal: !!l.medal };
+      l.medal = false;
       l.flash = calm ? 0 : 8;
       l.flashC = '#ffffff';
       l.cheer = 70;
@@ -1349,6 +1627,11 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     }
     if (e.type === 'gate_cleared' || e.type === 'gate_failed' || (e.type === 'check_failed' && !l && e.node)) {
       startBattle(e.node, e.type === 'gate_cleared');
+    }
+    if (e.type === 'seal_broken' && l) l.trap = { t: 0 };
+    // push: 本当に送れたときだけ、上向きの矢印が飛ぶ
+    if (e.type === 'pushed') {
+      showPush(l ?? lanes.find((x) => x.at === e.node) ?? lanes[0], e.ok !== false, e.branch);
     }
   }
 
@@ -1391,9 +1674,13 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     if (c.t >= start && (c.t - start) % gap === 0 && c.hits < Math.max(blows, rows.length)) {
       const m = rows[c.hits % rows.length];
       m.atk = 24;
+      const box = a.bossBox;
+      if (box) (own(ATTACK, m.c.job) ?? ATTACK.hero)(box.x + box.w * 0.3, Math.round(m.y) + LH - 8);
       if (c.hits < blows) {
         c.flash = 6;
         sound?.play('hit');
+        const label = node?.cases?.[c.hits]?.name;
+        if (box && label) float(box.x - 20, box.y + box.h * 0.35, fit1(String(label), 12), '#ffffff', 44);
       }
       c.hits++;
       shake = Math.max(shake, calm ? 0 : 3);
@@ -1404,7 +1691,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       if (c.ok) {
         a.dying = c.goal ? 150 : 110;
         const goal = c.goal;
-        banner = { text: t(goal ? 'march.goal' : 'march.gate', String(node?.title ?? a.gate).replace(/^(結合|あがり): /, '')), t: 0, life: goal ? 300 : 130 };
+        banner = { text: t(goal ? 'march.goal' : 'march.gate', String(node?.title ?? a.gate).replace(/^(結合|あがり): /, '')), sub: rows.length >= 2 ? chainNameOf(rows.map((l) => l.c.job)) : '', t: 0, life: goal ? 300 : 130 };
         shake = calm ? 0 : 18;
         confetti = goal ? 400 : 90;
         sound?.play('fanfare');
@@ -1489,34 +1776,66 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
             sound?.play('hit');
             for (let k = 0; k < killed; k++) dropBag(heroX() + 50 + k * 14, gy - 14);
           }
-          if (killed >= 2) float(heroX() + 30, gy - 42, t('march.combo', killed), '#ff9a3c', 70);
+          if (killed >= 2) float(heroX() + 30, gy - 22, t('march.combo', killed), '#ff9a3c', 50);
           // レベルアップ（本物の level が上がったとき）
           if ((c.level ?? 1) > (l.level ?? c.level ?? 1)) {
-            float(heroX() - 20, gy - 46, t('march.levelup', c.level), '#ffe27a', 90);
+            notices.push({ str: `${c.name}: ${t('march.levelup', c.level)}`, c: '#ffe27a' });
             l.flash = calm ? 0 : 12;
             l.flashC = '#ffe27a';
             l.cheer = Math.max(l.cheer, 60);
             sound?.play('up');
           }
-          if ((c.level ?? 1) < (l.level ?? 1)) float(heroX() - 20, gy - 46, t('march.leveldown', c.level), '#ff9a8a', 90);
+          if ((c.level ?? 1) < (l.level ?? 1)) notices.push({ str: `${c.name}: ${t('march.leveldown', c.level)}`, c: '#ff9a8a' });
           if ((c.xp ?? 0) !== l.xp || (c.level ?? 1) !== l.level) l.xpFlash = 20;
           // 通ったはずのテストが戻ってきた
           const node = own(next.nodes, c.at);
           const revived = Array.isArray(node?.cases) ? node.cases.reduce((a, k) => a + (k?.revived ?? 0), 0) : 0;
           if (sameNode && revived > (l.revived ?? 0)) {
-            float(heroX() + 40, gy - 34, t('march.revived'), '#ff7a5a', 70);
+            float(heroX() + 40, gy - 22, t('march.revived'), '#ff7a5a', 50);
             sound?.play('down');
           }
           l.revived = revived;
           // 一発合格のメダル
           const was = own(prev.nodes, l.at);
-          if (was && was.first_try !== true && own(next.nodes, l.at)?.first_try === true) float(heroX() - 10, gy - 40, t('march.medal'), '#ffd84a', 80);
+          if (was && was.first_try !== true && own(next.nodes, l.at)?.first_try === true) l.medal = true;
+          const before = prev.characters?.find((x) => x.id === l.id);
+          if (before) {
+            // 閃き: 強敵のあとの日誌が技になった
+            const skills = Array.isArray(c.skills) ? c.skills : [];
+            if (skills.length > (Array.isArray(before.skills) ? before.skills.length : 0)) {
+              l.idea = { t: 0, text: skills[0]?.text ?? '' };
+              l.flash = calm ? 0 : 10;
+              l.flashC = '#ffe27a';
+              sound?.play('kira');
+            }
+            // 伝承: 新しい代が受け継いだ
+            if ((c.generation ?? 1) > (before.generation ?? 1)) {
+              l.inherit = { t: 0, gen: c.generation };
+              sound?.play('achieve');
+            }
+            // 宝箱: 判定のほころびを見つけて直された
+            if ((c.treasures ?? 0) > (before.treasures ?? 0)) {
+              l.chest = { t: 0 };
+              sound?.play('gold');
+            }
+          }
         }
         l.level = c.level ?? 1;
         l.xp = c.xp ?? 0;
         l.at = c.at ?? '';
         l.cmd = commandOf(c, next, l.status);
       });
+      // 余白: 村の人のひとこと・仲間との会話・号外（本当に起きた行だけ）
+      if (sameQuest && prev.head && next.head && Array.isArray(next.margins)) {
+        for (const m of next.margins) {
+          if (!Number.isInteger(m?.seq) || m.seq <= prev.head.seq || !Array.isArray(m.lines) || !m.lines.length) continue;
+          const l = lanes.find((x) => x.id === m.road);
+          if (!l || l.talk) continue;
+          const nameOf = (who) => next.characters.find((c) => c.id === who)?.name ?? who;
+          const partner = m.kind === 'talk' ? next.characters.find((c) => m.lines.some((q) => q.who === c.id) && c.id !== m.road) : m.kind === 'npc' ? VILLAGER : null;
+          l.talk = { t: 0, i: 0, partner, lines: m.lines.map((q) => ({ who: q.who ? nameOf(q.who) : null, text: q.text })) };
+        }
+      }
       syncArenas(sameQuest && !!prev);
       syncCommands();
       // いちばん近い門まで（全員の分を足す）
@@ -1528,15 +1847,64 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       const near = Object.entries(gates).sort((a, b) => a[1] - b[1])[0];
       bossNote = near ? t('march.toboss', near[0], near[1]) : '';
       if (sameQuest && prev.head && next.head) for (const e of next.log) if (e?.seq > prev.head.seq) play(e);
+      // 連続 PASS: 節目で盛り上げ、途切れたら知らせる
+      const nowStreak = streakOf(next.log);
+      if (sameQuest && streak !== null) {
+        const toast = (str, c) => notices.push({ str, c });
+        if (nowStreak > streak && (nowStreak === 3 || nowStreak === 5 || nowStreak % 10 === 0)) {
+          toast(t('march.streak.up', nowStreak), '#ffd84a');
+          confetti = Math.max(confetti, calm ? 0 : 40);
+          sound?.play('kira');
+        } else if (nowStreak === 0 && streak >= 3) toast(t('march.streak.lost', streak), '#ff9a8a');
+      }
+      streak = nowStreak;
       lastArenas = arenas.filter((a) => !a.cine).map((a) => ({ ...a, members: [...a.members] }));
       const pass = lanes.map((l) => `${l.c.name}: ${t(`march.${l.status}`)}`).join(' / ');
       canvas.setAttribute('aria-label', pass);
-      window.__masume.march = { lanes: lanes.map((l) => ({ id: l.id, status: l.status, label: t(`march.${l.status}`), foes: l.foes.map((f) => f.name), cmd: l.cmd?.kind ?? null, level: l.c.level ?? 1 })) };
+      window.__masume.march = { lanes: lanes.map((l) => ({ id: l.id, status: l.status, label: t(`march.${l.status}`), foes: l.foes.map((f) => f.name), cmd: l.cmd?.kind ?? null, level: l.c.level ?? 1, rest: l.rest?.kind ?? null, talk: !!l.talk, idea: !!l.idea, inherit: !!l.inherit, chest: !!l.chest })), arenas: arenas.map((a) => ({ gate: a.gate, members: [...a.members], cine: !!a.cine, ready: !!a.ready })) };
     },
     show(flag) {
       on = flag;
+      if (!on) sound?.music?.(null);
       if (on && !raf) raf = requestAnimationFrame(frame);
       if (on) fit();
+    },
+    /** PR に付いた本物のレビュー・コメントを、そのブランチの担当のレーンで話す（§80.16）。合うレーンが無ければ知らせる */
+    talk(branch, who, str) {
+      const hit = lanes.find((l) => String(branch ?? '').toLowerCase().includes(String(l.id).toLowerCase()) && !l.talk && !arenaOf(l));
+      const l = hit ?? lanes.find((x) => !x.talk && !x.rest && !arenaOf(x));
+      if (!l) return notices.push({ str: `${who}: ${fit1(str, 30)}`, c: '#ffffff' });
+      l.talk = { t: 0, i: 0, partner: VILLAGER, lines: [{ who, text: str }] };
+      window.__masume.marchTalk = { lane: l.id, who, text: str };
+      sound?.play('normal');
+      return null;
+    },
+    /** 大きな知らせ（§80.16）。ok なら紙吹雪、だめなら揺れる */
+    announce(text, ok) {
+      banner = { text, t: 0, life: 120 };
+      if (ok) {
+        confetti = calm ? 0 : 70;
+        sound?.play('fanfare');
+      } else {
+        shake = calm ? 0 : 14;
+        sound?.play('down');
+      }
+    },
+    /** 小さな知らせ（§80.16） */
+    notice(text) {
+      notices.push({ str: text, c: '#ffe27a' });
+      sound?.play('normal');
+    },
+    /** 盤面から git push したとき（§80.8）。全員のレーンに矢印が飛ぶ */
+    pushed(ok, branch) {
+      if (ok && !calm) for (const l of lanes) for (let k = 0; k < 3; k++) parts.push({ arrow: true, x: heroX() + 40 + k * 90 + l.i * 13, y: l.y + LH - 14 + k * 8, vy: -1.6, life: 30 });
+      notices.push({ str: ok ? t('march.push.ok', branch ?? '') : t('march.push.ng'), c: ok ? '#7ee8a8' : '#ff9a8a' });
+      sound?.play(ok ? 'kira' : 'down');
+    },
+    /** 仲間のひとこと（§79.12） */
+    say(id, str) {
+      const l = lanes.find((x) => x.id === id);
+      if (l) l.say = { t: 0, text: fit1(String(str), 22) };
     },
     rewords() {
       TEXT.clear();
