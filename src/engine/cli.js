@@ -3,13 +3,36 @@ import { resolve } from 'node:path';
 import { MasumeError } from './errors.js';
 import { findRoot, logFile } from './paths.js';
 import { inspectLog, outputFile, requireHealthy } from './store.js';
+import { buildView } from './view.js';
+import { WORDS, resolveWords, t } from './words.js';
 
 export function usage(message) {
   throw new MasumeError('E_USAGE', message);
 }
 
+/** argv の --words game|dev（--words=dev でも）。無ければ null。自分で引数を読むコマンドが、ことばを決めるのに使う（§76.2） */
+export function wordsFlag(argv) {
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i];
+    if (arg === '--') return null;
+    if (arg === '--words') return WORDS.includes(argv[i + 1]) ? argv[i + 1] : null;
+    if (arg.startsWith('--words=')) {
+      const value = arg.slice('--words='.length);
+      return WORDS.includes(value) ? value : null;
+    }
+  }
+  return null;
+}
+
+/** 冒険の書のある場所を、引数・環境変数・今いる場所から推し量る（無ければ null。ことばの設定を読むため） */
+export function guessRoot({ cwd, env, dir }) {
+  if (dir !== undefined) return resolve(cwd, dir);
+  if (env?.MASUME_DIR) return resolve(cwd, env.MASUME_DIR);
+  return findRoot(cwd);
+}
+
 export function parseArgs(argv, ctx, extra = {}) {
-  const types = { dir: 'string', as: 'string', json: 'boolean', ...extra };
+  const types = { dir: 'string', as: 'string', json: 'boolean', words: 'string', ...extra };
   const options = {};
   const args = [];
   for (let i = 0; i < argv.length; i++) {
@@ -28,6 +51,11 @@ export function parseArgs(argv, ctx, extra = {}) {
     if (types[key] === 'boolean') {
       if (equal !== -1) usage(`--${key} に値は指定できません`);
       options[key] = true;
+    } else if (types[key] === 'maybe') {
+      // 値があってもなくてもよい（--tail / --tail 20 / --tail=20）。無ければ true
+      if (equal !== -1) options[key] = argument.slice(equal + 1);
+      else if (argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) options[key] = argv[++i];
+      else options[key] = true;
     } else {
       const value = equal === -1 ? argv[++i] : argument.slice(equal + 1);
       if (value === undefined || (equal === -1 && value.startsWith('--'))) usage(`--${key} の値が必要です`);
@@ -35,9 +63,25 @@ export function parseArgs(argv, ctx, extra = {}) {
     }
   }
   if (options.dir === '' || options.as === '') usage('--dir と --as に空文字は指定できません');
+  if (options.words !== undefined && !WORDS.includes(options.words)) usage(`--words は game か dev です: ${options.words}`);
   const cwd = ctx.cwd ?? process.cwd();
   const env = ctx.env ?? process.env;
-  return { args, options, cwd, env, actor: options.as ?? (env.MASUME_ACTOR || 'gm') };
+  // ことば（§76）: --words > GRIDHUB_WORDS > 冒険の .masume/words.json > game。ここで決めて、以後の t() に効かせる
+  resolveWords({ root: guessRoot({ cwd, env, dir: options.dir }), env, flag: options.words ?? null });
+  return {
+    args, options, cwd, env,
+    actor: options.as ?? (env.MASUME_ACTOR || 'gm'),
+    // --as か MASUME_ACTOR で「だれとして」が決まっているか。無ければ、キャラクターIDを取るコマンドはそのIDとして記録する（actorFor。§78.3）
+    actorGiven: options.as !== undefined || Boolean(env.MASUME_ACTOR),
+  };
+}
+
+/**
+ * だれとして記録するか。--as > MASUME_ACTOR > コマンドに渡したキャラクターID（step・check・note）。
+ * 人が `gridhub step engine` と打ったら engine の記録になる（gm にならない）。
+ */
+export function actorFor(command, characterId) {
+  return command.actorGiven ? command.actor : characterId;
 }
 
 export function gameRoot(command, { creating = false, optional = false } = {}) {
@@ -45,7 +89,7 @@ export function gameRoot(command, { creating = false, optional = false } = {}) {
   const root = options.dir !== undefined ? resolve(cwd, options.dir)
     : creating ? resolve(cwd)
       : env.MASUME_DIR ? resolve(cwd, env.MASUME_DIR) : findRoot(cwd);
-  if (!root && !optional) throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません');
+  if (!root && !optional) throw new MasumeError('E_NO_GAME', t('err.nogame'));
   return root;
 }
 
@@ -63,7 +107,7 @@ export function printValidation(result) {
 
 export function printCorruption(errors) {
   if (errors.length > 0) {
-    console.error(`冒険の書は呪われています（seq ${errors[0].seq}）。読めたイベントだけを表示します`);
+    console.error(`${t('verify.cursed', errors[0].seq)}。読めたイベントだけを表示します`);
   }
 }
 
@@ -78,25 +122,45 @@ function printFailureOutput(root, seq, node) {
   console.log(failed.replace(/\r?\n$/u, '').split(/\r\n|\n|\r/u).slice(-40).join('\n'));
 }
 
-export function printCheckResult(root, result) {
+/** 判定の結果行に使う、名前と題（盤面のログと同じ言い方。ID も残す）。view は読んであれば渡す（二度再生しない） */
+function namesOf(root, view = null) {
+  if (!view) {
+    try {
+      view = buildView(root);
+    } catch {
+      view = null;
+    }
+  }
+  const who = (id) => {
+    const c = view?.characters.find((x) => x.id === id);
+    return c ? `${c.name}（${id}）` : String(id);
+  };
+  const where = (id) => {
+    const title = view?.nodes?.[id]?.title;
+    return title ? `${id}「${title}」` : String(id);
+  };
+  return { who, where };
+}
+
+export function printCheckResult(root, result, { view = null } = {}) {
+  const { who, where } = namesOf(root, view);
   for (const { seq, type, data } of result.events) {
     switch (type) {
       case 'check_passed':
-        console.log(`判定成功: ${data.character} が ${data.node} を突破しました`);
+        console.log(t('check.passed', who(data.character), where(data.node)));
         break;
       case 'check_failed':
-        console.log(`判定失敗: ${data.character} の ${data.failed} が失敗しました`);
+        console.log(t('check.failed', who(data.character), where(data.failed)));
         printFailureOutput(root, seq, data.failed);
         break;
       case 'stamped':
-        console.log(`判定成功: ${data.by} が ${data.node} にハンコを押しました`);
+        console.log(t('check.stamped', who(data.by), where(data.node)));
         break;
       case 'gate_cleared':
-        console.log(`結合ゲート突破: ${data.gate} を ${data.members.join('、')} が突破しました`);
+        console.log(t('check.gate_cleared', where(data.gate), data.members.map(who).join('、')));
         break;
       case 'gate_failed':
-        console.log(`${data.blamed.length === data.members.length ? '全滅' : '差し戻し'}: `
-          + `${data.gate} の判定失敗（${data.blamed.join('、')}）`);
+        console.log(t('check.gate_failed', data.blamed.length === data.members.length, where(data.gate), data.blamed.map(who).join('、')));
         printFailureOutput(root, seq, data.gate);
         break;
     }

@@ -1,11 +1,13 @@
 // アプリの起動役（CONTRACTS §68）: はじめの画面・フォルダを開く・最近のフォルダ・チュートリアル。伝令の縄張り。
 // Mac のアプリ（mac/GridHub.swift）はこれを `gridhub app --port 0 --lifeline` で起こし、出てきた URL を窓に映す。
 // フォルダを開くと、そのフォルダの盤面のサーバー（startServer。§15）を同じプロセスの中に起こす。開き直すと前のものは止める。
+import { createHash } from 'node:crypto';
 import { createServer as createHttpServer } from 'node:http';
 import { accessSync, constants, cpSync, existsSync, mkdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { basename, delimiter, isAbsolute, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { appHome } from '../engine/home.js';
 import {
   MAX_POST_BYTES, SECURITY_HEADERS, allowedHost, allowedOrigin, apiError, isObject, rejectLargeBody,
   sendError, sendJson, sendText, serveStatic, startServer,
@@ -17,9 +19,15 @@ const TUTORIAL_NAME = 'チュートリアル';
 
 /** 最近のフォルダを置く場所（§68.1）: --home → GRIDHUB_APP_HOME → macOS は ~/Library/Application Support/GridHub、ほかは XDG */
 export function defaultHome(env = process.env) {
-  if (env.GRIDHUB_APP_HOME) return resolve(env.GRIDHUB_APP_HOME);
-  if (process.platform === 'darwin') return join(homedir(), 'Library', 'Application Support', 'GridHub');
-  return join(env.XDG_CONFIG_HOME ? resolve(env.XDG_CONFIG_HOME) : join(homedir(), '.config'), 'gridhub');
+  return appHome(env);
+}
+
+/**
+ * フォルダごとに決まった盤面のポート（§79.29）。41000〜48999 のうち、フォルダの場所のハッシュで決める。
+ * 開くたびに同じ住所（origin）になるので、盤面がブラウザに覚えたこと（音・見たエンディング）がアプリを開き直しても残る
+ */
+export function stablePort(dir) {
+  return 41000 + (createHash('sha256').update(resolve(dir)).digest().readUInt32BE(0) % 8000);
 }
 
 /** チュートリアルのフォルダを作る場所（§68.1）: --play → GRIDHUB_PLAY_DIR → ~/GridHub */
@@ -175,7 +183,14 @@ export async function startApp({
     if (!info.isDirectory()) throw apiError('E_NO_DIR', `フォルダではありません: ${dir}`, 404);
     if (stopped) throw apiError('E_BUSY', '起動役を閉じています', 409);
     await closeCurrent();
-    const running = await startServer({ root: dir, port: 0, host });
+    let running;
+    try {
+      running = await startServer({ root: dir, port: stablePort(dir), host, home });
+    } catch (error) {
+      // 決まったポートが使われていれば、空いているポートで（その回だけ、覚えたことは引き継がれない）
+      if (!['EADDRINUSE', 'EACCES'].includes(error?.code)) throw error;
+      running = await startServer({ root: dir, port: 0, host, home });
+    }
     current = { dir, running };
     remember(dir);
     const url = new URL(running.url);
@@ -261,6 +276,13 @@ export async function startApp({
           return url.href;
         })() },
       });
+      return;
+    }
+    // 勇者の手帳（§79.7）: はじめの画面の勇者のカード。冒険をまたいだまとめ（読むだけ）
+    if (pathname === '/api/hero') {
+      response.setHeader('Cache-Control', 'no-store');
+      const hero = await import('../engine/hero.js');
+      sendJson(response, 200, hero.heroJournal(home));
       return;
     }
     if (pathname === '/api/health') {

@@ -6,6 +6,9 @@ const DIRECTIVE = /\s+#\s*(.*)$/u;
 const SPEC = [['✔', true], ['✖', false], ['﹣', null]];
 const OTHER = [['✓', true], ['PASS', true], ['ok', true], ['✗', false], ['FAIL', false], ['NG', false], ['ng', false]];
 
+/** CLI（step・brief・log）がテスト1件の成否を出すときの印（✔ 通った / ✖ 落ちた / ・ まだ・不明）。盤面は自分の印を持つ */
+export const MARK = { true: '✔', false: '✖', null: '・' };
+
 function cleanName(text) {
   let name = text;
   let skipped = false;

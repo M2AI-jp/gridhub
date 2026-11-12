@@ -43,9 +43,27 @@ function bubble(say, spot) {
   return `<g class="pawn-say" data-side="${{ t: 'top', b: 'bottom', l: 'left', r: 'right' }[side]}">${inner}</g>`;
 }
 
+/**
+ * 装備（§79.22）: レベル（信頼）が上がると、駒の見た目にも出る。Lv3 剣・Lv5 マント・Lv7 足もとの光・Lv9 王冠。
+ * back は駒の後ろ、front は前に描く
+ */
+function gear(c) {
+  const L = Number(c.level) || 1;
+  const s = SIZE;
+  const f = (n) => n.toFixed(1);
+  let back = '';
+  let front = '';
+  if (L >= 7) back += `<ellipse class="gear-aura" cx="0" cy="0" rx="${f(1.3 * U)}" ry="${f(0.45 * U)}"/>`;
+  if (L >= 5) back += `<path class="gear-cape" d="M${f(-s * 0.24)} ${f(-s * 0.6)} Q0 ${f(-s * 0.5)} ${f(s * 0.24)} ${f(-s * 0.6)} L${f(s * 0.44)} ${f(-s * 0.04)} Q0 ${f(s * 0.06)} ${f(-s * 0.44)} ${f(-s * 0.04)} Z" fill="${hl(c.color)}"/>`;
+  if (L >= 3) front += `<g class="gear-sword" transform="translate(${f(s * 0.44)} ${f(-s * 0.3)}) rotate(28)"><path class="gear-blade" d="M0 ${f(-s * 0.34)}V${f(s * 0.02)}"/><path class="gear-hilt" d="M-4.5 0H4.5M0 0V6"/></g>`;
+  if (L >= 9) front += `<path class="gear-crown" d="M-8 ${f(-s + 1)}l1.5 -8 4 4.5 2.5 -7 2.5 7 4 -4.5 1.5 8z"/>`;
+  return { back, front };
+}
+
 export function pawnMarkup(c, sprites, lay) {
   const working = c.status === 'working';
-  return `${working ? `<ellipse class="pawn-glow" cx="0" cy="-2" rx="${1.55 * U}" ry="${0.62 * U}" fill="${hl(c.color)}"/>` : ''}<ellipse class="pawn-foot" cx="0" cy="0" rx="${0.95 * U}" ry="${0.32 * U}" fill="${hl(c.color)}"/><g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.25 * U, SIZE, 'pawn')}</g>${badge(c)}${bubble(lay?.say?.[c.id], lay?.spots?.[c.id])}`;
+  const g = gear(c);
+  return `${working ? `<ellipse class="pawn-glow" cx="0" cy="-2" rx="${1.55 * U}" ry="${0.62 * U}" fill="${hl(c.color)}"/>` : ''}<ellipse class="pawn-foot" cx="0" cy="0" rx="${0.95 * U}" ry="${0.32 * U}" fill="${hl(c.color)}"/>${g.back ? `<g class="pawn-gear back">${g.back}</g>` : ''}<g class="pawn-body">${spriteMarkup(sprites, c, -SIZE / 2, -SIZE + 0.25 * U, SIZE, 'pawn')}</g>${g.front ? `<g class="pawn-gear front">${g.front}</g>` : ''}${badge(c)}${bubble(lay?.say?.[c.id], lay?.spots?.[c.id])}`;
 }
 
 /** 駒の世界座標（world.js の pawnSpots。同じ場所に何人もいれば、少しずらしてある） */

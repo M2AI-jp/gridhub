@@ -280,13 +280,13 @@
       <ol class="setup">
         <li>
           <h3><span class="ph">GridHub を手元に置く</span></h3>
-          <pre><code>git clone https://github.com/M2AI-jp/gridhub.git &amp;&amp; cd gridhub &amp;&amp; npm link</code></pre>
-          <p>または <code>npm install <span class="nb">-g</span> <span class="nb">github:M2AI-jp/gridhub#v0.3.0</span></code> でも使えます。</p>
+          <pre><code>git clone https://github.com/M2AI-jp/gridhub.git &amp;&amp; cd gridhub
+ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub</code></pre>
+          <p><code>~/.local/bin</code> が PATH に無ければ、<code>alias gridhub="node $PWD/bin/gridhub.js"</code> でも使えます。</p>
         </li>
         <li>
           <h3><span class="ph">Claude Code か</span> <span class="ph">Codex を用意する</span></h3>
-          <pre><code>npm install -g @anthropic-ai/claude-code</code></pre>
-          <p>Codex なら <code>npm install <span class="nb">-g</span> @openai/codex</code> です。どちらも、それぞれのアカウントか API キーでログインします。</p>
+          <p>Claude Code は https://claude.com/claude-code、Codex は https://github.com/openai/codex の公式手順で用意します。どちらも、それぞれのアカウントか API キーでログインします。</p>
         </li>
         <li>
           <h3><span class="ph">願いから冒険を作り、</span><span class="ph">盤面を開く</span></h3>
@@ -303,7 +303,7 @@ gridhub serve</code></pre>
       <div class="starts">
         <div class="start-box">
           <h3><img src="img/hero.svg" alt="" width="40" height="40"><span class="ph">Mac アプリ</span></h3>
-          <p><code>npm run mac</code> で <code>dist/GridHub.app</code> ができます（macOS 13 以上・Command Line Tools。<code>swiftc</code> で組み、アドホック署名します）。</p>
+          <p><code>sh mac/build.sh</code> で <code>dist/GridHub.app</code> ができます（macOS 13 以上・Command Line Tools。<code>swiftc</code> で組み、アドホック署名します）。</p>
         </div>
         <div class="start-box">
           <h3><img src="img/key.svg" alt="" width="40" height="40"><span class="ph">チュートリアル</span></h3>

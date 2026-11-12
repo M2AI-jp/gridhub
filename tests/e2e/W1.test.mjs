@@ -1,4 +1,4 @@
-// W1「紹介ページの中身」— 看板屋（第17章）。CONTRACTS §75.1・§75.2。
+// W1「紹介ページの中身」— 看板屋（第17章）。CONTRACTS §81.1・§81.2。
 // gridhub.matsunai.com に置く2ページ（はじめての方へ site/index.html・エンジニアの方へ site/engineers.html）が、ふつうのサービス紹介の日本語で書かれ、タブで行き来できるか。
 // 開発の記録・家計簿の例・ユーザーが例に挙げた言い回しが載っていないか。技術の固有名詞を省略していないか。書いてある事実がリポジトリと合うか。
 import test from 'node:test';
@@ -44,7 +44,7 @@ const HEAD = {
   },
 };
 
-test('§75.1 2ページ（site/index.html・site/engineers.html）は、どちらも日本語のページ（lang="ja"・utf-8・viewport・title・description・og・アイコン）で、スクリプトを使わない。ヘッダーの目次はそのページの節へ', () => {
+test('§81.1 2ページ（site/index.html・site/engineers.html）は、どちらも日本語のページ（lang="ja"・utf-8・viewport・title・description・og・アイコン）で、スクリプトを使わない。ヘッダーの目次はそのページの節へ', () => {
   for (const k of KEYS) {
     const at = `site/${PAGES[k]}`;
     assert.ok(html[k], `${at} がある`);
@@ -69,7 +69,7 @@ test('§75.1 2ページ（site/index.html・site/engineers.html）は、どち�
   }
 });
 
-test('§75.2 2ページとも、ヘッダーのすぐ下に同じタブ（はじめての方へ → index.html・エンジニアの方へ → engineers.html）。いまのページのタブに aria-current="page"', () => {
+test('§81.2 2ページとも、ヘッダーのすぐ下に同じタブ（はじめての方へ → index.html・エンジニアの方へ → engineers.html）。いまのページのタブに aria-current="page"', () => {
   const tabs = {};
   for (const k of KEYS) {
     const m = /<\/header>\s*(<nav class="tabs"[^>]*>[\s\S]*?<\/nav>)/u.exec(body[k]);
@@ -84,7 +84,7 @@ test('§75.2 2ページとも、ヘッダーのすぐ下に同じタブ（はじ
   assert.equal(plain(tabs.index), plain(tabs.engineers), '2ページで同じタブ（印の場所だけが違う）');
 });
 
-test('§75.2 2ページとも、開発の記録とメタな話を載せない・例に家計簿を出さない・ユーザーが例に挙げた言い回し（「退屈な開発を、楽しいゲームに」「ゲーム感覚で」）を使わない', () => {
+test('§81.2 2ページとも、開発の記録とメタな話を載せない・例に家計簿を出さない・ユーザーが例に挙げた言い回し（「退屈な開発を、楽しいゲームに」「ゲーム感覚で」）を使わない', () => {
   for (const k of KEYS) {
     const at = PAGES[k];
     const text = textOf(body[k]);
@@ -107,7 +107,7 @@ test('§75.2 2ページとも、開発の記録とメタな話を載せない・
   assert.match(tool, /examples', 'memo'/u, '盤面はサンプル（examples/memo）で撮る');
 });
 
-test('§75.2 リポジトリの中だけの言い回し: はじめての方へは使わない。エンジニアの方へは、技術の意味のあとのかっこ（「判定ファイルの固定（封印）」）でだけ。ほかのゲームの作品名・決まった言い回しは2ページとも出さない', () => {
+test('§81.2 リポジトリの中だけの言い回し: はじめての方へは使わない。エンジニアの方へは、技術の意味のあとのかっこ（「判定ファイルの固定（封印）」）でだけ。ほかのゲームの作品名・決まった言い回しは2ページとも出さない', () => {
   const text = textOf(body.index);
   for (const w of ['包み', '入れる', '縄張り', '宣言判定', 'あがり', '封印', '指令書', '出撃', '申し送り', '手で演じる']) assert.ok(!text.includes(w), `はじめての方へ: 「${w}」を使わない`);
   const eng = prose(body.engineers).replace(/（(?:封印|縄張り|出撃)）/gu, '');
@@ -123,7 +123,7 @@ test('§75.2 リポジトリの中だけの言い回し: はじめての方へ�
   }
 });
 
-test('§75.2 2ページとも、使う道具の名前を省略しない（Claude Code・Codex・Anthropic・OpenAI・Git・GitHub・Node.js・API キー）', () => {
+test('§81.2 2ページとも、使う道具の名前を省略しない（Claude Code・Codex・Anthropic・OpenAI・Git・GitHub・Node.js・API キー）', () => {
   for (const k of KEYS) {
     const text = textOf(body[k]);
     for (const w of ['Claude Code', 'Codex', 'Anthropic', 'OpenAI', 'GitHub', 'Node.js', 'API キー']) assert.ok(text.includes(w), `${PAGES[k]} に「${w}」`);
@@ -133,7 +133,7 @@ test('§75.2 2ページとも、使う道具の名前を省略しない（Claude
 
 // ---- はじめての方へ（index.html） ----
 
-test('§75.2 はじめての方へ: ファーストビュー（#hero）は文字が少なく、絵が主役: ラベル・見出し2行・説明1つ・ボタン2つ、盤面の写真と駒やモンスターの絵', () => {
+test('§81.2 はじめての方へ: ファーストビュー（#hero）は文字が少なく、絵が主役: ラベル・見出し2行・説明1つ・ボタン2つ、盤面の写真と駒やモンスターの絵', () => {
   const hero = part('index', 'hero');
   assert.equal(flat(textOf(sectionOf(hero, 'hero-title'))), '1マス進むたび、アプリができていく。');
   assert.equal((sectionOf(hero, 'hero-title').match(/<br>/gu) ?? []).length, 1, '見出しは2行');
@@ -150,7 +150,7 @@ test('§75.2 はじめての方へ: ファーストビュー（#hero）は文字
   assert.ok(imgs.filter((i) => /^img\/[a-z]+\.svg$/u.test(i.attrs.src)).length >= 5, '駒やモンスターの絵を5つ以上');
 });
 
-test('§75.2 はじめての方へ: こんな悩み（#pain）3つと、つなぎの1文。特長（#features）4つ（テストはメモアプリの例で。AI と Git と GitHub は名前で）', () => {
+test('§81.2 はじめての方へ: こんな悩み（#pain）3つと、つなぎの1文。特長（#features）4つ（テストはメモアプリの例で。AI と Git と GitHub は名前で）', () => {
   const pain = part('index', 'pain');
   const pains = [...pain.matchAll(/<li class="pain">([\s\S]*?)<\/li>/gu)].map((m) => m[1]);
   assert.equal(pains.length, 3);
@@ -175,7 +175,7 @@ test('§75.2 はじめての方へ: こんな悩み（#pain）3つと、つな�
   assert.match(memo.nodes.S1.detail, /list が新しい順/u);
 });
 
-test('§75.2 はじめての方へ: 地図のつくり（#map）: AI の得意・不得意に合わせた大きさの凡例7段（メモアプリの例つき）と、「テストは、あなたが書かなくて大丈夫」。目安はルールのとおり', () => {
+test('§81.2 はじめての方へ: 地図のつくり（#map）: AI の得意・不得意に合わせた大きさの凡例7段（メモアプリの例つき）と、「テストは、あなたが書かなくて大丈夫」。目安はルールのとおり', () => {
   const map = part('index', 'map');
   assert.equal(flat(textOf(sectionOf(map, 'map-title'))), 'AIがいちばん力を出せる大きさで、地図ができています');
   assert.equal(textOf(/<p class="map-lead">([\s\S]*?)<\/p>/u.exec(map)?.[1] ?? ''), 'AI は、小さくてはっきりした仕事が得意です。いっぽうで、長い会話では前のことを忘れやすく、頼んでいない所まで手を広げがちです。GridHub の地図は、その性質に合わせて、1マスから大ボスまでの大きさが決めてあります。');
@@ -221,7 +221,7 @@ test('§75.2 はじめての方へ: 地図のつくり（#map）: AI の得意�
   assert.match(read('src', 'engine', 'margins.js'), /テスト \$\{passed\} 件、通ってきたね/u, '宿屋の主人のせりふ');
 });
 
-test('§75.2 はじめての方へ: ゲームとして、ここが楽しい（#fun）: 絵つきのカード6〜8枚・1枚2文まで。書いてある仕組みはルールのとおり', () => {
+test('§81.2 はじめての方へ: ゲームとして、ここが楽しい（#fun）: 絵つきのカード6〜8枚・1枚2文まで。書いてある仕組みはルールのとおり', () => {
   const fun = part('index', 'fun');
   assert.equal(flat(textOf(sectionOf(fun, 'fun-title'))), 'ゲームとして、ここが楽しい');
   const cards = [...fun.matchAll(/<article class="fun">([\s\S]*?)<\/article>/gu)].map((m) => m[1]);
@@ -243,7 +243,7 @@ test('§75.2 はじめての方へ: ゲームとして、ここが楽しい（#f
   assert.match(read('web', 'board', 'app.js'), /book\.turnTo\(last\.page \+ 1\)/u, '駒が次のページへ進むと、ノートがめくれる');
 });
 
-test('§75.2 はじめての方へ: 遊び方（#how）3ステップ（メモアプリの例・AI は名前で）とチュートリアル・画面（#screens）3枚', () => {
+test('§81.2 はじめての方へ: 遊び方（#how）3ステップ（メモアプリの例・AI は名前で）とチュートリアル・画面（#screens）3枚', () => {
   const how = part('index', 'how');
   const steps = [...how.matchAll(/<li class="step">([\s\S]*?)<\/li>/gu)].map((m) => m[1]);
   assert.equal(steps.length, 3);
@@ -260,7 +260,7 @@ test('§75.2 はじめての方へ: 遊び方（#how）3ステップ（メモア
   ]);
 });
 
-test('§75.2 はじめての方へ: はじめる（#start）の頭に「必要なもの」を名前つきで（Mac・Node.js・Command Line Tools・Claude Code か Codex・GitHub・Linear や Jira）。Mac アプリとコマンドライン。書いてある事実がリポジトリと合う', () => {
+test('§81.2 はじめての方へ: はじめる（#start）の頭に「必要なもの」を名前つきで（Mac・Node.js・Command Line Tools・Claude Code か Codex・GitHub・Linear や Jira）。Mac アプリとコマンドライン。書いてある事実がリポジトリと合う', () => {
   const start = part('index', 'start');
   assert.ok(start.indexOf('class="needs"') < start.indexOf('class="starts"'), '「必要なもの」が頭に');
   const needs = /<div class="needs"[\s\S]*?<\/ul>/u.exec(start)?.[0] ?? '';
@@ -277,29 +277,30 @@ test('§75.2 はじめての方へ: はじめる（#start）の頭に「必要�
     'Linear や Jira を使っているチームは、進み具合をそちらにも映せます（任意。それぞれの API キーを使います）。',
   ].map(flat));
   assert.deepEqual(items.map((i) => i.opt), [false, false, false, false, true, true], 'GitHub と Linear・Jira は、無くても遊べる');
-  assert.deepEqual(codes(items[3].html), [['npm install -g @anthropic-ai/claude-code'], ['npm install -g @openai/codex']], 'Claude Code と Codex の入れ方');
+  assert.deepEqual(codes(items[3].html), [], 'Claude Code と Codex は公式の手順を指す');
+  for (const w of ['https://claude.com/claude-code', 'https://github.com/openai/codex', '公式手順']) assert.ok(textOf(items[3].html).includes(w), `公式の手順「${w}」`);
   assert.deepEqual(codes(start).slice(2), [
-    ['git clone https://github.com/M2AI-jp/gridhub.git', 'cd gridhub', 'npm run mac'],
-    ['npm install -g github:M2AI-jp/gridhub#v0.3.0', 'gridhub --help'],
+    ['git clone https://github.com/M2AI-jp/gridhub.git', 'cd gridhub', 'sh mac/build.sh'],
+    ['git clone https://github.com/M2AI-jp/gridhub.git', 'cd gridhub', 'ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub', 'gridhub --help'],
   ]);
   const text = textOf(start);
   assert.ok(text.includes('dist/GridHub.app を「アプリケーション」フォルダに移して、ダブルクリックで開きます。'));
   assert.ok(text.includes('「開けません」と表示されたときは、右クリックして「開く」を選んでください。'));
   assert.ok(tagsOf(start).some((t) => t.tag === 'a' && t.attrs.href === 'engineers.html'), 'くわしい話は、エンジニアの方へ');
-  // 事実: npm run mac・macOS 13・Node.js 22・--help・エージェントは claude と codex・Claude Code の入れ方・AI なしで遊べるチュートリアル
+  // 事実: sh mac/build.sh・macOS 13・Node.js 22・--help・エージェントは claude と codex・公式の手順・AI なしで遊べるチュートリアル
   assert.equal(pkg.scripts.mac, 'sh mac/build.sh');
   assert.equal(pkg.engines.node, '>=22');
   assert.match(read('mac', 'Info.plist'), /<key>LSMinimumSystemVersion<\/key>\s*<string>13\.0<\/string>/u);
   assert.match(read('mac', 'build.sh'), /xcode-select --install/u, 'Command Line Tools の入れ方');
   assert.equal(help.status, 0, 'gridhub --help');
   assert.match(help.stdout, /party \[--agent claude\|codex\]/u, 'エージェントは Claude Code と Codex');
-  assert.match(read('README.md'), /npm install -g @anthropic-ai\/claude-code/u, 'Claude Code の入れ方');
+  assert.match(read('README.md'), /https:\/\/claude\.com\/claude-code/u, 'Claude Code の公式手順');
   assert.ok(existsSync(join(ROOT, 'quests', 'tutorial', 'SOLUTIONS.json')), 'AI なしで遊べるチュートリアル（見本つき）');
 });
 
 // ---- エンジニアの方へ（engineers.html） ----
 
-test('§75.2 エンジニアの方へ: ファーストビュー（#hero）: ラベル・見出し2行・説明1つ・ボタン2つ。盤面の写真に、gridhub step の出力の例（いまの出力の形・サンプルの冒険のテストの名前）を重ねる', () => {
+test('§81.2 エンジニアの方へ: ファーストビュー（#hero）: ラベル・見出し2行・説明1つ・ボタン2つ。盤面の写真に、gridhub step の出力の例（いまの出力の形・サンプルの冒険のテストの名前）を重ねる', () => {
   const hero = part('engineers', 'hero');
   assert.equal(flat(textOf(sectionOf(hero, 'hero-title'))), flat('テスト1件が、1マス。Git のコミットが、セーブ。'));
   assert.equal((sectionOf(hero, 'hero-title').match(/<br>/gu) ?? []).length, 1, '見出しは2行');
@@ -331,7 +332,7 @@ test('§75.2 エンジニアの方へ: ファーストビュー（#hero）: ラ�
   assert.deepEqual(cases.map((c) => c.name), names, `examples/memo/checks/${head[2]}.mjs のテスト`);
 });
 
-test('§75.2 エンジニアの方へ: つかう技術（#stack）の表（名前・役目・要るか）7行。書いてある事実がリポジトリと合う', () => {
+test('§81.2 エンジニアの方へ: つかう技術（#stack）の表（名前・役目・要るか）7行。書いてある事実がリポジトリと合う', () => {
   const stack = part('engineers', 'stack');
   assert.deepEqual([...stack.matchAll(/<th scope="col">([^<]+)<\/th>/gu)].map((m) => m[1]), ['名前', '役目', '要るか']);
   const rows = [...stack.matchAll(/<tr>\s*<th scope="row">([\s\S]*?)<\/th>\s*<td>([\s\S]*?)<\/td>\s*<td>([\s\S]*?)<\/td>\s*<\/tr>/gu)].map((m) => ({ name: flat(textOf(m[1])), role: textOf(m[2]), need: textOf(m[3]) }));
@@ -370,7 +371,7 @@ test('§75.2 エンジニアの方へ: つかう技術（#stack）の表（名�
   assert.match(read('mac', 'Info.plist'), /<string>13\.0<\/string>/u, 'macOS 13 以上');
 });
 
-test('§75.2 エンジニアの方へ: ゲームの言葉と、実際に起きること（#mechanics）12。左にゲームの言葉、右に実際の動き。ルールと src のとおり', () => {
+test('§81.2 エンジニアの方へ: ゲームの言葉と、実際に起きること（#mechanics）12。左にゲームの言葉、右に実際の動き。ルールと src のとおり', () => {
   const mech = part('engineers', 'mechanics');
   assert.equal(flat(textOf(sectionOf(mech, 'mechanics-title'))), 'ゲームの言葉と、実際に起きること');
   const terms = [...mech.matchAll(/<div class="term">\s*<dt>([\s\S]*?)<\/dt>\s*<dd>([\s\S]*?)<\/dd>\s*<\/div>/gu)].map((m) => ({
@@ -410,7 +411,7 @@ test('§75.2 エンジニアの方へ: ゲームの言葉と、実際に起き�
   for (const w of ["'宿屋の主人'", '号外: ']) assert.ok(margins.includes(w), `余白のマスに ${w}`);
 });
 
-test('§75.2 エンジニアの方へ: 例: メモアプリの地図（#example）。願い・キャラクター・道の図・中ボス・大ボス・王様の城が、サンプルの冒険（examples/memo）の地図のとおり', () => {
+test('§81.2 エンジニアの方へ: 例: メモアプリの地図（#example）。願い・キャラクター・道の図・中ボス・大ボス・王様の城が、サンプルの冒険（examples/memo）の地図のとおり', () => {
   const ex = part('engineers', 'example');
   assert.equal(flat(textOf(sectionOf(ex, 'example-title'))), flat('例: メモアプリの地図'));
   const lead = textOf(/<p class="lead">([\s\S]*?)<\/p>/u.exec(ex)?.[1] ?? '');
@@ -452,7 +453,7 @@ test('§75.2 エンジニアの方へ: 例: メモアプリの地図（#example�
   assert.ok(memo.characters.filter((c) => c.kind === 'human').every((c) => c.path.includes('H1') && c.path.includes('H2')), 'ハンコは勇者（人間）');
 });
 
-test('§75.2 エンジニアの方へ: エージェントの1ターン（#turn）と作戦（careful・balanced・bold）。ルールと gridhub --help のとおり', () => {
+test('§81.2 エンジニアの方へ: エージェントの1ターン（#turn）と作戦（careful・balanced・bold）。ルールと gridhub --help のとおり', () => {
   const turn = part('engineers', 'turn');
   const steps = [...(/<ol class="turn">([\s\S]*?)<\/ol>/u.exec(turn)?.[1] ?? '').matchAll(/<li>([\s\S]*?)<\/li>/gu)].map((m) => ({
     head: textOf(/^<(?:code|span class="no-code")>([\s\S]*?)<\/(?:code|span)>/u.exec(m[1])?.[1] ?? ''),
@@ -474,7 +475,7 @@ test('§75.2 エンジニアの方へ: エージェントの1ターン（#turn�
   for (const w of ['`balanced`、既定', '町に着いたら（セーブしたら）・砦で待機になったら', 'どの作戦でも、宣言に2回失敗したら止まって報告する', '変わるのは、エージェントの動き方と1回の出撃の長さ（利用料）']) assert.ok(rules.includes(w), `RULEBOOK に「${w}」`);
 });
 
-test('§75.2 エンジニアの方へ: 主なコマンド（#commands）。どれも gridhub --help にある', () => {
+test('§81.2 エンジニアの方へ: 主なコマンド（#commands）。どれも gridhub --help にある', () => {
   const cmds = part('engineers', 'commands');
   const names = [...cmds.matchAll(/<tr><th scope="row">([\s\S]*?)<\/th><td>([\s\S]*?)<\/td><\/tr>/gu)].flatMap((m) => [...textOf(m[1]).matchAll(/gridhub ([a-z]+(?: (?:linear|push))?)/gu)].map((x) => x[1]));
   assert.deepEqual(names, ['quest', 'serve', 'app', 'party', 'brief', 'step', 'check', 'note', 'stamp', 'status', 'verify', 'load', 'remote', 'push', 'mcp', 'export linear', 'import linear', 'linear push', 'jira push']);
@@ -483,23 +484,22 @@ test('§75.2 エンジニアの方へ: 主なコマンド（#commands）。ど�
   assert.ok(textOf(cmds).includes('http://127.0.0.1:5005/'), 'serve の場所');
 });
 
-test('§75.2 エンジニアの方へ: はじめる（#start）。手元に置く・Claude Code か Codex・願いから冒険・盤面・出撃と、Mac アプリ・チュートリアル。書いてある事実がリポジトリと合う', () => {
+test('§81.2 エンジニアの方へ: はじめる（#start）。手元に置く・Claude Code か Codex・願いから冒険・盤面・出撃と、Mac アプリ・チュートリアル。書いてある事実がリポジトリと合う', () => {
   const start = part('engineers', 'start');
   assert.deepEqual(codes(start), [
-    ['git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub && npm link'],
-    ['npm install -g @anthropic-ai/claude-code'],
+    ['git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub', 'ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub'],
     ['mkdir ~/memo && cd ~/memo', 'gridhub quest "メモを書いて一覧できるアプリを作りたい" --gm claude', 'gridhub serve'],
     ['gridhub party --agent claude --tactic careful'],
   ]);
   const text = textOf(start);
-  for (const w of ['npm install -g github:M2AI-jp/gridhub#v0.3.0', 'npm install -g @openai/codex', 'アカウントか API キー', '別のターミナル', 'npm run mac', 'dist/GridHub.app', 'エージェントなしで', '約5分', 'quests/tutorial/README.md']) assert.ok(text.includes(w), `#start に「${w}」`);
+  for (const w of ['https://claude.com/claude-code', 'https://github.com/openai/codex', 'アカウントか API キー', '別のターミナル', 'sh mac/build.sh', 'dist/GridHub.app', 'エージェントなしで', '約5分', 'quests/tutorial/README.md']) assert.ok(text.includes(w), `#start に「${w}」`);
   const readme = read('README.md');
-  for (const w of ['git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub', 'npm link', 'npm install -g @anthropic-ai/claude-code', 'mkdir ~/memo && cd ~/memo', 'gridhub quest "メモを書いて一覧できるアプリを作りたい" --gm claude', 'gridhub serve', 'gridhub party --agent claude --tactic careful', '続きは別のターミナルで', 'npm run mac          # dist/GridHub.app ができる']) assert.ok(readme.includes(w), `README に「${w}」`);
+  for (const w of ['git clone https://github.com/M2AI-jp/gridhub.git && cd gridhub', 'ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub', 'https://claude.com/claude-code', 'https://github.com/openai/codex', 'mkdir ~/memo && cd ~/memo', 'gridhub quest "メモを書いて一覧できるアプリを作りたい" --gm claude', 'gridhub serve', 'gridhub party --agent claude --tactic careful', '続きは別のターミナルで', 'sh mac/build.sh']) assert.ok(readme.includes(w), `README に「${w}」`);
   assert.equal(pkg.version, '0.3.0', '#v0.3.0 は package.json の版');
   assert.match(read('quests', 'tutorial', 'README.md'), /約5分/u);
 });
 
-test('§75.2 2ページとも、フッターは GridHub ・ MIT ライセンス ・ GitHub だけ', () => {
+test('§81.2 2ページとも、フッターは GridHub ・ MIT ライセンス ・ GitHub だけ', () => {
   for (const k of KEYS) {
     const footer = /<footer[\s\S]*?<\/footer>/u.exec(body[k])?.[0] ?? '';
     assert.equal(textOf(footer).replace(/\s+/gu, ' '), 'GridHub ・ MIT ライセンス ・ GitHub', `${PAGES[k]}: フッターはこれだけ`);
@@ -508,7 +508,7 @@ test('§75.2 2ページとも、フッターは GridHub ・ MIT ライセンス 
   assert.match(read('LICENSE'), /^MIT License/u);
 });
 
-test('§75.2 スクリーンショット4枚（盤面・はじめの画面・手で進める・エンディング。盤面は2ページとも）。PNG で、alt と、本当の大きさの width・height がある', () => {
+test('§81.2 スクリーンショット4枚（盤面・はじめの画面・手で進める・エンディング。盤面は2ページとも）。PNG で、alt と、本当の大きさの width・height がある', () => {
   const all = KEYS.flatMap((k) => tags[k].map((t) => ({ ...t, page: PAGES[k] })));
   for (const name of ['board', 'start', 'hand', 'ending']) {
     const img = all.find((t) => t.tag === 'img' && t.attrs.src === `img/${name}.png`);

@@ -1,4 +1,4 @@
-// W3「スマホの縦でもはみ出さない」— 看板屋（第17章）。CONTRACTS §75.4。
+// W3「スマホの縦でもはみ出さない」— 看板屋（第17章）。CONTRACTS §81.4。
 // 2ページ（はじめての方へ・エンジニアの方へ）とも、スマホの縦（幅 320・375・390）・タブレット（768）・パソコン（1280）で、ページが横にはみ出さず、字が読める大きさ。タブは押しやすく、1行に収まる。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -25,7 +25,7 @@ const MEASURE = `(() => {
   return { w, scrollWidth: document.documentElement.scrollWidth, bodyScroll: document.body.scrollWidth, over: over.slice(0, 12), small: small.slice(0, 12), pres, imgs: [...document.images].filter((i) => i.getBoundingClientRect().width > w + 1).map((i) => i.getAttribute('src')) };
 })()`;
 
-test('§75.4 2ページとも、スマホの縦（幅 320・375・390）・タブレット（768）・パソコン（1280）で、ページが横にはみ出さない（コードの箱は箱の中で横に動かせる）', { timeout: 300000 }, async () => {
+test('§81.4 2ページとも、スマホの縦（幅 320・375・390）・タブレット（768）・パソコン（1280）で、ページが横にはみ出さない（コードの箱は箱の中で横に動かせる）', { timeout: 300000 }, async () => {
   const srv = await serveStatic(SITE);
   try {
     for (const [width, height] of SIZES) for (const p of PAGES) {
@@ -52,7 +52,7 @@ test('§75.4 2ページとも、スマホの縦（幅 320・375・390）・タ�
   }
 });
 
-test('§75.4 2ページとも、スマホの縦（幅 320）でも、字は 13px 以上、上の帯の目次とボタンは押せる大きさ、タブは高さ 44px 以上', { timeout: 120000 }, async () => {
+test('§81.4 2ページとも、スマホの縦（幅 320）でも、字は 13px 以上、上の帯の目次とボタンは押せる大きさ、タブは高さ 44px 以上', { timeout: 120000 }, async () => {
   const srv = await serveStatic(SITE);
   const page = await openBrowser({ width: 320, height: 640 });
   try {
@@ -73,7 +73,7 @@ test('§75.4 2ページとも、スマホの縦（幅 320）でも、字は 13px
   }
 });
 
-test('§75.2 2ページとも、見出し（h1・h2・h3）は、幅 320・375・1280 で句のまとまり（.ph）で折れ、句の途中で折れない。見出し h1 は幅 1280 で2行', { timeout: 180000 }, async () => {
+test('§81.2 2ページとも、見出し（h1・h2・h3）は、幅 320・375・1280 で句のまとまり（.ph）で折れ、句の途中で折れない。見出し h1 は幅 1280 で2行', { timeout: 180000 }, async () => {
   const srv = await serveStatic(SITE);
   try {
     for (const width of [320, 375, 1280]) for (const p of PAGES) {
@@ -105,7 +105,7 @@ test('§75.2 2ページとも、見出し（h1・h2・h3）は、幅 320・375�
   }
 });
 
-test('§75.2 2ページとも、スマホの縦（375×812）でも、1画面目に盤面の写真と駒やモンスターの絵が入り、ヘッダーのリンクは1行に、タブの2つも1行に収まる', { timeout: 120000 }, async () => {
+test('§81.2 2ページとも、スマホの縦（375×812）でも、1画面目に盤面の写真と駒やモンスターの絵が入り、ヘッダーのリンクは1行に、タブの2つも1行に収まる', { timeout: 120000 }, async () => {
   const srv = await serveStatic(SITE);
   const page = await openBrowser({ width: 375, height: 812 });
   try {

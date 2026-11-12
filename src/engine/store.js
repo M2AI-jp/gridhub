@@ -7,6 +7,7 @@ import { resolve } from 'node:path';
 import { canonical, eventHash, sha256 } from './canonical.js';
 import { MasumeError } from './errors.js';
 import { containedFile, logFile } from './paths.js';
+import { t } from './words.js';
 
 const ZERO = '0'.repeat(64);
 const HASH = /^[0-9a-f]{64}$/u;
@@ -57,7 +58,7 @@ function tryLock(file) {
     const descriptor = openSync(file, 'wx');
     return { descriptor, identity: fstatSync(descriptor) };
   } catch (error) {
-    if (error.code === 'ENOENT') throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません');
+    if (error.code === 'ENOENT') throw new MasumeError('E_NO_GAME', t('err.nogame'));
     if (error.code !== 'EEXIST') throw error;
     try {
       const old = lstatSync(file);
@@ -131,7 +132,7 @@ function readBytes(root) {
     return readFileSync(logFile(root));
   } catch (error) {
     if (error.code === 'ENOENT' || error.code === 'ENOTDIR') {
-      throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません');
+      throw new MasumeError('E_NO_GAME', t('err.nogame'));
     }
     throw error;
   }
@@ -239,7 +240,7 @@ export function verify(root) {
 export function requireHealthy(snapshot) {
   if (!snapshot.ok) {
     const first = snapshot.errors[0];
-    throw new MasumeError('E_CURSED', `冒険の書は呪われています（seq ${first.seq}: ${first.code}）。verify / repair で確認してください`, 3);
+    throw new MasumeError('E_CURSED', t('err.cursed', first.seq, first.code), 3);
   }
   return snapshot;
 }
@@ -291,7 +292,7 @@ export function repair(root, { actor = defaultActor() } = {}) {
     if (snapshot.ok) return { kept: snapshot.events.length, moved: 0, file: null };
     const first = snapshot.errors[0].seq;
     if (first === 0) {
-      throw new MasumeError('E_CURSED', '冒険の書は呪われています（seq 0）。genesis が壊れているため修復できません', 3);
+      throw new MasumeError('E_CURSED', t('err.cursed.genesis'), 3);
     }
     const directory = resolve(root, '.masume');
     const timestamp = new Date().toISOString().replace(/[:.]/gu, '-');

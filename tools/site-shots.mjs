@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// 紹介ページ（site/img/）のスクリーンショットを撮り直す道具（CONTRACTS §75.1）。看板屋の縄張り。包みには入らない。
+// 紹介ページ（site/img/）のスクリーンショットを撮り直す道具（CONTRACTS §81.1）。看板屋の縄張り。Mac のアプリの中身には入らない。
 // テストの Chrome（MASUME_CHROME。無ければ /Applications/Google Chrome.app）で、次の4枚を 1440×900 で撮る:
 //   board.png  … サンプルの冒険（examples/memo を一時フォルダに作り直し、途中まで進めた盤面）
 //   start.png  … gridhub app のはじめの画面（最近のフォルダ: チュートリアル・メモのアプリ・まだ冒険の無いフォルダ）

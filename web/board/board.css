@@ -211,7 +211,7 @@ body.drawer-open #rail > #party { display: none; }
 .party-card.selected { box-shadow: 0 0 0 3px var(--hl), 0 10px 14px -8px rgba(60, 40, 10, 0.55); }
 .party-card .mini { flex: none; background: color-mix(in srgb, var(--hl) 28%, #fff); border-radius: 6px; }
 .pc-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.pc-top { display: flex; align-items: baseline; gap: 6px; }
+.pc-top { display: flex; align-items: baseline; gap: 6px; flex-wrap: wrap; }
 .pc-gen { font-family: var(--hand); font-size: 11px; font-weight: 600; color: #6a3fb0; }
 .pc-medal { color: #b58500; font-weight: 700; }
 .pc-strong { color: #b25b00; font-weight: 700; }
@@ -219,7 +219,7 @@ body.drawer-open #rail > #party { display: none; }
 .pc-fight { font-family: var(--mono); font-size: 10.5px; color: #8a2b1e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pc-tests { color: var(--ink); font-family: var(--mono); font-size: 10.5px; }
 .pc-tests.all { color: var(--red); }
-.pc-name { font-family: var(--marker); font-size: 14px; width: fit-content; padding: 0 2px; background: linear-gradient(transparent 55%, color-mix(in srgb, var(--hl) 75%, transparent) 55% 92%, transparent 92%); }
+.pc-name { font-family: var(--marker); font-size: 14px; width: fit-content; max-width: 100%; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: linear-gradient(transparent 55%, color-mix(in srgb, var(--hl) 75%, transparent) 55% 92%, transparent 92%); }
 .pc-meta { font-size: 11px; color: var(--ink-soft); font-family: var(--hand); margin-top: 3px; }
 .pc-meta b { color: var(--ink); }
 .pc-xp, .pc-progress, .trip-bar { height: 6px; background: transparent; border: 1.2px solid rgba(29, 43, 92, 0.45); border-radius: var(--wobbly); overflow: hidden; }
@@ -735,9 +735,23 @@ body.in-lobby #curse { display: none; }
 @media (max-width: 1360px) {
   :root { --side-w: 290px; }
 }
+/* 見出しが横にはみ出さないように（§57）: 飾りの字から順に隠す。添え書き → 記録の札の「記録」とことばのボタンの名前 */
+@media (max-width: 1640px) {
+  .tagline { display: none; }
+}
 @media (max-width: 1100px) {
   :root { --side-w: 270px; }
-  .tagline { display: none; }
+  /* 見出しの右の欄（記録・コピー・セーブ正常・音）が 1024px で横にはみ出さないように、間と余白を詰める（§57。「記録」の札は残す） */
+  .cover { gap: 12px; }
+  .brand { padding: 5px 10px 6px; }
+  .save { gap: 6px; margin-left: 8px; }
+  .record-box { gap: 6px; padding: 5px 5px 5px 8px; }
+  .mini-btn { padding: 3px 7px; }
+  .pill { padding: 3px 8px; }
+  #ending-open .btn-text { display: none; } /* あがった盤面では 🏁 だけ（名前は aria-label と title に） */
+}
+@media (max-width: 1360px) and (min-width: 861px) {
+  .cover #live, .cover #copy-record { display: none; }
 }
 @media (max-width: 860px) {
   body { overflow: auto; }
@@ -747,6 +761,7 @@ body.in-lobby #curse { display: none; }
   .desk { display: flex; flex-direction: column; height: auto; padding: 0 16px 16px; }
   #rail { display: contents; }
   #party { order: 1; max-height: none; }
+  #party-controls { position: static; }
   .party-list { flex-direction: row; overflow-x: auto; padding-top: 16px; }
   .party-card { min-width: 210px; }
   .party-foot { display: none; }
@@ -822,7 +837,8 @@ body.in-lobby #curse { display: none; }
 .live[data-mode='lobby']::before { content: '🔮 '; }
 
 /* ---------- 第2章: 出撃 ---------- */
-#party-controls { padding: 10px 12px 12px; border-top: 1.5px dashed rgba(29, 43, 92, 0.3); display: flex; flex-direction: column; gap: 8px; background: var(--paper); }
+/* 「出撃させる」は、なかまの欄が長くても隠れないように、欄の下に貼り付く */
+#party-controls { position: sticky; bottom: 0; z-index: 1; padding: 10px 12px 12px; border-top: 1.5px dashed rgba(29, 43, 92, 0.3); display: flex; flex-direction: column; gap: 8px; background: var(--paper); }
 .act.sortie { margin: 0; background: #ffe45c; color: var(--ink); font-size: 16px; padding: 9px 12px 8px; }
 .act.sortie::before { content: '📯 '; }
 #party-status { display: flex; align-items: center; gap: 8px; font-size: 11.5px; color: var(--ink-soft); min-height: 24px; font-family: var(--hand); }
@@ -916,7 +932,7 @@ body.in-lobby #stage { min-height: 70vh; }
     linear-gradient(rgba(143, 195, 218, 0.4) 1px, transparent 1px), linear-gradient(90deg, rgba(143, 195, 218, 0.4) 1px, transparent 1px);
   background-size: auto, 16px 16px, 16px 16px; border-radius: 3px; box-shadow: 0 30px 50px -20px rgba(30, 20, 5, 0.75); transform: rotate(-0.6deg); }
 .ending-kicker { margin: 0; font-family: var(--hand); font-weight: 700; letter-spacing: 3px; color: var(--red); }
-.ending-card h2 { font-family: var(--marker); font-weight: 400; font-size: 28px; margin: 4px 0 12px; }
+.ending-card h2 { font-family: var(--marker); font-weight: 400; font-size: 28px; margin: 4px 100px 12px 0; } /* 右はハンコのぶん空ける（長い題がハンコの下に入らない） */
 .ending-stamp { position: absolute; right: 22px; top: 14px; width: 104px; height: 104px; border-radius: 50%; border: 6px double var(--red); color: var(--red); display: grid; place-items: center; font-family: var(--marker); font-size: 26px; transform: rotate(-14deg); background: rgba(255, 255, 255, 0.6); }
 #ending-text p { font-family: var(--hand); font-size: 16px; line-height: 1.7; margin: 0 0 4px; padding-right: 96px; }
 #ending-text p:first-child { font-weight: 700; font-size: 18px; }
@@ -938,6 +954,7 @@ body.in-lobby #stage { min-height: 70vh; }
   .ending-card { padding: 22px 18px 18px 38px; }
   #ending-text p { padding-right: 0; }
   .ending-stamp { width: 72px; height: 72px; font-size: 18px; top: 8px; right: 10px; }
+  .ending-card h2 { margin-right: 70px; }
 }
 
 /* 書体の予熱（見えない。index.html の .font-warm） */
@@ -1068,8 +1085,8 @@ body.in-lobby #stage { min-height: 70vh; }
 .git-head small { font-size: 10.5px; font-weight: 400; color: #4f5a6e; }
 .git-mark { font-family: var(--mono); font-size: 12px; color: #fffdf6; background: var(--ink); padding: 0 6px 1px; border-radius: 2px; }
 #git-remote { margin: 0 0 3px; font-family: var(--mono); font-size: 10.5px; color: #4f5a6e; word-break: break-all; }
-.git-row { display: flex; align-items: center; gap: 8px; }
-#git-ahead { margin: 0; flex: 1; font-weight: 600; }
+.git-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+#git-ahead { margin: 0; flex: 1; font-weight: 600; word-break: keep-all; min-width: 12em; }
 #git-panel[data-state='synced'] #git-ahead { color: #2f6b3a; font-weight: 400; }
 .git-push { font-weight: 600; }
 .git-auto { display: flex; align-items: center; gap: 6px; margin: 6px 0 0; font-size: 12.5px; cursor: pointer; }
@@ -1191,3 +1208,18 @@ details.cli .hint { margin: 4px 0 0; }
 @media (max-width: 900px) {
   .hand-panel { left: 8px; right: 8px; width: auto; min-width: 0; top: auto; bottom: 8px; max-height: 70vh; }
 }
+
+/* ---------- ことばの切り替え（§75）: 冒険のことば / 開発のことば ---------- */
+/* 2つの言い方を HTML に両方書き、<html data-words> に合うほうだけ見せる。属性が無いあいだは冒険のことば */
+html:not([data-words='dev']) [data-say='dev'], html[data-words='dev'] [data-say='game'] { display: none !important; }
+.words-toggle { white-space: nowrap; }
+.words-toggle[data-words='dev'] { background: #e3edff; border-color: #3b5fb8; color: #1d3a7a; }
+.words-toggle[data-words='dev']:hover { background: #d3e2ff; }
+@media (max-width: 1360px) {
+  .words-toggle { padding-inline: 6px; }
+}
+/* 狭い画面: 見出しが横にはみ出さないように、名前を隠して印（🗡 / ⌨）だけにする。名前は title で読める */
+@media (max-width: 1240px) {
+  .cover .words-toggle .wt-label { display: none; }
+}
+.start-head .words-toggle { margin-left: auto; align-self: center; }

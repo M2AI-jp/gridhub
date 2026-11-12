@@ -5,41 +5,47 @@ import { MasumeError, buildView, findRoot, logFile } from '../engine/index.js';
 import { resolveAgent } from '../party/agents.js';
 import { Party, needsSeal } from '../party/patrol.js';
 import { buildPrompt } from '../party/prompt.js';
-import { TACTICS, chooseTactic } from '../party/tactics.js';
+import { TACTICS, chooseTactic, tacticText } from '../party/tactics.js';
+import { WORDS, isDev, resolveWords, t } from '../engine/words.js';
+
+/** いまのことばの字（冒険 / 開発。§76） */
+const pick = (game, dev) => (isDev() ? dev : game);
 
 const DEFAULTS = { agent: 'claude', parallel: 3, rounds: 40 };
 const OPTIONS = {
   dir: 'string', agent: 'string', model: 'string', parallel: 'string',
   rounds: 'string', only: 'string', tactic: 'string', 'dry-run': 'boolean', 'allow-listen': 'boolean', 'no-allow-listen': 'boolean',
+  words: 'string',
 };
 
 // party --help / -h（CONTRACTS §32.2）。何も記録・起動せず、冒険の書が無くても出せる
-const HELP = `gridhub party — キャラクターごとにエージェントを出撃させ、ボス戦を指揮します（軍師。masume party も同じ）
+const HELP = () => `${pick('gridhub party — キャラクターごとにエージェントを出撃させ、ボス戦を指揮します（軍師。masume party も同じ）', 'gridhub party — 担当ごとにエージェントを起動し、結合テストを走らせます（masume party も同じ）')}
 
-つかいかた:
+${pick('つかいかた', '使い方')}:
   gridhub party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R]
-                [--only id,id] [--tactic careful|balanced|bold] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]
+                [--only id,id] [--tactic careful|balanced|bold] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D] [--words game|dev]
   gridhub party --help | -h
 
 オプション:
-  --agent A            出撃させるエージェント。claude（既定）/ codex / cmd:<command>（/bin/sh -c で起動）
+  --agent A            ${pick('出撃させる', '起動する')}エージェント。claude（既定）/ codex / cmd:<command>（/bin/sh -c で起動）
   --model M            エージェントのモデル（claude は何も指定しなければ sonnet）
-  --parallel N         同時に出撃させる人数（既定 3）
-  --rounds R           巡回の上限。帰還1回で1巡と数えます（既定 40）
-  --only id,id         出撃させるキャラクターIDを、カンマ区切りで絞ります
-  --tactic T           作戦（エージェントの動き方と、1回の出撃の長さ。ルールは変わりません）:
-${Object.values(TACTICS).map((t) => `                         ${t.id.padEnd(9)}${t.name}${t.id === 'balanced' ? '（既定）' : ''} … ${t.moves}`).join('\n')}
+  --parallel N         同時に${pick('出撃させる人数', '起動する数')}（既定 3）
+  --rounds R           巡回の上限。${pick('帰還', '終了')}1回で1巡と数えます（既定 40）
+  --only id,id         ${pick('出撃させるキャラクターID', '起動する担当の ID')}を、カンマ区切りで絞ります
+  --tactic T           作戦（エージェントの動き方と、1回の${pick('出撃', '起動')}の長さ。ルールは変わりません）:
+${Object.values(TACTICS).map((x) => `                         ${x.id.padEnd(9)}${x.name}${x.id === 'balanced' ? '（既定）' : ''} … ${tacticText(x).moves}`).join('\n')}
                        日本語の名前（いのちだいじに など）でも書けます
   --allow-listen       判定（E2E）がテストの中で 127.0.0.1 にサーバーを立てられるよう、
                        Codex の箱（サンドボックス）のソケットを開けます。
                        ゲームはローカルのままで、インターネットは要りません。
                        ただし、開けるのに使う Codex の設定 sandbox_workspace_write.network_access は
-                       localhost だけに絞れないので、開けると、その出撃中のエージェントは
+                       localhost だけに絞れないので、開けると、その${pick('出撃', '起動')}中のエージェントは
                        インターネットにも出られます（頼んだときだけ開けます。既定は閉じたまま）。
                        codex にだけ効きます（claude と cmd: のコマンドは変わりません）。
   --no-allow-listen    箱のソケットを開けません（.masume/party.json で開けているときの上書き）
-  --dry-run            何も記録・起動せず、どのキャラクターが出るかと、渡すプロンプトの先頭だけを出します
-  --dir D              ゲームのルート（既定: 今いる場所から探します）
+  --dry-run            何も記録・起動せず、${pick('どのキャラクターが出るか', 'どの担当を起動するか')}と、渡すプロンプトの先頭だけを出します
+  --dir D              ${pick('ゲーム', 'プロジェクト')}のルート（既定: 今いる場所から探します）
+  --words game|dev     字を冒険のことば（game）か開発のことば（dev）で出します（省略すると gridhub words の設定）
   -h, --help           この説明を出します
 
 .masume/party.json に既定を書けます（オプションがあればそちらが優先）:
@@ -58,7 +64,7 @@ function parseOptions(argv) {
   const options = {};
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
-    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--tactic careful|balanced|bold] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D]（余計な引数: ${arg}。くわしくは party --help）`);
+    if (!arg.startsWith('--')) usage(`つかいかた: party [--agent claude|codex|cmd:<command>] [--model M] [--parallel N] [--rounds R] [--only id,id] [--tactic careful|balanced|bold] [--allow-listen | --no-allow-listen] [--dry-run] [--dir D] [--words game|dev]（余計な引数: ${arg}。くわしくは party --help）`);
     const eq = arg.indexOf('=');
     const key = arg.slice(2, eq === -1 ? undefined : eq);
     if (!Object.hasOwn(OPTIONS, key)) usage(`知らないオプションです: --${key}`);
@@ -122,16 +128,21 @@ function survive(stream) {
 export async function run(argv, ctx) {
   survive(process.stdout);
   survive(process.stderr);
+  const cwd = ctx.cwd ?? process.cwd();
+  const env = ctx.env ?? process.env;
   if (argv.includes('--help') || argv.includes('-h')) {
-    process.stdout.write(HELP);
+    // --help でも、ことば（--words > GRIDHUB_WORDS > 冒険の設定）に合わせる
+    const flag = argv.find((a, i) => argv[i - 1] === '--words') ?? argv.find((a) => a.startsWith('--words='))?.slice('--words='.length) ?? null;
+    resolveWords({ root: findRoot(cwd), env, flag });
+    process.stdout.write(HELP());
     return 0;
   }
   const options = parseOptions(argv);
-  const cwd = ctx.cwd ?? process.cwd();
-  const env = ctx.env ?? process.env;
+  if (options.words !== undefined && !WORDS.includes(options.words)) usage(`--words は game か dev です: ${options.words}`);
   const root = options.dir !== undefined ? resolve(cwd, options.dir)
     : env.MASUME_DIR ? resolve(cwd, env.MASUME_DIR) : findRoot(cwd);
-  if (!root || !existsSync(logFile(root))) throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません');
+  resolveWords({ root, env, flag: options.words ?? null });
+  if (!root || !existsSync(logFile(root))) throw new MasumeError('E_NO_GAME', t('err.nogame'));
 
   const config = readConfig(root);
   const agentName = env.MASUME_AGENT_OVERRIDE || options.agent || config.agent || DEFAULTS.agent;
@@ -147,14 +158,14 @@ export async function run(argv, ctx) {
 
   const view = buildView(root);
   if (!view.integrity.ok) {
-    throw new MasumeError('E_CURSED', `冒険の書は呪われています（seq ${view.integrity.errors[0].seq}）。verify / repair で確認してください`, 3);
+    throw new MasumeError('E_CURSED', t('err.cursed', view.integrity.errors[0].seq, null), 3);
   }
   let only = null;
   if (options.only !== undefined) {
     only = new Set(options.only.split(',').map((s) => s.trim()).filter(Boolean));
     if (only.size === 0) usage('--only にはキャラクターIDをカンマ区切りで指定してください');
     for (const id of only) {
-      if (!view.characters.some((c) => c.id === id)) throw new MasumeError('E_UNKNOWN', `キャラクターが見つかりません: ${id}`);
+      if (!view.characters.some((c) => c.id === id)) throw new MasumeError('E_UNKNOWN', t('err.unknown.char', id));
     }
   }
 
@@ -182,13 +193,14 @@ function listenNotice(agent) {
   if (agent.name !== 'codex') {
     return `箱のソケット: --allow-listen は codex にだけ効きます（${agent.name === 'claude' ? 'claude' : 'cmd:'} のコマンドは変わりません）`;
   }
-  return '箱のソケット: 判定が 127.0.0.1 にサーバーを立てられるよう、codex の箱を開けて出撃します（ゲームはローカルのままですが、この出撃中のエージェントはインターネットにも出られます）';
+  return pick('箱のソケット: 判定が 127.0.0.1 にサーバーを立てられるよう、codex の箱を開けて出撃します（ゲームはローカルのままですが、この出撃中のエージェントはインターネットにも出られます）',
+    '箱のソケット: テストが 127.0.0.1 にサーバーを立てられるよう、codex のサンドボックスのソケットを開けて起動します（ローカルのままですが、この起動中のエージェントはインターネットにも出られます）');
 }
 
 function dryRun({ root, bin, view, agent, only, tactic }) {
   console.log(`作戦: ${tactic.name}（${tactic.id}）`);
   if (view.finished) {
-    console.log('あがり！ もう出撃するキャラクターはいません');
+    console.log(pick('あがり！ もう出撃するキャラクターはいません', '完了！ もう起動する担当はいません'));
     return 0;
   }
   let planned = 0;
@@ -197,15 +209,15 @@ function dryRun({ root, bin, view, agent, only, tactic }) {
     if (view.nodes[c.at]?.check?.kind === 'stamp') continue;
     if (only && !only.has(c.id)) continue;
     if (needsSeal(view.nodes[c.at])) {
-      console.log(`未封印: ${c.at}（${c.id} は出撃させません）`);
+      console.log(pick(`未封印: ${c.at}（${c.id} は出撃させません）`, `ハッシュ未記録: ${c.at}（${c.id} は起動しません）`));
       continue;
     }
     planned++;
-    console.log(`出撃予定: ${c.id} ${agent.display}`);
+    console.log(`${pick('出撃予定', '起動予定')}: ${c.id} ${agent.display}`);
     const prompt = buildPrompt({ root, bin, view, characterId: c.id, tactic });
     for (const line of prompt.split('\n').slice(0, 12)) console.log(`    ${line}`);
     console.log('    …');
   }
-  if (planned === 0) console.log('出撃予定のキャラクターはいません');
+  if (planned === 0) console.log(pick('出撃予定のキャラクターはいません', '起動予定の担当はいません'));
   return 0;
 }

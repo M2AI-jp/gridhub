@@ -138,7 +138,8 @@ test('§70.4 claude が無ければ、入れ方と「チュートリアルは cl
     const env = await page.eval(`(() => { const e = document.querySelector('#env-claude'); return { found: e.dataset.found, text: e.innerText }; })()`);
     assert.equal(env.found, 'false');
     assert.match(env.text, /claude（Claude Code）が見つかりません/);
-    assert.match(env.text, /npm install -g @anthropic-ai\/claude-code/);
+    assert.match(env.text, /claude\.com\/claude-code/, '入れ方は公式の手順へのリンク（§77.4）');
+    assert.equal(await page.eval(`document.querySelector('#env-claude a')?.getAttribute('href')`), 'https://claude.com/claude-code');
     assert.match(env.text, /チュートリアルは claude なしで遊べます/);
   }, { app: info({ claude: { found: false, path: null } }) });
   await withStart(async (page) => {

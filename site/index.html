@@ -269,10 +269,10 @@
           <li>
             <p><b>Claude Code</b>（Anthropic）か <b>Codex</b>（OpenAI）のどちらか1つ。それぞれのアカウントか API キーでログインして使います。AI の利用料は、Anthropic か OpenAI にかかります。GridHub 自体は無料です。（5分のチュートリアルだけなら要りません）</p>
             <dl class="install">
-              <dt>Claude Code の入れ方</dt>
-              <dd><pre><code>npm install -g @anthropic-ai/claude-code</code></pre></dd>
-              <dt>Codex の入れ方</dt>
-              <dd><pre><code>npm install -g @openai/codex</code></pre></dd>
+              <dt>Claude Code</dt>
+              <dd>https://claude.com/claude-code の公式手順で用意します。</dd>
+              <dt>Codex CLI</dt>
+              <dd>https://github.com/openai/codex の公式手順で用意します。</dd>
             </dl>
           </li>
           <li class="opt"><b>GitHub</b> … GridHub は GitHub からダウンロードします。セーブを GitHub に送ることもできます（送らなくても遊べます）。</li>
@@ -287,7 +287,7 @@
               <p>ターミナルで次のコマンドを実行します（最初の1回だけです）。</p>
               <pre><code>git clone https://github.com/M2AI-jp/gridhub.git
 cd gridhub
-npm run mac</code></pre>
+sh mac/build.sh</code></pre>
             </li>
             <li><p>できあがった <code>dist/GridHub.app</code> を「アプリケーション」フォルダに移して、ダブルクリックで開きます。</p></li>
           </ol>
@@ -295,7 +295,9 @@ npm run mac</code></pre>
         </div>
         <div class="start-box">
           <h3><img src="img/mage.svg" alt="" width="40" height="40"><span class="ph">コマンドラインで遊ぶ</span></h3>
-          <pre><code>npm install -g github:M2AI-jp/gridhub#v0.3.0
+          <pre><code>git clone https://github.com/M2AI-jp/gridhub.git
+cd gridhub
+ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub
 gridhub --help</code></pre>
           <p>コマンドやしくみのくわしい話は、<a href="engineers.html">エンジニアの方へ</a>のページにあります。</p>
         </div>

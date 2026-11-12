@@ -1,4 +1,4 @@
-// W2「壊れたリンク・外から読むものが無い」— 看板屋（第17章）。CONTRACTS §75.3。
+// W2「壊れたリンク・外から読むものが無い」— 看板屋（第17章）。CONTRACTS §81.3。
 // site/ だけで動き（index.html が入口。エンジニアの方へ engineers.html とタブで行き来する）、リンクと画像が壊れておらず、外のサイトから何も読み込まない。
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -36,7 +36,7 @@ function refsOf(file) {
 const refs = files.flatMap(refsOf);
 const ids = Object.fromEntries(pages.map((p) => [p, new Set(tagsOf(readSite(p)).map((t) => t.attrs.id).filter(Boolean))]));
 
-test('§75.3 site/ の中は HTML・CSS・画像だけ（スクリプト・Web フォントなし）。入口は site/index.html、もう1つのページは site/engineers.html', () => {
+test('§81.3 site/ の中は HTML・CSS・画像だけ（スクリプト・Web フォントなし）。入口は site/index.html、もう1つのページは site/engineers.html', () => {
   assert.ok(files.includes('index.html'), 'site/index.html');
   assert.ok(files.includes('engineers.html'), 'site/engineers.html');
   for (const p of pages) assert.ok(tagsOf(readSite(p)).some((t) => t.tag === 'link' && t.attrs.rel === 'stylesheet' && t.attrs.href === 'site.css'), `site/${p} は site.css を使う（2ページで共有）`);
@@ -49,7 +49,7 @@ test('§75.3 site/ の中は HTML・CSS・画像だけ（スクリプト・Web �
   }
 });
 
-test('§75.3 リンクと画像が壊れていない: site/ の中のファイル・ページの中の #id・GitHub のリンクだけ。site/ の外（../）を指さない', () => {
+test('§81.3 リンクと画像が壊れていない: site/ の中のファイル・ページの中の #id・GitHub のリンクだけ。site/ の外（../）を指さない', () => {
   assert.ok(refs.length >= 10, `参照 ${refs.length}`);
   for (const { file, tag, key, ref, rel } of refs) {
     const where = `site/${file} の <${tag} ${key}="${ref}">`;
@@ -77,7 +77,7 @@ test('§75.3 リンクと画像が壊れていない: site/ の中のファイ�
   }
 });
 
-test('§75.3 タブで行き来できる: どちらのページのタブも、もう1つのページを指す（相対パス）', () => {
+test('§81.3 タブで行き来できる: どちらのページのタブも、もう1つのページを指す（相対パス）', () => {
   const tabs = (p) => tagsOf(/<nav class="tabs"[^>]*>[\s\S]*?<\/nav>/u.exec(readSite(p))?.[0] ?? '').filter((t) => t.tag === 'a');
   for (const [from, to] of [['index.html', 'engineers.html'], ['engineers.html', 'index.html']]) {
     const links = tabs(from);
@@ -86,7 +86,7 @@ test('§75.3 タブで行き来できる: どちらのページのタブも、�
   }
 });
 
-test('§75.3 Chrome で開くと、読み込むのは同じ場所のものだけ。画像は全部読めて、コンソールにエラーが無い（http でも file でも、2ページとも）', { timeout: 180000 }, async () => {
+test('§81.3 Chrome で開くと、読み込むのは同じ場所のものだけ。画像は全部読めて、コンソールにエラーが無い（http でも file でも、2ページとも）', { timeout: 180000 }, async () => {
   const srv = await serveStatic(SITE);
   const page = await openBrowser({ width: 1280, height: 800 });
   try {
@@ -114,7 +114,7 @@ test('§75.3 Chrome で開くと、読み込むのは同じ場所のものだけ
   }
 });
 
-test('§75.3 Chrome でタブを押すと、もう1つのページが開き、またタブで戻れる（http でも file でも）', { timeout: 120000 }, async () => {
+test('§81.3 Chrome でタブを押すと、もう1つのページが開き、またタブで戻れる（http でも file でも）', { timeout: 120000 }, async () => {
   const srv = await serveStatic(SITE);
   const page = await openBrowser({ width: 375, height: 812 });
   try {

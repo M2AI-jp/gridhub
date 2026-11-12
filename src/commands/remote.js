@@ -6,6 +6,7 @@ import { gameRoot, parseArgs, usage } from '../engine/cli.js';
 import { MasumeError } from '../engine/errors.js';
 import { logFile } from '../engine/paths.js';
 import { remoteInfo, setAutoPush } from '../engine/remote.js';
+import { t } from '../engine/words.js';
 
 export async function run(argv, ctx) {
   const command = parseArgs(argv, ctx, { 'auto-push': 'string' });
@@ -14,10 +15,10 @@ export async function run(argv, ctx) {
   if (auto !== undefined) {
     if (auto !== 'on' && auto !== 'off') usage('つかいかた: remote --auto-push on|off');
     const game = gameRoot(command);
-    if (!existsSync(logFile(game))) throw new MasumeError('E_NO_GAME', '冒険の書が見つかりません（設定は冒険ごとに書きます）');
+    if (!existsSync(logFile(game))) throw new MasumeError('E_NO_GAME', t('remote.nogame'));
     const settings = setAutoPush(game, auto === 'on');
     if (command.options.json) console.log(JSON.stringify(settings));
-    else console.log(`町でセーブしたら GitHub に送る: ${settings.auto_push ? 'オン' : 'オフ'}`);
+    else console.log(t('remote.auto', settings.auto_push));
     return 0;
   }
   const root = gameRoot(command, { optional: true }) ?? resolve(command.cwd);
@@ -30,9 +31,9 @@ export async function run(argv, ctx) {
   else {
     console.log(`Git: ブランチ ${info.branch ?? '（HEAD が切り離されている）'}${info.head ? `（commit ${info.head.slice(0, 7)}）` : '（まだコミットが無い）'}`);
     console.log(`リモート: ${info.remote ? `${info.remote.name} ${info.remote.url ?? ''}${info.remote.github ? '（GitHub）' : ''}`.trim() : 'まだつながっていません'}`);
-    console.log(info.upstream === null ? 'GitHub に送っていないセーブ: まだ一度も送っていない' : `GitHub に送っていないセーブ: ${info.ahead}${info.behind ? `（リモートにだけあるコミット: ${info.behind}）` : ''}`);
+    console.log(info.upstream === null ? t('remote.ahead.none') : t('remote.ahead', info.ahead, info.behind));
   }
-  if (info.inside) console.log(`町でセーブしたら GitHub に送る: ${info.auto_push ? 'オン' : 'オフ'}（gridhub remote --auto-push on|off）`);
+  if (info.inside) console.log(t('remote.auto.hint', info.auto_push));
   console.log(`GitHub CLI（gh）: ${info.gh.installed ? (info.gh.authenticated ? 'ログインしています' : '入っているが、ログインしていない') : '入っていない'}`);
   const todo = info.steps.filter((step) => !step.done);
   if (todo.length === 0) console.log('手引き: すべて済んでいます');

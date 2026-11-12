@@ -3,8 +3,9 @@
 // 座標の属性は、すべて世界の座標（ページの位置を足したもの）で書く。transform でずらさない（方眼に合っているかを属性で確かめられるように）。
 import { U, PAGE, GRID, X0, X1, P1_TOP, PN_TOP, BOTTOM, pageOrigin, casesOf, titleLines, stopOf, TITLE_PX, wrapJa, marginHappened, marginSource, whoName, BUBBLE_PX, BUBBLE_LINE } from './world.js';
 import { INK, hl, tint, rect, box, line, circle, hanamaru, tape, smooth, esc, rng, own, byId, wrap } from './sketch.js';
+import { t as say, statusJa, marginJa } from './words.js';
 
-export const STATUS_JA = { fog: '霧の中', open: '見えている', current: '作業中', waiting: '待機中', ready: '全員そろった', cleared: '突破', stale: '要再検証' };
+// 状態・余白の種類の字は words.js（statusJa・marginJa。冒険のことば / 開発のことば）
 const JOB_JA = { hero: '勇者', warrior: '戦士', mage: '魔法使い', priest: '僧侶', thief: '盗賊', merchant: '商人', sage: '賢者', scribe: '書記', herald: '伝令', cartographer: '地図職人', painter: '絵師', villager: '村人' };
 export const jobJa = (job) => own(JOB_JA, job) || job || '';
 
@@ -122,7 +123,7 @@ function goalPreview(view, pl, monsters) {
   return `<g class="goal-preview" aria-label="章のあがり ${esc(view.quest.goal)}（p.${pl.page + 1}）">
     <path class="pencil-line preview-frame" d="${box(x, y, w, h, 'preview', 0.8)}"/>
     <text class="marker-text preview-head" x="${f1(x + 0.5 * U)}" y="${f1(y + 1.15 * U)}">あがり</text>
-    <text class="hand preview-sub" x="${f1(x + 3.4 * U)}" y="${f1(y + 1.1 * U)}">魔王の城 ↓p.${pl.page + 1}</text>
+    <text class="hand preview-sub" x="${f1(x + 3.4 * U)}" y="${f1(y + 1.1 * U)}">${esc(say('board.goal.preview', pl.page + 1))}</text>
     <text class="hand preview-title" x="${f1(x + 0.5 * U)}" y="${f1(y + 2.05 * U)}">${esc(wrap(title, 13, 1)[0] || '')}</text>
     <path class="preview-ridge" d="${ridge}"/>
     <path class="pen castle-mini" d="${castle}"/><path class="pen" d="${gate}"/>
@@ -160,8 +161,8 @@ export function headLayer(view, lay, sprites, monsters = {}) {
   out += `<g class="start-label">`;
   for (let k = 0; k < 4; k++) out += `<path class="pen title-box" data-tool="ballpoint" d="${ruled(wx(0, X0 + 1 + k * 2), wy(fy), 2 * U, 2 * U, `fd${k}`, 0.3)}"/>`;
   out += `<text class="furidashi" x="${wx(0, X0 + 1) + (2 * U - 22) / 2}" y="${wy(fy + 1.52)}" letter-spacing="${2 * U - 22}">ふりだし</text>`;
-  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 0.85)}">上から下へ。モンスター1体 ＝ テスト1件</text>`;
-  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 1.85)}">倒すと斜線、出口で gridhub check</text>`;
+  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 0.85)}">${esc(say('board.hint1'))}</text>`;
+  out += `<text class="pencil-text start-hint" x="${wx(0, X0 + 10)}" y="${wy(fy + 1.85)}">${esc(say('board.hint2'))}</text>`;
   out += '</g>';
   // 名札（ふりだしの付箋。1ページ目の道の上）
   const g0 = lay.pages[0].lanes;
@@ -210,25 +211,16 @@ export function headLayer(view, lay, sprites, monsters = {}) {
   // 最後のページ: 凡例（字だけで読めるように）
   const lp = lay.pages.length - 1;
   const ly0 = lay.pages[lp].units.length ? BOTTOM - 1 : 8;
-  const items = [
-    ['monster', 'モンスター1体 ＝ テスト1件'],
-    ['slain', '倒した（テストが通った）'],
-    ['revived', '復活（前に通ったテストが落ちた）'],
-    ['card', 'ダンジョンの出口 ＝ 宣言判定'],
-    ['town', '町 ＝ セーブ（git commit）'],
-    ['gate', '中ボスの砦 ＝ 結合テスト'],
-    ['goal', '魔王の城 ＝ 章のあがり'],
-    ['king', '王様の城 ＝ 人間のハンコ'],
-  ];
+  const items = ['monster', 'slain', 'revived', 'card', 'town', 'gate', 'goal', 'king'].map((k) => [k, say(`board.legend.${k}`)]);
   if (!lay.pages[lp].units.length) {
-    out += `<g class="legend-page"><text class="marker-text legend-head" x="${wx(lp, X0 + 1)}" y="${wy(ly0 - 1.2)}">このノートの読み方</text>`;
+    out += `<g class="legend-page"><text class="marker-text legend-head" x="${wx(lp, X0 + 1)}" y="${wy(ly0 - 1.2)}">${esc(say('board.legend.head'))}</text>`;
     items.forEach(([k, t], i) => (out += `<text class="hand legend-item" x="${wx(lp, X0 + 3)}" y="${wy(ly0 + 0.75 + i * 1.6)}">${esc(t)}</text>${legendGlyph(k, wx(lp, X0 + 1.5), wy(ly0 + 0.45 + i * 1.6))}`));
     out += '</g>';
     // あがったら、エンディングを赤ペンで日記のように書きこむ
     if (view.ending && typeof view.ending.text === 'string') {
       const ey = ly0 + 15;
       const lines = view.ending.text.split('\n').filter(Boolean).flatMap((l) => wrap(l, 30, 2));
-      out += `<g class="ending-note"><text class="marker-text ending-note-head" x="${wx(lp, X0 + 1)}" y="${wy(ey)}">エンディング</text>`;
+      out += `<g class="ending-note"><text class="marker-text ending-note-head" x="${wx(lp, X0 + 1)}" y="${wy(ey)}">${esc(say('board.ending'))}</text>`;
       lines.slice(0, 12).forEach((l, i) => (out += `<text class="hand ending-note-line" x="${wx(lp, X0 + 1)}" y="${wy(ey + 1.6 + i * 1.25)}">${esc(l)}</text>`));
       out += '</g>';
     }
@@ -439,10 +431,10 @@ export function monsterItems(view, lay, monsters, { fresh = null } = {}) {
       const revived = !unknown && c.revived > 0 && ok !== true;
       const species = speciesOf(c?.name, s.i);
       const fill = slain ? '#ffffff' : revived ? '#ffc2b8' : fog ? '#ffffff' : ALIVE[species];
-      const name = unknown ? 'まだ一度も走らせていないテスト（中の分からないダンジョン）' : `テスト ${s.i + 1}/${cases.length}: ${c.name}`;
+      const name = unknown ? say('board.sq.unknown') : say('board.sq.name', s.i + 1, cases.length, c.name);
       const state = unknown ? 'unknown' : slain ? 'slain' : revived ? 'revived' : ok === false ? 'alive failing' : 'alive';
       const fr = freshCases && freshCases.includes(s.i) ? ' fresh-slain' : '';
-      let inner = `<title>${esc(name)}${!unknown ? `（${ok === true ? '✔ 通った' : ok === false ? '✖ 落ちている' : '・ まだ'}${c.strong ? '・強敵' : ''}${c.revived ? `・復活 ${c.revived}` : ''}）` : ''}</title>`;
+      let inner = `<title>${esc(name)}${!unknown ? `（${ok === true ? say('board.sq.ok') : ok === false ? say('board.sq.ng') : say('board.sq.none')}${c.strong ? say('board.sq.strong') : ''}${c.revived ? say('board.sq.revived', c.revived) : ''}）` : ''}</title>`;
       inner += `<rect class="sq-paper" x="${X}" y="${Y}" width="${2 * U}" height="${2 * U}"/>`;
       inner += `<path class="${fog ? 'pencil-sq' : 'pen'} sq-line" data-tool="${fog ? 'pencil' : 'ballpoint'}" d="${ruled(X, Y, 2 * U, 2 * U, `sq:${id}:${s.i}`, 0.35)}"/>`;
       if (unknown) {
@@ -461,7 +453,6 @@ export function monsterItems(view, lay, monsters, { fresh = null } = {}) {
 }
 
 // ---------- 余白のマス（§53）: 別の担当との会話・町の住人との雑談・瓦版。進みは止めない ----------
-export const MARGIN_JA = { talk: '会話', npc: '町の住人', news: '瓦版' };
 
 /** 余白のマスの中の絵（2×2 目）: talk は話した2人の顔、npc は町の住人、news は瓦版。まだ起きていなければ鉛筆で薄く */
 function marginGlyph(view, m, X, Y, sprites, chars, happened) {
@@ -545,8 +536,8 @@ function bubbleMarkup(b, p, chars) {
 
 /** 余白のマスの <title>: 題と、すべての行（話し手がいれば「名前: 」を前に）と、出典 */
 export function marginTitle(view, m) {
-  const kind = own(MARGIN_JA, m.kind) || m.kind;
-  if (!marginHappened(m)) return `${kind}: ${m.title || ''}（まだ起きていない。駒が通ると起きる）`;
+  const kind = marginJa(m.kind);
+  if (!marginHappened(m)) return `${kind}: ${m.title || ''}${say('board.margin.pending')}`;
   const lines = m.lines.filter((l) => l && l.text).map((l) => `${whoName(view, l.who) ? whoName(view, l.who) + ': ' : ''}${l.text}`);
   const src = marginSource(m);
   return [`${kind}: ${m.title || ''}`, ...lines, src ? `（${src}）` : ''].filter(Boolean).join('\n');
@@ -583,7 +574,7 @@ function sealMark(n, x, y) {
   const rot = f1((rng(`seal:${n.id ?? x}:${y}`)() - 0.5) * 16 - 6);
   const cls = n.seal_broken ? 'seal broken' : n.sealed ? 'seal' : 'seal unsealed';
   const ch = n.sealed || n.seal_broken ? '封' : '未';
-  return `<g class="${cls}" transform="translate(${f1(x)} ${f1(y)}) rotate(${rot})"><title>${n.seal_broken ? '封印が破れている' : n.sealed ? '判定は封印済み' : '未封印（GMの封印待ち）'}</title><rect x="-6" y="-6" width="12" height="12" rx="2" class="seal-box"/><text class="seal-text" y="3.5" text-anchor="middle">${ch}</text>${n.seal_broken ? '<path d="M-7 -5 L-1 1 L-3 3 L6 8" class="seal-crack"/>' : ''}</g>`;
+  return `<g class="${cls}" transform="translate(${f1(x)} ${f1(y)}) rotate(${rot})"><title>${esc(n.seal_broken ? say('board.seal.broken') : n.sealed ? say('board.seal.ok') : say('board.seal.none'))}</title><rect x="-6" y="-6" width="12" height="12" rx="2" class="seal-box"/><text class="seal-text" y="3.5" text-anchor="middle">${ch}</text>${n.seal_broken ? '<path d="M-7 -5 L-1 1 L-3 3 L6 8" class="seal-crack"/>' : ''}</g>`;
 }
 
 function hanko(cx, cy, r, ch, seed) {
@@ -650,9 +641,9 @@ function taskMarkup(pl, n, chars, attrs, extra) {
   // 1行目: ID と、テスト p/t（ダンジョンの出口）か「人間のハンコ」（王様の城）
   s += `<text class="hand cell-id${t}${narrow ? ' narrow' : ''}" x="${X + 3}" y="${Y + U - 3.5}">${esc(id)}</text>`;
   const tests = n.tests && Number.isInteger(n.tests.total) ? n.tests : { pass: casesOf(n).filter((c) => c.ok === true).length, total: casesOf(n).length };
-  const label = stamp ? 'ハンコ' : tests.total > 0 ? `テスト ${tests.pass}/${tests.total}` : 'テスト ？';
+  const label = stamp ? say('board.stamp') : tests.total > 0 ? `テスト ${tests.pass}/${tests.total}` : say('board.tests.unknown');
   s += `<text class="hand cell-tests${t}${narrow ? ' narrow' : ''}${!stamp && tests.total && tests.pass === tests.total ? ' all' : ''}" x="${X + W - 3}" y="${Y + U - 3.5}" text-anchor="end">${esc(label)}</text>`;
-  if (n.first_try === true && st === 'cleared' && !narrow) s += `<text class="medal-mark" x="${X + 3 + textW(id, 11.5) + 3}" y="${Y + U - 3.5}"><title>一発で出口を抜けた（ちいさなメダル）</title>◎</text>`;
+  if (n.first_try === true && st === 'cleared' && !narrow) s += `<text class="medal-mark" x="${X + 3 + textW(id, 11.5) + 3}" y="${Y + U - 3.5}"><title>${esc(say('board.medal.title'))}</title>◎</text>`;
   // 題（技術の言葉。大きく、2行まで）
   const lines = titleLines(n.title, stamp ? pl.w - 2 : pl.w, Math.max(1, pl.h - 1));
   lines.forEach((l, k) => (s += `<text class="hand cell-title${t}" x="${X + 4}" y="${Y + U * (2 + k) - 3.5}">${esc(l)}</text>`));
@@ -665,7 +656,7 @@ function taskMarkup(pl, n, chars, attrs, extra) {
   }
   if (st === 'stale') s += eraser(X, Y + U, W, Hh - U, `er:${id}`);
   if (n.fails > 0 && st !== 'cleared') s += `<text class="hand fail-tally" x="${X + 3 + textW(id, 11.5) + 3}" y="${Y + U - 3.5}">${'✗'.repeat(Math.min(n.fails, 3))}</text>`;
-  return `<g class="node task${stamp ? ' king' : ''}${extra}" ${attrs} data-owner="${esc(n.owner || '')}" aria-label="${esc(id)} ${esc(n.title)}（${esc(own(STATUS_JA, st) || st)}${tests.total ? ` テスト ${tests.pass}/${tests.total}` : ''}）">${s}</g>`;
+  return `<g class="node task${stamp ? ' king' : ''}${extra}" ${attrs} data-owner="${esc(n.owner || '')}" aria-label="${esc(id)} ${esc(n.title)}（${esc(statusJa(st))}${tests.total ? ` テスト ${tests.pass}/${tests.total}` : ''}）">${s}</g>`;
 }
 
 /** 砦の塔（px）。x は塔の左、y は帯の上、h は帯の高さ */
@@ -704,13 +695,13 @@ function campMarkup(pl, n, chars, attrs, extra) {
   s += `<rect class="cell-hit" x="${X}" y="${Y}" width="${W}" height="${Hh}"/>`;
   s += outline(X, Y, W, Hh, `camp:${id}`, pencil, 'cell-line');
   // 1行目: ID と「町」、右に commit（セーブ = Git のコミット）
-  s += `<text class="hand cell-id${t}" x="${X + 3}" y="${Y + U - 3.5}">${esc(id)} <tspan class="camp-kind">町</tspan></text>`;
-  const commit = n.save?.commit ? `commit ${String(n.save.commit).slice(0, 7)}` : st === 'cleared' ? 'セーブ済み' : 'セーブ前';
+  s += `<text class="hand cell-id${t}" x="${X + 3}" y="${Y + U - 3.5}">${esc(id)} <tspan class="camp-kind">${esc(say('board.camp.kind'))}</tspan></text>`;
+  const commit = n.save?.commit ? `commit ${String(n.save.commit).slice(0, 7)}` : st === 'cleared' ? say('board.camp.saved') : say('board.camp.unsaved');
   s += `<text class="hand save-commit${n.save?.commit ? '' : ' none'}${t}" x="${X + W - 3}" y="${Y + U - 3.5}" text-anchor="end">${esc(commit)}</text>`;
   const lines = wrap(n.title, Math.max(3, (W - 2.4 * U) / TITLE_PX), Math.max(1, pl.h - 2));
   lines.forEach((l, k) => (s += `<text class="hand cell-title${t}" x="${X + 4}" y="${Y + U * (2 + k) - 3.5}">${esc(l)}</text>`));
   s += `<g class="inn-house">${house(X + W - 2.1 * U, Y + Hh - 2.05 * U, 1.7 * U, 1.75 * U, `inn:${id}`)}</g>`;
-  if (st === 'cleared') s += `<text class="camp-done stamp-in" x="${X + 4}" y="${Y + Hh - 5}">泊まった</text>`;
+  if (st === 'cleared') s += `<text class="camp-done stamp-in" x="${X + 4}" y="${Y + Hh - 5}">${esc(say('board.camp.stayed'))}</text>`;
   return `<g class="node camp${extra}" ${attrs} data-owner="${esc(n.owner || '')}" aria-label="町 ${esc(id)} ${esc(n.title)}">${s}</g>`;
 }
 
@@ -787,7 +778,7 @@ function gateMarkup(view, pl, n, chars, monsters, attrs, extra) {
     tx = wx(pl.page, pl.x + 1);
     ty = Y + 4.3 * U;
   }
-  const kind = goal ? '魔王の城・章のあがり' : '中ボス・結合テスト';
+  const kind = goal ? say('board.goal.kind') : say('board.gate.kind');
   const title = n.title.replace(/^(結合|あがり)[:：]\s*/, '');
   const room = (goal ? X + W / 2 - bs / 2 : bx) - tx - 6;
   const head = `${id} `;
@@ -804,7 +795,7 @@ function gateMarkup(view, pl, n, chars, monsters, attrs, extra) {
   tLines.forEach((l, k) => (s += `<text class="gate-title${t}" x="${f1(tx)}" y="${f1(ty + k * 1.05 * U)}">${esc(l)}</text>`));
   void fit;
   const hpY = goal ? ty + 1.15 * U : Y + 3.75 * U;
-  const hp = tests.total > 0 ? `テスト ${tests.pass}/${tests.total}` : 'テスト ？';
+  const hp = tests.total > 0 ? `テスト ${tests.pass}/${tests.total}` : say('board.tests.unknown');
   s += `<text class="hand gate-hp${t}" x="${f1(tx)}" y="${f1(hpY)}">${esc(hp)}</text>`;
   // HP の目盛り（テスト1件 = 1目）
   if (tests.total > 0) {
@@ -815,15 +806,15 @@ function gateMarkup(view, pl, n, chars, monsters, attrs, extra) {
   const commit = n.save?.commit ? `・commit ${String(n.save.commit).slice(0, 7)}` : '';
   s += `<text class="hand gate-kind${t}" x="${f1(tx)}" y="${f1(hpY + 0.85 * U)}">${esc(kind)}${esc(commit)}</text>`;
   let label;
-  if (beaten) label = goal ? 'あがり！' : '撃破！';
-  else if (st === 'ready') label = 'そろった！ 結合テスト';
-  else label = `待機 ${waiting.length}/${members.length}`;
+  if (beaten) label = goal ? say('board.goal.beaten') : say('board.gate.beaten');
+  else if (st === 'ready') label = say('board.gate.ready');
+  else label = say('board.gate.waiting', waiting.length, members.length);
   if (goal) s += `<text class="hand gate-count big${t}${beaten ? ' done' : ''}" x="${f1(X + W - 0.8 * U)}" y="${f1(Y + 2 * U)}" text-anchor="end">${esc(label)}</text>`;
   else s += `<text class="hand gate-count${t}${beaten ? ' done' : ''}" x="${f1(bx + bs / 2)}" y="${f1(by - 1)}" text-anchor="middle">${esc(label)}</text>`;
   if (beaten) s += `<path d="${hanamaru(bx + bs / 2, by + bs / 2, bs * 0.62, `hm:${id}`)}" class="hanamaru big" data-tool="redpen" pathLength="1"/>`;
   if (n.fails > 0 && !beaten) s += `<text class="hand fail-tally" x="${X + 4}" y="${Y + Hh - 5}">${'✗'.repeat(Math.min(n.fails, 3))}</text>`;
   s += sealMark(n, X + 0.55 * U, Y + Hh - 0.6 * U);
-  return `<g class="node gate${goal ? ' goal' : ''}${extra}" ${attrs} aria-label="${goal ? '魔王の城' : '中ボス'} ${esc(id)} ${esc(n.title)}（${esc(own(STATUS_JA, st) || st)}・${esc(hp)}）">${s}</g>`;
+  return `<g class="node gate${goal ? ' goal' : ''}${extra}" ${attrs} aria-label="${goal ? '魔王の城' : '中ボス'} ${esc(id)} ${esc(n.title)}（${esc(statusJa(st))}・${esc(hp)}）">${s}</g>`;
 }
 
 // ---------- 駒の絵 ----------

@@ -1,8 +1,9 @@
 // 余白のマス（CONTRACTS §53）。開発に関係する、良い余白: 別の担当との会話・町の住人との雑談・瓦版。
 // 進みを止めない（判定も罰もない）。出来事は冒険の書と地図に本当にあることからだけ作る。
 import { commitOfEvent } from './store.js';
+import { t } from './words.js';
 
-const NPC = '宿屋の主人';
+const NPC = () => t('margin.npc'); // 宿屋の主人（いまのことばで）
 const EXTRAS = 20; // 瓦版に載せる号外の数
 
 /** 再生（replay）の before / after で、駒が進んだイベントと、号外になるイベントを覚える */
@@ -91,8 +92,8 @@ export function buildMargins({ map, state, events, tracker }) {
     const name = character.name;
     let title;
     let partner = null;
-    if (kind === 'news') title = '瓦版';
-    else if (kind === 'npc') title = `${titleOf(after)} の住人`;
+    if (kind === 'news') title = t('margin.title.news');
+    else if (kind === 'npc') title = t('margin.title.npc', titleOf(after));
     else {
       partner = map.characters.find((c) => c.id !== character.id && c.path.includes(next)) ?? null;
       title = partner ? `${name} と ${partner.name}` : name;
@@ -113,18 +114,18 @@ export function buildMargins({ map, state, events, tracker }) {
     margin.commit = commitAt.get(source.seq) ?? null;
 
     if (kind === 'news') {
-      margin.lines.push({ who: null, text: `号外: ${name} が ${after}「${titleOf(after)}」を抜けた${testsOf(source.data, after)}` });
+      margin.lines.push({ who: null, text: t('margin.extra.cleared', name, after, titleOf(after), testsOf(source.data, after)) });
       if (quests.length > 0) margin.lines.push({ who: null, text: quests[k % quests.length] });
     } else if (kind === 'npc') {
       const cases = source.data?.cases;
       const passed = cases && typeof cases === 'object'
         ? Object.values(cases).reduce((sum, list) => sum + okCount(list), 0)
         : Array.isArray(source.data?.ran) ? source.data.ran.length : 0;
-      margin.lines.push({ who: NPC, text: `${name}さん、おつかれさま。テスト ${passed} 件、通ってきたね` });
+      margin.lines.push({ who: NPC(), text: t('margin.npc.hello', name, passed) });
       const saved = events.find((e) => e.seq > source.seq && e.type === 'saved' && e.data?.node === after
         && typeof e.data.commit === 'string' && e.data.commit && (e.data.characters ?? []).includes(character.id));
       if (saved) {
-        margin.lines.push({ who: NPC, text: `セーブは commit ${saved.data.commit.slice(0, 7)}。変えたファイルは ${(saved.data.files ?? []).length} 件` });
+        margin.lines.push({ who: NPC(), text: t('margin.npc.saved', saved.data.commit.slice(0, 7), (saved.data.files ?? []).length) });
         margin.commit = saved.data.commit;
       }
     } else {
@@ -135,7 +136,7 @@ export function buildMargins({ map, state, events, tracker }) {
       if (margin.lines.length === 0) {
         margin.lines.push({
           who: null,
-          text: partner ? `${name} と ${partner.name} が ${titleOf(next)} の前で顔を合わせた` : `${name} が ${titleOf(next)} の前に着いた`,
+          text: partner ? t('margin.talk.met', name, partner.name, titleOf(next)) : t('margin.talk.arrived', name, titleOf(next)),
         });
       }
     }
@@ -146,8 +147,8 @@ export function buildMargins({ map, state, events, tracker }) {
   const extras = tracker.extras.slice(-EXTRAS).reverse().map(({ event, node, title }) => {
     const data = event.data ?? {};
     const text = event.type === 'gate_cleared'
-      ? `号外: ${(data.members ?? []).map(nameOf).join('、')} が ${node}「${map.nodes[node]?.title ?? title}」を突破した`
-      : `号外: ${nameOf(data.character)} が ${node}「${map.nodes[node]?.title ?? title}」を抜けた${testsOf(data, node)}`;
+      ? t('margin.extra.gate', (data.members ?? []).map(nameOf).join('、'), node, map.nodes[node]?.title ?? title)
+      : t('margin.extra.cleared', nameOf(data.character), node, map.nodes[node]?.title ?? title, testsOf(data, node));
     return { text, kind: 'extra', seq: event.seq };
   });
   // 号外と製品の話題の両方が上のほうに見えるように、交互に並べる（§54.3）: x0, d0, x1, d1, …（片方が尽きたら残りを続ける）
@@ -173,7 +174,7 @@ export function latestMargin(margins, characterId = null) {
 
 /** 余白を短い字に（指令書・status・MCP 向け）。1行目は見出し、あとは1行ずつ */
 export function marginText(margin, nameOf = (id) => id) {
-  const kinds = { talk: '会話', npc: '町の住人', news: '瓦版' };
+  const kinds = { talk: t('margin.kind.talk'), npc: t('margin.kind.npc'), news: t('margin.kind.news') };
   return [
     `${kinds[margin.kind] ?? margin.kind}「${margin.title}」（${margin.after} のあと・seq ${margin.seq}）`,
     ...margin.lines.map(({ who, text }) => `${who === null ? '' : `${nameOf(who)}: `}${text}`),

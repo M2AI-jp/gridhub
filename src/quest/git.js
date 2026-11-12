@@ -30,7 +30,9 @@ export function ensureRepository(root) {
   const inside = git(root, ['rev-parse', '--is-inside-work-tree']);
   if (inside.missing) return { initialized: false, error: 'git が見つかりません' };
   if (inside.ok && inside.out === 'true') return { initialized: false };
-  const init = git(root, ['init', '-q']);
+  // 既定のブランチは main（GitHub の既定と、gridhub remote の手引きの gh repo create にそろえる）。-b の無い古い git なら、設定どおりの名前で
+  let init = git(root, ['init', '-q', '-b', 'main']);
+  if (!init.ok && !init.missing) init = git(root, ['init', '-q']);
   if (!init.ok) return { initialized: false, error: init.missing ? 'git が見つかりません' : `git init に失敗しました: ${init.err}` };
   return { initialized: true };
 }
