@@ -367,3 +367,55 @@ test('§80.4・§80.5 ビューが進むと敵が減り、失敗すると倒れ�
     await srv.close?.();
   }
 });
+
+test('§80.22 レーンを作り直したら古いボタンを残さず、Space は現行レーンを押す', async () => {
+  const srv = await serveStatic(join(ROOT, 'web'));
+  const page = await openBrowser({ width: 1440, height: 900 });
+  try {
+    await page.goto(`${srv.url}/index.html?fixture=demo&mode=march`);
+    await page.waitFor(READY, { timeout: 20000 });
+    const info = await page.eval(`(() => {
+      const old = document.querySelector('#march-cmds .march-cmd:not(.sub)[data-next="true"]');
+      if (!old) throw new Error('光っているレーンのボタンがない');
+      const v = structuredClone(window.__masume.view);
+      const stampEntry = Object.entries(v.nodes).find(([, n]) => n?.type === 'task' && n.check?.kind === 'stamp');
+      if (!stampEntry) throw new Error('ハンコのマスがない');
+      const [stampId, stampNode] = stampEntry;
+      const source = v.characters.find((c) => c.at === stampId) ?? v.characters[0];
+      const replacement = { ...source, id: 'replacement', kind: 'human', agent: 'human', at: stampId, pos: source.path.indexOf(stampId), sortie: null };
+      delete replacement.status;
+      v.nodes[stampId] = { ...stampNode, check: { ...stampNode.check, by: replacement.id } };
+      v.characters = v.characters.filter((c) => c.id !== old.dataset.char);
+      v.characters.push(replacement);
+      window.__masume.render(v);
+      const ids = new Set(v.characters.map((c) => c.id));
+      const buttons = [...document.querySelectorAll('#march-cmds .march-cmd')];
+      const next = buttons.filter((b) => b.dataset.next === 'true' && !b.classList.contains('sub'));
+      return {
+        removed: old.dataset.char,
+        ids: [...ids],
+        buttonChars: buttons.map((b) => b.dataset.char),
+        nextChars: next.map((b) => b.dataset.char),
+        currentNext: window.__masume.marchNext,
+        currentKind: next.find((b) => b.dataset.char === window.__masume.marchNext)?.dataset.kind ?? null,
+      };
+    })()`);
+    assert.ok(info.removed);
+    assert.ok(info.ids.includes(info.currentNext), JSON.stringify(info));
+    assert.ok(info.buttonChars.every((id) => info.ids.includes(id)), JSON.stringify(info));
+    assert.deepEqual(info.nextChars, [info.currentNext], JSON.stringify(info));
+    assert.equal(info.currentKind, 'stamp');
+    await page.eval(`window.__marchClicks = []; document.addEventListener('click', (e) => {
+      const b = e.target.closest?.('#march-cmds .march-cmd');
+      if (!b) return;
+      window.__marchClicks.push(b.dataset.char);
+      e.stopImmediatePropagation();
+    }, true)`);
+    await page.eval(`document.body.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true }))`);
+    assert.deepEqual(await page.eval('window.__marchClicks'), [info.currentNext], 'Space は現行レーンの光るボタンを押す');
+    assert.deepEqual(exceptions(page), []);
+  } finally {
+    await page.close();
+    await srv.close?.();
+  }
+});

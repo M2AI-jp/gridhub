@@ -2,14 +2,51 @@
 import { t } from './words.js';
 import { prsToShow, canMerge, prEvents } from './march-status.js';
 
-const key = (p) => `${p.state}|${p.draft}|${p.review}|${p.checks}|${p.note?.at ?? ''}`;
+const key = (p) => [
+  p.number,
+  p.title,
+  p.state,
+  p.draft,
+  p.review,
+  p.checks,
+  p.job,
+  p.branch,
+  p.author,
+  p.note?.who,
+  p.note?.text,
+  p.note?.at,
+].map((v) => String(v ?? '')).join('|');
+const ARM_MS = 5000;
 
 export function createPrs({ host, load, merge, open, march, every = 20000 }) {
   let last = null;
   let canOpen = false;
   let nextMerge = null;
   let armed = null;
+  let armTimer = 0;
   let busy = false;
+
+  function disarm(renderNow = true) {
+    if (armTimer) {
+      clearTimeout(armTimer);
+      armTimer = 0;
+    }
+    if (armed === null) return false;
+    armed = null;
+    if (renderNow) render();
+    return true;
+  }
+
+  function arm(number) {
+    if (armTimer) clearTimeout(armTimer);
+    armed = number;
+    armTimer = setTimeout(() => {
+      if (armed !== number) return;
+      armTimer = 0;
+      armed = null;
+      render();
+    }, ARM_MS);
+  }
 
   function chip(p) {
     const el = document.createElement('div');
@@ -56,14 +93,31 @@ export function createPrs({ host, load, merge, open, march, every = 20000 }) {
     window.__masume.prs = shown.map((p) => ({ number: p.number, state: p.state, canMerge: canMerge(p) }));
   }
 
+  // マージ確認中に別のボタンを押したら、確認対象を持ち越さない
+  document.addEventListener('click', (e) => {
+    const button = e.target?.closest?.('button');
+    if (!button) return;
+    const mergeButton = button.closest('.pr-merge');
+    const number = Number(button.closest('.pr-chip')?.dataset.number);
+    if (mergeButton && Number.isInteger(number) && armed === number) return;
+    disarm();
+  });
+  // Space などで同じマージボタンを2回目に押す操作は通し、それ以外のキー操作は解く
+  document.addEventListener('keydown', () => {
+    const before = armed;
+    queueMicrotask(() => {
+      if (before !== null && armed === before) disarm();
+    });
+  }, true);
+
   async function onMerge(p) {
     if (busy) return;
     if (armed !== p.number) {
-      armed = p.number;
+      arm(p.number);
       render();
       return;
     }
-    armed = null;
+    disarm(false);
     busy = true;
     render();
     await merge(p.number);
@@ -88,12 +142,14 @@ export function createPrs({ host, load, merge, open, march, every = 20000 }) {
     }
     canOpen = !!j?.canOpen;
     if (!j || !j.available) {
+      disarm(false);
       last = null;
       host.hidden = true;
       return;
     }
     const before = last;
     const same = before && before.length === j.prs.length && before.every((p, i) => key(p) === key(j.prs[i]));
+    if (!same) disarm(false);
     last = j.prs;
     for (const ev of prEvents(before, last)) show(ev);
     if (!same || !host.children.length) render();

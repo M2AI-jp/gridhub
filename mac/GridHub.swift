@@ -143,7 +143,7 @@ enum Words: String {
     static let key = "GridHubWords"
 
     static func remembered() -> Words {
-        Words(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .game
+        Words(rawValue: UserDefaults.standard.string(forKey: key) ?? "") ?? .dev
     }
 
     func remember() {

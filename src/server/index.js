@@ -52,11 +52,24 @@ export function sendError(response, status, error) {
 /** gh の PR 1件を、盤面で使う形にする（§80.16） */
 export function prOf(p) {
   const runs = Array.isArray(p.statusCheckRollup) ? p.statusCheckRollup : [];
-  const pending = runs.some((r) => ['IN_PROGRESS', 'QUEUED', 'PENDING', 'WAITING'].includes(String(r.status ?? r.state ?? '').toUpperCase()));
+  const passValues = new Set(['SUCCESS', 'NEUTRAL', 'SKIPPED']);
+  const runningValues = new Set(['IN_PROGRESS', 'QUEUED', 'PENDING', 'WAITING', 'EXPECTED', 'REQUESTED']);
+  const failValues = new Set(['FAILURE', 'ERROR', 'TIMED_OUT', 'CANCELLED', 'STARTUP_FAILURE', 'ACTION_REQUIRED']);
+  const outcomeOf = (run) => {
+    if (run === null || typeof run !== 'object') return '';
+    const conclusion = String(run.conclusion ?? '').toUpperCase();
+    if (conclusion) return conclusion;
+    return String(run.status ?? run.state ?? '').toUpperCase();
+  };
+  const pending = runs.some((r) => runningValues.has(outcomeOf(r)));
   let checks = null;
-  const broke = runs.find((r) => ['FAILURE', 'ERROR', 'TIMED_OUT', 'CANCELLED'].includes(String(r.conclusion ?? r.state ?? '').toUpperCase()));
+  const broke = runs.find((r) => failValues.has(outcomeOf(r)));
+  const unknown = runs.some((r) => {
+    const outcome = outcomeOf(r);
+    return !passValues.has(outcome) && !runningValues.has(outcome) && !failValues.has(outcome);
+  });
   if (broke) checks = 'fail';
-  else if (pending) checks = 'running';
+  else if (pending || unknown) checks = 'running';
   else if (runs.length) checks = 'pass';
   // いちばん新しいレビュー・コメント（本文のあるもの）
   const said = [
@@ -65,7 +78,21 @@ export function prOf(p) {
   ].filter((x) => typeof x.text === 'string' && x.text.trim() && x.at).sort((a, b) => String(a.at).localeCompare(String(b.at)));
   const last = said[said.length - 1];
   const note = last ? { who: String(last.who ?? ''), text: last.text.trim().split('\n')[0].slice(0, 120), at: String(last.at) } : null;
-  return { note, number: p.number, title: String(p.title ?? ''), state: p.state, draft: p.isDraft === true, review: p.reviewDecision || null, checks, job: broke ? String(broke.name ?? broke.context ?? '') || null : null, branch: p.headRefName ?? null, author: p.author?.login ?? null };
+  return {
+    note,
+    number: p.number,
+    title: String(p.title ?? ''),
+    state: p.state,
+    draft: p.isDraft === true,
+    review: p.reviewDecision || null,
+    checks,
+    job: broke ? String(broke.name ?? broke.context ?? '') || null : null,
+    branch: p.headRefName ?? null,
+    author: p.author?.login ?? null,
+    headRefOid: typeof p.headRefOid === 'string' ? p.headRefOid : null,
+    baseRefName: typeof p.baseRefName === 'string' ? p.baseRefName : null,
+    url: typeof p.url === 'string' ? p.url : null,
+  };
 }
 
 export function apiError(code, message, status) {
@@ -703,10 +730,52 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const battles = new Map();
   let shuttingDown = false;
   let pushing = false;
+  let openingPr = false;
+  let mergingPr = false;
   let prCache = null;
   const runGh = (args) => new Promise((done) => {
-    execFile(process.env.MASUME_GH || 'gh', args, { cwd: gameRoot, encoding: 'utf8', timeout: 30_000, maxBuffer: 8 * 1024 * 1024 }, (error, stdout, stderr) => done({ code: error ? (typeof error.code === 'number' ? error.code : -1) : 0, stdout, stderr }));
+    execFile(process.env.MASUME_GH || 'gh', args, { cwd: gameRoot, encoding: 'utf8', timeout: 30_000, maxBuffer: 8 * 1024 * 1024 }, (error, stdout, stderr) => done({
+      code: error ? (typeof error.code === 'number' ? error.code : -1) : 0,
+      stdout,
+      stderr,
+      timedOut: error?.code === 'ETIMEDOUT' || error?.killed === true,
+    }));
   });
+  const runGit = (args) => new Promise((done) => {
+    execFile('git', args, { cwd: gameRoot, encoding: 'utf8', timeout: 10_000, maxBuffer: 1024 * 1024 }, (error, stdout, stderr) => done({
+      code: error ? (typeof error.code === 'number' ? error.code : -1) : 0,
+      stdout: String(stdout ?? ''),
+      stderr: String(stderr ?? ''),
+    }));
+  });
+  const gitOutput = async (args) => {
+    const result = await runGit(args);
+    return result.code === 0 ? result.stdout.trim() : null;
+  };
+  const existingGitRef = async (branch) => {
+    for (const ref of [`refs/remotes/origin/${branch}`, `refs/heads/${branch}`]) {
+      const oid = await gitOutput(['rev-parse', '--verify', '-q', ref]);
+      if (oid) return ref;
+    }
+    return null;
+  };
+  const defaultBranchRef = async (prs) => {
+    const bases = [...new Set(prs.map((pr) => pr.baseRefName).filter((name) => typeof name === 'string' && name))];
+    if (bases.length === 1) {
+      const ref = await existingGitRef(bases[0]);
+      if (ref) return ref;
+    }
+    const remoteHead = await gitOutput(['symbolic-ref', '--quiet', '--short', 'refs/remotes/origin/HEAD']);
+    if (remoteHead) {
+      const oid = await gitOutput(['rev-parse', '--verify', '-q', remoteHead]);
+      if (oid) return remoteHead;
+    }
+    for (const branch of ['main', 'master']) {
+      const ref = await existingGitRef(branch);
+      if (ref) return ref;
+    }
+    return null;
+  };
 
   const requireOpen = () => {
     if (shuttingDown) throw apiError('E_BUSY', '窓口を閉じています');
@@ -824,6 +893,48 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     log: await tailLines(file),
   });
   const partyStatus = job(() => party.running, () => party.code, partyLog);
+  const loadPrs = async ({ fresh = false } = {}) => {
+    if (!fresh && prCache && Date.now() - prCache.at < 15_000) return prCache.value;
+    const { code, stdout } = await runGh([
+      'pr', 'list', '--state', 'all', '--limit', '12', '--json',
+      'number,title,state,isDraft,reviewDecision,statusCheckRollup,headRefName,headRefOid,baseRefName,url,author,comments,latestReviews',
+    ]);
+    let list = null;
+    try {
+      list = code === 0 ? JSON.parse(stdout) : null;
+    } catch {
+      list = null;
+    }
+    let value = { ok: true, available: false, prs: [], canOpen: false };
+    if (Array.isArray(list)) {
+      const prs = list.map(prOf);
+      // いまのブランチに、既定ブランチより先のコミットがあるときだけ PR を作れる。
+      // Git のどれか1つでも答えられないときは、誤って「PR を作れる」と見せない。
+      const current = await gitOutput(['rev-parse', '--abbrev-ref', 'HEAD']);
+      const head = await gitOutput(['rev-parse', '--verify', '-q', 'HEAD']);
+      const base = await defaultBranchRef(prs);
+      let ahead = null;
+      if (base && head && current && !['main', 'master', 'HEAD'].includes(current)) {
+        const count = await gitOutput(['rev-list', '--count', `${base}..HEAD`]);
+        if (/^\d+$/u.test(count ?? '')) ahead = Number(count);
+      }
+      const hasOpenForCurrent = prs.some((p) => String(p.state ?? '').toUpperCase() === 'OPEN' && p.branch === current);
+      const merged = prs.filter((p) => String(p.state ?? '').toUpperCase() === 'MERGED');
+      const mergedHeadMissing = merged.some((p) => !p.headRefOid);
+      const sameAsMerged = merged.some((p) => p.headRefOid?.toLowerCase() === head?.toLowerCase());
+      const canOpen = !!current
+        && !!head
+        && !['main', 'master', 'HEAD'].includes(current)
+        && ahead !== null
+        && ahead > 0
+        && !hasOpenForCurrent
+        && !mergedHeadMissing
+        && !sameAsMerged;
+      value = { ok: true, available: true, prs, current, canOpen };
+    }
+    prCache = { at: Date.now(), value };
+    return value;
+  };
 
   const server = createServer({
     webRoot: webRoot ?? fileURLToPath(new URL('../../web/', import.meta.url)),
@@ -1012,39 +1123,45 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     // Git の様子と手引き（gridhub remote --json と同じ）。ビュー（冒険の書）には入れない
     getGit: () => engine.remoteInfoAsync(gameRoot),
     // 本物の PR（§80.16）。gh が無い・リポジトリにつながっていなければ available: false。少しのあいだ覚えておく
-    getPrs: async () => {
-      if (prCache && Date.now() - prCache.at < 15000) return prCache.value;
-      const { code, stdout } = await runGh(['pr', 'list', '--state', 'all', '--limit', '12', '--json', 'number,title,state,isDraft,reviewDecision,statusCheckRollup,headRefName,author,comments,latestReviews']);
-      let list = null;
-      try {
-        list = code === 0 ? JSON.parse(stdout) : null;
-      } catch {
-        list = null;
-      }
-      let value = { ok: true, available: false, prs: [], canOpen: false };
-      if (Array.isArray(list)) {
-        const prs = list.map(prOf);
-        // いまのブランチにまだ開いた PR が無ければ、盤面から作れる
-        const current = await new Promise((done) => execFile('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: gameRoot, encoding: 'utf8' }, (error, out) => done(error ? null : out.trim())));
-        const canOpen = !!current && !['main', 'master', 'HEAD'].includes(current) && !prs.some((p) => p.state === 'OPEN' && p.branch === current);
-        value = { ok: true, available: true, prs, current, canOpen };
-      }
-      prCache = { at: Date.now(), value };
-      return value;
-    },
+    getPrs: loadPrs,
     onOpenPr: async () => {
       requireOpen();
-      const { code, stdout, stderr } = await runGh(['pr', 'create', '--fill']);
-      prCache = null;
-      if (code !== 0) throw apiError('E_PR', String(stderr ?? '').trim().slice(0, 300) || t('err.server.pr'), 409);
-      return { ok: true, url: String(stdout ?? '').trim() };
+      if (openingPr) throw apiError('E_BUSY', t('err.server.pr.busy'));
+      openingPr = true;
+      try {
+        const { code, stdout, stderr, timedOut } = await runGh(['pr', 'create', '--fill']);
+        prCache = null;
+        if (code === 0) return { ok: true, url: String(stdout ?? '').trim() };
+        if (timedOut) {
+          const latest = await loadPrs({ fresh: true });
+          const created = latest?.available && latest.current
+            ? latest.prs.find((p) => String(p.state ?? '').toUpperCase() === 'OPEN' && p.branch === latest.current)
+            : null;
+          if (created) return { ok: true, url: created.url ?? '' };
+        }
+        throw apiError('E_PR', String(stderr ?? '').trim().slice(0, 300) || t('err.server.pr'), 409);
+      } finally {
+        openingPr = false;
+      }
     },
     onMerge: async ({ number }) => {
       requireOpen();
-      const { code, stderr } = await runGh(['pr', 'merge', String(number), '--merge']);
-      prCache = null;
-      if (code !== 0) throw apiError('E_MERGE', String(stderr ?? '').trim().slice(0, 300) || t('err.server.merge'), 409);
-      return { ok: true, number };
+      if (mergingPr) throw apiError('E_BUSY', t('err.server.merge.busy'));
+      mergingPr = true;
+      try {
+        const { code, stderr, timedOut } = await runGh(['pr', 'merge', String(number), '--merge']);
+        prCache = null;
+        if (code === 0) return { ok: true, number };
+        if (timedOut) {
+          const latest = await loadPrs({ fresh: true });
+          const merged = latest?.available
+            && latest.prs.some((p) => Number(p.number) === number && String(p.state ?? '').toUpperCase() === 'MERGED');
+          if (merged) return { ok: true, number };
+        }
+        throw apiError('E_MERGE', String(stderr ?? '').trim().slice(0, 300) || t('err.server.merge'), 409);
+      } finally {
+        mergingPr = false;
+      }
     },
     getWords: () => {
       const set = engine.wordsSetting(gameRoot);

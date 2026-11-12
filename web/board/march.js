@@ -632,6 +632,8 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
   function makeLanes(chars) {
     const ids = chars.map((c) => c.id).join('\n');
     if (lanes.ids === ids) return;
+    // キャラクターの増減や冒険の切り替えでレーンを作り直すときは、前のレーンの手を先に捨てる
+    cmdLayer.replaceChildren();
     lanes = chars.map((c, i) => {
       const set = {};
       for (const p of Object.keys(POSES)) set[p] = toCanvas(compose(c.job, POSES[p], c.color));
