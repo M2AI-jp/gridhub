@@ -114,3 +114,23 @@ test('cases の名前は、判定の出力のテストの名前と同じ（テ�
     }
   }
 });
+
+test('§40 テスト名の中の # は名前のまま（spec の #start・tap の \\#）。指令は行末の # SKIP / # TODO だけ', async () => {
+  const { readResults } = await import(pathToFileURL(join(ROOT, 'src', 'engine', 'cases.js')).href);
+  const output = [
+    '✔ spec #start b (0.39ms)',
+    '﹣ spec # SKIP x (0.05ms) # SKIP',
+    'ok 1 - tap \\#start b',
+    'ok 2 - tap \\# SKIP x # SKIP',
+    'not ok 3 - tap \\# TODO x # TODO',
+    '✖ 普通の失敗 (0.4ms)',
+  ].join('\n');
+  assert.deepEqual(readResults(output).map(({ name, ok }) => ({ name, ok })), [
+    { name: 'spec #start b', ok: true },
+    { name: 'spec # SKIP x', ok: null },
+    { name: 'tap #start b', ok: true },
+    { name: 'tap # SKIP x', ok: null },
+    { name: 'tap # TODO x', ok: null },
+    { name: '普通の失敗', ok: false },
+  ]);
+});
