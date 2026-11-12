@@ -19,6 +19,22 @@ const OUT = join(ROOT, 'site', 'img');
 const SIZE = { width: 1440, height: 900 };
 const SOLUTIONS = JSON.parse(readFileSync(join(ROOT, 'quests', 'tutorial', 'SOLUTIONS.json'), 'utf8'));
 const LOADED = `document.querySelector('#hand')?.dataset.loaded === 'true' && document.querySelector('#hand').dataset.busy !== 'true'`;
+const TRANSIENT_UI_CLEAR = `(() => {
+  const hidden = (selector) => {
+    const node = document.querySelector(selector);
+    return !node || !node.isConnected || node.hidden;
+  };
+  const empty = (selector) => {
+    const node = document.querySelector(selector);
+    return !node || !node.isConnected || node.children.length === 0;
+  };
+  return hidden('#welcome') &&
+    empty('#fanfare') &&
+    empty('#toast') &&
+    hidden('#rank-up') &&
+    hidden('#boss-cut') &&
+    !document.body.classList.contains('march-battle');
+})()`;
 const settle = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /** 画面の大きさをきっちり 1440×900 にした Chrome（窓の枠のぶん小さくならないように） */
@@ -30,6 +46,8 @@ async function browser() {
 
 async function shoot(page, name) {
   await settle(1500); // ペンで描かれていく線と駒の動きが落ち着くまで
+  await page.eval(`document.querySelector('[data-hero="welcome-close"]')?.click()`);
+  await page.waitFor(TRANSIENT_UI_CLEAR, { timeout: 20000, message: '撮影前の演出' });
   await page.screenshot(join(OUT, `${name}.png`));
   console.log(`撮りました: site/img/${name}.png`);
 }
@@ -37,12 +55,13 @@ async function shoot(page, name) {
 /** はじめの画面と、チュートリアルの「手で進める」・あがり */
 async function launcher(root) {
   const play = join(root, 'GridHub');
+  const home = join(root, 'home');
   mkdirSync(play, { recursive: true });
   const memo = join(play, 'メモのアプリ');
   cpSync(join(ROOT, 'examples', 'memo'), memo, { recursive: true });
   const idea = join(play, '新しいアイデア');
   mkdirSync(idea, { recursive: true });
-  const app = await startApp({ claude: true, home: join(root, 'home'), play });
+  const app = await startApp({ claude: true, home, play });
   const page = await browser();
   try {
     // 最近のフォルダを3つにする（開くと最近のフォルダに入る）
@@ -60,6 +79,9 @@ async function launcher(root) {
     // チュートリアルの盤面: 見習いAI の「手で進める」で、見本を写して歩く
     await page.eval(`document.querySelector('#tutorial').click()`);
     await page.waitFor(`new URLSearchParams(location.search).has('home') && window.__masume && window.__masume.ready && !!window.__masume.view`, { timeout: 30000, message: 'チュートリアルの盤面' });
+    const noteUrl = await page.eval(`(() => { const u = new URL(location.href); u.searchParams.set('mode', 'note'); u.searchParams.set('words', 'game'); return u.href; })()`);
+    await page.goto(noteUrl);
+    await page.waitFor(`window.__masume && window.__masume.ready && !!window.__masume.view`, { timeout: 30000, message: 'チュートリアルのノート' });
     const board = await page.eval('location.origin');
     await page.eval(`window.__masume.select('char', 'apprentice')`);
     await page.waitFor(`!!document.querySelector('#drawer button[data-hand="apprentice"]')`);
@@ -96,7 +118,11 @@ async function launcher(root) {
     await waitUntil(async () => (await state()).finished === true, { timeout: 90000, message: 'あがり' });
     await page.eval(`document.querySelector('#hand-close').click()`);
     await page.eval(`window.__masume.select(null)`).catch(() => {});
+    const marchUrl = await page.eval(`(() => { const u = new URL(location.href); u.searchParams.set('mode', 'march'); u.searchParams.set('words', 'game'); return u.href; })()`);
+    await page.goto(marchUrl);
+    await page.waitFor(`window.__masume && window.__masume.ready && !!window.__masume.view`, { timeout: 30000, message: 'チュートリアルの進軍画面' });
     await page.waitFor(`!document.querySelector('#ending').hidden`, { timeout: 20000, message: 'エンディング' });
+    await page.waitFor(`!document.querySelector('#ending').hidden && document.querySelector('#boss-cut')?.hidden !== false && !document.body.classList.contains('march-battle')`, { timeout: 20000, message: 'ボス演出の終了' });
     await shoot(page, 'ending');
   } finally {
     await page.close();
@@ -107,6 +133,7 @@ async function launcher(root) {
 /** サンプルの冒険の盤面: examples/memo を作り直し、倉庫番は砦（G1）で待ち、伝令と絵師は道の途中、勇者はハンコのマス（H1） */
 async function sample(root) {
   const dir = join(root, 'memo');
+  const home = join(root, 'home');
   cpSync(join(ROOT, 'examples', 'memo'), dir, { recursive: true, filter: (src) => !src.split(/[\\/]/).includes('.masume') });
   const run = (...args) => {
     const r = spawnSync(process.execPath, [join(ROOT, 'bin', 'gridhub.js'), ...args], { cwd: dir, encoding: 'utf8', env: { ...process.env, NO_COLOR: '1' } });
@@ -114,10 +141,14 @@ async function sample(root) {
   };
   run('new', 'quest.map.json');
   for (const c of ['store', 'store', 'store', 'api', 'api', 'ui']) run('check', c, '--as', c, '--no-boss');
-  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH }, cwd: dir });
+  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir], {
+    pattern: /盤面: (http:\/\/\S+)/,
+    env: { PATH: pathWith().PATH, GRIDHUB_APP_HOME: home },
+    cwd: dir,
+  });
   const page = await browser();
   try {
-    await page.goto(`${srv.url}/`);
+    await page.goto(`${srv.url}/?mode=note&words=game`);
     await page.waitFor('window.__masume && window.__masume.ready && !!window.__masume.view', { timeout: 30000 });
     await shoot(page, 'board');
   } finally {
