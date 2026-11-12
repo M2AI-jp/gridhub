@@ -1278,8 +1278,8 @@ details.cli .hint { margin: 4px 0 0; }
 }
 
 /* ---------- ことばの切り替え（§75）: 冒険のことば / 開発のことば ---------- */
-/* 2つの言い方を HTML に両方書き、<html data-words> に合うほうだけ見せる。属性が無いあいだは冒険のことば */
-html:not([data-words='dev']) [data-say='dev'], html[data-words='dev'] [data-say='game'] { display: none !important; }
+/* 2つの言い方を HTML に両方書き、<html data-words> に合うほうだけ見せる。属性が無いあいだは開発のことば */
+html:not([data-words='game']) [data-say='game'], html[data-words='game'] [data-say='dev'] { display: none !important; }
 .words-toggle { white-space: nowrap; }
 .words-toggle[data-words='dev'] { background: #e3edff; border-color: #3b5fb8; color: #1d3a7a; }
 .words-toggle[data-words='dev']:hover { background: #d3e2ff; }

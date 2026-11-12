@@ -42,7 +42,7 @@ async function go(path, body, label) {
   if (j.ok && typeof j.url === 'string') {
     // はじめの画面と盤面は窓口（origin）が別なので、選んだことばを URL で渡す（§79.33）
     const next = new URL(j.url, location.href);
-    if (isDev()) next.searchParams.set('words', 'dev');
+    next.searchParams.set('words', isDev() ? 'dev' : 'game');
     location.href = next.href;
     return;
   }

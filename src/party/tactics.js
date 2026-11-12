@@ -2,7 +2,7 @@
 import { MasumeError } from '../engine/index.js';
 import { isDev } from '../engine/words.js';
 
-// moves / stops は冒険のことば（既定）。dev は開発のことば。いまのことばで読むなら tacticText()（§76）
+// moves / stops は冒険のことば（game）側。dev が既定で、いまのことばで読むなら tacticText()（§76）
 export const TACTICS = {
   careful: {
     id: 'careful',

@@ -1,10 +1,10 @@
 // ことば（CONTRACTS §75・§76）。CLI・窓口・MCP・盤面の字に、2つの言い方がある。
-//   game … 冒険のことば（モンスター・ダンジョン・町・ハンコ・全滅）。はじめての人向け。既定
-//   dev  … 開発のことば（テスト・タスク・コミット・承認・リグレッション）。エンジニア向け
+//   game … 冒険のことば（モンスター・ダンジョン・町・ハンコ・全滅）。はじめての人向け。切り替えて選べる
+//   dev  … 開発のことば（テスト・タスク・コミット・承認・リグレッション）。エンジニア向け。既定
 // 1つの文の中に2つの言い方を並べない。地図に書かれた字（マスの題・説明・テストの名前・キャラクターの名前）はそのまま。
 //
-// 決め方（上が優先）: --words game|dev > 環境変数 GRIDHUB_WORDS > <root>/.masume/words.json の words > game
-// 盤面（web/board/words.js）は、URL の ?words= > ブラウザに残した選択 > GET /api/words（この設定）> game。
+// 決め方（上が優先）: --words game|dev > 環境変数 GRIDHUB_WORDS > <root>/.masume/words.json の words > dev
+// 盤面（web/board/words.js）は、URL の ?words= > ブラウザに残した選択 > GET /api/words（この設定）> dev。
 // 盤面で切り替えると POST /api/words でこの設定にも書くので、CLI と盤面の言い方がそろう。
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -49,7 +49,7 @@ export function setWordsSetting(root, mode) {
 }
 
 /**
- * 言い方を決めて使う: flag（--words）> env.GRIDHUB_WORDS > 冒険の設定 > game。
+ * 言い方を決めて使う: flag（--words）> env.GRIDHUB_WORDS > 冒険の設定 > dev。
  * 決まった言い方と、何で決まったか（'flag' | 'env' | 'file' | 'default'）を返す
  */
 export function resolveWords({ root = null, env = process.env, flag = null } = {}) {
@@ -65,7 +65,7 @@ export function resolveWords({ root = null, env = process.env, flag = null } = {
 
 // ---- 辞書 ----
 // key ごとに { game, dev }。字か、引数を受ける関数。dev が無ければ game と同じ。
-// 既定（game）の字のうち、判定（tests/e2e）が見ているものは変えない（§76.5）。
+// 判定（tests/e2e）が見ている冒険のことば（game）の字は変えない（§76.5）。
 
 const T = {
   // 役（受付係の --help と、知らせの主語）
@@ -265,8 +265,8 @@ const T = {
       'つかいかた: gridhub words [game|dev]',
       '',
       'ことばを見る・変える。GridHub の字には2つの言い方がある:',
-      '  game  冒険のことば … モンスター・ダンジョン・町・ハンコ・全滅（はじめての人向け。既定）',
-      '  dev   開発のことば … テスト・タスク・コミット・承認・リグレッション（エンジニア向け）',
+      '  game  冒険のことば … モンスター・ダンジョン・町・ハンコ・全滅（はじめての人向け。切り替えて選べます）',
+      '  dev   開発のことば … テスト・タスク・コミット・承認・リグレッション（エンジニア向け。既定）',
       '引数なしで、いまの言い方と、何で決まっているかを出す。',
       '引数をつけると、この冒険の設定（.masume/words.json）に書く。盤面の右上のボタンで切り替えても同じ所に書かれる。',
       '1回だけ変えるなら、どのコマンドにも --words game|dev を足す。環境変数 GRIDHUB_WORDS でも決められる。',
@@ -275,8 +275,8 @@ const T = {
       '使い方: gridhub words [game|dev]',
       '',
       'ことばを見る・変える。GridHub の字には2つの言い方がある:',
-      '  game  冒険のことば … モンスター・ダンジョン・町・ハンコ・全滅（はじめての人向け。既定）',
-      '  dev   開発のことば … テスト・タスク・コミット・承認・リグレッション（エンジニア向け）',
+      '  game  冒険のことば … モンスター・ダンジョン・町・ハンコ・全滅（はじめての人向け。切り替えて選べます）',
+      '  dev   開発のことば … テスト・タスク・コミット・承認・リグレッション（エンジニア向け。既定）',
       '引数なしで、いまの言い方と、何で決まっているかを出す。',
       '引数をつけると、このプロジェクトの設定（.masume/words.json）に書く。盤面の右上のボタンで切り替えても同じ所に書かれる。',
       '1回だけ変えるなら、どのコマンドにも --words game|dev を足す。環境変数 GRIDHUB_WORDS でも決められる。',
