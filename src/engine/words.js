@@ -13,7 +13,7 @@ import { MasumeError } from './errors.js';
 export const WORDS = ['game', 'dev'];
 export const WORDS_JA = { game: '冒険のことば', dev: '開発のことば' };
 
-let current = 'game';
+let current = 'dev';
 
 /** いまの言い方（'game' | 'dev'） */
 export const wordsMode = () => current;
@@ -54,7 +54,7 @@ export function setWordsSetting(root, mode) {
  */
 export function resolveWords({ root = null, env = process.env, flag = null } = {}) {
   let source = 'default';
-  let mode = 'game';
+  let mode = 'dev';
   const file = wordsSetting(root);
   if (file) [mode, source] = [file, 'file'];
   if (WORDS.includes(env?.GRIDHUB_WORDS)) [mode, source] = [env.GRIDHUB_WORDS, 'env'];
@@ -348,6 +348,8 @@ const T = {
   'err.server.party.busy': { game: 'もう出撃しています', dev: 'もう起動しています' },
   'err.server.party.unknown': { game: (names) => `そんなキャラクターはいません: ${names}`, dev: (names) => `その担当はいません: ${names}` },
   'err.server.party.spawn': { game: (why) => `軍師を起こせませんでした: ${why}`, dev: (why) => `gridhub party を起動できませんでした: ${why}` },
+  'err.server.pr': { game: 'PR を作れませんでした', dev: 'PR を作れませんでした' },
+  'err.server.merge': { game: 'マージできませんでした', dev: 'マージできませんでした' },
   'err.server.pushing': { game: 'いま GitHub に送っています', dev: 'いま push しています' },
   'err.server.push': { game: (tail) => `GitHub に送れませんでした: ${tail}`, dev: (tail) => `push できませんでした: ${tail}` },
   'err.server.hand.busy': { game: (id) => `${id} はいま判定を走らせています`, dev: (id) => `${id} はいまテストを走らせています` },

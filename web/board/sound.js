@@ -15,6 +15,20 @@ const TUNES = {
   achieve: [[784, 0.1], [988, 0.1], [1175, 0.1], [1568, 0.3]],
 };
 
+// 進軍の曲（§80.15。このゲームのために作った短いループ）。音の高さは MIDI の番号、0 は休み。1つが8分音符
+const MUSIC = {
+  march: {
+    bpm: 132,
+    lead: [67, 0, 72, 0, 76, 74, 72, 0, 69, 0, 74, 0, 77, 76, 74, 0, 72, 0, 76, 0, 79, 77, 76, 74, 72, 71, 69, 71, 72, 0, 0, 0],
+    bass: [48, 0, 55, 0, 48, 0, 55, 0, 50, 0, 57, 0, 50, 0, 57, 0, 48, 0, 55, 0, 48, 0, 55, 0, 43, 0, 50, 0, 48, 0, 43, 0],
+  },
+  boss: {
+    bpm: 168,
+    lead: [69, 0, 69, 72, 71, 0, 69, 0, 65, 0, 65, 69, 67, 0, 65, 0, 64, 0, 64, 67, 69, 0, 71, 0, 72, 71, 69, 68, 69, 0, 0, 0],
+    bass: [45, 45, 57, 45, 45, 45, 57, 45, 41, 41, 53, 41, 41, 41, 53, 41, 40, 40, 52, 40, 40, 40, 52, 40, 45, 45, 57, 45, 45, 45, 57, 45],
+  },
+};
+
 export class Sound {
   constructor() {
     try {
@@ -30,6 +44,55 @@ export class Sound {
     try {
       localStorage.setItem(KEY, this.on ? '1' : '0');
     } catch {}
+  }
+
+  /** 曲を切り替える。描くたびに呼んでよい。呼ばれなくなる（画面が隠れる）と1秒で止まる。null で止める */
+  music(name) {
+    this.seen = Date.now();
+    const next = this.on ? name : null;
+    if (next === (this.track ?? null)) return;
+    this.track = next;
+    clearInterval(this.timer);
+    if (!next) return;
+    try {
+      this.ctx ||= new AudioContext();
+      this.ctx.resume?.();
+      this.step = 0;
+      this.at = this.ctx.currentTime + 0.05;
+      this.timer = setInterval(() => this.pump(), 100);
+      this.pump();
+    } catch {
+      this.track = null;
+    }
+  }
+
+  pump() {
+    if (Date.now() - this.seen > 1000) return this.music(null);
+    const song = MUSIC[this.track];
+    if (!song) return;
+    const beat = 60 / song.bpm / 2;
+    while (this.at < this.ctx.currentTime + 0.3) {
+      const k = this.step % song.lead.length;
+      this.note(song.lead[k], this.at, beat * 0.9, 'square', 0.022);
+      this.note(song.bass[k], this.at, beat * 0.8, 'triangle', 0.06);
+      this.at += beat;
+      this.step += 1;
+    }
+  }
+
+  note(midi, at, dur, type, vol) {
+    if (!midi) return;
+    const osc = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = type;
+    osc.frequency.value = 440 * 2 ** ((midi - 69) / 12);
+    // 音を保ってから短く消す（すぐ減衰させると小さなスピーカーでは聞こえない）
+    gain.gain.setValueAtTime(vol, at);
+    gain.gain.linearRampToValueAtTime(vol * 0.6, at + dur * 0.8);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + dur);
+    osc.connect(gain).connect(this.ctx.destination);
+    osc.start(at);
+    osc.stop(at + dur + 0.02);
   }
 
   play(name) {

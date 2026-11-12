@@ -4,7 +4,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { ROOT, tmp, openBrowser, fakeGm, GIT_ENV, distPaths, distEnv } from '../helpers7.mjs';
 
@@ -231,7 +231,7 @@ test('アプリの中身の MCP の資料・gridhub init の AGENTS.md・gridhub
   const rulebook = agents.match(/^ルールブック: (.+?)（/m)?.[1];
   assert.ok(rulebook, `AGENTS.md にルールブックの場所\n${agents.slice(0, 600)}`);
   assert.ok(existsSync(rulebook), `ルールブックがある: ${rulebook}`);
-  assert.equal(rulebook, join(pkgDir, 'docs', 'RULEBOOK.md'));
+  assert.equal(realpathSync(rulebook), realpathSync(join(pkgDir, 'docs', 'RULEBOOK.md')));
 
   // quest: GM に渡すプロンプトの付録は、アプリの中身の docs から
   const root = tmp('gridhub-g11-quest-');

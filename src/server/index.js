@@ -49,6 +49,25 @@ export function sendError(response, status, error) {
   });
 }
 
+/** gh の PR 1件を、盤面で使う形にする（§80.16） */
+export function prOf(p) {
+  const runs = Array.isArray(p.statusCheckRollup) ? p.statusCheckRollup : [];
+  const pending = runs.some((r) => ['IN_PROGRESS', 'QUEUED', 'PENDING', 'WAITING'].includes(String(r.status ?? r.state ?? '').toUpperCase()));
+  let checks = null;
+  const broke = runs.find((r) => ['FAILURE', 'ERROR', 'TIMED_OUT', 'CANCELLED'].includes(String(r.conclusion ?? r.state ?? '').toUpperCase()));
+  if (broke) checks = 'fail';
+  else if (pending) checks = 'running';
+  else if (runs.length) checks = 'pass';
+  // いちばん新しいレビュー・コメント（本文のあるもの）
+  const said = [
+    ...(Array.isArray(p.comments) ? p.comments.map((c) => ({ who: c.author?.login, text: c.body, at: c.createdAt })) : []),
+    ...(Array.isArray(p.latestReviews) ? p.latestReviews.map((r) => ({ who: r.author?.login, text: r.body, at: r.submittedAt })) : []),
+  ].filter((x) => typeof x.text === 'string' && x.text.trim() && x.at).sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  const last = said[said.length - 1];
+  const note = last ? { who: String(last.who ?? ''), text: last.text.trim().split('\n')[0].slice(0, 120), at: String(last.at) } : null;
+  return { note, number: p.number, title: String(p.title ?? ''), state: p.state, draft: p.isDraft === true, review: p.reviewDecision || null, checks, job: broke ? String(broke.name ?? broke.context ?? '') || null : null, branch: p.headRefName ?? null, author: p.author?.login ?? null };
+}
+
 export function apiError(code, message, status) {
   return Object.assign(new Error(message), status === undefined ? { code } : { code, status });
 }
@@ -215,7 +234,7 @@ export async function serveStatic(response, root, pathname) {
 export function createServer({
   webRoot, getView, watchFile, onStamp, onBattle, outputFor,
   onQuest, getQuest, onSortie, getParty, onPartyStop,
-  getGit, onPush, onAutoPush,
+  getGit, onPush, onAutoPush, getPrs, onMerge, onOpenPr,
   getHand, getFile, onFile, onStep, onCheck, onNote,
   getWords, onWords,
   getHero, onHeroOpen, onHeroSeen, onHeroPaste, onHeroPeel, onHeroTrade, onHeroTitle, onHeroTheme,
@@ -303,6 +322,21 @@ export function createServer({
   // GitHub につなぐ導線（§56.3）: 送る
   if (typeof onPush === 'function') {
     postRoutes['/api/git/push'] = { parse: () => ({}), call: () => onPush(), status: 200, optionalBody: true };
+  }
+  // PR を作る（§80.16）
+  if (typeof onOpenPr === 'function') {
+    postRoutes['/api/prs/create'] = { parse: () => ({}), call: () => onOpenPr(), status: 200, optionalBody: true };
+  }
+  // PR をマージする（§80.16）
+  if (typeof onMerge === 'function') {
+    postRoutes['/api/prs/merge'] = {
+      parse(body) {
+        if (!Number.isInteger(body.number) || body.number <= 0) throw badRequest('number を正の整数で指定してください');
+        return { number: body.number };
+      },
+      call: (value) => onMerge(value),
+      status: 200,
+    };
   }
   // 町でセーブしたら GitHub に送る設定（§59.5）
   if (typeof onAutoPush === 'function') {
@@ -452,6 +486,7 @@ export function createServer({
   if (typeof getQuest === 'function') getRoutes['/api/quest'] = getQuest;
   if (typeof getParty === 'function') getRoutes['/api/party'] = getParty;
   if (typeof getGit === 'function') getRoutes['/api/git'] = getGit;
+  if (typeof getPrs === 'function') getRoutes['/api/prs'] = getPrs;
   if (typeof getHero === 'function') getRoutes['/api/hero'] = getHero;
   if (typeof getWords === 'function') getRoutes['/api/words'] = getWords;
 
@@ -668,6 +703,10 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const battles = new Map();
   let shuttingDown = false;
   let pushing = false;
+  let prCache = null;
+  const runGh = (args) => new Promise((done) => {
+    execFile(process.env.MASUME_GH || 'gh', args, { cwd: gameRoot, encoding: 'utf8', timeout: 30_000, maxBuffer: 8 * 1024 * 1024 }, (error, stdout, stderr) => done({ code: error ? (typeof error.code === 'number' ? error.code : -1) : 0, stdout, stderr }));
+  });
 
   const requireOpen = () => {
     if (shuttingDown) throw apiError('E_BUSY', '窓口を閉じています');
@@ -972,6 +1011,41 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
     // ---- GitHub につなぐ導線（§56.3）----
     // Git の様子と手引き（gridhub remote --json と同じ）。ビュー（冒険の書）には入れない
     getGit: () => engine.remoteInfoAsync(gameRoot),
+    // 本物の PR（§80.16）。gh が無い・リポジトリにつながっていなければ available: false。少しのあいだ覚えておく
+    getPrs: async () => {
+      if (prCache && Date.now() - prCache.at < 15000) return prCache.value;
+      const { code, stdout } = await runGh(['pr', 'list', '--state', 'all', '--limit', '12', '--json', 'number,title,state,isDraft,reviewDecision,statusCheckRollup,headRefName,author,comments,latestReviews']);
+      let list = null;
+      try {
+        list = code === 0 ? JSON.parse(stdout) : null;
+      } catch {
+        list = null;
+      }
+      let value = { ok: true, available: false, prs: [], canOpen: false };
+      if (Array.isArray(list)) {
+        const prs = list.map(prOf);
+        // いまのブランチにまだ開いた PR が無ければ、盤面から作れる
+        const current = await new Promise((done) => execFile('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: gameRoot, encoding: 'utf8' }, (error, out) => done(error ? null : out.trim())));
+        const canOpen = !!current && !['main', 'master', 'HEAD'].includes(current) && !prs.some((p) => p.state === 'OPEN' && p.branch === current);
+        value = { ok: true, available: true, prs, current, canOpen };
+      }
+      prCache = { at: Date.now(), value };
+      return value;
+    },
+    onOpenPr: async () => {
+      requireOpen();
+      const { code, stdout, stderr } = await runGh(['pr', 'create', '--fill']);
+      prCache = null;
+      if (code !== 0) throw apiError('E_PR', String(stderr ?? '').trim().slice(0, 300) || t('err.server.pr'), 409);
+      return { ok: true, url: String(stdout ?? '').trim() };
+    },
+    onMerge: async ({ number }) => {
+      requireOpen();
+      const { code, stderr } = await runGh(['pr', 'merge', String(number), '--merge']);
+      prCache = null;
+      if (code !== 0) throw apiError('E_MERGE', String(stderr ?? '').trim().slice(0, 300) || t('err.server.merge'), 409);
+      return { ok: true, number };
+    },
     getWords: () => {
       const set = engine.wordsSetting(gameRoot);
       return { ok: true, words: engine.wordsMode(), set: set !== null, source: engine.WORDS.includes(process.env.GRIDHUB_WORDS) ? 'env' : set ? 'file' : 'default' };

@@ -1,0 +1,42 @@
+// 丸い石の井戸 26×26。石の段は下へ弓なり、口は暗い楕円で縁に光、木の屋根と枠と釣瓶。光は左上。
+// 屋根と木は人物の服の鮮やかさの 6〜7 割に抑えた古い板葺き。人物の頭の高さに来るので、石は大きく（5〜7 ドット）、目地は細い明暗の線にせず石の下の陰で見せる。
+export default {
+  id: 'well', w: 26, h: 26, ax: 13, ay: 25,
+  pal: {
+    6: '#1b120e', 7: '#33221b', 8: '#4a3428', 9: '#5e4434', '!': '#72543f', '^': '#866650',
+    H: '#322e28', I: '#48433a', J: '#615a4a', K: '#7a725e', L: '#948b73', P: '#aca389',
+    Z: '#0d0f17',
+    w: '#1e160e', x: '#3a2e1f', y: '#56462f', z: '#6e5c42', o: '#86745a',
+    '#': '#1f1d0e', '%': '#2b2817',
+  },
+  frames: {
+    base: [
+      '........7^^^!!!998........',
+      '......7^^^^!!!!99987......',
+      '.....7!!!8!!989988887.....',
+      '....7^^^!!!!!!99999887....',
+      '...7!!!8!!!98!999899887...',
+      '..6999999999888888888886..',
+      '...zyx66666666666666yxw...',
+      '...zyxzzzzzoyoyzzzzzyxw...',
+      '...zyxxxxxxyxyxxxxxxyxw...',
+      '...zyx.......o......yxw...',
+      '...zyx.......o......yxw...',
+      '...zyx.PPPPoozyxLLL.yxw...',
+      '...PPPPPPPPzyyxwLLLKKKK...',
+      '.PLPPPPHHHHKJIHHIIIKKKKKK.',
+      '.PPPPZZZZZZzyyxwZZZZZKKKK.',
+      '.PPPZZZZZZZZyxxZZZZZZZKKK.',
+      '.JJPPPZZZZZZZZZZZZZZKKKHH.',
+      '.PPJJJJPPPLPPLLLLKLHHHHJJ.',
+      '.LLPPJPIIIIIIHHHHHHJJJJII.',
+      '.JJLLJLLLLLLLHKKKKHIIIIHH.',
+      '.PPJJJJKKKKKKHJJJJHHHHHJJ.',
+      '.LLJPPPIIIIIIHHHHHHJJHJII.',
+      '.JJJLLLLLLILLKKHKKKIIHIHH.',
+      '.%%JJJJKKKIKKJJHJJJHHHH##%',
+      '..%%%%%IIIIIIHHHHHH######%',
+      '....%%%%################%%',
+    ],
+  },
+};

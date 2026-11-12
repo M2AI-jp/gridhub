@@ -1,6 +1,7 @@
 // はじめの画面（CONTRACTS §70）。盤面の担当。フォルダを選ぶ・最近のフォルダ・チュートリアルで遊ぶ。
 // アプリ（GridHub.app）の中では、フォルダのダイアログを Mac の標準のものにまかせる（window.webkit.messageHandlers.gridhub）。
-import { t, initWords, onWords } from './words.js';
+import { t, initWords, isDev, onWords, pair, said } from './words.js';
+import { startMarch } from './start-march.js';
 
 const $ = (sel) => document.querySelector(sel);
 const bridge = window.webkit?.messageHandlers?.gridhub ?? null;
@@ -39,7 +40,10 @@ async function go(path, body, label) {
   setBusy(true, label);
   const j = await post(path, body);
   if (j.ok && typeof j.url === 'string') {
-    location.href = j.url;
+    // はじめの画面と盤面は窓口（origin）が別なので、選んだことばを URL で渡す（§79.33）
+    const next = new URL(j.url, location.href);
+    if (isDev()) next.searchParams.set('words', 'dev');
+    location.href = next.href;
     return;
   }
   setBusy(false, label);
@@ -144,10 +148,33 @@ $('#recent').addEventListener('click', async (e) => {
   if (e.target.closest('button.open-recent')) openFolder(li.dataset.dir);
 });
 
-/** 勇者の手帳（§79.7）: ランク・続いた日数・今日のお題・未開封のシール袋。冒険をまたいだまとめ（読むだけ） */
+/**
+ * 次に押すボタン（§79.35）: はじめの画面でいちばん先に押すものを1つ。
+ * つづきのフォルダがあれば開く。ぜんぶ終えていれば新しいフォルダ、何もなければチュートリアル。
+ */
+function nextAction(j) {
+  const resume = recentList.find((item) => item.missing !== true && item.has_game === true);
+  const quest = resume ? (j.quests ?? []).find((q) => q.dir === resume.dir) : null;
+  if (!resume) {
+    return { label: pair('チュートリアルで遊ぶ', 'チュートリアルを試す'), sub: pair('まずは5分。ボタンだけで、ひととおり遊べます', 'まずは5分。ボタンだけで、ひととおり試せます'), go: () => $('#tutorial').click() };
+  }
+  if (quest?.finished && !quest.bags) {
+    return { label: pair('次の冒険をはじめる', '次のプロジェクトをはじめる'), sub: pair('フォルダを選んで、作りたいものを書く', 'フォルダを選んで、作りたいものを書く'), go: () => $('#choose-folder').click() };
+  }
+  const name = resume.title || resume.name;
+  const { streak } = j;
+  const why = quest?.bags ? `開くとシール袋 ${quest.bags} 個が待っています`
+    : !streak.today && streak.current > 0 ? pair(`今日テストを1件倒せば、${streak.current + 1}日連続`, `今日テストを1件通せば、${streak.current + 1}日連続`)
+      : pair('テストを倒すほど、駒が進みます', 'テストが通るほど、進みます');
+  return { label: pair('つづきから', '続きを開く'), name, sub: why, go: () => openFolder(resume.dir) };
+}
+
+/** 勇者の手帳（§79.7）: 次に押すボタン・ランク・続いた日数・今日のお題。冒険をまたいだまとめ */
+let heroJournal = null;
 function renderHero(j) {
   const box = $('#start-hero');
   if (!j || j.ok !== true || j.hero !== 1) return;
+  heroJournal = j;
   const el = (tag, cls, text) => {
     const node = document.createElement(tag);
     if (cls) node.className = cls;
@@ -155,6 +182,14 @@ function renderHero(j) {
     return node;
   };
   const { rank, streak, daily, bags, album, achievements } = j;
+  const action = nextAction(j);
+  const cta = el('button', 'start-btn primary sh-cta');
+  cta.type = 'button';
+  cta.id = 'start-next';
+  cta.append(el('b', '', action.label));
+  if (action.name) cta.append(el('span', 'sh-cta-name', action.name));
+  cta.append(el('small', '', action.sub));
+  cta.addEventListener('click', action.go);
   const badge = el('div', 'sh-rank');
   badge.append(el('small', '', 'ランク'), el('b', '', rank.level));
   const who = el('div', 'sh-who');
@@ -162,7 +197,7 @@ function renderHero(j) {
   const fill = el('i');
   fill.style.width = `${Math.round((rank.into / rank.need) * 100)}%`;
   bar.append(fill);
-  who.append(el('b', '', rank.title), el('small', '', `経験値 ${rank.xp}・次のランクまで ${rank.next - rank.xp}`), bar);
+  who.append(el('b', '', said(rank, 'title')), el('small', '', `${pair('経験値', 'XP')} ${rank.xp}・次のランクまで ${rank.next - rank.xp}`), bar);
   const fire = el('div', `sh-streak${streak.today ? ' lit' : ''}`);
   fire.append(el('b', '', streak.current), el('small', '', '日連続'));
   const top = el('div', 'sh-top');
@@ -171,20 +206,15 @@ function renderHero(j) {
   const missions = el('ul', 'sh-missions');
   for (const m of daily.missions) {
     const li = el('li', m.done ? 'done' : '');
-    li.append(el('span', 'sh-check', m.done ? '✔' : ''), el('span', '', m.text), el('em', '', `${m.now}/${m.goal}`));
+    li.append(el('span', 'sh-check', m.done ? '✔' : ''), el('span', '', said(m, 'text')), el('em', '', `${m.now}/${m.goal}`));
     missions.append(li);
   }
-  // いちばん効く次の一歩を1行で
-  const nudge = !streak.today && streak.current > 0 ? `今日テストを1件倒せば、${streak.current + 1}日連続！`
-    : bags.count > 0 ? `未開封のシール袋が ${bags.count} 個。冒険を開いて「手帳」で開けよう`
-      : (j.quests ?? []).length > 0 && j.quests.every((q) => q.finished) ? 'あがり！ 次は本当の冒険を。「フォルダを選ぶ」で、作りたいものの願いを書こう'
-      : !daily.done ? `今日のお題 ${daily.missions.filter((m) => m.done).length}/3。3つで「${daily.reward}」`
-        : '今日のお題はぜんぶこなした。また明日！';
   const foot = el('p', 'sh-foot');
-  foot.append(el('span', 'sh-nudge', nudge), el('small', '', `シール帳 ${album.owned}/${album.total}・称号 ${achievements.filter((a) => a.done).length}/${achievements.length}`));
-  const head = el('h2', 'sh-h', '勇者の手帳');
-  head.append(el('small', '', `今日のお題（${daily.date}）`));
-  box.replaceChildren(top, head, missions, foot);
+  foot.append(el('small', '', `シール帳 ${album.owned}/${album.total}・${pair('称号', '実績')} ${achievements.filter((a) => a.done).length}/${achievements.length}${bags.count ? `・未開封のシール袋 ${bags.count}` : ''}`));
+  const head = el('h2', 'sh-h', pair('今日のお題', '今日の目標'));
+  head.append(el('small', '', daily.date));
+  box.setAttribute('aria-label', pair('勇者の手帳', '手帳'));
+  box.replaceChildren(cta, top, head, missions, foot);
   box.hidden = false;
   document.documentElement.dataset.notebook = j.theme ?? 'note';
   // 最近のフォルダに、その冒険の未開封のシール袋の数
@@ -217,6 +247,7 @@ initWords();
 onWords(() => {
   renderRecent(recentList);
   if (envInfo) renderEnv(envInfo);
+  if (heroJournal) renderHero(heroJournal);
 });
 
 (async () => {
@@ -233,3 +264,5 @@ onWords(() => {
   window.__gridhubStart = { ready: true };
   askHandFonts();
 })();
+
+startMarch(document.querySelector('#start-march'));
