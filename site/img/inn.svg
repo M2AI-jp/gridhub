@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>宿屋</title>
+  <desc>黄色い三角屋根の小さな宿屋。煙突と四角い窓、丸い取っ手のある扉がついている。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M42 20L42 9L49 9L49 26" fill="#ffffff"/>
+    <path d="M13 29L14 54Q32 56 51 54L51 29L32 15Z" fill="#ffffff"/>
+    <path d="M6 30L31 8Q33 7 35 10L58 30L53 34L32 16L11 34Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M29 54L29 36Q35 34 41 36L41 54Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M18 35L24 35L24 43L18 43Z" fill="#ffffff" stroke-width="2"/>
+    <path d="M36 45L37 45" stroke-width="3"/>
+    <path d="M9 57Q31 55 55 57" stroke-width="2"/>
+  </g>
+</svg>

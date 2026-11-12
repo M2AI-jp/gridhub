@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>ゴーレム</title>
+  <desc>石を積んだゴーレム。ひびの入った体に、黄色く光る目。</desc>
+  <ellipse cx="32" cy="58" rx="22" ry="3" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 46L17 57L27 57L27 47M37 47L37 57L47 57L46 46" fill="var(--monster, #ffffff)"/>
+    <path d="M13 26Q4 30 6 42L14 43Q14 35 17 32M51 26Q60 30 58 42L50 43Q50 35 47 32" fill="var(--monster, #ffffff)"/>
+    <path d="M15 24Q14 49 18 49L46 49Q50 49 49 24Q32 20 15 24Z" fill="var(--monster, #ffffff)"/>
+    <path d="M21 8L43 8Q47 9 47 13L46 23Q32 26 18 23L17 13Q17 9 21 8Z" fill="var(--monster, #ffffff)"/>
+    <path d="M22 15L29 15L28 19L22 19ZM35 15L42 15L42 19L36 19Z" fill="#ffe45c"/>
+    <path d="M27 34L31 38L28 43M40 30L37 35M22 28L25 31"/>
+    <path d="M30 8L31 12"/>
+  </g>
+</svg>

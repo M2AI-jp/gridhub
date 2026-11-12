@@ -2,22 +2,29 @@
 // 出力は `=== <nodeId>: <run> ===` の区切りごとに、そのマスの判定の出力になっている。
 
 const DURATION = /\s+\(\d+(?:\.\d+)?\s*m?s\)$/u;
-const DIRECTIVE = /\s+#\s*(.*)$/u;
+const DIRECTIVE = /^(.*)\s+#\s*(SKIP|TODO)\b.*$/iu;
 const SPEC = [['✔', true], ['✖', false], ['﹣', null]];
 const OTHER = [['✓', true], ['PASS', true], ['ok', true], ['✗', false], ['FAIL', false], ['NG', false], ['ng', false]];
 
 /** CLI（step・brief・log）がテスト1件の成否を出すときの印（✔ 通った / ✖ 落ちた / ・ まだ・不明）。盤面は自分の印を持つ */
 export const MARK = { true: '✔', false: '✖', null: '・' };
 
-function cleanName(text) {
-  let name = text;
+function cleanName(text, { tap = false } = {}) {
+  let source = text.trim();
+  let directive = DIRECTIVE.exec(source);
   let skipped = false;
-  const directive = DIRECTIVE.exec(name);
   if (directive) {
-    if (/^(SKIP|TODO)\b/iu.test(directive[1])) skipped = true;
-    name = name.slice(0, directive.index);
+    skipped = true;
+    source = directive[1].replace(DURATION, '').trim();
+  } else {
+    source = source.replace(DURATION, '').trim();
+    directive = DIRECTIVE.exec(source);
+    if (directive) {
+      skipped = true;
+      source = directive[1].trim();
+    }
   }
-  name = name.replace(DURATION, '').trim();
+  const name = tap ? source.replace(/\\([#\\])/gu, '$1') : source;
   return { name, skipped };
 }
 
@@ -27,7 +34,7 @@ function readLine(line) {
   if (!body) return null;
   let match = /^(not ok|ok)\s+\d+(?:\s+-)?(?:\s+(.*))?$/u.exec(body);
   if (match) {
-    const { name, skipped } = cleanName(match[2] ?? '');
+    const { name, skipped } = cleanName(match[2] ?? '', { tap: true });
     if (!name) return null;
     return { name, ok: skipped ? null : match[1] === 'ok', indent };
   }

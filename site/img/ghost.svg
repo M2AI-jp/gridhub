@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>ゴースト</title>
+  <desc>すそがひらひらのゴースト。べろを出して、両手をふわっと上げる。</desc>
+  <ellipse cx="32" cy="58" rx="13" ry="2.6" fill="#1d2b5c" fill-opacity=".1"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 50Q12 30 16 21Q22 8 33 8Q46 9 50 22Q53 34 51 50Q47 46 44 51Q40 47 37 52Q33 47 30 52Q26 47 22 51Q18 46 14 50Z" fill="var(--monster, #ffffff)"/>
+    <path d="M15 31Q8 27 7 21Q12 22 16 26M49 30Q56 25 57 19Q52 21 49 25" fill="var(--monster, #ffffff)"/>
+    <ellipse cx="26" cy="25" rx="3" ry="4.4" fill="#1d2b5c"/>
+    <ellipse cx="39" cy="25" rx="3" ry="4.4" fill="#1d2b5c"/>
+    <path d="M27 34Q33 38 38 33"/>
+    <path d="M31 36Q31 42 34 42Q37 41 36 35" fill="#d94a3a"/>
+    <path d="M20 14Q23 11 27 10" stroke="#ffffff" stroke-width="3"/>
+  </g>
+</svg>

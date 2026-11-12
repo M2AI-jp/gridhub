@@ -1,0 +1,140 @@
+=== W1: node --test --test-reporter=spec tests/e2e/W1.test.mjs ===
+✔ §81.1 2ページ（site/index.html・site/engineers.html）はlang="ja"・utf-8・viewport・title・description・og・アイコン。スクリプトなし。ヘッダー目次はページの節へ (4.137916ms)
+✔ §81.2 2ページとも、ヘッダーのすぐ下に同じタブ（はじめての方へ → index.html・エンジニアの方へ → engineers.html）。いまのページのタブに aria-current="page" (0.882292ms)
+✔ §81.2 2ページとも、開発の記録とメタな話を載せない・例に家計簿を出さない・ユーザーが例に挙げた言い回し（「退屈な開発を、楽しいゲームに」「ゲーム感覚で」）を使わない (2.02725ms)
+✔ §81.2 リポジトリの中だけの言い回し: はじめての方へは使わない。エンジニアの方へは、技術の意味のあとのかっこ（「判定ファイルの固定（封印）」）でだけ。ほかのゲームの作品名・決まった言い回しは2ページとも出さない (1.858166ms)
+✔ §81.2 2ページとも、使う道具の名前を省略しない（Claude Code・Codex・Anthropic・OpenAI・Git・GitHub・Node.js・API キー） (0.388833ms)
+✔ §81.2 はじめての方へ: ファーストビュー（#hero）は文字が少なく、絵が主役: ラベル・見出し2行・説明1つ・ボタン2つ、盤面の写真と駒やモンスターの絵 (0.914667ms)
+✔ §81.2 はじめての方へ: こんな悩み（#pain）3つと、つなぎの1文。特長（#features）4つ（テストはメモアプリの例で。AI と Git と GitHub は名前で） (0.648417ms)
+✖ §81.2 はじめての方へ: 地図のつくり（#map）: AI の得意・不得意に合わせた大きさの凡例7段（メモアプリの例つき）と、「テストは、あなたが書かなくて大丈夫」。目安はルールのとおり (2.861459ms)
+✔ §81.2 はじめての方へ: ゲームとして、ここが楽しい（#fun）: 絵つきのカード6〜8枚・1枚2文まで。書いてある仕組みはルールのとおり (1.418916ms)
+✔ §81.2 はじめての方へ: 遊び方（#how）3ステップ（メモアプリの例・AI は名前で）とチュートリアル・画面（#screens）3枚 (1.021208ms)
+✖ §81.2 はじめての方へ: #start の頭に必要なもの（Mac・Node.js・Command Line Tools・Claude Code か Codex・GitHub・Linear や Jira）を列挙。事実がリポジトリと合う (0.935708ms)
+✖ §81.2 エンジニアの方へ: ファーストビュー（#hero）: ラベル・見出し2行・説明1つ・ボタン2つ。盤面の写真に、gridhub step の出力の例（いまの出力の形・サンプルの冒険のテストの名前）を重ねる (0.941584ms)
+✔ §81.2 エンジニアの方へ: つかう技術（#stack）の表（名前・役目・要るか）7行。書いてある事実がリポジトリと合う (2.993667ms)
+✖ §81.2 エンジニアの方へ: ゲームの言葉と、実際に起きること（#mechanics）12。左にゲームの言葉、右に実際の動き。ルールと src のとおり (1.300208ms)
+✔ §81.2 エンジニアの方へ: 例: メモアプリの地図（#example）。願い・キャラクター・道の図・中ボス・大ボス・王様の城が、サンプルの冒険（examples/memo）の地図のとおり (1.612917ms)
+✖ §81.2 エンジニアの方へ: エージェントの1ターン（#turn）と作戦（careful・balanced・bold）。ルールと gridhub --help のとおり (0.719333ms)
+✔ §81.2 エンジニアの方へ: 主なコマンド（#commands）。どれも gridhub --help にある (0.820708ms)
+✔ §81.2 エンジニアの方へ: はじめる（#start）。手元に置く・Claude Code か Codex・願いから冒険・盤面・出撃と、Mac アプリ・チュートリアル。書いてある事実がリポジトリと合う (0.757ms)
+✔ §81.2 2ページとも、フッターは GridHub ・ MIT ライセンス ・ GitHub だけ (0.840958ms)
+✔ §81.2 スクリーンショット4枚（盤面・はじめの画面・手で進める・エンディング。盤面は2ページとも）。PNG で、alt と、本当の大きさの width・height がある (3.895166ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 15
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 311.941584
+
+✖ failing tests:
+
+test at tests/e2e/W1.test.mjs:178:1
+✖ §81.2 はじめての方へ: 地図のつくり（#map）: AI の得意・不得意に合わせた大きさの凡例7段（メモアプリの例つき）と、「テストは、あなたが書かなくて大丈夫」。目安はルールのとおり (2.861459ms)
+  AssertionError [ERR_ASSERTION]: 宿屋の主人のせりふ
+      at TestContext.<anonymous> (file:///Users/amano/dev/masume-site/tests/e2e/W1.test.mjs:221:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: "// 余白のマス（CONTRACTS §53）。開発に関係する、良い余白: 別の担当との会話・町の住人との雑談・瓦版。\n// 進みを止めない（判定も罰もない）。出来事は冒険の書と地図に本当にあることからだけ作る。\nimport { commitOfEvent } from './store.js';\nimport { t } from './words.js';\n\nconst NPC = () => t('margin.npc'); // 宿屋の主人（いまのことばで）\nconst EXTRAS = 20; // 瓦版に載せる号外の数\n\n/** 再生（replay）の before / after で、駒が進んだイベントと、号外になるイベントを覚える */\nexport function marginTracker() {\n  let positions = null;\n  const moves = []; // {character, from, to, path, event}\n  const extras = []; // {event, node, title}\n  return {\n    moves,\n    extras,\n    before(state) {\n      positions = Object.fromEntries(Object.entries(state.characters).map(([id, character]) => [id, character.pos]));\n    },\n    after(state, event) {\n      for (const [id, character] of Object.entries(state.characters)) {\n        const from = positions?.[id];\n        if (from === undefined || character.pos <= from) continue;\n        const path = state.map.characters.find((definition) => definition.id === id)?.path ?? [];\n        moves.push({ character: id, from, to: character.pos, path, event });\n      }\n      if (event.type === 'check_passed' || event.type === 'gate_cleared') {\n        const node = event.data?.gate ?? event.data?.node;\n        extras.push({ event, node, title: state.map.nodes[node]?.title ?? '' });\n      }\n    },\n  };\n}\n\n/** 余白を置く所（§53.2）: 各キャラクターの道で、task か camp のすぐ後（道の最後と gate の後には置かない） */\nfunction slots(map) {\n  const out = [];\n  for (const character of map.characters) {\n    character.path.forEach((id, index) => {\n      const node = map.nodes[id];\n      const next = map.nodes[character.path[index + 1]];\n      if (!next || !['task', 'camp'].includes(node?.type)) return;\n      const kind = node.type === 'camp' ? 'npc' : next.type === 'gate' ? 'talk' : 'news';\n      out.push({ character, index, after: id, next: character.path[index + 1], kind });\n    });\n  }\n  return out;\n}\n\nconst okCount = (list) => (Array.isArray(list) ? list.filter((c) => c?.ok === true).length : 0);\nconst testsOf = (data, node) => {\n  const list = data?.cases?.[node];\n  return Array.isArray(list) ? `（テスト ${okCount(list)}/${list.length}）` : '';\n};\n/** 日誌の1行目（80字を超えたら79字と …） */\nconst firstLine = (text) => {\n  const line = String(text ?? '').trim().split(/\\r?\\n/u)[0].trim();\n  const chars = Array.from(line);\n  return chars.length > 80 ? `${chars.slice(0, 79).join('')}…` : line;\n};\n\n/**\n * ビューの margins と news（§53.4）。\n * map は今の地図、state は再生の最後、events は再生した冒険の書、tracker は marginTracker()。\n */\nexport function buildMargins({ map, state, events, tracker }) {\n  const nameOf = (id) => map.characters.find((c) => c.id === id)?.name ?? id;\n  const titleOf = (id) => map.nodes[id]?.title ?? '';\n  const quests = Array.isArray(map.quest.news) ? map.quest.news : [];\n\n  // seq ごとの「その記録までに見えていたコミット」（§52.3 と同じ規則）\n  const commitAt = new Map();\n  let latest = null;\n  for (const event of events) {\n    latest = commitOfEvent(event) ?? latest;\n    commitAt.set(event.seq, latest);\n  }\n  const notes = new Map(); // キャラクターID → [{seq, text}]（古い順）\n  for (const event of events) {\n    if (event.type !== 'note' || typeof event.data?.character !== 'string') continue;\n    if (!notes.has(event.data.character)) notes.set(event.data.character, []);\n    notes.get(event.data.character).push({ seq: event.seq, text: event.data.text });\n  }\n  const noteBefore = (id, seq) => {\n    const list = notes.get(id) ?? [];\n    for (let i = list.length - 1; i >= 0; i--) if (list[i].seq <= seq) return list[i];\n    return null;\n  };\n\n  let newsIndex = 0;\n  const margins = slots(map).map(({ character, index, after, next, kind }) => {\n    const name = character.name;\n    let title;\n    let partner = null;\n    if (kind === 'news') title = t('margin.title.news');\n    else if (kind === 'npc') title = t('margin.title.npc', titleOf(after));\n    else {\n      partner = map.characters.find((c) => c.id !== character.id && c.path.includes(next)) ?? null;\n      title = partner ? `${name} と ${partner.name}` : name;\n    }\n    const k = kind === 'news' ? newsIndex++ : null;\n    const margin = { id: `m-${after}`, road: character.id, after, kind, title, lines: [], seq: null, commit: null };\n\n    // 起きる（§53.3）: 今の位置が X より先。出典は、位置が X 以下から X より先へ移った最後のイベント\n    if ((state.characters[character.id]?.pos ?? 0) <= index) return margin;\n    const move = tracker.moves.findLast((m) => {\n      if (m.character !== character.id) return false;\n      const at = m.path.indexOf(after);\n      return at !== -1 && m.from <= at && m.to > at;\n    });\n    if (!move) return margin;\n    const source = move.event;\n    margin.seq = source.seq;\n    margin.commit = commitAt.get(source.seq) ?? null;\n\n    if (kind === 'news') {\n      margin.lines.push({ who: null, text: t('margin.extra.cleared', name, after, titleOf(after), testsOf(source.data, after)) });\n      if (quests.length > 0) margin.lines.push({ who: null, text: quests[k % quests.length] });\n    } else if (kind === 'npc') {\n      const cases = source.data?.cases;\n      const passed = cases && typeof cases === 'object'\n        ? Object.values(cases).reduce((sum, list) => sum + okCount(list), 0)\n        : Array.isArray(source.data?.ran) ? source.data.ran.length : 0;\n      margin.lines.push({ who: NPC(), text: t('margin.npc.hello', name, passed) });\n      const saved = events.find((e) => e.seq > source.seq && e.type === 'saved' && e.data?.node === after\n        && typeof e.data.commit === 'string' && e.data.commit && (e.data.characters ?? []).includes(character.id));\n      if (saved) {\n        margin.lines.push({ who: NPC(), text: t('margin.npc.saved', saved.data.commit.slice(0, 7), (saved.data.files ?? []).length) });\n        margin.commit = saved.data.commit;\n      }\n    } else {\n      for (const who of [character.id, partner?.id].filter(Boolean)) {\n        const note = noteBefore(who, source.seq);\n        if (note) margin.lines.push({ who, text: firstLine(note.text) });\n      }\n      if (margin.lines.length === 0) {\n        margin.lines.push({\n          who: null,\n          text: partner ? t('margin.talk.met', name, partner.name, titleOf(next)) : t('margin.talk.arrived', name, titleOf(next)),\n        });\n      }\n    }\n    return margin;\n  });\n\n  // 瓦版（§53.4・§54.3）: 号外は新しい順に（最大20件）\n  const extras = tracker.extras.slice(-EXTRAS).reverse().map(({ event, node, title }) => {\n    const data = event.data ?? {};\n    const text = event.type === 'gate_cleared'\n      ? t('margin.extra.gate', (data.members ?? []).map(nameOf).join('、'), node, map.nodes[node]?.title ?? title)\n      : t('margin.extra.cleared', nameOf(data.character), node, map.nodes[node]?.title ?? title, testsOf(data, node));\n    return { text, kind: 'extra', seq: event.seq };\n  });\n  // 号外と製品の話題の両方が上のほうに見えるように、交互に並べる（§54.3）: x0, d0, x1, d1, …（片方が尽きたら残りを続ける）\n  const domain = quests.map((text) => ({ text, kind: 'domain', seq: null }));\n  const news = [];\n  for (let i = 0; i < Math.max(extras.length, domain.length); i++) {\n    if (i < extras.length) news.push(extras[i]);\n    if (i < domain.length) news.push(domain[i]);\n  }\n  return { margins, news };\n}\n\n/** 起きた余白のうち、いちばん新しいもの。characterId を渡せば、その人の道か、その人が話している余白だけ */\nexport function latestMargin(margins, characterId = null) {\n  let found = null;\n  for (const margin of margins ?? []) {\n    if (margin.seq === null) continue;\n    if (characterId !== null && margin.road !== characterId && !margin.lines.some(({ who }) => who === characterId)) continue;\n    if (found === null || margin.seq >= found.seq) found = margin;\n  }\n  return found;\n}\n\n/** 余白を短い字に（指令書・status・MCP 向け）。1行目は見出し、あとは1行ずつ */\nexport function marginText(margin, nameOf = (id) => id) {\n  const kinds = { talk: t('margin.kind.talk'), npc: t('margin.kind.npc'), news: t('margin.kind.news') };\n  return [\n    `${kinds[margin.kind] ?? margin.kind}「${margin.title}」（${margin.after} のあと・seq ${margin.seq}）`,\n    ...margin.lines.map(({ who, text }) => `${who === null ? '' : `${nameOf(who)}: `}${text}`),\n  ];\n}\n",
+    expected: /テスト \$\{passed\} 件、通ってきたね/u,
+    operator: 'match',
+    diff: 'simple'
+  }
+
+test at tests/e2e/W1.test.mjs:263:1
+✖ §81.2 はじめての方へ: #start の頭に必要なもの（Mac・Node.js・Command Line Tools・Claude Code か Codex・GitHub・Linear や Jira）を列挙。事実がリポジトリと合う (0.935708ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+  + []
+  - [
+  -   [
+  -     'git clone https://github.com/M2AI-jp/gridhub.git',
+  -     'cd gridhub',
+  -     'sh mac/build.sh'
+  -   ],
+  -   [
+  -     'git clone https://github.com/M2AI-jp/gridhub.git',
+  -     'cd gridhub',
+  -     'ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub',
+  -     'gridhub --help'
+  -   ]
+  - ]
+  
+      at TestContext.<anonymous> (file:///Users/amano/dev/masume-site/tests/e2e/W1.test.mjs:282:10)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [],
+    expected: [ [ 'git clone https://github.com/M2AI-jp/gridhub.git', 'cd gridhub', 'sh mac/build.sh' ], [ 'git clone https://github.com/M2AI-jp/gridhub.git', 'cd gridhub', 'ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub', 'gridhub --help' ] ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+
+test at tests/e2e/W1.test.mjs:303:1
+✖ §81.2 エンジニアの方へ: ファーストビュー（#hero）: ラベル・見出し2行・説明1つ・ボタン2つ。盤面の写真に、gridhub step の出力の例（いまの出力の形・サンプルの冒険のテストの名前）を重ねる (0.941584ms)
+  AssertionError [ERR_ASSERTION]: step.js に { true: '✔', false: '✖'
+      at TestContext.<anonymous> (file:///Users/amano/dev/masume-site/tests/e2e/W1.test.mjs:328:186)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/e2e/W1.test.mjs:374:1
+✖ §81.2 エンジニアの方へ: ゲームの言葉と、実際に起きること（#mechanics）12。左にゲームの言葉、右に実際の動き。ルールと src のとおり (1.300208ms)
+  AssertionError [ERR_ASSERTION]: RULEBOOK に「終了コード 0 なら成功」
+      at TestContext.<anonymous> (file:///Users/amano/dev/masume-site/tests/e2e/W1.test.mjs:403:219)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at tests/e2e/W1.test.mjs:456:1
+✖ §81.2 エンジニアの方へ: エージェントの1ターン（#turn）と作戦（careful・balanced・bold）。ルールと gridhub --help のとおり (0.719333ms)
+  AssertionError [ERR_ASSERTION]: RULEBOOK に「どの作戦でも、宣言に2回失敗したら止まって報告する」
+      at TestContext.<anonymous> (file:///Users/amano/dev/masume-site/tests/e2e/W1.test.mjs:475:136)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1402:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:974:18)
+      at Test.postRun (node:internal/test_runner/test:1542:19)
+      at Test.run (node:internal/test_runner/test:1467:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+(exit 1, 449ms)

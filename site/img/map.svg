@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>地図</title>
+  <desc>三つ折りを広げた地図。白と黄色の紙に、赤い目印へ続く点線の道が描かれている。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M7 15L23 10L41 16L56 10L55 49L41 55L23 49L8 54Z" fill="#ffffff"/>
+    <path d="M23 10L41 16L41 55L23 49Z" fill="var(--pawn, #ffe45c)" stroke-width="2"/>
+    <path d="M13 28L17 21L21 27" stroke-width="2"/>
+    <path d="M15 43L19 40M24 37L28 34M31 29L35 28M39 30L43 34" stroke-width="2"/>
+    <path d="M44 34L51 41M51 34L44 41" stroke="#d94a3a" stroke-width="3"/>
+    <path d="M46 20L50 18" stroke-width="2"/>
+  </g>
+</svg>

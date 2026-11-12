@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>ランタン</title>
+  <desc>丸い持ち手と屋根のついたランタン。白いガラスの中に黄色い炎が灯っている。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M25 17Q20 6 31 6Q43 5 39 17"/>
+    <path d="M19 25L45 25L47 50Q32 54 17 50Z" fill="#ffffff"/>
+    <path d="M31 28Q33 34 38 39C43 49 27 54 25 44Q23 39 28 35Q27 41 31 40Q35 37 31 28Z" fill="var(--pawn, #ffe45c)" stroke-width="2"/>
+    <path d="M22 18L42 18L48 26Q32 29 16 26Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M19 29L19 47M45 29L45 47" stroke-width="2"/>
+    <path d="M17 49Q31 52 47 49L49 56Q32 59 15 56Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M9 32L5 30M54 32L59 29" stroke-width="2"/>
+  </g>
+</svg>

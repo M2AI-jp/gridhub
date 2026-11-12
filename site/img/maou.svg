@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>魔王</title>
+  <desc>あがりの城にいる魔王。王冠と大きなつの、赤い裏地のマントをひるがえす。</desc>
+  <ellipse cx="32" cy="58" rx="24" ry="3" fill="#1d2b5c" fill-opacity=".16"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M18 30Q6 44 5 57L59 57Q58 44 46 30Z" fill="#d94a3a"/>
+    <path d="M20 31Q14 46 15 57L49 57Q50 46 44 31Z" fill="#1d2b5c"/>
+    <path d="M24 34Q22 47 24 57L40 57Q42 47 40 34Z" fill="var(--monster, #ffffff)"/>
+    <path d="M28 41L36 41M28 47L36 47" stroke="#ffe45c" stroke-width="2"/>
+    <path d="M21 20Q20 33 32 34Q44 33 43 20Q43 11 32 11Q21 11 21 20Z" fill="var(--monster, #ffffff)"/>
+    <path d="M21 17Q11 13 10 3Q16 10 23 11M43 17Q53 13 54 3Q48 10 41 11" fill="#ffffff"/>
+    <path d="M24 12L23 4L28 8L32 2L36 8L41 4L40 12Q32 9 24 12Z" fill="#ffe45c"/>
+    <circle cx="32" cy="7" r="1.4" fill="#d94a3a" stroke="none"/>
+    <path d="M24 19L30 22M40 19L34 22"/>
+    <circle cx="27.5" cy="23" r="1.8" fill="#d94a3a"/>
+    <circle cx="36.5" cy="23" r="1.8" fill="#d94a3a"/>
+    <path d="M27 29Q32 27 37 29L35 30L33 28.5L31 30L29 28.5Z" fill="#ffffff"/>
+  </g>
+</svg>

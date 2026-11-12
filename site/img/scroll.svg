@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>巻物</title>
+  <desc>上下がくるりと巻かれた白い巻物。紺の文字の線と、赤い丸い封印がある。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M15 9Q28 7 44 9Q51 9 51 17L49 48Q48 55 40 55L15 54Q21 51 19 44L18 19Z" fill="#ffffff"/>
+    <path d="M16 9Q8 8 8 16Q8 23 16 22L24 22L24 16Q23 9 16 9Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M14 15Q11 18 16 18L18 18" stroke-width="2"/>
+    <path d="M17 44L41 45Q38 52 44 54Q52 56 53 47" fill="var(--pawn, #ffe45c)"/>
+    <path d="M29 20Q36 19 43 20M26 28L42 28M26 35L33 35" stroke-width="2"/>
+    <path d="M40 34C46 33 48 42 42 44C35 46 34 36 40 34Z" fill="#d94a3a"/>
+  </g>
+</svg>

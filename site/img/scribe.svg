@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>書記</title>
+  <desc>前髪を横に流した書記。大きな羽ペンを立て、書きかけの巻物を抱えている。</desc>
+  <path d="M15 58C17 54 46 54 48 58C50 62 14 63 15 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M23 48L22 56Q17 59 29 58L30 49M33 49L34 58Q46 59 40 55L39 48" fill="#1d2b5c"/>
+    <path d="M23 33Q29 30 37 33L41 50Q31 53 21 49Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 34Q17 35 14 41L21 46L25 39M38 34Q42 34 47 39L43 45L37 40" fill="var(--pawn, #ffe45c)"/>
+    <path d="M27 33L30 39L34 33" fill="#ffffff"/>
+    <path d="M30 38L29 43L32 42Z" fill="#d94a3a" stroke="none"/>
+    <path d="M18 17Q20 9 31 10Q43 11 42 24Q41 34 30 35Q18 33 18 25Q14 22 18 20Z" fill="#ffffff"/>
+    <path d="M18 23Q13 16 20 11Q25 7 34 10Q43 9 43 20L38 19L36 14Q31 20 21 18L21 23Z" fill="#1d2b5c"/>
+    <path d="M25 23L25 24M35 23L35 24M28 29Q31 31 34 28"/>
+    <path d="M10 37L32 36Q35 35 36 39L39 48Q39 52 35 52L14 54Q11 54 10 50L7 41Q6 37 10 37Z" fill="#ffffff"/>
+    <path d="M10 37Q14 37 14 41L10 42M14 54Q18 54 17 50L35 49Q39 48 36 46"/>
+    <path d="M17 42Q21 40 26 42M19 46Q24 44 31 46" stroke-width="2"/>
+    <path d="M12 45Q8 44 8 48Q9 52 13 50L15 48Z" fill="#ffffff"/>
+    <path d="M45 29Q40 18 52 8Q61 10 56 21Q52 28 45 29Z" fill="#ffffff"/>
+    <path d="M43 44Q47 26 54 13M47 24L44 20M50 20L55 18"/>
+    <path d="M43 38Q47 37 49 40Q50 44 45 45L42 42Z" fill="#ffffff"/>
+  </g>
+</svg>

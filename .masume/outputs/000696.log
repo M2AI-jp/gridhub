@@ -1,0 +1,14 @@
+=== GOAL17: node --test --test-reporter=spec tests/e2e/GOAL17.test.mjs ===
+✔ 第1章〜第17章のすべての判定が、まとめて本当に通る (433985.418959ms)
+✔ すべての冒険の書が正常。地図と package.json は第17章（看板屋の縄張りは site/**、test に看板屋の判定） (781.459208ms)
+✔ §81.5 紹介ページは Mac のアプリの中身に入らない。README に紹介ページ（site/ の2ページ・gridhub.matsunai.com）、CHANGELOG に第17章 (291.212833ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 435199.853375
+
+(exit 0, 435323ms)

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>王冠</title>
+  <desc>三つの山がある黄色い王冠。中央に赤い宝石、下の縁に小さな鋲が並ぶ。</desc>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14 46Q11 32 8 20L22 31L32 13L42 31L56 19Q53 34 50 46Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M14 44Q31 47 50 44L49 53Q32 56 15 53Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M32 29L38 36L32 42L26 36Z" fill="#d94a3a"/>
+    <path d="M6 17Q9 14 11 18Q12 21 8 22Q4 21 6 17ZM29 10Q31 7 34 10Q36 14 32 15Q28 14 29 10ZM53 16Q56 13 58 17Q59 21 55 21Q51 20 53 16Z" fill="#ffffff"/>
+    <path d="M21 50L22 50M31 51L32 51M41 50L42 50" stroke-width="2"/>
+  </g>
+</svg>

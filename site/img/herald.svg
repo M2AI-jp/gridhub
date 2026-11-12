@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>伝令</title>
+  <desc>小さな帽子の伝令。角笛を口に当て、羽のついた早足の靴で一歩を踏み出す。</desc>
+  <path d="M12 58C15 54 44 55 48 59C47 63 11 62 12 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M23 44L19 52L14 54Q10 58 17 59L26 56L31 46M31 46L35 55Q35 59 43 58Q49 57 44 53L39 53L36 44" fill="var(--pawn, #ffe45c)"/>
+    <path d="M20 52L16 48L17 53L12 51Q14 57 21 55ZM36 53L32 49L33 54L29 52Q31 57 38 56Z" fill="#ffffff"/>
+    <path d="M24 32Q30 31 36 34L39 46Q32 49 21 45Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M25 34Q19 34 15 39L20 44L27 39M35 34Q41 32 43 28L47 33Q44 40 38 41" fill="var(--pawn, #ffe45c)"/>
+    <path d="M16 39Q12 39 12 43Q15 47 19 43Z" fill="#ffffff"/>
+    <path d="M24 33Q16 31 10 35L17 36L14 39Q21 39 26 35Z" fill="#d94a3a"/>
+    <path d="M19 16Q21 9 31 11Q41 12 41 23Q40 33 30 35Q19 34 17 26Q14 21 18 20Z" fill="#ffffff"/>
+    <path d="M17 18Q16 9 25 9Q35 5 40 15L44 17Q37 20 32 17Q23 15 17 18Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M34 10Q39 5 42 8Q41 12 37 14" fill="#ffffff"/>
+    <path d="M24 23L24 24M33 22L33 23M28 29Q30 30 33 28"/>
+    <path d="M36 26Q44 29 53 20L58 33Q46 37 36 30Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M53 20Q59 22 58 33Q54 30 53 20Z" fill="#ffffff"/>
+    <path d="M41 31Q44 29 46 32L46 35Q42 38 40 34Z" fill="#ffffff"/>
+  </g>
+</svg>

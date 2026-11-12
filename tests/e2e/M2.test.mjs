@@ -85,7 +85,7 @@ test('解く前はどの判定も落ち、SOLUTIONS を当てると全部通る'
   }
 });
 
-// 配る前の点検（§75.1）: 見習いAIのダンジョンは「テスト1件 = 1マス」。地図の cases の名前が判定の出力のテストの名前と
+// 配る前の点検（§78.1）: 見習いAIのダンジョンは「テスト1件 = 1マス」。地図の cases の名前が判定の出力のテストの名前と
 // 同じでなければ、テストは通っても盤面の図鑑ではそのモンスターが「結果なし」のまま残る（GM_GUIDE の注意）
 test('cases の名前は、判定の出力のテストの名前と同じ（テスト1件 = 1マスが盤面で結びつく）', async () => {
   const { readResults } = await import(pathToFileURL(join(ROOT, 'src', 'engine', 'cases.js')).href);
@@ -113,4 +113,24 @@ test('cases の名前は、判定の出力のテストの名前と同じ（テ�
       assert.equal(found.get(name), true, `${id} の cases「${name}」が判定の出力にある（出力のテスト: ${[...found.keys()].join(' / ')}）`);
     }
   }
+});
+
+test('§40 テスト名の中の # は名前のまま（spec の #start・tap の \\#）。指令は行末の # SKIP / # TODO だけ', async () => {
+  const { readResults } = await import(pathToFileURL(join(ROOT, 'src', 'engine', 'cases.js')).href);
+  const output = [
+    '✔ spec #start b (0.39ms)',
+    '﹣ spec # SKIP x (0.05ms) # SKIP',
+    'ok 1 - tap \\#start b',
+    'ok 2 - tap \\# SKIP x # SKIP',
+    'not ok 3 - tap \\# TODO x # TODO',
+    '✖ 普通の失敗 (0.4ms)',
+  ].join('\n');
+  assert.deepEqual(readResults(output).map(({ name, ok }) => ({ name, ok })), [
+    { name: 'spec #start b', ok: true },
+    { name: 'spec # SKIP x', ok: null },
+    { name: 'tap #start b', ok: true },
+    { name: 'tap # SKIP x', ok: null },
+    { name: 'tap # TODO x', ok: null },
+    { name: '普通の失敗', ok: false },
+  ]);
 });

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>勇者</title>
+  <desc>とがった前髪の小さな勇者。マントを広げ、右手に剣を立てている。</desc>
+  <path d="M16 58C17 54 46 54 48 58C50 62 16 63 16 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 30C18 31 16 42 10 49Q17 48 22 53L43 51Q42 39 37 30Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 47Q22 51 22 56Q16 59 29 58L30 48M33 48L34 58Q47 59 40 55L40 47" fill="#1d2b5c"/>
+    <path d="M23 33Q29 30 37 33L41 48Q32 52 21 48Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M22 34Q17 35 16 41L21 43L24 38M39 34Q43 35 46 39L42 43L38 39" fill="var(--pawn, #ffe45c)"/>
+    <path d="M16 40Q12 43 16 46Q20 46 21 42Z" fill="#ffffff"/>
+    <path d="M23 44Q31 46 39 44"/>
+    <path d="M27 33L30 38L34 33" fill="#d94a3a"/>
+    <path d="M18 17C19 10 38 9 41 18Q46 30 33 34Q19 36 17 25Q14 21 18 20Z" fill="#ffffff"/>
+    <path d="M17 21Q12 15 19 11L18 7L26 10L29 5L33 10Q42 9 43 20L35 16L32 21L27 15L22 20L21 16Z" fill="#1d2b5c"/>
+    <path d="M25 24L25 25M35 23L35 24M28 29Q31 31 34 28"/>
+    <path d="M47 38Q48 27 50 17L54 11L56 18Q54 29 52 39Z" fill="#ffffff"/>
+    <path d="M45 38Q50 40 55 40M49 41Q49 44 48 47" stroke-width="2.5"/>
+    <path d="M44 40Q47 38 49 41L49 45Q45 47 43 43Z" fill="#ffffff"/>
+  </g>
+</svg>

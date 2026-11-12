@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>商人</title>
+  <desc>丸い帽子の商人。片手に口を結んだ袋を下げ、もう片手にそろばんを掲げる。</desc>
+  <path d="M15 58C18 54 47 54 49 58C50 63 14 62 15 58Z" fill="#1d2b5c" fill-opacity=".14"/>
+  <g fill="none" stroke="#1d2b5c" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M24 48L22 56Q17 59 30 58L31 49M34 49L35 58Q47 59 41 55L40 48" fill="#1d2b5c"/>
+    <path d="M24 33Q30 31 38 33Q42 40 43 50Q32 53 21 49Q20 40 24 33Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M23 34Q17 32 13 39L20 44L25 38M38 34Q43 32 48 37L43 43L38 39" fill="var(--pawn, #ffe45c)"/>
+    <path d="M29 35L32 39L35 35" fill="#d94a3a"/>
+    <path d="M31 40Q30 45 32 49"/>
+    <path d="M19 17Q21 10 32 11Q44 12 44 24Q42 35 31 35Q18 35 18 25Q15 22 19 21Z" fill="#ffffff"/>
+    <path d="M18 18Q17 10 26 9Q29 5 35 8Q44 9 44 18Q31 14 18 18Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M25 23Q27 21 29 23M35 23Q37 21 39 23M28 28Q32 34 36 28Z" fill="#ffffff"/>
+    <path d="M12 38L10 33L18 34L16 39Q23 42 22 50Q19 55 9 52Q4 47 12 38Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M11 39Q15 40 18 38M14 45Q12 47 14 50"/>
+    <path d="M13 35Q11 32 14 31Q18 31 18 35L17 38L13 37Z" fill="#ffffff"/>
+    <path d="M36 33L55 32L56 49L36 50Z" fill="var(--pawn, #ffe45c)"/>
+    <path d="M41 36L41 47M46 36L46 47M51 35L51 46M38 40L53 40" stroke-width="2"/>
+    <path d="M38.5 37L41 35L43.5 37L41 39ZM43.5 37L46 35L48.5 37L46 39ZM48.5 36L51 34L53.5 36L51 38ZM38.5 44L41 42L43.5 44L41 46ZM43.5 45L46 43L48.5 45L46 47ZM48.5 44L51 42L53.5 44L51 46Z" fill="#1d2b5c" stroke="none"/>
+    <path d="M37 45Q40 44 41 47Q42 51 38 52L35 50Z" fill="#ffffff"/>
+  </g>
+</svg>
