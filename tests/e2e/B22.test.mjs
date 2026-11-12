@@ -31,7 +31,22 @@ async function withBoard(fn, { query = '' } = {}) {
   }
 }
 
-test('§75.1 既定は冒険のことば: #words-toggle は「冒険のことば」、<html data-words="game">。あそびかた・町の説明・なかまの欄に開発のことばが混ざらない', { timeout: 120000 }, async () => {
+test('§75.1 既定は開発のことば。何も選んでいなければ <html data-words="dev">', { timeout: 60000 }, async () => {
+  const srv = await serveStatic(WEB);
+  const page = await openBrowser({ width: 1440, height: 900, words: null });
+  try {
+    await page.goto(`${srv.url}/?fixture=demo`);
+    await page.waitFor(READY, { timeout: 20000 });
+    assert.equal(await page.eval(MODE), 'dev');
+    assert.match(await page.eval(`${TOGGLE}.innerText`), /開発のことば/);
+    assert.match(await page.eval(text('nav.tabs')), /使い方/);
+  } finally {
+    await page.close();
+    await srv.close();
+  }
+});
+
+test('§75.1 冒険のことば: #words-toggle は「冒険のことば」、<html data-words="game">。あそびかた・町の説明・なかまの欄に開発のことばが混ざらない', { timeout: 120000 }, async () => {
   await withBoard(async (page) => {
     assert.equal(await page.eval(MODE), 'game');
     const btn = await page.eval(`({ text: ${TOGGLE}.innerText, pressed: ${TOGGLE}.getAttribute('aria-pressed'), title: ${TOGGLE}.title })`);
@@ -156,7 +171,7 @@ test('§75.5 はじめの画面にも同じボタン。押すと説明が切り�
 });
 
 // ---- §76.3 本物の盤面と窓口の同期（GET/POST /api/words）。窓口は偽物で配る ----
-async function withLive(fn, { words = null, query = '' } = {}) {
+async function withLive(fn, { words = null, query = '', chosen = 'game' } = {}) {
   const posts = [];
   let setting = words; // 偽の冒険の設定（null なら未設定）
   const json = (res, status, body) => {
@@ -176,7 +191,7 @@ async function withLive(fn, { words = null, query = '' } = {}) {
       json(res, 200, { ok: true, words: body.words });
     },
   });
-  const page = await openBrowser({ width: 1440, height: 900 });
+  const page = await openBrowser({ width: 1440, height: 900, words: chosen });
   try {
     await page.goto(`${srv.url}/${query}`);
     await page.waitFor(READY, { timeout: 20000 });
@@ -190,17 +205,17 @@ async function withLive(fn, { words = null, query = '' } = {}) {
 
 test('§76.3 本物の盤面は、URL にもブラウザにも選択が無ければ、この冒険の設定（GET /api/words）を既定にする', { timeout: 120000 }, async () => {
   await withLive(async (page) => {
-    await page.waitFor(`${MODE} === 'dev'`, { timeout: 10000, message: '冒険の設定（dev）が既定になる' });
-    assert.match(await page.eval(text('nav.tabs')), /使い方/);
-    assert.match(await page.eval(`${TOGGLE}.innerText`), /開発のことば/);
-  }, { words: 'dev' });
-  // 設定が無ければ game のまま。?words= があれば URL が勝つ
+    await page.waitFor(`${MODE} === 'game'`, { timeout: 10000, message: '冒険の設定（game）が既定になる' });
+    assert.match(await page.eval(text('nav.tabs')), /あそびかた/);
+    assert.match(await page.eval(`${TOGGLE}.innerText`), /冒険のことば/);
+  }, { words: 'game', chosen: null });
+  // 設定が無ければ dev のまま。?words= があれば URL が勝つ
   await withLive(async (page) => {
-    assert.equal(await page.eval(MODE), 'game');
-  });
+    assert.equal(await page.eval(MODE), 'dev');
+  }, { chosen: null });
   await withLive(async (page) => {
-    assert.equal(await page.eval(MODE), 'game', '?words=game が冒険の設定（dev）より優先');
-  }, { words: 'dev', query: '?words=game' });
+    assert.equal(await page.eval(MODE), 'dev', '?words=dev が冒険の設定（game）より優先');
+  }, { words: 'game', query: '?words=dev', chosen: null });
 });
 
 test('§76.3 本物の盤面で切り替えると、X-Masume 付きで POST /api/words に書く（届かなくても切り替えは効く）', { timeout: 120000 }, async () => {
@@ -255,15 +270,15 @@ test('§76.7 アプリが覚えていることば（window.__gridhubWords）は�
 test('§76.7 アプリの中で切り替えると postMessage({type: "words", words}) でアプリに知らせる。外（窓口が無い）では何も起きない', { timeout: 120000 }, async () => {
   await withApp(async (page) => {
     await page.eval(`${TOGGLE}.click()`);
-    await page.waitFor(`${MODE} === 'dev'`);
-    assert.deepEqual(await page.eval('window.__posted'), [{ type: 'words', words: 'dev' }]);
-    await page.eval(`${TOGGLE}.click()`);
     await page.waitFor(`${MODE} === 'game'`);
-    assert.deepEqual(await page.eval('window.__posted'), [{ type: 'words', words: 'dev' }, { type: 'words', words: 'game' }]);
+    assert.deepEqual(await page.eval('window.__posted'), [{ type: 'words', words: 'game' }]);
+    await page.eval(`${TOGGLE}.click()`);
+    await page.waitFor(`${MODE} === 'dev'`);
+    assert.deepEqual(await page.eval('window.__posted'), [{ type: 'words', words: 'game' }, { type: 'words', words: 'dev' }]);
   });
   await withApp(async (page) => {
     await page.eval(`${TOGGLE}.click()`);
-    await page.waitFor(`${MODE} === 'dev'`);
+    await page.waitFor(`${MODE} === 'game'`);
     assert.equal(await page.eval('typeof window.webkit'), 'undefined');
   }, { preload: '' });
 });

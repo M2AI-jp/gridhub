@@ -9,13 +9,17 @@ import { newToy, startServe, getJson, mcpClient } from '../helpers3.mjs';
 
 const post = (url, body, headers = { 'X-Masume': '1' }) => getJson(url, { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) });
 
-test('§76.2 GET /api/words は既定 game（未設定）。POST /api/words で .masume/words.json に書き、GET とエラー文がその場で切り替わる', { timeout: 120000 }, async () => {
+
+test('§76.2 GET /api/words は既定 dev（未設定）。POST /api/words で .masume/words.json に書き、GET とエラー文がその場で切り替わる', { timeout: 120000 }, async (t) => {
   const dir = newToy();
+  const saved = process.env.GRIDHUB_WORDS;
+  delete process.env.GRIDHUB_WORDS;
+  t.after(() => { process.env.GRIDHUB_WORDS = saved; });
   const srv = await startServe(dir);
   try {
     let r = await getJson(`${srv.url}/api/words`);
     assert.equal(r.status, 200);
-    assert.deepEqual(r.body, { ok: true, words: 'game', set: false, source: 'default' });
+    assert.deepEqual(r.body, { ok: true, words: 'dev', set: false, source: 'default' });
 
     const denied = await post(`${srv.url}/api/words`, { words: 'dev' }, {});
     assert.equal(denied.status, 403, 'X-Masume が無ければ 403');

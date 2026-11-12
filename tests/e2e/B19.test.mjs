@@ -171,3 +171,71 @@ test('§70.5 盤面の ?home= が手元（127.0.0.1・localhost）のときだ�
     await srv.close();
   }
 });
+
+test('§79.35 はじめの画面の #start-next: つづきのフォルダを開く。無ければチュートリアル。開発のことばでも読める', { timeout: 120000 }, async () => {
+  const hero = (over = {}) => ({
+    ok: true, hero: 1, theme: 'note',
+    rank: { level: 2, title: '見習い勇者', dev: { title: '見習い' }, xp: 100, next: 150, into: 0, need: 100 },
+    streak: { current: 1, today: false, best: 1 },
+    daily: { date: '2026-10-31', done: false, reward: 'お題のランタン', dev: { reward: '今日の目標' }, missions: [{ id: 'defeat3', text: 'テストを3件倒す', dev: { text: 'テストを3件通す' }, now: 0, goal: 3, done: false }] },
+    bags: { count: 7 }, album: { owned: 0, total: 39 }, achievements: [],
+    quests: [{ dir: '/Users/you/GridHub/はじめての GridHub', bags: 7, finished: false }],
+    ...over,
+  });
+  const withHero = async (fn, app, j) => {
+    const srv = await serveStatic(WEB, {
+      'GET /': (req, res) => {
+        res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
+        res.end(readFileSync(join(WEB, 'start.html')));
+      },
+      'GET /api/app': (req, res) => {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify(app));
+      },
+      'GET /api/hero': (req, res) => {
+        res.writeHead(200, { 'content-type': 'application/json' });
+        res.end(JSON.stringify(j));
+      },
+      'POST /api/app/open': (req, res) => {
+        let b = '';
+        req.on('data', (d) => (b += d));
+        req.on('end', () => {
+          res.writeHead(200, { 'content-type': 'application/json' });
+          res.end(JSON.stringify({ ok: true, url: `/start.html?opened=${encodeURIComponent(JSON.parse(b).dir)}` }));
+        });
+      },
+    });
+    const page = await openBrowser({ width: 1320, height: 880 });
+    try {
+      await page.goto(`${srv.url}/`);
+      await page.waitFor(`!!document.querySelector('#start-next')`, { timeout: 15000, message: '#start-next' });
+      await fn(page);
+    } finally {
+      await page.close();
+      await srv.close();
+    }
+  };
+  const text = `document.querySelector('#start-next').innerText`;
+  const app = info({ recent: [{ dir: '/Users/you/GridHub/はじめての GridHub', name: 'x', has_game: true, title: 'はじめての GridHub', missing: false }] });
+  await withHero(async (page) => {
+    const got = await page.eval(text);
+    assert.match(got, /つづきから/);
+    assert.match(got, /はじめての GridHub/);
+    assert.match(got, /シール袋 7 個/, '未開封のシール袋をいちばんの理由に');
+    assert.doesNotMatch(await page.eval(`document.querySelector('#start-hero').innerText`), /フォルダを選ぶ/);
+    await page.eval(`document.querySelector('#words-toggle').click()`);
+    await page.waitFor(`document.documentElement.dataset.words === 'dev'`);
+    const card = await page.eval(`document.querySelector('#start-hero').innerText`);
+    assert.match(card, /続きを開く/);
+    assert.match(card, /テストを3件通す/);
+    assert.doesNotMatch(card, /勇者|倒す|お題|称号/u);
+    await page.eval(`document.querySelector('#start-next').click()`);
+    await page.waitFor(`location.search.includes('opened=')`, { message: 'フォルダを開く' });
+  }, app, hero());
+  await withHero(async (page) => {
+    assert.match(await page.eval(text), /チュートリアル/);
+  }, info({ recent: [] }), hero({ quests: [] }));
+  await withHero(async (page) => {
+    assert.match(await page.eval(text), /次の冒険/);
+  }, app, hero({ quests: [{ dir: '/Users/you/GridHub/はじめての GridHub', bags: 0, finished: true }] }));
+});

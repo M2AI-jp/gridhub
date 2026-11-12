@@ -251,6 +251,69 @@ body.drawer-open #rail > #party { display: none; }
 .view.active { display: block; }
 #board { --dock: 54px; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; user-select: none; }
 #board.dragging { cursor: grabbing; }
+/* 進軍（§80）: 盤面の上に重ねる。ノートはその下で描かれたまま */
+#march { position: absolute; inset: 0; z-index: 2; background: #0c0c14; display: flex; flex-direction: column; font-family: "DotGothic16", var(--marker), sans-serif; }
+#march[hidden] { display: none; }
+#march-lanes { position: relative; flex: 1; min-height: 0; overflow: auto; display: flex; align-items: safe center; justify-content: center; }
+#march-cmds { position: absolute; pointer-events: none; }
+.march-cmd { position: absolute; right: 8px; pointer-events: auto; font: inherit; font-size: 15px; min-height: 28px; padding: 3px 12px; color: #fff; background: #2a2060; border: 2px solid #c8c4dc; cursor: pointer; box-shadow: 0 2px 0 #10101c; }
+.march-cmd[hidden] { display: none; }
+.march-cmd:hover { background: #3c30a0; }
+.march-cmd:disabled { opacity: 0.5; cursor: wait; }
+.march-cmd.sub { background: #14121f; border-color: #6c6888; color: #c8c4dc; font-size: 13px; }
+/* 小さな手はふだん隠す。通り切った判定と、キーボードで選んだときは出す。マウスの無い画面では常に出す */
+@media (hover: hover) { .march-cmd.sub:not(.show):not(:focus-visible):not([data-ready="true"]) { opacity: 0; } }
+.march-cmd.sub[data-kind="check"][data-ready="false"] { color: #ff9a8a; border-color: #b83c34; }
+.march-cmd.sub[data-kind="check"][data-ready="true"] { background: linear-gradient(#f4dc98, #d8a848); color: #14121f; border-color: #fff; }
+.march-cmd[data-kind="watch"] { background: #14121f; border-color: #6c6888; color: #c8c4dc; }
+.march-cmd[data-next="true"] { background: #ffd84a; color: #14121f; border-color: #fff; animation: march-pulse 0.9s steps(2) infinite; }
+.march-cmd[data-kind="battle"] { background: #d8342c; color: #fff; border-color: #ffd84a; }
+@keyframes march-pulse { 50% { transform: translateY(-2px); box-shadow: 0 4px 0 #10101c, 0 0 0 3px rgba(255, 216, 74, 0.45); } }
+@media (prefers-reduced-motion: reduce) { .march-cmd[data-next="true"] { animation: none; } }
+#march-bar { flex: none; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; background: #14121f; border-top: 1px solid #3c3858; }
+.march-btn { font: inherit; font-size: 14px; min-height: 30px; padding: 3px 12px; color: #fff; background: #2a2640; border: 1px solid #6c6888; cursor: pointer; }
+.march-btn.primary { background: #d8342c; border-color: #ffd84a; }
+.march-btn:disabled { background: #1c1a2c; color: #6c6888; border-color: #3c3858; cursor: default; }
+.march-btn[data-next="true"], .pr-merge[data-next="true"] { background: linear-gradient(#f4dc98, #d8a848); color: #14121f; border-color: #fff; animation: march-pulse 0.9s steps(2) infinite; }
+@media (prefers-reduced-motion: reduce) { .march-btn[data-next="true"], .pr-merge[data-next="true"] { animation: none; } }
+.march-keys { font-size: 12px; color: #8c88a8; white-space: nowrap; }
+@media (hover: none), (max-width: 900px) { .march-keys { display: none; } }
+#march-prs { flex: none; display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px; background: #14121f; border-top: 1px solid #3c3858; }
+#march-prs[hidden] { display: none; }
+.pr-chip { display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; padding: 2px 6px; font-size: 13px; color: #fff; background: #1c1a2c; border: 1px solid #3c3858; }
+.pr-chip[data-state="OPEN"] { border-color: #46c868; }
+.pr-chip[data-state="MERGED"] { border-color: #7a5ae6; color: #c8c4dc; }
+.pr-name { max-width: 16em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pr-badge { padding: 0 4px; font-size: 12px; color: #14121f; background: #c8c4dc; white-space: nowrap; }
+.pr-badge[data-kind="pass"] { background: #5ae0a0; }
+.pr-badge[data-kind="fail"] { background: #ff7a5a; }
+.pr-badge[data-kind="running"], .pr-badge[data-kind="wait"] { background: #ffd84a; }
+.pr-badge[data-kind="merged"] { background: #a48cf0; }
+.pr-merge { font: inherit; font-size: 12px; min-height: 22px; padding: 0 8px; color: #fff; background: #7a5ae6; border: 1px solid #fff; cursor: pointer; }
+.pr-merge[data-armed="true"] { background: #d8342c; }
+.pr-merge:disabled { opacity: .5; cursor: wait; }
+#march-open-pr { background: linear-gradient(#8c6cf0, #5a3cc0); border-color: #e8e0ff; }
+#march-push { background: linear-gradient(#3cb878, #1c7c4c); border-color: #d8f4e0; }
+.march-btn.march-bag { margin-left: auto; background: #ff72b4; color: #14121f; border-color: #fff; }
+#march-tactic { display: flex; }
+#march-tactic button { font: inherit; font-size: 13px; min-height: 30px; padding: 3px 8px; background: #1c1a2c; color: #c8c4dc; border: 1px solid #3c3858; cursor: pointer; }
+#march-tactic button + button { border-left: 0; }
+#march-tactic button[aria-pressed="true"] { background: #5ac8ff; color: #14121f; border-color: #5ac8ff; }
+#march-canvas { display: block; flex: none; image-rendering: pixelated; cursor: pointer; }
+.mode-switch { position: absolute; top: 6px; right: 8px; z-index: 4; display: flex; font-family: "DotGothic16", var(--marker), sans-serif; font-size: 14px; }
+.mode-switch button { font: inherit; padding: 4px 10px; min-height: 30px; background: #14121f; color: #c8c4dc; border: 1px solid #3c3858; cursor: pointer; }
+.mode-switch button + button { border-left: 0; }
+.mode-switch button[aria-pressed="true"] { background: #ffd84a; color: #14121f; border-color: #ffd84a; }
+body[data-mode="note"] .mode-switch button { background: var(--card, #fffef5); color: var(--ink, #222); border-color: var(--ink, #222); }
+body[data-mode="note"] .mode-switch button[aria-pressed="true"] { background: var(--ink, #222); color: var(--card, #fffef5); }
+body[data-mode="march"] .your-turn { display: none; }
+/* ノートのページめくりは、進軍の裏で済ませる */
+body[data-mode="march"] .flip-stage { display: none; }
+/* 進軍では知らせを左下（札の上）に寄せて、戦場を隠さない */
+body[data-mode="march"] #toast { top: auto; bottom: 58px; left: 8px; transform: none; align-items: flex-start; gap: 4px; max-width: 250px; }
+body[data-mode="march"] .toast { font-size: 12px; padding: 4px 8px; width: 240px; max-width: 100%; box-sizing: border-box; }
+body[data-mode="march"] #fanfare { top: 56px; right: 8px; bottom: auto; left: auto; transform: none; flex-direction: column; }
+body[data-mode="march"] .pager, body[data-mode="march"] .zoom, body[data-mode="march"] .legend, body[data-mode="march"] #boss-meter { display: none; }
 .zoom { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 6px; z-index: 3; align-items: center; }
 .zoom button {
   background: var(--card);
@@ -882,6 +945,7 @@ body.in-lobby #stage { min-height: 70vh; }
 @media print {
   .cover, #party, #side, .zoom, .legend, #toast, #lobby { display: none !important; }
   body, #stage { overflow: visible; background: #fff; }
+  #march, .mode-switch { display: none !important; }
   .desk { display: block; padding: 0; height: auto; }
   #stage { position: static; box-shadow: none; border-radius: 0; height: 100vh; }
   .view { position: static; }
@@ -941,6 +1005,8 @@ body.in-lobby #stage { min-height: 70vh; }
 #ending-stats b { display: block; font-family: var(--marker); font-size: 20px; font-weight: 400; color: var(--ink); }
 #ending-stats small { font-family: var(--hand); font-size: 11px; color: var(--ink-soft); }
 #ending-close { background: var(--ink); color: #fff; }
+.ending-next { display: block; margin-bottom: 8px; text-align: center; text-decoration: none; background: var(--highlight-yellow, #ffe27a); color: var(--ink, #1d2b5c); }
+.ending-next[hidden] { display: none; }
 @media (prefers-reduced-motion: no-preference) {
   #ending.show .ending-card { animation: endingin 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
   #ending.show .ending-stamp { animation: bigstamp 0.7s cubic-bezier(0.2, 1.6, 0.4, 1) 0.5s both; }
@@ -1116,6 +1182,8 @@ body.start-page { overflow: auto; min-height: 100%; display: flex; align-items: 
   font-family: var(--hand);
 }
 .start-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 22px; }
+.start-march { margin: 0 0 14px; border: 2px solid var(--ink, #1d2b5c); line-height: 0; overflow: hidden; background: #bfe6f6; }
+#start-march-canvas { width: 100%; height: auto; display: block; image-rendering: pixelated; }
 .start-head .logo { font-size: 30px; margin: 0; }
 .start-tagline { margin: 0; color: var(--ink-soft); font-size: 14px; }
 .start-actions { display: grid; gap: 14px; }

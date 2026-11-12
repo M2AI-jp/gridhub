@@ -148,6 +148,7 @@ test('モジュール API: buildView は status --json と同じ、ログに日�
   check(dir, 'a');
   masume(['note', 'a', 'A2は盾の裏がまだ', '--dir', dir, '--as', 'a']);
   const engine = await import(pathToFileURL(join(ROOT, 'src', 'engine', 'index.js')).href);
+  engine.resolveWords({ env: process.env });
   for (const fn of ['findRoot', 'validateMap', 'newGame', 'buildView', 'brief', 'check', 'stamp', 'seal', 'appendEvent', 'verify', 'repair', 'logFile', 'outputFile', 'amend', 'load'])
     assert.equal(typeof engine[fn], 'function', `engine.${fn}`);
   assert.equal(engine.jumonOf, undefined, '§52: エンジンはじゅもんを出さない');

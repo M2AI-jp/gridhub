@@ -228,3 +228,35 @@ test('§79.16〜§79.18 盤面: 交換所でめくる・自己ベストの札・
     await srv.stop();
   }
 });
+
+test('§79.33 手帳は開発のことばで読める: 切り替えると、手帳を読み直さずカードと手帳のタブの字が変わる', { timeout: 120000 }, async () => {
+  const dir = tmp('gridhub-b23-');
+  cpSync(join(ROOT, 'quests', 'tutorial'), dir, { recursive: true });
+  assert.equal(masume(['new', 'tutorial.map.json'], { cwd: dir }).code, 0);
+  const home = tmp('gridhub-b23-home-');
+  const srv = await startGridhub(['serve', '--port', '0', '--dir', dir, '--no-open'], { pattern: /盤面: (http:\/\/\S+)/, env: { PATH: pathWith().PATH, GRIDHUB_APP_HOME: home }, cwd: dir });
+  const page = await openBrowser({ width: 1440, height: 900 });
+  try {
+    await page.goto(`${srv.url}/`);
+    await page.waitFor(READY, { timeout: 20000 });
+    await page.waitFor(`!!window.__masume.hero`, { timeout: 20000, message: '手帳が読めた' });
+    await page.eval(`document.querySelector('[data-hero="welcome-close"]')?.click()`);
+    const card = `document.querySelector('#hero-card').innerText`;
+    assert.match(await page.eval(card), /見習い勇者/);
+    await page.eval(`document.querySelector('#words-toggle').click()`);
+    await page.waitFor(`document.documentElement.dataset.words === 'dev'`);
+    const dev = await page.eval(card);
+    assert.match(dev, /見習い/);
+    assert.doesNotMatch(dev, /勇者|お題|称号/u);
+    await page.eval(`document.querySelector('#techo-tab').click()`);
+    await page.waitFor(`document.querySelectorAll('#techo .al-slot').length === 39`, { timeout: 20000 });
+    const techo = await page.eval(`document.querySelector('#techo').innerText`);
+    for (const w of ['プロフィール', '今日の目標', '活動カレンダー', '実績', '通ったテスト']) assert.ok(techo.includes(w), `${w} がある`);
+    assert.doesNotMatch(techo, /勇者|倒|ダンジョン|冒険|魔王|ハンコ|お題|スライム/u);
+    await page.eval(`document.querySelector('#words-toggle').click()`);
+    await page.waitFor(`document.querySelector('#techo').innerText.includes('冒険者カード')`, { timeout: 10000, message: '冒険のことばに戻る' });
+  } finally {
+    await page.close();
+    await srv.stop();
+  }
+});

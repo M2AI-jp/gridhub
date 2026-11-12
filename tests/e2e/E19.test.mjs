@@ -1,6 +1,6 @@
 // E19「ことば（冒険のことば / 開発のことば）」— 書記。CONTRACTS §76.1。
 // gridhub words・--words・GRIDHUB_WORDS・.masume/words.json と、開発のことばの brief / step / status / ログの文 / エラー文。
-// 既定（冒険のことば）の字は今までどおり（E8・E9・E1 などが見ている）。
+// 既定は開発のことば。冒険のことばの字は今までどおり（E8・E9・E1 などが見ている）。
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
@@ -9,12 +9,18 @@ import { tmp, gridhub, view, newDungeon, setCases } from '../helpers5.mjs';
 
 const wordsFile = (dir) => join(dir, '.masume', 'words.json');
 
-test('§76.1 gridhub words: 既定は冒険のことば。引数で冒険の設定（.masume/words.json）に書き、引数なしで何で決まったかを出す', () => {
+
+test('§76.1 gridhub words: 既定は開発のことば。引数で冒険の設定（.masume/words.json）に書き、引数なしで何で決まったかを出す', (t) => {
   const dir = newDungeon();
-  let r = gridhub(['words', '--dir', dir]);
+  // 既定と設定ファイルを確かめるので、判定の共通の環境変数を外す
+  const none = { env: { GRIDHUB_WORDS: undefined } };
+  const saved = process.env.GRIDHUB_WORDS;
+  delete process.env.GRIDHUB_WORDS;
+  t.after(() => { process.env.GRIDHUB_WORDS = saved; });
+  let r = gridhub(['words', '--dir', dir], none);
   assert.equal(r.code, 0, r.all);
-  assert.match(r.out, /^ことば: 冒険のことば（game。既定）/m);
-  assert.deepEqual(JSON.parse(gridhub(['words', '--dir', dir, '--json']).out), { words: 'game', source: 'default' });
+  assert.match(r.out, /^ことば: 開発のことば（dev。既定）/m);
+  assert.deepEqual(JSON.parse(gridhub(['words', '--dir', dir, '--json'], none).out), { words: 'dev', source: 'default' });
 
   r = gridhub(['words', 'dev', '--dir', dir]);
   assert.equal(r.code, 0, r.all);
@@ -42,10 +48,10 @@ test('§76.1 gridhub words: 既定は冒険のことば。引数で冒険の設�
   assert.equal(r.code, 2);
   assert.match(r.err, /\[E_NO_GAME\]/);
   // 環境変数の知らない値は無視して既定
-  assert.deepEqual(JSON.parse(gridhub(['words', '--dir', empty, '--json'], { env: { GRIDHUB_WORDS: 'klingon' } }).out), { words: 'game', source: 'default' });
+  assert.deepEqual(JSON.parse(gridhub(['words', '--dir', empty, '--json'], { env: { GRIDHUB_WORDS: 'klingon' } }).out), { words: 'dev', source: 'default' });
 });
 
-test('§76.1 開発のことば: brief・step・status・ログの文が開発の言い方になり、冒険のことばでは今までどおり', () => {
+test('§76.1 開発のことば: brief・step・status・ログの文が開発の言い方になり、冒険のことばでは今までどおり', (t) => {
   const dir = newDungeon();
   setCases(dir, 'A1', { 'x が 1': 'ok', 'y が 2': 'fail' });
 
@@ -78,7 +84,10 @@ test('§76.1 開発のことば: brief・step・status・ログの文が開発�
   // JSON は言い方に関係なく同じ形
   assert.equal(JSON.parse(gridhub(['brief', 'a', '--dir', dir, '--json', '--words', 'dev']).out).next_case, 'y が 2');
 
-  // status と、冒険の書（ログ）の文
+  // status と、冒険の書（ログ）の文。ここは設定ファイルで決める
+  const saved = process.env.GRIDHUB_WORDS;
+  delete process.env.GRIDHUB_WORDS;
+  t.after(() => { process.env.GRIDHUB_WORDS = saved; });
   gridhub(['words', 'dev', '--dir', dir]);
   const status = gridhub(['status', '--dir', dir]).out;
   assert.match(status, /合格 \d+・失敗 \d+/);

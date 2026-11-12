@@ -7,6 +7,9 @@ import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// 字を確かめる判定の多くは冒険のことばで書いてある。既定そのものを確かめる判定は、この環境変数を外す
+process.env.GRIDHUB_WORDS ??= 'game';
+
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 export const BIN = join(ROOT, 'bin', 'masume.js');
 
@@ -376,7 +379,8 @@ export async function startChrome({ width = 1440, height = 900 } = {}) {
 }
 
 /** ヘッドレス Chrome を開き、goto / eval / waitFor / screenshot / close を返す */
-export async function openBrowser({ width = 1440, height = 900 } = {}) {
+// words: 字を確かめる判定の多くは冒険のことばで書いてあるので、選択が無ければそれを選んだ状態で開く。既定そのものを確かめるときは null
+export async function openBrowser({ width = 1440, height = 900, words = 'game' } = {}) {
   const { proc, profile, port } = await startChrome({ width, height });
   const targets = await waitUntil(async () => {
     const list = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
@@ -419,6 +423,7 @@ export async function openBrowser({ width = 1440, height = 900 } = {}) {
     });
   await send('Page.enable');
   await send('Runtime.enable');
+  if (words) await send('Page.addScriptToEvaluateOnNewDocument', { source: `try { if (localStorage.getItem('gridhub.words') === null) localStorage.setItem('gridhub.words', ${JSON.stringify(words)}); } catch {}` });
   const page = {
     console: consoleLines,
     async goto(url) {

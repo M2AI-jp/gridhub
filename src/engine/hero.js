@@ -57,6 +57,46 @@ export const THEMES = [
   { id: 'gold', name: '金の方眼', rank: 24 },
 ];
 
+// 開発のことば（§79.33）: 手帳の字のもう1つの言い方。journal の各所の dev に入れて渡す（盤面と gridhub me が選ぶ）
+const SPECIES_DEV = { slime: '青のテスト', bat: '紫のテスト', mushroom: '桃のテスト', ghost: '白のテスト', snake: '緑のテスト', golem: '茶のテスト', dragon: '結合テスト', maou: '最終結合テスト' };
+const ITEMS_DEV = {
+  map: { name: 'プロジェクト開始', how: 'プロジェクトをはじめる' },
+  inn: { name: 'コミット', how: 'セーブする（git commit）' },
+  medal: { name: '一発合格', how: 'タスクを一発で完了する' },
+  potion: { name: 'リグレッション修正', how: '再び落ちたテストを通し直す' },
+  crown: { name: '承認', how: '承認タスクを承認する' },
+  flag: { name: 'push', how: 'GitHub に送る（push）' },
+  lantern: { name: '今日の目標', how: '今日の目標を3つ達成する' },
+  sword: { name: '一括通過', how: '1回の判定でテストを5件以上通す' },
+  scroll: { name: '学びのメモ', how: '何度も落ちたテストのあとにメモを書く' },
+  chest: { name: '判定の不具合報告', how: '判定の不具合を見つけて直してもらう' },
+  bell: { name: '連続記録', how: '何日も続けてテストを通す（3・7・14・30日…）' },
+  shield: { name: 'ノーミス完了', how: '一度も全滅せずに章を完了する' },
+};
+const LORE_DEV = {
+  slime: 'ふつうのテスト。1つの値を確かめる。小さく進めるのがいちばん速い。',
+  bat: '非同期の待ち合わせ（await）を忘れると、通ったり落ちたりする。',
+  mushroom: '直し忘れると増える。落ちたままのテストは早めに片づける。',
+  ghost: 'たまにだけ落ちるテスト（flaky）。時刻と実行順を疑う。',
+  snake: '空・最大・ちょうど境目。入力の長さを確かめると見つかる。',
+  golem: 'ファイルやサーバーを使うテストは、遅いが確実に確かめられる。',
+  dragon: 'モジュールどうしが初めてつながる所。担当がそろうまで始まらない。',
+  maou: '章の最後の E2E。全員がそろってから走る。',
+  map: 'どのプロジェクトも、作りたいものを地図にするところから始まる。',
+  inn: 'セーブは commit。こまめなら、失敗しても失うものは小さい。',
+  medal: '全部通してから宣言した証。',
+  potion: 'リグレッションに気づいて、すぐ直した。',
+  crown: '人間にしか決められないことを、人間が決めた印。',
+  flag: 'GitHub に送った。手元の外にも残る。',
+  lantern: '毎日の小さな一歩。',
+  sword: '1回の判定で5件以上。まとめて前に進んだ。',
+  scroll: '苦戦のあとに書いたメモ。次の担当に引き継がれる。',
+  chest: '判定の不具合を、テストを書き換えずに報告した。',
+  bell: '毎日少しずつが、いちばん強い。',
+  shield: '一度も全滅せずに章を完了した。',
+};
+const SETS_DEV = { boss: '結合テスト', items: '節目' };
+
 // シールのいわれ（§79.28）: 図鑑のひとこと。どれも開発の話
 export const LORE = {
   slime: 'いちばん多い、ふつうのテスト。1つの値を確かめれば倒せる。小さく進む勇者の友。',
@@ -126,6 +166,8 @@ const TITLES = [
 /** ランク L から L+1 に上がるのに要る経験値 */
 const toNext = (level) => 50 + 50 * level;
 
+const TITLES_DEV = [[1, '見習い'], [3, 'ジュニア'], [5, 'ミドル'], [8, 'シニア'], [12, 'リード'], [17, 'スタッフ'], [24, 'プリンシパル'], [32, 'フェロー']];
+
 export function rankOf(xp) {
   let level = 1;
   let floor = 0;
@@ -135,19 +177,20 @@ export function rankOf(xp) {
   }
   const title = TITLES.filter(([from]) => level >= from).at(-1)[1];
   const next = floor + toNext(level);
-  return { level, title, xp, floor, next, into: xp - floor, need: next - floor };
+  const dev = { title: TITLES_DEV.filter(([from]) => level >= from).at(-1)[1] };
+  return { level, title, dev, xp, floor, next, into: xp - floor, need: next - floor };
 }
 
 // ---- 今日のお題（§79.5） ----
 const MISSIONS = {
-  defeat3: { text: 'テストを3件倒す', key: 'defeats', goal: 3 },
-  defeat8: { text: 'テストを8件倒す', key: 'defeats', goal: 8 },
-  clear1: { text: 'ダンジョンを1つ抜ける（宣言判定に通る）', key: 'clears', goal: 1 },
-  clear2: { text: 'ダンジョンを2つ抜ける', key: 'clears', goal: 2 },
-  medal1: { text: '一発で出口を抜ける（ちいさなメダル）', key: 'medals', goal: 1 },
-  note1: { text: '日誌を1つ書く（次の自分への申し送り）', key: 'notes', goal: 1 },
-  sortie1: { text: 'エージェントを出撃させる', key: 'sorties', goal: 1 },
-  step5: { text: '5回歩く（step で小さく確かめる）', key: 'steps', goal: 5 },
+  defeat3: { text: 'テストを3件倒す', dev: 'テストを3件通す', key: 'defeats', goal: 3 },
+  defeat8: { text: 'テストを8件倒す', dev: 'テストを8件通す', key: 'defeats', goal: 8 },
+  clear1: { text: 'ダンジョンを1つ抜ける（宣言判定に通る）', dev: 'タスクを1つ完了する（判定に通る）', key: 'clears', goal: 1 },
+  clear2: { text: 'ダンジョンを2つ抜ける', dev: 'タスクを2つ完了する', key: 'clears', goal: 2 },
+  medal1: { text: '一発で出口を抜ける（ちいさなメダル）', dev: 'タスクを一発で完了する', key: 'medals', goal: 1 },
+  note1: { text: '日誌を1つ書く（次の自分への申し送り）', dev: 'メモを1つ書く（次の担当への引き継ぎ）', key: 'notes', goal: 1 },
+  sortie1: { text: 'エージェントを出撃させる', dev: 'エージェントを起動する', key: 'sorties', goal: 1 },
+  step5: { text: '5回歩く（step で小さく確かめる）', dev: 'step を5回走らせる（小さく確かめる）', key: 'steps', goal: 5 },
 };
 const MISSION_SLOTS = [['defeat3', 'defeat8', 'step5'], ['clear1', 'clear2', 'medal1'], ['note1', 'sortie1', 'step5']];
 
@@ -160,6 +203,53 @@ export function missionsOf(date) {
   });
   return picked.map((id) => ({ id, ...MISSIONS[id] }));
 }
+
+const ACHIEVEMENTS_DEV = {
+  'first-blood': ['はじめの一歩', 'テストを1件通す'],
+  'defeat-10': ['10件通過', 'テストを10件通す'],
+  'defeat-100': ['100件通過', 'テストを100件通す'],
+  'defeat-1000': ['1000件通過', 'テストを1000件通す'],
+  'clear-1': ['タスク完了', 'タスクを1つ完了する'],
+  'clear-50': ['タスク50', 'タスクを50完了する'],
+  'medal-1': ['一発合格', 'タスクを一発で完了する'],
+  'medal-10': ['一発合格10', '一発合格を10回'],
+  'medal-50': ['一発合格50', '一発合格を50回'],
+  'strong-1': ['粘り勝ち', '2回以上落ちたテストを通す'],
+  'comeback': ['大逆転', '5回以上落ちたテストを通す'],
+  'skill-1': ['はじめての学び', '学びを1つ残す（苦戦のあとのメモ）'],
+  'skill-10': ['学びの蓄積', '学びを10残す'],
+  'cure-1': ['見逃さない', '再び落ちたテストを通し直す'],
+  'combo-1': ['一括通過', '1回の判定でテストを5件以上通す'],
+  'gate-1': ['結合成功', '結合テストを通す'],
+  'gate-10': ['結合10', '結合テストを10通す'],
+  'goal-1': ['章を完了', '最終結合テストを通して章を完了する'],
+  'goal-5': ['5章完了', '章を5つ完了する'],
+  'flawless': ['ノーミス', '一度も全滅せずに章を完了する'],
+  'stamp-5': ['承認5回', '承認を5回する'],
+  'note-20': ['筆まめ', 'メモを20書く'],
+  'treasure-1': ['不具合報告', '判定の不具合を見つける'],
+  'save-10': ['こまめなコミット', '10回コミットする'],
+  'push-1': ['初 push', 'GitHub に送る'],
+  'sortie-50': ['エージェント50回', 'エージェントを50回起動する'],
+  'quest-3': ['3プロジェクト', '3つのプロジェクトをはじめる'],
+  'night': ['深夜の開発', '0時〜4時台にテストを通す'],
+  'dawn': ['早朝の開発', '5時〜7時台にテストを通す'],
+  'weekend': ['週末の開発', '土日にテストを通す'],
+  'streak-3': ['3日連続', '3日続けてテストを通す'],
+  'streak-7': ['7日連続', '7日続けてテストを通す'],
+  'streak-30': ['30日連続', '30日続けてテストを通す'],
+  'daily-1': ['目標達成', '今日の目標を3つ全部達成する'],
+  'daily-10': ['目標達成10日', '今日の目標を10日達成する'],
+  'kira-10': ['キラ10枚', 'キラ以上のシールを10枚開ける'],
+  'gold-1': ['金のシール', '金のシールを開ける'],
+  'bags-100': ['開封100', 'シール袋を100開ける'],
+  'trade-1': ['はじめての交換', '交換所でシールを換える'],
+  'paste-5': ['ノートを飾る', 'シールをノートに5枚貼る'],
+  'set-1': ['1列コンプ', 'シール帳の列を1つそろえる'],
+  'title-1': ['実績を表示', '手に入れた実績を名前に添える'],
+  'album-half': ['シール帳 半分', 'シール帳を半分うめる'],
+  'album-full': ['シール帳 全部', 'シール帳をぜんぶうめる'],
+};
 
 // ---- 称号（§79.4） ----
 export const ACHIEVEMENTS = [
@@ -324,29 +414,29 @@ function lootOf(root, events) {
         const species = speciesOf(d.case);
         const rarity = monsterRarity(dice(hashOf(d.seq), d.node, d.case), d.strong);
         find(d, { kind: 'monster', species, rarity, slot: `${species}:${rarity}`, node: d.node, case: d.case,
-          what: `「${short(d.case)}」を倒した${d.strong ? '（強敵）' : ''}`, where: `${d.node}「${short(titleOf(d.node), 28)}」` });
+          what: `「${short(d.case)}」を倒した${d.strong ? '（強敵）' : ''}`, what_dev: `「${short(d.case)}」を通した${d.strong ? '（苦戦）' : ''}`, where: `${d.node}「${short(titleOf(d.node), 28)}」` });
         break;
       }
       case 'gate': {
         const rarity = dice(hashOf(d.seq), 'boss', d.node) < 0.2 ? 'gold' : 'holo';
         find(d, { kind: 'boss', species: 'dragon', rarity, slot: `dragon:${rarity}`, node: d.node,
-          what: `結合ゲート ${d.node} を突破した`, where: `「${short(titleOf(d.node), 32)}」` });
+          what: `結合ゲート ${d.node} を突破した`, what_dev: `結合テスト ${d.node} を通した`, where: `「${short(titleOf(d.node), 32)}」` });
         break;
       }
       case 'goal':
         find(d, { kind: 'maou', species: 'maou', rarity: 'gold', slot: 'maou:gold', node: d.node,
-          what: `魔王の城 ${d.node} を落とした（章のあがり）`, where: `「${short(titleOf(d.node), 32)}」` });
-        if (d.flawless) find(d, item('shield', '一度も倒れずに章をあがった', d.node));
+          what: `魔王の城 ${d.node} を落とした（章のあがり）`, what_dev: `最終結合テスト ${d.node} を通した（章の完了）`, where: `「${short(titleOf(d.node), 32)}」` });
+        if (d.flawless) find(d, item('shield', '一度も倒れずに章をあがった', d.node, '一度も全滅せずに章を完了した'));
         break;
-      case 'quest': find(d, item('map', `冒険『${short(map.quest.title, 32)}』をはじめた`)); break;
-      case 'save': find(d, item('inn', `${d.node ?? 'ふりだし'} でセーブした（commit ${String(d.commit).slice(0, 7)}）`, d.node)); break;
-      case 'medal': find(d, item('medal', `${d.node} を一発で抜けた`, d.node)); break;
-      case 'cure': find(d, item('potion', `復活した「${short(d.case)}」を倒し直した`, d.node)); break;
-      case 'stamp': find(d, item('crown', `${d.node} にハンコを押した`, d.node)); break;
+      case 'quest': find(d, item('map', `冒険『${short(map.quest.title, 32)}』をはじめた`, null, `プロジェクト『${short(map.quest.title, 32)}』をはじめた`)); break;
+      case 'save': find(d, item('inn', `${d.node ?? 'ふりだし'} でセーブした（commit ${String(d.commit).slice(0, 7)}）`, d.node, `${d.node ?? 'スタート'} でコミットした（${String(d.commit).slice(0, 7)}）`)); break;
+      case 'medal': find(d, item('medal', `${d.node} を一発で抜けた`, d.node, `${d.node} を一発で完了した`)); break;
+      case 'cure': find(d, item('potion', `復活した「${short(d.case)}」を倒し直した`, d.node, `再び落ちた「${short(d.case)}」を通し直した`)); break;
+      case 'stamp': find(d, item('crown', `${d.node} にハンコを押した`, d.node, `${d.node} を承認した`)); break;
       case 'push': find(d, item('flag', `GitHub に送った${d.commit ? `（commit ${String(d.commit).slice(0, 7)}）` : ''}`)); break;
-      case 'combo': find(d, item('sword', `1回の判定で ${d.n} 体まとめて倒した`)); break;
-      case 'skill': find(d, item('scroll', `技を覚えた: ${short(d.text, 40)}`, d.node)); break;
-      case 'treasure': find(d, item('chest', `判定のほころびを見つけた（${d.node ?? '?'}）`, d.node)); break;
+      case 'combo': find(d, item('sword', `1回の判定で ${d.n} 体まとめて倒した`, null, `1回の判定でテストを ${d.n} 件まとめて通した`)); break;
+      case 'skill': find(d, item('scroll', `技を覚えた: ${short(d.text, 40)}`, d.node, `学びを残した: ${short(d.text, 40)}`)); break;
+      case 'treasure': find(d, item('chest', `判定のほころびを見つけた（${d.node ?? '?'}）`, d.node, `判定の不具合を見つけた（${d.node ?? '?'}）`)); break;
     }
   }
   const goal = map.quest.goal;
@@ -357,8 +447,8 @@ function lootOf(root, events) {
   };
 }
 
-function item(name, what, node = null) {
-  return { kind: 'item', item: name, rarity: ITEMS[name].rarity, slot: name, node, what };
+function item(name, what, node = null, whatDev = what) {
+  return { kind: 'item', item: name, rarity: ITEMS[name].rarity, slot: name, node, what, what_dev: whatDev };
 }
 
 // ---- 手帳のファイル（<home>/hero.json） ----
@@ -524,7 +614,7 @@ function summarize(book, quests, { current, now }) {
       totals.streak = Math.max(totals.streak, streakRun);
       if (STREAK_MARKS.includes(streakRun)) {
         xp += XP.streak;
-        globals.push({ id: `streak:${streakRun}:${date}`, quest: null, seq: null, ts: d.ts, who: null, ...item('bell', `${streakRun}日つづけてテストを倒した`) });
+        globals.push({ id: `streak:${streakRun}:${date}`, quest: null, seq: null, ts: d.ts, who: null, ...item('bell', `${streakRun}日つづけてテストを倒した`, null, `${streakRun}日続けてテストを通した`) });
       }
     }
     // お題を3つこなした瞬間に、お題のランタン
@@ -532,7 +622,7 @@ function summarize(book, quests, { current, now }) {
       day.doneAt = d.ts;
       totals.dailies++;
       xp += XP.daily;
-      globals.push({ id: `daily:${date}`, quest: null, seq: null, ts: d.ts, who: null, ...item('lantern', `${date} のお題を3つこなした`) });
+      globals.push({ id: `daily:${date}`, quest: null, seq: null, ts: d.ts, who: null, ...item('lantern', `${date} のお題を3つこなした`, null, `${date} の目標を3つ達成した`) });
     }
     reach(d.ts);
   }
@@ -570,7 +660,7 @@ function summarize(book, quests, { current, now }) {
     totals.trades++;
     const got = pick({
       id: `trade:${t.at}:${t.from}`, kind: to.kind, slot: to.slot, species: to.species ?? null, item: null, rarity: to.rarity,
-      what: `交換所で「${SPECIES_JA[slotInfo.get(t.from).species]}（${RARITY_JA[slotInfo.get(t.from).rarity]}）」${t.n}枚と換えた`, ts: t.at, seq: null,
+      what: `交換所で「${SPECIES_JA[slotInfo.get(t.from).species]}（${RARITY_JA[slotInfo.get(t.from).rarity]}）」${t.n}枚と換えた`, what_dev: `交換所で「${SPECIES_DEV[slotInfo.get(t.from).species]}（${RARITY_JA[slotInfo.get(t.from).rarity]}）」${t.n}枚と換えた`, ts: t.at, seq: null,
     });
     const slot = owned.get(t.to) ?? { count: 0, first: null, last: null };
     slot.count++;
@@ -595,6 +685,11 @@ function summarize(book, quests, { current, now }) {
   }
   const album = ALBUM.map((s) => ({
     ...s, name: s.kind === 'item' ? ITEMS[s.item].name : SPECIES_JA[s.species], rarity_ja: RARITY_JA[s.rarity], lore: LORE[s.kind === 'item' ? s.item : s.species] ?? '',
+    dev: {
+      name: s.kind === 'item' ? ITEMS_DEV[s.item].name : SPECIES_DEV[s.species],
+      lore: LORE_DEV[s.kind === 'item' ? s.item : s.species] ?? '',
+      how: s.kind === 'item' ? ITEMS_DEV[s.item].how : s.kind === 'boss' ? '結合テストを通す' : s.kind === 'maou' ? '最終結合テストを通して章を完了する' : 'テストを通す（名前で色が決まる。レア度はハッシュのサイコロ）',
+    },
     how: s.kind === 'item' ? ITEMS[s.item].how : s.kind === 'boss' ? '結合ゲート（中ボス）を突破する' : s.kind === 'maou' ? '章をあがる（魔王の城）' : 'テストを倒す（名前で種類が決まる。レア度はハッシュのサイコロ）',
     count: owned.get(s.slot)?.count ?? 0, first: owned.get(s.slot)?.first ?? null, last: owned.get(s.slot)?.last ?? null,
     pasted: pastedBySlot.get(s.slot) ?? 0, free: Math.max(0, (owned.get(s.slot)?.count ?? 0) - (pastedBySlot.get(s.slot) ?? 0)),
@@ -610,7 +705,7 @@ function summarize(book, quests, { current, now }) {
     { id: 'items', name: '出来事', slots: album.filter((a) => a.kind === 'item') },
   ].map((set) => {
     const owned = set.slots.filter((a) => a.count > 0).length;
-    return { id: set.id, name: set.name, owned, total: set.slots.length, done: owned === set.slots.length };
+    return { id: set.id, name: set.name, dev: { name: SETS_DEV[set.id] ?? SPECIES_DEV[set.id] }, owned, total: set.slots.length, done: owned === set.slots.length };
   });
   xp += sets.filter((x) => x.done).length * SET_XP;
   totals.sets = sets.filter((x) => x.done).length;
@@ -622,7 +717,7 @@ function summarize(book, quests, { current, now }) {
   const achievements = ACHIEVEMENTS.map((a) => {
     const nowValue = Math.min(totals[a.counter] ?? 0, a.goal);
     const done = (totals[a.counter] ?? 0) >= a.goal;
-    return { id: a.id, name: a.name, desc: a.desc, goal: a.goal, now: nowValue, done, at: done ? achievedAt.get(a.id) ?? null : null, fresh: done && !acked.has(a.id) };
+    return { id: a.id, name: a.name, desc: a.desc, dev: { name: ACHIEVEMENTS_DEV[a.id][0], desc: ACHIEVEMENTS_DEV[a.id][1] }, goal: a.goal, now: nowValue, done, at: done ? achievedAt.get(a.id) ?? null : null, fresh: done && !acked.has(a.id) };
   });
 
   // スタンプカード（この90日）と続いた日数
@@ -642,7 +737,7 @@ function summarize(book, quests, { current, now }) {
 
   // 今日のお題
   const todayStats = days.get(today) ?? dayOf(today);
-  const missions = missionsOf(today).map((m) => ({ id: m.id, text: m.text, goal: m.goal, now: Math.min(todayStats[m.key] ?? 0, m.goal), done: (todayStats[m.key] ?? 0) >= m.goal }));
+  const missions = missionsOf(today).map((m) => ({ id: m.id, text: m.text, dev: { text: m.dev }, goal: m.goal, now: Math.min(todayStats[m.key] ?? 0, m.goal), done: (todayStats[m.key] ?? 0) >= m.goal }));
 
   // いまの冒険の「留守のあいだ」（前に読んだ seq より後の手柄）
   let here = null;
@@ -671,7 +766,7 @@ function summarize(book, quests, { current, now }) {
       key: q.key, title: q.title, head: q.head, seen: firstSeen ? null : seen, mvp, sortie: lastSortie(q),
       pasted: (book.pasted[q.key] ?? []).filter((p) => slotOf.has(p.slot)).map((p, index) => {
         const a = slotOf.get(p.slot);
-        return { index, slot: p.slot, page: p.page, x: p.x, y: p.y, r: p.r, kind: a.kind, species: a.species ?? null, item: a.item ?? null, rarity: a.rarity, name: a.kind === 'item' ? ITEMS[a.item].name : SPECIES_JA[a.species] };
+        return { index, slot: p.slot, page: p.page, x: p.x, y: p.y, r: p.r, kind: a.kind, species: a.species ?? null, item: a.item ?? null, rarity: a.rarity, name: a.kind === 'item' ? ITEMS[a.item].name : SPECIES_JA[a.species], dev: { name: a.kind === 'item' ? ITEMS_DEV[a.item].name : SPECIES_DEV[a.species] } };
       }),
       since: {
         first: firstSeen,
@@ -712,16 +807,16 @@ function summarize(book, quests, { current, now }) {
     today,
     rank,
     rank_seen: book.rank,
-    epithet: titled ? { id: titled.id, name: titled.name } : null,
+    epithet: titled ? { id: titled.id, name: titled.name, dev: { name: titled.dev.name } } : null,
     themes: THEMES.map((t) => ({ ...t, unlocked: rank.level >= t.rank })),
     theme: THEMES.find((t) => t.id === book.theme && rank.level >= t.rank)?.id ?? 'note',
     records,
     totals,
     streak: { current: streak, best: totals.streak, today: played(today) },
     calendar,
-    daily: { date: today, missions, done: missions.every((m) => m.done), reward: ITEMS.lantern.name, xp: XP.daily },
+    daily: { date: today, missions, done: missions.every((m) => m.done), reward: ITEMS.lantern.name, dev: { reward: ITEMS_DEV.lantern.name }, xp: XP.daily },
     album: { total: ALBUM.length, owned: totals.album, slots: album, sets, set_xp: SET_XP },
-    next_achievement: next ? { id: next.id, name: next.name, desc: next.desc, now: next.now, goal: next.goal } : null,
+    next_achievement: next ? { id: next.id, name: next.name, desc: next.desc, dev: next.dev, now: next.now, goal: next.goal } : null,
     bags: { count: unopened.length, next: unopened.slice(0, BAG_PREVIEW).map(pick), latest: unopened.slice(-30).map(pick) },
     achievements,
     current: here,
@@ -750,6 +845,7 @@ function pick(f) {
     id: f.id, kind: f.kind, slot: f.slot, species: f.species ?? null, item: f.item ?? null, rarity: f.rarity,
     rarity_ja: RARITY_JA[f.rarity],
     name: f.kind === 'item' ? ITEMS[f.item].name : SPECIES_JA[f.species],
+    dev: { name: f.kind === 'item' ? ITEMS_DEV[f.item].name : SPECIES_DEV[f.species], what: f.what_dev ?? f.what },
     what: f.what, where: f.where ?? null, who: f.who ?? null, title: f.title ?? null, ts: f.ts, seq: f.seq, node: f.node ?? null,
   };
 }

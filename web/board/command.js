@@ -244,6 +244,40 @@ function renderPartyStatus() {
 }
 
 /** 出撃中の様子を見張る（本物の盤面だけ） */
+/**
+ * 進軍のレーンから出撃する（§80.8）。既定（party.json の agent・parallel）と、選んだ作戦で。
+ * 既定のエージェントが決まっていなければ、いつもの窓を開いて選んでもらう。
+ */
+export async function quickSortie(ids, tactic) {
+  if (!ctx?.live) {
+    ctx?.toast({ text: t('sortie.demo'), ok: null });
+    return null;
+  }
+  let p = null;
+  try {
+    const r = await fetch('api/party', { cache: 'no-store' });
+    if (r.ok) p = await r.json();
+  } catch {
+    p = null;
+  }
+  if (p?.agent !== 'claude' && p?.agent !== 'codex') {
+    $('#sortie-open').click();
+    return null;
+  }
+  const body = { agent: p.agent, only: ids, tactic: TACTICS.includes(tactic) ? tactic : 'balanced' };
+  if (Number.isInteger(p.parallel) && p.parallel >= 1 && p.parallel <= 8) body.parallel = p.parallel;
+  if (p.agent === 'codex') body.allow_listen = p.allow_listen === true;
+  const j = await ctx.post('api/sortie', body);
+  if (j && j.ok !== false) {
+    ctx.toast({ text: t('sortie.went', p.agent, TACTIC_JA[body.tactic]), ok: null, type: 'battle' });
+    party.running = true;
+    renderPartyStatus();
+    pollParty(true);
+  }
+  return j;
+}
+export const partyRunning = () => party.running;
+
 export function pollParty(now = false) {
   if (!ctx?.live) return;
   clearTimeout(partyTimer);
@@ -383,6 +417,13 @@ export async function pushGit() {
   gitPushing = false;
   btn.textContent = t('git.push');
   await refreshGit();
+  return j;
+}
+
+/** 進軍の帯の git push（§80.8）: まだ送っていないセーブがあるときだけ、その数を返す。無ければ null */
+export function unpushed() {
+  if (gitState !== 'unpushed') return null;
+  return gitLast?.ahead ?? 0;
 }
 
 /** ことばが切り替わったら、窓口を読み直さずに、手元にあるもので描き直す（§75） */

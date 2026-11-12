@@ -151,7 +151,7 @@ test('§79.16〜§79.18 交換所（6枚あれば5枚を1つ上のレア度1枚�
   assert.equal(ach(journal, 'trade-1'), true, '交換所デビュー');
   const done = journal.achievements.find((a) => a.done);
   const titled = hero.setTitle(home, { id: done.id });
-  assert.deepEqual(titled.epithet, { id: done.id, name: done.name });
+  assert.deepEqual(titled.epithet, { id: done.id, name: done.name, dev: { name: done.dev.name } });
   assert.equal(ach(titled, 'title-1'), true, '名乗りを上げる');
   assert.throws(() => hero.setTitle(home, { id: 'album-full' }), (e) => e.code === 'E_HERO', 'まだの称号は名乗れない');
   assert.equal(hero.setTitle(home, { id: null }).epithet, null);
@@ -197,4 +197,29 @@ test('§79.4・§79.11・§79.16 レビューで見つかったこと: 交換で
   assert.equal(marked.current.seen, 100);
   assert.ok(marked.current.since.defeats > 0, '100 より後の手柄は、まだ見ていない');
   assert.equal(hero.markSeen(home, { current: ROOT, seq: 10 ** 9 }).current.seen, marked.current.head);
+});
+
+test('§79.33 手帳の字は開発のことばでも読める: dev の字に冒険の言い方が混ざらない。gridhub me も切り替わる', () => {
+  const dir = tutorial();
+  passA1(dir);
+  assert.equal(masume(['check', 'apprentice', '--dir', dir]).code, 0);
+  const home = tmp('gridhub-e20-home-');
+  const j = me(dir, home);
+  const GAME = /勇者|倒|ダンジョン|冒険|魔王|ハンコ|日誌|出撃|お題|あがり|スライム|ゴーレム|ドラゴン/u;
+  const texts = [
+    j.rank.dev.title,
+    j.daily.dev.reward,
+    ...j.daily.missions.map((m) => m.dev.text),
+    ...j.achievements.flatMap((a) => [a.dev.name, a.dev.desc]),
+    ...j.album.slots.flatMap((s) => [s.dev.name, s.dev.how, s.dev.lore]),
+    ...j.album.sets.map((s) => s.dev.name),
+    ...j.bags.next.flatMap((f) => [f.dev.name, f.dev.what]),
+  ];
+  assert.ok(texts.every((x) => typeof x === 'string' && x.length > 0), '字が欠けていない');
+  assert.deepEqual(texts.filter((x) => GAME.test(x)), [], '開発のことばに冒険の言い方が混ざらない');
+  const dev = masume(['me', '--dir', dir, '--home', home, '--words', 'dev']);
+  assert.equal(dev.code, 0, dev.all);
+  assert.match(dev.all, /通ったテスト/);
+  assert.doesNotMatch(dev.all, /勇者|倒した|ダンジョン|スタンプカード/u);
+  assert.match(masume(['me', '--dir', dir, '--home', home]).all, /勇者の手帳/);
 });

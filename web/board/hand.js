@@ -122,6 +122,8 @@ export function initHand({ live, post, toast, app = false }) {
     show('#hand-step', task && !stamp);
     show('#hand-check', task && !stamp);
     show('#hand-stamp', stamp && me.kind === 'human' && n.check.by === me.id);
+    // チュートリアルなど見本があるマスは、1回押すだけで先へ進める
+    show('#hand-quick', (data.solutions ?? []).length > 0 && (n.check?.kind === 'cmd' || (stamp && me.kind === 'human' && n.check.by === me.id)));
     show('#hand-battle', n?.type === 'gate' && (b.waiting_for ?? []).length === 0);
     show('.hand-edit', ((data.territory ?? []).length > 0 || (data.review ?? []).length > 0) && n !== null);
   }
@@ -265,11 +267,34 @@ export function initHand({ live, post, toast, app = false }) {
       });
       return;
     }
+    if (t.id === 'hand-quick') {
+      if (busy || !character) return;
+      const current = data.brief.current;
+      setBusy(true);
+      try {
+        for (const file of data.solutions ?? []) {
+          const saved = await post('api/file', { character, path: file.path, content: file.content });
+          if (!saved?.ok) return void message(say('hand.msg.fail', saved?.error || saved?.code || ''), false);
+        }
+        const stamping = current.check?.kind === 'stamp';
+        const j = await post(stamping ? 'api/stamp' : 'api/check', stamping ? { node: current.id, as: character } : { character });
+        if (!j?.ok) return void message(say('hand.msg.fail', j?.error || j?.code || ''), false);
+        if (j.ready) toast({ text: say('toast.ready', j.ready), ok: null, type: 'battle' });
+        if ((stamping || j.passed) && document.body.dataset.mode === 'march') panel.hidden = true;
+        else if (!stamping && !j.passed) message(say('hand.msg.check.ng'), false);
+      } finally {
+        await load();
+        setBusy(false);
+      }
+      return;
+    }
     if (t.id === 'hand-stamp') {
       const node = data.brief.current.id;
       await act('api/stamp', { node, as: character }, (j) => {
         message(say('hand.msg.stamp', node, j.ready), true);
         if (j.ready) toast({ text: say('toast.ready', j.ready), ok: null, type: 'battle' });
+        // 進軍では欄を閉じて、キャラクターが先へ進むところを見せる
+        if (document.body.dataset.mode === 'march') panel.hidden = true;
       });
       return;
     }
