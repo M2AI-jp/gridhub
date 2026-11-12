@@ -150,6 +150,8 @@ test('§80.8 人が判定に落ちても、押せるボタンが残り、やり�
     await page.goto(`${srv.url}/`);
     await page.waitFor(READY, { timeout: 20000 });
     await page.waitFor(`document.querySelector('.march-cmd[data-kind=check][data-char=a]')`, { timeout: 10000, message: '判定のボタン' });
+    assert.match(await page.eval(`document.querySelector('.march-cmd[data-kind=check][data-char=a]').innerText`), /0\/\d/, '通ったテストの数が見える');
+    assert.equal(await page.eval(`document.querySelector('.march-cmd[data-kind=check][data-char=a]').dataset.ready`), 'false');
     // テストが落ちたまま判定する
     await page.eval(`document.querySelector('.march-cmd[data-kind=check][data-char=a]').click()`);
     await page.waitFor(`${lane}.status === 'down'`, { timeout: 60000, message: '判定に落ちる' });
@@ -160,6 +162,40 @@ test('§80.8 人が判定に落ちても、押せるボタンが残り、やり�
     const before = await page.eval(pos);
     await page.eval(`document.querySelector('.march-cmd[data-kind=check][data-char=a]').click()`);
     await page.waitFor(`${pos} > ${before}`, { timeout: 60000, message: 'やり直して通ると進む' });
+    assert.deepEqual(page.console.filter((l) => l.startsWith('[exception]') || l.startsWith('[error]')), []);
+  } finally {
+    await page.close();
+    await srv.stop();
+  }
+});
+
+test('§80.8 レーンの承認: 欄は1枚だけ開き、承認に通ると閉じて先へ進む', { timeout: 120000 }, async () => {
+  const dir = tmp('gridhub-g10-stamp-');
+  setupDungeon(dir, {});
+  assert.equal(masume(['new', 'dungeon.map.json'], { cwd: dir, env: ENV }).code, 0);
+  const srv = await startServeEnv(dir, ENV);
+  const page = await openBrowser({ width: 1440, height: 900 });
+  try {
+    await page.goto(`${srv.url}/`);
+    await page.waitFor(READY, { timeout: 20000 });
+    const button = `document.querySelector('.march-cmd[data-kind=stamp][data-char=h]')`;
+    await page.waitFor(button, { timeout: 10000, message: '承認のボタン' });
+    await page.eval(`${button}.click()`);
+    await page.waitFor(`!document.querySelector('#hand').hidden && document.querySelector('#hand-stamp')`, { timeout: 10000, message: '手で進める欄が開く' });
+    assert.equal(await page.eval(`document.body.classList.contains('drawer-open')`), false, '右の欄は重ねない');
+    await page.waitFor(`document.querySelector('#hand-stamp').offsetParent && !document.querySelector('#hand-stamp').disabled && document.querySelector('#hand').innerText.includes('H1')`, { timeout: 10000, message: '読み込みが終わる' });
+    await new Promise((r) => setTimeout(r, 500));
+    // キーだけで: Esc で閉じて Space で開き、Enter で承認する
+    const key = (k) => page.eval(`document.body.dispatchEvent(new KeyboardEvent('keydown', { key: ${JSON.stringify(k)}, bubbles: true, cancelable: true }))`);
+    await key('Escape');
+    assert.equal(await page.eval(`document.querySelector('#hand').hidden`), true, 'Esc で閉じる');
+    await page.eval(`document.activeElement?.blur?.()`);
+    await page.eval(`document.querySelector('.march-cmd[data-kind=stamp][data-char=h]').click()`);
+    await page.waitFor(`!document.querySelector('#hand').hidden && document.querySelector('#hand-stamp').offsetParent && !document.querySelector('#hand-stamp').disabled`, { timeout: 10000, message: 'もう一度開く' });
+    await new Promise((r) => setTimeout(r, 500));
+    await key('Enter');
+    await page.waitFor(`document.querySelector('#hand').hidden`, { timeout: 10000, message: '承認に通ると閉じる' });
+    await page.waitFor(`window.__masume.view.characters.find((c) => c.id === 'h').pos === 1`, { timeout: 10000, message: '先へ進む' });
     assert.deepEqual(page.console.filter((l) => l.startsWith('[exception]') || l.startsWith('[error]')), []);
   } finally {
     await page.close();

@@ -1,6 +1,12 @@
 // 進軍（CONTRACTS §80）: 担当ごとの横レーン。まだ通っていないテスト1件が、レーンを塞ぐ敵1体。
 // 状態はすべてビューと記録から導く。ここは見せ方だけで、書き込まない。盤面の担当
-import { compose, POSES, toCanvas, bust, BUST, mob, flies, boss, FOOT, CENTER } from './march-art.js';
+import { compose, POSES, toCanvas, bust, BUST, mob, flies, boss, FOOT, CENTER, hasArt, mobHasArt } from './march-art.js';
+import { SCENES as ART_SCENES, SCENE_OF } from './art/index.js';
+import { toCanvas as surfaceCanvas, paint } from './art/sprite.js';
+import barnArt from './art/env/cottage2.js';
+import wellArt from './art/env/well.js';
+import cottageArt from './art/env/cottage.js';
+const ENV = { barn: barnArt, well: wellArt, cottage: cottageArt };
 import { t } from './words.js';
 import { own } from './sketch.js';
 import { laneStatus, foesOf, commandOf, nextCommand, routeOf, foesToGate, arenasOf, laneOrder, travelOf, chainNameOf, toolsOf, streakOf } from './march-status.js';
@@ -419,40 +425,103 @@ function buildScene(i, LH) {
   return { sky, far, mid, ground };
 }
 
-// 字: DotGothic16 を 1px ずつの点に落とす（滲ませない）
+// 字: 半角は手で描いた 6×12 の細い字、ほかは DotGothic16 を細く 1px の点に落とす（ドカポン4の窓の字）
+const HALF = {
+  0: ['.####.', '#....#', '#...##', '#..#.#', '#.#..#', '##...#', '#....#', '#....#', '.####.'], 1: ['..#...', '.##...', '#.#...', '..#...', '..#...', '..#...', '..#...', '..#...', '#####.'],
+  2: ['.####.', '#....#', '.....#', '....#.', '...#..', '..#...', '.#....', '#.....', '######'], 3: ['.####.', '#....#', '.....#', '..###.', '.....#', '.....#', '.....#', '#....#', '.####.'],
+  4: ['....#.', '...##.', '..#.#.', '.#..#.', '#...#.', '######', '....#.', '....#.', '....#.'], 5: ['######', '#.....', '#.....', '#####.', '.....#', '.....#', '.....#', '#....#', '.####.'],
+  6: ['.####.', '#.....', '#.....', '#####.', '#....#', '#....#', '#....#', '#....#', '.####.'], 7: ['######', '.....#', '....#.', '....#.', '...#..', '...#..', '..#...', '..#...', '..#...'],
+  8: ['.####.', '#....#', '#....#', '.####.', '#....#', '#....#', '#....#', '#....#', '.####.'], 9: ['.####.', '#....#', '#....#', '#....#', '.#####', '.....#', '.....#', '.....#', '.####.'],
+  '/': ['.....#', '....#.', '....#.', '...#..', '...#..', '..#...', '..#...', '.#....', '#.....'], '-': ['......', '......', '......', '......', '######', '......', '......', '......', '......'],
+  ':': ['......', '......', '..#...', '......', '......', '......', '..#...', '......', '......'], '.': ['......', '......', '......', '......', '......', '......', '......', '..#...', '......'],
+  ' ': ['......', '......', '......', '......', '......', '......', '......', '......', '......'], '!': ['..#...', '..#...', '..#...', '..#...', '..#...', '..#...', '......', '..#...', '......'],
+  L: ['#.....', '#.....', '#.....', '#.....', '#.....', '#.....', '#.....', '#.....', '######'], v: ['......', '......', '......', '#....#', '#....#', '.#..#.', '.#..#.', '..##..', '..##..'],
+  G: ['.####.', '#....#', '#.....', '#.....', '#..###', '#....#', '#....#', '#....#', '.####.'], H: ['#....#', '#....#', '#....#', '#....#', '######', '#....#', '#....#', '#....#', '#....#'],
+  P: ['#####.', '#....#', '#....#', '#....#', '#####.', '#.....', '#.....', '#.....', '#.....'], A: ['..##..', '.#..#.', '#....#', '#....#', '######', '#....#', '#....#', '#....#', '#....#'],
+  S: ['.####.', '#....#', '#.....', '.####.', '.....#', '.....#', '.....#', '#....#', '.####.'], F: ['######', '#.....', '#.....', '#####.', '#.....', '#.....', '#.....', '#.....', '#.....'],
+  I: ['.###..', '..#...', '..#...', '..#...', '..#...', '..#...', '..#...', '..#...', '.###..'], E: ['######', '#.....', '#.....', '#####.', '#.....', '#.....', '#.....', '#.....', '######'],
+  M: ['#....#', '##..##', '#.##.#', '#.##.#', '#....#', '#....#', '#....#', '#....#', '#....#'], N: ['#....#', '##...#', '#.#..#', '#.#..#', '#..#.#', '#..#.#', '#...##', '#...##', '#....#'],
+  O: ['.####.', '#....#', '#....#', '#....#', '#....#', '#....#', '#....#', '#....#', '.####.'], T: ['######', '..#...', '..#...', '..#...', '..#...', '..#...', '..#...', '..#...', '..#...'],
+  U: ['#....#', '#....#', '#....#', '#....#', '#....#', '#....#', '#....#', '#....#', '.####.'], R: ['#####.', '#....#', '#....#', '#####.', '#..#..', '#...#.', '#...#.', '#....#', '#....#'],
+  K: ['#....#', '#...#.', '#..#..', '#.#...', '##....', '#.#...', '#..#..', '#...#.', '#....#'], B: ['#####.', '#....#', '#....#', '#####.', '#....#', '#....#', '#....#', '#....#', '#####.'],
+  C: ['.####.', '#....#', '#.....', '#.....', '#.....', '#.....', '#.....', '#....#', '.####.'], D: ['####..', '#...#.', '#....#', '#....#', '#....#', '#....#', '#....#', '#...#.', '####..'],
+  X: ['#....#', '#....#', '.#..#.', '..##..', '..##..', '.#..#.', '#....#', '#....#', '#....#'], Y: ['#....#', '#....#', '.#..#.', '..##..', '..#...', '..#...', '..#...', '..#...', '..#...'],
+  a: ['......', '......', '......', '.####.', '.....#', '.#####', '#....#', '#...##', '.###.#'],
+  b: ['#.....', '#.....', '#.....', '#.###.', '##...#', '#....#', '#....#', '##...#', '#.###.'],
+  c: ['......', '......', '......', '.####.', '#....#', '#.....', '#.....', '#....#', '.####.'],
+  d: ['.....#', '.....#', '.....#', '.###.#', '#...##', '#....#', '#....#', '#...##', '.###.#'],
+  e: ['......', '......', '......', '.####.', '#....#', '######', '#.....', '#....#', '.####.'],
+  f: ['..###.', '.#....', '.#....', '####..', '.#....', '.#....', '.#....', '.#....', '.#....'],
+  g: ['......', '......', '.####.', '#....#', '#....#', '.#####', '.....#', '#....#', '.####.'],
+  h: ['#.....', '#.....', '#.....', '#.###.', '##...#', '#....#', '#....#', '#....#', '#....#'],
+  i: ['..#...', '......', '......', '.##...', '..#...', '..#...', '..#...', '..#...', '.###..'],
+  j: ['....#.', '......', '......', '...##.', '....#.', '....#.', '....#.', '#...#.', '.###..'],
+  k: ['#.....', '#.....', '#.....', '#...#.', '#..#..', '###...', '#..#..', '#...#.', '#....#'],
+  l: ['.##...', '..#...', '..#...', '..#...', '..#...', '..#...', '..#...', '..#...', '.###..'],
+  m: ['......', '......', '......', '##.##.', '#.#..#', '#.#..#', '#.#..#', '#.#..#', '#.#..#'],
+  n: ['......', '......', '......', '#.###.', '##...#', '#....#', '#....#', '#....#', '#....#'],
+  o: ['......', '......', '......', '.####.', '#....#', '#....#', '#....#', '#....#', '.####.'],
+  p: ['......', '......', '#.###.', '##...#', '#....#', '#....#', '#####.', '#.....', '#.....'],
+  q: ['......', '......', '.###.#', '#...##', '#....#', '#....#', '.#####', '.....#', '.....#'],
+  r: ['......', '......', '......', '#.###.', '##...#', '#.....', '#.....', '#.....', '#.....'],
+  s: ['......', '......', '......', '.#####', '#.....', '.####.', '.....#', '.....#', '#####.'],
+  t: ['.#....', '.#....', '####..', '.#....', '.#....', '.#....', '.#....', '.#..#.', '..##..'],
+  u: ['......', '......', '......', '#....#', '#....#', '#....#', '#....#', '#...##', '.###.#'],
+  v: ['......', '......', '......', '#....#', '#....#', '.#..#.', '.#..#.', '..##..', '..##..'],
+  w: ['......', '......', '......', '#....#', '#....#', '#.##.#', '#.##.#', '#.##.#', '.#..#.'],
+  x: ['......', '......', '......', '#....#', '.#..#.', '..##..', '..##..', '.#..#.', '#....#'],
+  y: ['......', '......', '#....#', '#....#', '#....#', '.#####', '.....#', '#....#', '.####.'],
+  z: ['......', '......', '......', '######', '....#.', '...#..', '..#...', '.#....', '######'],
+  '_': ['......', '......', '......', '......', '......', '......', '......', '......', '######'],
+  '(': ['...#..', '..#...', '.#....', '.#....', '.#....', '.#....', '.#....', '..#...', '...#..'],
+  ')': ['..#...', '...#..', '....#.', '....#.', '....#.', '....#.', '....#.', '...#..', '..#...'],
+  W: ['#....#', '#....#', '#....#', '#....#', '#.##.#', '#.##.#', '#.##.#', '##..##', '#....#'], V: ['#....#', '#....#', '#....#', '#....#', '#....#', '.#..#.', '.#..#.', '..##..', '..##..'],
+};
 const TEXT = new Map();
+const glyphCanvas = document.createElement('canvas');
+glyphCanvas.width = 24;
+glyphCanvas.height = 20;
+const gx = glyphCanvas.getContext('2d', { willReadFrequently: true });
 function textCanvas(str, color, shadow) {
   const key = `${str}|${color}|${shadow}`;
   const hit = TEXT.get(key);
   if (hit) return hit;
   if (TEXT.size > 900) TEXT.clear();
-  const m = document.createElement('canvas').getContext('2d');
-  m.font = FONT;
-  const w = Math.ceil(m.measureText(str).width) + 3;
+  gx.font = FONT;
+  // 1 文字ずつ点に落とす
+  const cols = [];
+  for (const ch of Array.from(String(str))) {
+    const g = HALF[ch];
+    if (g) {
+      const tall = [g[0], g[1], g[1], g[2], g[3], g[4], g[4], g[5], g[6], g[6], g[7], g[8]];
+      const m = Array.from({ length: 7 }, (_, i) => Array.from({ length: 20 }, (_, j) => (j >= 3 && j < 15 && i < 6 && tall[j - 3][i] === '#' ? 1 : 0)));
+      cols.push(...m);
+      continue;
+    }
+    gx.clearRect(0, 0, 24, 20);
+    gx.textBaseline = 'alphabetic';
+    gx.fillStyle = '#ffffff';
+    gx.fillText(ch, 0, 15);
+    const adv = Math.max(4, Math.round(gx.measureText(ch).width));
+    const d = gx.getImageData(0, 0, 24, 20).data;
+    for (let i = 0; i < adv; i++) cols.push(Array.from({ length: 20 }, (_, j) => (d[(j * 24 + i) * 4 + 3] > 200 ? 1 : 0)));
+  }
+  const w = cols.length + 3;
   const c = document.createElement('canvas');
   c.width = w;
   c.height = 20;
-  const x = c.getContext('2d', { willReadFrequently: true });
-  x.font = FONT;
-  x.textBaseline = 'alphabetic';
-  x.fillStyle = '#ffffff';
-  x.fillText(str, 0, 15);
-  const d = x.getImageData(0, 0, w, 20);
+  const x = c.getContext('2d');
+  const img = x.createImageData(w, 20);
   const n = (hex) => [1, 3, 5].map((k) => parseInt(hex.slice(k, k + 2), 16));
   const col = n(color);
   const sh = shadow ? n(shadow) : null;
-  const on = new Uint8Array(w * 20);
-  for (let i = 0; i < on.length; i++) on[i] = d.data[i * 4 + 3] > 110 ? 1 : 0;
-  d.data.fill(0);
+  const on = (i, j) => i >= 0 && i < cols.length && j >= 0 && cols[i][j] === 1;
   for (let j = 0; j < 20; j++) for (let i = 0; i < w; i++) {
     const o = (j * w + i) * 4;
-    if (on[j * w + i]) {
-      d.data.set([col[0], col[1], col[2], 255], o);
-    } else if (sh && ((i > 0 && on[j * w + i - 1]) || (j > 0 && on[(j - 1) * w + i]) || (i > 0 && j > 0 && on[(j - 1) * w + i - 1]))) {
-      d.data.set([sh[0], sh[1], sh[2], 255], o);
-    }
+    if (on(i, j)) img.data.set([col[0], col[1], col[2], 255], o);
+    else if (sh && (on(i - 1, j) || on(i, j - 1) || on(i - 1, j - 1))) img.data.set([sh[0], sh[1], sh[2], 255], o);
   }
-  x.putImageData(d, 0, 0);
+  x.putImageData(img, 0, 0);
   TEXT.set(key, c);
   return c;
 }
@@ -460,7 +529,7 @@ function textCanvas(str, color, shadow) {
 const ENEMIES = { sage: ['slime', 'mushroom'], scribe: ['slime', 'skeleton'], herald: ['ghost', 'bat'], cartographer: ['slime', 'imp'], painter: ['mushroom', 'ghost'], hero: ['imp', 'bat', 'skeleton'] };
 const TINTS = ['green', 'orange', 'blue', 'ice', 'purple', 'red'];
 const LANE_COLOR = { blue: '#4a8cff', yellow: '#ffd84a', green: '#46c868', orange: '#ff9040', pink: '#ff72b4', purple: '#7a5ae6', mint: '#5ae0c0', gray: '#a8acb8' };
-const STATUS_COLOR = { working: '#ff9a5a', ready: '#c8c4dc', turn: '#ffd84a', camp: '#a4e464', waiting: '#9ee8ff', down: '#ff5a5a', done: '#ffd84a' };
+const STATUS_COLOR = { working: '#f0b080', ready: '#f0f0f0', turn: '#f0d878', camp: '#b8e090', waiting: '#a8d8f0', down: '#f08a7a', done: '#f0d878' };
 
 const seqRoll = (e) => {
   // 判定の出目は演出。成功なら 11〜20、失敗なら 1〜10（結果はテストが決める）
@@ -506,7 +575,20 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
   const arenaScenes = new Map();
   const arenaScene = (goal, h) => {
     const key = `${goal}/${h}`;
-    if (!arenaScenes.has(key)) arenaScenes.set(key, buildArena(goal, h));
+    if (!arenaScenes.has(key)) {
+      // 描き直した舞台を戦場の高さで作る（門は村、魔王は暗い森）。無ければ前の戦場
+      const sc = ART_SCENES[goal ? 'forest2' : 'village1'];
+      if (sc) {
+        const b = sc.build(h);
+        const c = document.createElement('canvas');
+        c.width = LW;
+        c.height = h;
+        const x = c.getContext('2d');
+        for (const L of b.layers) x.drawImage(surfaceCanvas(L.s), 0, 0);
+        if (goal) { x.fillStyle = 'rgba(40,0,20,.35)'; x.fillRect(0, 0, LW, h); }
+        arenaScenes.set(key, c);
+      } else arenaScenes.set(key, buildArena(goal, h));
+    }
     return arenaScenes.get(key);
   };
   const REST_LEN = 250;
@@ -514,7 +596,10 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
   const heroX = () => PLATE + 36;
   const contact = () => heroX() + 34;
   const mobs = {};
-  const mobOf = (kind, tint) => (mobs[`${kind}/${tint}`] ??= [toCanvas(mob(kind, tint, 0)), toCanvas(mob(kind, tint, 1))]);
+  // 敵の絵: [歩き0〜3, のけぞり]。描き直した敵が無ければ前の 2 枚を繰り返す
+  const mobOf = (kind, tint, strong = false) => (mobs[`${kind}/${tint}/${strong}`] ??= mobHasArt(kind)
+    ? [0, 1, 2, 3, 'hit'].map((f) => toCanvas(mob(kind, tint, f, strong)))
+    : [0, 1, 0, 1, 0].map((f) => toCanvas(mob(kind, tint, f))));
   let golem = null;
   let demon = null;
   const scenes = new Map();
@@ -522,6 +607,26 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const key = `${i % SCENES.length}/${LH}`;
     if (!scenes.has(key)) scenes.set(key, buildScene(i % SCENES.length, LH));
     return scenes.get(key);
+  };
+  // 描き直した舞台（art/places.js）。職業ごとに決まった場所を行く
+  const artScenes = new Map();
+  const artSceneFor = (l) => {
+    const id = Object.hasOwn(SCENE_OF, l.c.job ?? '') ? SCENE_OF[l.c.job] : null;
+    const sc = id && Object.hasOwn(ART_SCENES, id) ? ART_SCENES[id] : null;
+    if (!sc) return null;
+    const key = `${sc.id}/${LH}`;
+    if (!artScenes.has(key)) {
+      const b = sc.build(LH);
+      const conv = (L) => ({ k: L.k ?? 1, every: L.every ?? 12, imgs: (L.frames ?? [L.s]).map((x) => surfaceCanvas(x)) });
+      artScenes.set(key, { layers: (b.layers ?? []).map(conv), front: (b.front ?? []).map(conv), ground: b.ground ?? LH - 9 });
+    }
+    return artScenes.get(key);
+  };
+  const drawLayer = (L, y, scroll) => {
+    const img = L.imgs.length > 1 && !calm ? L.imgs[Math.floor(tick / L.every) % L.imgs.length] : L.imgs[0];
+    const sx = ((Math.round(scroll * L.k) % LW) + LW) % LW;
+    ctx.drawImage(img, -sx, y);
+    if (LW - sx < W) ctx.drawImage(img, LW - sx, y);
   };
 
   function makeLanes(chars) {
@@ -532,7 +637,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       for (const p of Object.keys(POSES)) set[p] = toCanvas(compose(c.job, POSES[p], c.color));
       const busts = {};
       for (const e of ['normal', 'blink', 'happy', 'fierce', 'hurt']) busts[e] = toCanvas(bust(c.job, e, c.color));
-      return { id: c.id, c, i, y: 0, set, busts, scroll: i * 137, speed: 0, foes: [], air: [], atk: 0, atkAt: 0, hurt: 0, cheer: 0, shake: 0, flash: 0, flashC: '#ffffff', judge: null, boss: 0, bossDead: 0, bossKind: 'golem', travel: 0, at: null, status: 'ready', pending: null };
+      return { id: c.id, c, i, y: 0, set, busts, art: hasArt(c.job), scroll: i * 137, speed: 0, foes: [], air: [], atk: 0, atkAt: 0, hurt: 0, cheer: 0, shake: 0, flash: 0, flashC: '#ffffff', judge: null, boss: 0, bossDead: 0, bossKind: 'golem', travel: 0, at: null, status: 'ready', pending: null };
     });
     lanes.ids = ids;
     fit();
@@ -544,9 +649,9 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const dpr = devicePixelRatio || 1;
     const n = Math.max(1, lanes.length);
     // 1ドットが画面の整数ピクセルになる範囲で、いちばん大きく描く（レーンが少なければ人物も大きい）
-    const k = Math.max(1, Math.min(3, Math.floor(Math.min(r.width / 480, r.height / (TOP + n * 44)) * dpr) / dpr));
+    const k = Math.max(1, Math.min(3, Math.floor(Math.min(r.width / 480, r.height / (TOP + n * 60)) * dpr) / dpr));
     W = Math.min(LW, Math.floor(r.width / k));
-    LH = Math.max(44, Math.min(200, Math.floor((r.height / k - TOP) / n)));
+    LH = Math.max(52, Math.min(84, Math.floor((r.height / k - TOP) / n)));
     H = TOP + n * LH;
     spare = Math.ceil(reserve / k);
     canvas.width = W;
@@ -635,6 +740,15 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       for (const b of l.subs ?? []) {
         b.textContent = t(CMD_KEY[b.dataset.kind]);
         b.dataset.char = l.id;
+        // 判定はいちかばちか: 通った数を見せ、全部通っていれば光らせ、残っていれば危ない色にする
+        if (b.dataset.kind === 'check') {
+          const cases = own(view.nodes, l.c.at)?.cases;
+          if (Array.isArray(cases) && cases.length) {
+            const pass = cases.filter((k) => k?.ok === true).length;
+            b.textContent = `${t(CMD_KEY.check)} ${pass}/${cases.length}`;
+            b.dataset.ready = String(pass === cases.length);
+          }
+        }
         b.setAttribute('aria-label', `${l.c.name}: ${t(CMD_KEY[b.dataset.kind])}`);
       }
       l.button.textContent = t(CMD_KEY[cmd.kind]);
@@ -652,6 +766,25 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     return c.width * scale;
   };
   const textW = (str) => textCanvas(str, '#ffffff', null).width;
+  // 窓: 濃紺、縁は 3 段（白 → 薄い青灰 → 灰青）、角は丸い（ドカポン4の窓の作り）
+  const WIN_EDGE = ['#e8ecf4', '#a8b4cc', '#6a7898'];
+  function win(px, py, w, h) {
+    px = Math.round(px); py = Math.round(py); w = Math.round(w); h = Math.round(h);
+    const k = h >= 22 ? 3 : 2;
+    ctx.fillStyle = '#0c1050';
+    ctx.fillRect(px + 2, py + 2, w - 4, h - 4);
+    for (let q = 0; q < k; q++) {
+      ctx.fillStyle = WIN_EDGE[q + (3 - k)];
+      ctx.fillRect(px + 2 + q, py + q, w - 4 - 2 * q, 1);
+      ctx.fillRect(px + 2 + q, py + h - 1 - q, w - 4 - 2 * q, 1);
+      ctx.fillRect(px + q, py + 2 + q, 1, h - 4 - 2 * q);
+      ctx.fillRect(px + w - 1 - q, py + 2 + q, 1, h - 4 - 2 * q);
+      ctx.fillRect(px + 1 + q, py + 1 + q, 1, 1);
+      ctx.fillRect(px + w - 2 - q, py + 1 + q, 1, 1);
+      ctx.fillRect(px + 1 + q, py + h - 2 - q, 1, 1);
+      ctx.fillRect(px + w - 2 - q, py + h - 2 - q, 1, 1);
+    }
+  }
 
   function burst(x, y, cols, n = 12, sp = 2) {
     if (calm) return;
@@ -709,7 +842,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       if (want.some((w) => w.key === foe.key)) keep.push(foe);
       else if (animate && foe.key.startsWith(`${c.at}:`)) {
         burst(foe.x + 8, gy - 12, ['#ffffff', '#ffd84a', '#ff9a3c'], 16, 2.4);
-        if (!calm) parts.push({ corpse: mobOf(foe.kind, foe.tint)[0], x: foe.x, y: gy - 18, vx: 2.4, vy: -3.2, g: 0.2, rot: 0, life: 34 });
+        if (!calm) parts.push({ corpse: mobOf(foe.kind, foe.tint, foe.strong)[4], x: foe.x, y: gy - 18, vx: 2.4, vy: -3.2, g: 0.2, rot: 0, life: 34 });
         float(foe.x, gy - 22, t('march.slain'), '#ffd84a', 30);
         l.atk = l.atk > 0 ? l.atk : 16;
         hitStop = Math.max(hitStop, calm ? 0 : 3);
@@ -724,7 +857,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         return;
       }
       const n = i + l.i;
-      keep.push({ key: w.key, name: w.name, order: i, x: animate ? W + 30 + i * 34 : contact() + i * 34, kind: w.strong ? 'imp' : kinds[n % kinds.length], tint: w.strong ? 'red' : TINTS[l.i % TINTS.length], hit: 0, ph: R() * 6 });
+      keep.push({ key: w.key, name: w.name, order: i, x: animate ? W + 30 + i * 34 : contact() + i * 34, kind: w.strong && !mobHasArt(kinds[n % kinds.length]) ? 'imp' : kinds[n % kinds.length], tint: w.strong && !mobHasArt(kinds[n % kinds.length]) ? 'red' : TINTS[l.i % TINTS.length], strong: !!w.strong, hit: 0, ph: R() * 6 });
     });
     keep.sort((a, b) => a.order - b.order);
     l.foes = keep;
@@ -752,14 +885,19 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     } else if (st === 'waiting' || st === 'camp') {
       pose = Math.floor(tick / 40) % 5 === 4 ? 'sit1' : 'sit0';
     } else if (l.speed > 0.3) {
-      pose = `run${Math.floor(tick / 5 + l.i) % 4}`;
+      pose = l.art ? `run${Math.floor(tick / 5 + l.i) % 6}` : `run${Math.floor(tick / 5 + l.i) % 4}`;
     } else {
       pose = Math.floor(tick / 150 + l.i) % 7 === 3 && tick % 150 < 8 ? 'blink' : Math.floor(tick / 26 + l.i) % 2 ? 'idle1' : 'idle0';
     }
-    ctx.fillStyle = 'rgba(16,12,32,.32)';
-    ctx.fillRect(hx - 10 + dx, gy + 1, 21, 2);
-    ctx.fillRect(hx - 7 + dx, gy + 3, 15, 1);
+    ctx.fillStyle = 'rgba(20,18,8,.55)';
+    ctx.fillRect(hx - 5 + dx, gy, 11, 1);
+    ctx.fillRect(hx - 8 + dx, gy + 1, 17, 1);
+    ctx.fillRect(hx - 6 + dx, gy + 2, 13, 1);
     const sp = l.set[pose];
+    if (down && l.hurt <= 0 && l.art) {
+      ctx.drawImage(l.set.down, hx - CENTER, gy - FOOT);
+      return;
+    }
     if (down && l.hurt <= 0) {
       ctx.save();
       ctx.translate(hx + 20, gy - 10);
@@ -773,10 +911,16 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       }
       return;
     }
+    if (l.leap > 0) {
+      // 放物線で1回跳ぶ
+      dy -= Math.round(Math.sin(((36 - l.leap) / 36) * Math.PI) * Math.min(10, Math.max(0, LH - 40)));
+      l.leap--;
+    }
     ctx.drawImage(sp, hx - CENTER + dx, gy - FOOT + dy);
   }
 
   const VILLAGER = { job: 'villager', color: 'gray' };
+  let village = null;
   const idles = new Map();
   const idleOf = (c) => {
     const key = `${c.job}/${c.color}`;
@@ -824,11 +968,23 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const y = Math.round(l.y);
     const st = l.rest && l.rest.t >= 50 ? 'camp' : l.status;
     const node = own(view.nodes, c.at);
-    const scene = sceneFor(l.i);
+    const art = artSceneFor(l);
+    const scene = art ? null : sceneFor(l.i);
     const band = arenaOf(l);
     const hx = band ? heroX() + 14 + band.members.indexOf(l.id) * 16 : heroX();
     l.hx = hx;
-    const gy = y + LH - 8;
+    // 合流した戦場では、全員が戦場の下の地面に立つ（奥ほど少し上、手前ほど下）
+    let gy = y + (art ? art.ground : LH - 8);
+    let clipY = y;
+    let clipH = LH;
+    if (band) {
+      const rows = band.members.map((id) => lanes.find((x) => x.id === id)).filter(Boolean);
+      const y0 = Math.min(...rows.map((r) => Math.round(r.y)));
+      const idx = band.members.indexOf(l.id);
+      gy = y0 + rows.length * LH - 10 - (rows.length - 1 - idx) * 5;
+      clipY = y0;
+      clipH = rows.length * LH;
+    }
     const resting = !!l.rest || !!l.talk || !!l.inherit;
     const front = resting || band ? null : l.foes[0];
     const line = contact();
@@ -838,10 +994,12 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     l.scroll = (l.scroll + l.speed) % LW;
     ctx.save();
     ctx.beginPath();
-    ctx.rect(0, y, W, LH);
+    ctx.rect(0, clipY, W, clipH);
     ctx.clip();
     if (l.shake > 0) ctx.translate(l.shake-- % 2 ? 2 : -2, 0);
-    if (!band) {
+    if (!band && art) {
+      for (const L of art.layers) drawLayer(L, y, l.scroll);
+    } else if (!band) {
       ctx.drawImage(scene.sky, 0, y);
       const layerAt = (img, k) => {
         const sx = Math.round(l.scroll * k) % LW;
@@ -853,9 +1011,9 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       layerAt(scene.ground, 1);
     }
     if (!calm && !band) {
-      const air = SCENES[l.i % SCENES.length].air;
-      while (l.air.length < air.n) l.air.push({ x: R() * W, y: R() * LH, s: R() > 0.7 ? 2 : 1, c: air.c[Math.floor(R() * air.c.length)], p: R() * 6 });
-      for (const a of l.air) {
+      const air = art ? null : SCENES[l.i % SCENES.length].air;
+      if (air) while (l.air.length < air.n) l.air.push({ x: R() * W, y: R() * LH, s: R() > 0.7 ? 2 : 1, c: air.c[Math.floor(R() * air.c.length)], p: R() * 6 });
+      if (air) for (const a of l.air) {
         a.x += air.vx - l.speed * 0.6 + Math.sin(tick * 0.03 + a.p) * 0.2;
         a.y += air.vy;
         if (a.x < PLATE) a.x = W;
@@ -870,9 +1028,11 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     if (!band && (resting || l.status === 'camp')) {
       const t0 = l.rest ? l.rest.t : 999;
       const vx = Math.max(hx + 44, W + 40 - t0 * 4);
-      drawHouse(ctx, vx, gy + 1, 34, 20, '#f4e4c0', '#c8483a', true);
-      drawHouse(ctx, vx + 44, gy + 1, 28, 16, '#e8d4a8', '#3a78c8', true);
-      drawHouse(ctx, vx + 80, gy + 1, 38, 24, '#f4e4c0', '#46a058', t0 > 90);
+      // 村: 描き直した家と井戸（足もとの線にそろえる）
+      village ??= { barn: toCanvas(paint(ENV.barn, 'base')), well: toCanvas(paint(ENV.well, 'base')), cottage: toCanvas(paint(ENV.cottage, 'base')) };
+      ctx.drawImage(village.barn, vx, gy + 5 - village.barn.height);
+      ctx.drawImage(village.well, vx + 64, gy + 6 - village.well.height);
+      ctx.drawImage(village.cottage, vx + 92, gy + 4 - village.cottage.height);
       if (!calm && tick % 14 === 0) parts.push({ x: vx + 90, y: gy - 26, vx: -0.15, vy: -0.25, g: 0, life: 40, s: 2, c: '#c8c4dc' });
       if (l.rest) {
         l.rest.t++;
@@ -922,9 +1082,8 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       const missing = (node.members ?? []).filter((id) => id !== c.id && view.characters.find((x) => x.id === id)?.at !== node.id).length;
       if (missing) {
         const waitWord = t('march.wait', missing);
-        ctx.fillStyle = 'rgba(16,14,28,.72)';
-        ctx.fillRect(contact() + 4, y + 21, textW(waitWord) + 8, 18);
-        text(waitWord, contact() + 8, y + 22, '#9ee8ff');
+        win(contact() + 2, y + 20, textW(waitWord) + 10, 20);
+        text(waitWord, contact() + 7, y + 22, '#9ee8ff', null);
       }
     }
     // 焚き火（門の前と町）
@@ -947,8 +1106,9 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       e.x += (want - e.x) * 0.04 - (l.speed > 0.2 ? 1 : 0);
       if (e.x < want || calm) e.x = want;
       const fly = flies(e.kind);
-      const f = calm ? 0 : Math.floor((tick + e.ph * 9) / 14) % 2;
-      const img = mobOf(e.kind, e.tint)[f];
+      const f = calm ? 0 : Math.floor((tick + e.ph * 9) / 14) % 4;
+      const set = mobOf(e.kind, e.tint, e.strong);
+      const img = e.hit > 0 ? set[4] : set[f];
       const hop = fly ? Math.round(calm ? -12 : Math.sin(tick * 0.07 + e.ph) * 3 - 12) : 0;
       const jit = e.hit > 0 ? (e.hit-- % 2 ? 2 : -2) : 0;
       if (!fly) {
@@ -1074,13 +1234,9 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         const word = t(j.ok ? (j.medal ? 'march.medal' : 'march.ok') : 'march.ng');
         const bw = textW(word) * 2 + 48;
         const bx = W - bw * slide;
-        ctx.fillStyle = j.ok ? '#2a2060' : '#4c1420';
-        ctx.fillRect(bx, y + 8, bw, LH - 18);
-        ctx.fillStyle = col;
-        ctx.fillRect(bx, y + 8, bw, 1);
-        ctx.fillRect(bx, y + LH - 11, bw, 1);
-        ctx.drawImage(l.busts[j.ok ? 'happy' : 'hurt'], bx + 4, y + 10);
-        text(word, bx + 38, y + 16, col, '#10101c', 2);
+        win(bx, y + 6, bw, Math.min(40, LH - 12));
+        ctx.drawImage(l.busts[j.ok ? 'happy' : 'hurt'], bx + 4, y + 8);
+        text(word, bx + 40, y + 14, col, null);
       }
       if (j.t > 90) l.judge = null;
     }
@@ -1123,20 +1279,10 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       if (l.say.t > 170) l.say = null;
     }
     // 札（顔・名前・様子）
-    ctx.fillStyle = '#14121f';
+    ctx.fillStyle = '#05060f';
     ctx.fillRect(0, y, PLATE, LH);
-    const laneCol = own(LANE_COLOR, c.color) ?? '#a8acb8';
-    ctx.fillStyle = laneCol;
-    ctx.fillRect(0, y, 3, LH);
-    const bh = Math.min(BUST.h, LH - 10);
-    ctx.globalAlpha = 0.34;
-    ctx.fillRect(7, y + 5, BUST.w, bh);
-    ctx.globalAlpha = 1;
-    ctx.fillStyle = '#3c3858';
-    ctx.fillRect(6, y + 4, BUST.w + 2, 1);
-    ctx.fillRect(6, y + 5 + bh, BUST.w + 2, 1);
-    ctx.fillRect(6, y + 4, 1, bh + 2);
-    ctx.fillRect(7 + BUST.w, y + 4, 1, bh + 2);
+    win(1, y + 1, PLATE - 2, LH - 2);
+    const bh = Math.min(BUST.h, LH - 12);
     let expr = 'normal';
     if (st === 'down' || l.hurt > 0) expr = 'hurt';
     else if (st === 'done' || l.cheer > 0) expr = 'happy';
@@ -1144,25 +1290,23 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     else if ((tick + l.i * 37) % 170 < 7) expr = 'blink';
     ctx.save();
     ctx.beginPath();
-    ctx.rect(7, y + 5, BUST.w, bh);
+    ctx.rect(6, y + 5, BUST.w, bh);
     ctx.clip();
-    ctx.drawImage(l.busts[expr], 7, y + 5);
+    ctx.drawImage(l.busts[expr], 6, y + 5 + bh - BUST.h);
     ctx.restore();
-    text(fit1(String(c.name ?? c.id).replace('（あなた）', ''), 6), 40, y + 3);
-    text(t(`march.${st}`), 40, y + 19, STATUS_COLOR[st]);
+    text(fit1(String(c.name ?? c.id).replace('（あなた）', ''), 6), 40, y + 5, '#f0f0f0', null);
+    text(t(`march.${st}`), 40, y + 22, STATUS_COLOR[st], null);
     if (LH >= 54) {
       // レベルと次のレベルまで（本物の level / xp）
       const lv = `Lv${c.level ?? 1}`;
-      const lw2 = text(lv, 40, y + 35, '#ffe27a');
+      const lw2 = text(lv, 40, y + 37, '#f0d878', null);
       const gx = 40 + lw2 + 4;
-      const gw = PLATE - gx - 6;
+      const gw = PLATE - gx - 8;
       const rate = c.xp_next ? Math.min(1, (c.xp ?? 0) / c.xp_next) : 0;
-      ctx.fillStyle = '#10101c';
-      ctx.fillRect(gx, y + 42, gw, 6);
-      ctx.fillStyle = '#3c3858';
-      ctx.fillRect(gx + 1, y + 43, gw - 2, 4);
-      ctx.fillStyle = l.xpFlash > 0 ? '#ffffff' : '#5ac8ff';
-      ctx.fillRect(gx + 1, y + 43, Math.round((gw - 2) * rate), 4);
+      ctx.fillStyle = '#2a2f6a';
+      ctx.fillRect(gx, y + 46, gw, 3);
+      ctx.fillStyle = l.xpFlash > 0 ? '#ffffff' : '#f0d878';
+      ctx.fillRect(gx, y + 46, Math.round(gw * rate), 3);
       if (l.xpFlash > 0) l.xpFlash--;
     }
     // 道のり: ふりだしからあがりまでの点（門は大きく、いまの場所は光る）
@@ -1172,39 +1316,36 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       const rw = Math.min(W - PLATE - 96, route.length * 18);
       const ry = y + LH - 5;
       const xOf = (i) => rx0 + (route.length > 1 ? Math.round((i * rw) / (route.length - 1)) : 0);
-      // すごろくの道
-      ctx.fillStyle = '#10101c';
+      // すごろくの道（窓と同じ色で、控えめに）
+      ctx.fillStyle = '#0c1050';
       ctx.fillRect(rx0, ry, rw, 1);
       const here = route.findIndex((p) => p.here);
       if (here > 0) {
-        ctx.fillStyle = '#ffd84a';
+        ctx.fillStyle = '#c8a850';
         ctx.fillRect(rx0, ry, xOf(here) - rx0, 1);
       }
       route.forEach((p, i) => {
         const px = xOf(i);
         const lit = p.here && (tick % 30 < 15 || calm);
+        ctx.fillStyle = '#0c1050';
         if (p.camp) {
           // 町: 小さな家
-          ctx.fillStyle = '#10101c';
-          ctx.fillRect(px - 4, ry - 3, 9, 6);
-          ctx.fillRect(px - 2, ry - 5, 5, 2);
-          ctx.fillStyle = p.done ? '#a4e464' : '#f4e4c0';
-          ctx.fillRect(px - 3, ry - 2, 7, 4);
-          ctx.fillStyle = p.done ? '#46a058' : '#c8483a';
-          ctx.fillRect(px - 3, ry - 3, 7, 1);
+          ctx.fillRect(px - 3, ry - 3, 7, 5);
           ctx.fillRect(px - 1, ry - 4, 3, 1);
+          ctx.fillStyle = p.done ? '#c8a850' : '#a8a08a';
+          ctx.fillRect(px - 2, ry - 2, 5, 3);
+          ctx.fillStyle = '#7a3a24';
+          ctx.fillRect(px - 2, ry - 3, 5, 1);
         } else if (p.gate) {
-          // 門: 赤い扉
-          ctx.fillStyle = '#10101c';
-          ctx.fillRect(px - 4, ry - 6, 9, 9);
-          ctx.fillStyle = lit ? '#ffffff' : p.done ? '#ffd84a' : '#d8342c';
+          // 門
           ctx.fillRect(px - 3, ry - 5, 7, 7);
-          ctx.fillStyle = '#10101c';
-          ctx.fillRect(px, ry - 5, 1, 7);
+          ctx.fillStyle = lit ? '#f0f0f0' : p.done ? '#c8a850' : '#8a2c24';
+          ctx.fillRect(px - 2, ry - 4, 5, 5);
+          ctx.fillStyle = '#0c1050';
+          ctx.fillRect(px, ry - 4, 1, 5);
         } else {
-          ctx.fillStyle = '#10101c';
           ctx.fillRect(px - 2, ry - 2, 5, 5);
-          ctx.fillStyle = lit ? '#ffffff' : p.here ? '#ffd84a' : p.done ? '#ffd84a' : '#8c88a8';
+          ctx.fillStyle = lit ? '#f0f0f0' : p.here || p.done ? '#c8a850' : '#6a7898';
           ctx.fillRect(px - 1, ry - 1, 3, 3);
         }
       });
@@ -1217,29 +1358,26 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const tw = shown ? textW(shown) : 0;
     const pw = Math.min(total, 10) * 6;
     if (shown) {
-      ctx.fillStyle = 'rgba(16,14,28,.72)';
-      ctx.fillRect(W - tw - pw - 14, y, tw + pw + 14, 18);
-      text(shown, W - tw - pw - 8, y + 1);
+      win(W - tw - pw - 16, y, tw + pw + 16, 20);
+      text(shown, W - tw - pw - 9, y + 2, '#f0f0f0', null);
       for (let k = 0; k < Math.min(total, 10); k++) {
-        ctx.fillStyle = k < pass ? '#ffd84a' : '#3c3858';
-        ctx.fillRect(W - pw - 3 + k * 6, y + 6, 4, 6);
+        ctx.fillStyle = k < pass ? '#f0d878' : '#3a3f7a';
+        ctx.fillRect(W - pw - 5 + k * 6, y + 7, 4, 6);
       }
     }
     // いま戦っているテストの名前（敵の絵に重ねない。上の段の、マスの名前の左）
     if (event && !band) {
       // 出来事の字は上の段に1行だけ（テストの名前もマスの名前も、そのあいだは出さない）
       const line2 = fit1(event.str, Math.floor((W - contact() - pw - 12) / 15));
-      ctx.fillStyle = 'rgba(16,14,28,.82)';
-      ctx.fillRect(contact() - 4, y, textW(line2) + 8, 18);
-      text(line2, contact(), y + 1, event.color);
+      win(contact() - 6, y, textW(line2) + 12, 20);
+      text(line2, contact(), y + 2, event.color, null);
     } else if (front && !l.judge) {
       const room2 = W - tw - pw - 14 - line - 8;
       const n = Math.floor(room2 / 14);
       if (n >= 4) {
         const name = fit1(front.name, n);
-        ctx.fillStyle = 'rgba(16,14,28,.72)';
-        ctx.fillRect(line - 4, y, textW(name) + 8, 18);
-        text(name, line, y + 1);
+        win(line - 6, y, textW(name) + 12, 20);
+        text(name, line, y + 2, '#f0f0f0', null);
       }
     }
     ctx.fillStyle = '#0a0a14';
@@ -1265,7 +1403,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     golem ??= toCanvas(boss('golem'));
     demon ??= toCanvas(boss('demon'));
     const img = goal ? demon : golem;
-    const s = h >= 96 ? 2 : 1;
+    const s = 1; // 描き直した門番・魔王は等倍の大きさで描いてある（拡大しない）
     const bw = img.width * s;
     const bh = img.height * s;
     const bx = W - bw - 30;
@@ -1274,8 +1412,9 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     // 床の影
     ctx.fillStyle = 'rgba(0,0,0,.35)';
     ctx.fillRect(bx + 6, y0 + h - 12, bw - 12, 4);
-    const struck = a.cine?.flash > 0;
-    if (struck) a.cine.flash--;
+    const struck = a.cine?.flash > 0 || a.poke > 0;
+    if (a.cine?.flash > 0) a.cine.flash--;
+    if (a.poke > 0) a.poke--;
     if (a.dying) {
       a.dying--;
       if (a.dying % 2 === 0) burst(bx + R() * bw, by + R() * bh, ['#ffffff', '#ffd84a', '#ff6a2c', '#ff5a7c'], 7, 3);
@@ -1309,9 +1448,8 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     const name = t(goal ? 'march.bossname.goal' : 'march.bossname.gate', a.gate, String(node?.title ?? '').replace(/^(結合|あがり): /, ''));
     const shown = fit1(name, Math.floor((W - PLATE - 20) / 14));
     const tw = textW(shown);
-    ctx.fillStyle = 'rgba(16,14,28,.78)';
-    ctx.fillRect(W - tw - 14, y0, tw + 14, 18);
-    text(shown, W - tw - 8, y0 + 1, goal ? '#ff9a8a' : '#ffffff');
+    win(W - tw - 16, y0, tw + 16, 20);
+    text(shown, W - tw - 9, y0 + 2, goal ? '#ff9a8a' : '#f0f0f0', null);
     if (!a.cine) {
       const missing = a.all.length - a.members.length;
       const msg = a.ready ? t('march.allset') : t('march.wait', missing);
@@ -1500,15 +1638,6 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     if (noticeNow && tick >= noticeAt) noticeNow = null;
     drawParts();
     ctx.restore();
-    if (noticeNow) {
-      const nw = textW(noticeNow.str);
-      ctx.fillStyle = '#10101c';
-      // 上の帯の中に出す（レーンの字に重ねない）
-      ctx.fillRect(Math.round(W / 2 - nw / 2) - 8, 1, nw + 16, TOP - 2);
-      ctx.fillStyle = noticeNow.c;
-      ctx.fillRect(Math.round(W / 2 - nw / 2) - 8, TOP - 2, nw + 16, 1);
-      text(noticeNow.str, W / 2 - nw / 2, 3, noticeNow.c);
-    }
     // 上の帯: 冒険の名前と、テスト全体の進み
     const nodes = Object.values(view.nodes ?? {});
     let pass = 0;
@@ -1517,11 +1646,10 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       total += n.cases.length;
       pass += n.cases.filter((k) => k?.ok === true).length;
     }
-    ctx.fillStyle = '#14121f';
+    ctx.fillStyle = '#05060f';
     ctx.fillRect(0, 0, W, TOP);
-    ctx.fillStyle = '#3c3858';
-    ctx.fillRect(0, TOP - 1, W, 1);
-    const tw = text(fit1(String(view.quest?.title ?? ''), 14), 8, 3, '#ffffff');
+    win(0, 0, W, TOP);
+    const tw = text(fit1(String(view.quest?.title ?? ''), 14), 9, 3, '#f0f0f0', null);
     const bx = 8 + tw + 12;
     // バーを短くしすぎないよう、入らなければ門までの字を省く
     const streakWord = streak >= 2 ? `　${t('march.streak', streak)}` : '';
@@ -1539,6 +1667,12 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     ctx.fillStyle = '#ffe27a';
     ctx.fillRect(bx, 8, fill, 3);
     text(label, W - spare - lw - 6, 3, '#ffe27a');
+    if (noticeNow) {
+      const nw = textW(noticeNow.str);
+      // 上の帯の中に出す（レーンの字に重ねない）
+      win(Math.round(W / 2 - nw / 2) - 10, 0, nw + 20, TOP);
+      text(noticeNow.str, W / 2 - nw / 2, 3, noticeNow.c, null);
+    }
     if (banner) {
       banner.t++;
       const a = calm ? 1 : Math.min(1, banner.t / 8);
@@ -1546,17 +1680,12 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       const x0 = banner.x0 ?? 0;
       const bw2 = (banner.x1 ?? W) - x0;
       const mid = x0 + bw2 / 2;
-      ctx.globalAlpha = a * 0.9;
-      ctx.fillStyle = '#10101c';
-      ctx.fillRect(x0, by, bw2, 44);
-      ctx.globalAlpha = 1;
-      ctx.fillStyle = '#ffd84a';
-      ctx.fillRect(Math.round(mid - (bw2 / 2) * a), by, Math.round(bw2 * a), 2);
-      ctx.fillRect(Math.round(mid - (bw2 / 2) * a), by + 42, Math.round(bw2 * a), 2);
-      const big = textW(banner.text) * 2;
-      if (big < bw2 - 20) text(banner.text, mid - big / 2, by + 3, '#ffd84a', '#7a3c10', 2);
-      else text(banner.text, mid - big / 4, by + 13, '#ffd84a', '#7a3c10');
-      if (banner.sub) text(banner.sub, W / 2 - textW(banner.sub) / 2, by + 46, '#ffffff');
+      // 知らせの窓（拡大した字は使わない。窓が中から開く）
+      const tw2 = textW(banner.text);
+      const ww = Math.round(Math.min(bw2, tw2 + 40) * a);
+      if (ww > 12) win(Math.round(mid - ww / 2), by + 8, ww, 28);
+      if (a >= 1) text(banner.text, mid - tw2 / 2, by + 13, '#f0d878', null);
+      if (banner.sub) { const sw = textW(banner.sub); win(Math.round(W / 2 - sw / 2) - 10, by + 38, sw + 20, 22); text(banner.sub, W / 2 - sw / 2, by + 41, '#f0f0f0', null); }
       if (banner.t >= banner.life) banner = null;
     }
     if (confetti > 0) {
@@ -1586,7 +1715,7 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
         // 全員そろった瞬間に、門番が現れる
         if (a.ready && !old?.ready) {
           const top = Math.min(...a.members.map((id) => lanes.find((x) => x.id === id)?.toY ?? TOP));
-          banner = { text: t(a.gate === view.quest?.goal ? 'march.bossin.goal' : 'march.bossin.gate'), t: 0, life: 110, x0: PLATE, x1: W - 190, by: top + Math.round((a.members.length * LH) / 2) - 22 };
+          banner = { text: t(a.gate === view.quest?.goal ? 'march.bossin.goal' : 'march.bossin.gate'), t: 0, life: 110, x0: heroX() + 90, x1: W - 110, by: top + Math.round((a.members.length * LH) / 2) - 22 };
           shake = calm ? 0 : 12;
           sound?.play('down');
         }
@@ -1629,6 +1758,12 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
       startBattle(e.node, e.type === 'gate_cleared');
     }
     if (e.type === 'seal_broken' && l) l.trap = { t: 0 };
+    // 実況: エージェントの今を、記録された本当のことだけで吹き出しにする
+    if (l && e.type === 'stepped') {
+      const ratio = String(e.text ?? '').match(/\d+\/\d+/)?.[0];
+      if (ratio) l.say = { t: 0, text: t('march.say.step', ratio) };
+    }
+    if (l && e.type === 'note' && e.text) l.say = { t: 0, text: fit1(String(e.text), 28) };
     // push: 本当に送れたときだけ、上向きの矢印が飛ぶ
     if (e.type === 'pushed') {
       showPush(l ?? lanes.find((x) => x.at === e.node) ?? lanes[0], e.ok !== false, e.branch);
@@ -1716,13 +1851,75 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
     if (c.loseAt && c.t >= c.loseAt) a.dying = 0;
   }
 
+  // 敵をクリックすると殴れる（§80.18）。手ごたえだけで、記録もテストの結果も変えない
+  let combo = 0;
+  let comboAt = -999;
+  const foeBoxes = () => {
+    const out = [];
+    for (const a of arenas) if (a.bossBox && a.dying === undefined) out.push({ ...a.bossBox, hit: () => { if (a.cine) a.cine.flash = 4; else a.poke = 4; } });
+    for (const l of lanes) {
+      if (l.rest || l.talk || arenaOf(l)) continue;
+      const gy = l.y + LH - 8;
+      for (const f of l.foes) out.push({ x: f.x - 2, y: gy - 30, w: 24, h: 34, hit: () => { f.hit = 8; f.x += calm ? 0 : 3; } });
+    }
+    return out;
+  };
+  function punch(x, y) {
+    const box = foeBoxes().find((b) => x >= b.x && x <= b.x + b.w && y >= b.y && y <= b.y + b.h);
+    if (!box) return false;
+    box.hit();
+    combo = tick - comboAt <= 60 ? combo + 1 : 1;
+    comboAt = tick;
+    burst(x, y, ['#ffffff', '#ffd84a', '#ff9a3c'], 8, 2);
+    float(x - 6, y - 12, String(4 + Math.floor(R() * 12) + Math.min(combo, 40)), '#ffffff', 26);
+    sound?.play('hit');
+    if (combo >= 3) {
+      // 連打の数は待たせず、いまの知らせに上書きする
+      noticeNow = { str: t('march.hit', combo), c: '#ffd84a' };
+      noticeAt = tick + 50;
+    }
+    if (combo % 10 === 0) {
+      shake = Math.max(shake, calm ? 0 : 6);
+      confetti = Math.max(confetti, calm ? 0 : 30);
+      sound?.play('kira');
+    }
+    let best = 0;
+    try {
+      best = Number(localStorage.getItem('gridhub.bestCombo')) || 0;
+      if (combo > best) localStorage.setItem('gridhub.bestCombo', String(combo));
+    } catch {
+      best = combo;
+    }
+    window.__masume.marchCombo = { combo, best: Math.max(best, combo) };
+    return true;
+  }
+  window.__masume = window.__masume ?? {};
+  window.__masume.marchFoeAt = () => {
+    const b = foeBoxes()[0];
+    if (!b) return null;
+    const r = canvas.getBoundingClientRect();
+    return { x: r.left + ((b.x + b.w / 2) / W) * r.width, y: r.top + ((b.y + b.h / 2) / H) * r.height };
+  };
+
   canvas.addEventListener('click', (e) => {
     if (!view) return;
+    document.querySelector('[data-hero="welcome-close"]')?.click();
     const r = canvas.getBoundingClientRect();
     const y = ((e.clientY - r.top) / r.height) * H;
+    if (punch(((e.clientX - r.left) / r.width) * W, y)) return;
     const l = lanes.find((x) => y >= x.toY && y < x.toY + LH);
     if (l) onPick(l.id);
   });
+  // 小さな手は、マウスを乗せたレーンにだけ出す（戦場を隠さない）
+  const showTools = (id) => {
+    for (const l of lanes) for (const b of l.subs ?? []) b.classList.toggle('show', l.id === id);
+  };
+  canvas.addEventListener('mousemove', (e) => {
+    const r = canvas.getBoundingClientRect();
+    const y = ((e.clientY - r.top) / r.height) * H;
+    showTools(lanes.find((x) => y >= x.toY && y < x.toY + LH)?.id ?? null);
+  });
+  host.addEventListener('mouseleave', () => showTools(null));
   new ResizeObserver(() => fit()).observe(host);
   document.fonts?.addEventListener?.('loadingdone', () => TEXT.clear());
   // ドットの字は盤面を止めないよう、描いたあとで読む（§37）。届かなければ手元の書体のまま
@@ -1780,6 +1977,12 @@ export function createMarch({ host, onPick, onCommand, sound, reserve = 0 }) {
           // レベルアップ（本物の level が上がったとき）
           if ((c.level ?? 1) > (l.level ?? c.level ?? 1)) {
             notices.push({ str: `${c.name}: ${t('march.levelup', c.level)}`, c: '#ffe27a' });
+            // キャラクターから金の粒が広がり、大きく跳ぶ
+            l.leap = calm ? 0 : 36;
+            if (!calm) for (let k = 0; k < 28; k++) {
+              const a = (k / 28) * Math.PI * 2;
+              parts.push({ x: l.hx ?? heroX(), y: gy - 16, vx: Math.cos(a) * 1.8, vy: Math.sin(a) * 1.8, g: 0.02, life: 30, s: 2, c: k % 2 ? '#ffd84a' : '#ffffff' });
+            }
             l.flash = calm ? 0 : 12;
             l.flashC = '#ffe27a';
             l.cheer = Math.max(l.cheer, 60);

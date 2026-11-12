@@ -436,6 +436,7 @@ function rememberEnding(key, seq) {
 }
 /** 用意してあるエンディングを開く（演出つき） */
 function openEnding() {
+  document.querySelector('[data-hero="welcome-close"]')?.click();
   const el = $('#ending');
   el.hidden = false;
   el.classList.remove('show');
@@ -494,9 +495,15 @@ function renderEnding(view) {
   }
   if (key) rememberEnding(key, e.seq);
   // 進軍では、魔王が倒れるところを見せてから開く（§80.11）
+  let fought = false;
   const whenFree = (tries) => {
-    if (document.body.classList.contains('march-battle') && tries > 0) return void setTimeout(() => whenFree(tries - 1), 200);
-    openEnding();
+    if (document.body.classList.contains('march-battle') && tries > 0) {
+      fought = true;
+      return void setTimeout(() => whenFree(tries - 1), 200);
+    }
+    // 勝ったあとの紙吹雪を少し味わってから開く
+    if (fought) setTimeout(openEnding, 2500);
+    else openEnding();
   };
   whenFree(60);
 }
@@ -1091,6 +1098,12 @@ function setupHomeLink() {
   const link = $('#home-link');
   if (!link || !HOME) return;
   link.href = HOME.href;
+  // エンディングのあと、はじめの画面から次のフォルダへ進める
+  const next = $('#ending-next');
+  if (next) {
+    next.href = HOME.href;
+    next.hidden = false;
+  }
   link.hidden = false;
 }
 
@@ -1160,29 +1173,18 @@ const currentTactic = () => $('#march-tactic button[aria-pressed="true"]')?.data
 
 /** レーンの一手（§80.8）: どれも本物の窓口を呼ぶ */
 async function marchCommand(id, cmd, button) {
+  // 操作を始めたら、おかえりのカードは片づける
+  document.querySelector('[data-hero="welcome-close"]')?.click();
   if (cmd.kind === 'watch') return select('char', id);
-  if (cmd.kind === 'hand') {
-    select('char', id);
-    return hand.open(id);
-  }
-  // ハンコは、マスの説明を読んでから押す（お願いのファイルを書くマスもある）。手で書く欄もいっしょに開く
-  if (cmd.kind === 'stamp') {
-    select('node', cmd.node);
-    return hand.open(id);
-  }
+  // 手で作業・承認は、説明も書く欄も1枚にまとめた欄で（進軍を隠さない）
+  if (cmd.kind === 'hand' || cmd.kind === 'stamp') return hand.open(id);
   if (button) button.disabled = true;
   try {
     // テスト実行と判定はこの場で走る。結果は記録から盤面に映り、知らせにも出る
     if (cmd.kind === 'step') {
-      const j = await post('api/step', { character: id });
-      if (j?.ok !== false && j) {
-        const cases = j.cases ?? [];
-        const won = cases.filter((c) => c.ok === true).length;
-        toast({ text: j.exit === 0 ? t('hand.msg.step.ok', j.node) : t('hand.msg.step.ng', j.node, won, cases.length), ok: j.exit === 0, type: 'step' });
-      }
+      await post('api/step', { character: id });
     } else if (cmd.kind === 'check') {
-      const j = await post('api/check', { character: id });
-      if (j?.ok !== false && j) toast({ text: j.passed ? t('hand.msg.check.ok', j.ready) : t('hand.msg.check.ng'), ok: !!j.passed, type: 'check' });
+      await post('api/check', { character: id });
     } else if (cmd.kind === 'sortie' || cmd.kind === 'resortie') {
       sound.play('up');
       await quickSortie([id], currentTactic());
@@ -1227,7 +1229,46 @@ function renderMarchBar() {
   prs?.highlight(barNext?.startsWith('merge:') ? Number(barNext.slice(6)) : null);
 }
 
+/** 進軍のキー操作（§80.21）: Space 次の一手 / P git push / A 全員起動 / R PR を作成 / 欄の中では Enter 進める・Esc 閉じる */
+function marchKey(e) {
+  if (document.body.dataset.mode !== 'march' || e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
+  // Esc で手で進める欄を閉じて戦場へ戻る
+  if (e.key === 'Escape' && !$('#hand').hidden) {
+    e.preventDefault();
+    $('#hand-close').click();
+    return;
+  }
+  // Enter で欄のいちばん上の手（見本で進める / 承認）を押す。入力中と、落ちると戻される判定は押さない
+  if (e.key === 'Enter' && !$('#hand').hidden && !e.target.closest?.('input, textarea, select, button, a')) {
+    const go = [$('#hand-quick'), $('#hand-stamp')].find((b) => b && !b.hidden && !b.disabled);
+    if (go) {
+      e.preventDefault();
+      go.click();
+    }
+    return;
+  }
+  if (e.target.closest?.('input, textarea, select, button, a, [contenteditable]')) return;
+  if (!$('#hand').hidden || !$('#ending').hidden || document.body.classList.contains('drawer-open')) return;
+  const visible = (b) => b && !b.hidden && !b.disabled;
+  let target = null;
+  if (e.key === ' ') target = [...document.querySelectorAll('.march-cmd[data-next="true"], #march-push[data-next="true"], #march-open-pr[data-next="true"], .pr-merge[data-next="true"]')].find((b) => visible(b) && b.dataset.kind !== 'sortie' && b.dataset.kind !== 'resortie');
+  else if (e.key === 'p' || e.key === 'P') target = $('#march-push');
+  else if (e.key === 'a' || e.key === 'A') target = $('#march-all');
+  else if (e.key === 'r' || e.key === 'R') target = $('#march-open-pr');
+  if (!visible(target)) {
+    // Space で起動はしない。黙っていると壊れて見えるので、どうすればよいかを出す
+    if (e.key === ' ' && document.querySelector('.march-cmd[data-next="true"]')) {
+      e.preventDefault();
+      march?.notice(t('march.keys.start'));
+    }
+    return;
+  }
+  e.preventDefault();
+  target.click();
+}
+
 function setupMarch() {
+  document.addEventListener('keydown', marchKey);
   march = createMarch({ host: $('#march-lanes'), reserve: 150, sound, onPick: (id) => select('char', id), onCommand: marchCommand });
   if (LIVE) {
     prs = createPrs({

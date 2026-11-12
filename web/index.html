@@ -60,6 +60,7 @@
               <button type="button" data-tactic="balanced" aria-pressed="true" data-t="tactic.balanced">バッチリがんばれ</button>
               <button type="button" data-tactic="bold" aria-pressed="false" data-t="tactic.bold">ガンガンいこうぜ</button>
             </div>
+            <span id="march-keys" class="march-keys" data-t="march.keys">Space 次の一手 / P push / A 全員 / R PR</span>
             <button id="march-push" type="button" class="march-btn" hidden>git push</button>
             <button id="march-open-pr" type="button" class="march-btn" hidden data-t="pr.create">PR を作成</button>
             <button id="march-stop" type="button" class="march-btn" hidden data-t="march.stop">撤退</button>
@@ -218,6 +219,7 @@
       <div class="hand-actions">
         <button id="hand-step" class="act" type="button" hidden data-t="hand.step">歩く（モンスターと戦う）</button>
         <button id="hand-check" class="act" type="button" hidden data-t="hand.check">宣言判定（出口にいどむ）</button>
+        <button id="hand-quick" class="act stamp" type="button" hidden data-t="hand.quick">見本を保存して進める</button>
         <button id="hand-stamp" class="act stamp" type="button" hidden data-t="hand.stamp">ハンコを押す</button>
         <button id="hand-battle" class="act battle" type="button" hidden data-t="hand.battle">ボス戦を始める</button>
       </div>
@@ -329,6 +331,7 @@
       <div id="ending-text"></div>
       <div id="ending-stats"></div>
       <div id="ending-loot" class="ending-loot" hidden></div>
+      <a id="ending-next" class="act ending-next" hidden data-t="ending.next">自分のプロジェクトで始める</a>
       <button id="ending-close" type="button" class="act" data-t="ending.close">盤面にもどる</button>
     </div>
   </div>

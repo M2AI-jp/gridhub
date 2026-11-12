@@ -1,4 +1,7 @@
-// 進軍のドット絵（CONTRACTS §80）。頭・胴・腕・脚・武器を文字で描き、ポーズごとに組み立てて、最後に輪郭を付ける。盤面の担当
+// 進軍のドット絵（CONTRACTS §80）。描き下ろした絵（art/index.js に載せたもの）を先に使い、
+// 載っていない職業・敵は、頭・胴・腕・脚・武器を組み立てる前の絵で描く。盤面の担当
+import { CREW as ART_CREW, BUSTS as ART_BUSTS, MOBS as ART_MOBS, STRONG as ART_STRONG, BOSSES as ART_BOSSES, ALIAS as ART_ALIAS } from './art/index.js';
+import { paint } from './art/sprite.js';
 const SKIN = { S: '#ffe0bd', s: '#f6bd8e', d: '#cf8a62', r: '#ff9b8e', m: '#a8483a' };
 const INK = '#1c1430';
 
@@ -624,7 +627,31 @@ export const CENTER = 30;
  * ポーズ = 1枚の組み立て図
  * pose: { legs, run, bob, lean, arm, backArm, weapon: 角度|null, behind, expr, tail: 'idle'|0|1, headDx, headDy }
  */
+/** 描き下ろしの絵（無ければ null） */
+export function artOf(job) {
+  const j = job ?? '';
+  return (Object.hasOwn(ART_CREW, j) ? ART_CREW[j] : null) ?? (Object.hasOwn(ART_ALIAS, j) && Object.hasOwn(ART_CREW, ART_ALIAS[j]) ? ART_CREW[ART_ALIAS[j]] : null);
+}
+const TEAM_OK = new Set(['blue', 'yellow', 'green', 'orange', 'pink', 'purple', 'mint', 'gray']);
+/** 描き下ろしの 56×56 を、前の絵と同じ置き場所（SIZE×SIZE、足もと CENTER/FOOT）に移す */
+function place(buf, art) {
+  const out = blank(SIZE, SIZE);
+  const dx = CENTER - art.ax;
+  const dy = FOOT - art.ay;
+  buf.forEach((r, y) => r.forEach((c, x) => {
+    if (!c) return;
+    const yy = y + dy;
+    const xx = x + dx;
+    if (yy >= 0 && yy < SIZE && xx >= 0 && xx < SIZE) out[yy][xx] = c;
+  }));
+  return out;
+}
 export function compose(job, pose, color = null) {
+  const art = artOf(job);
+  if (art && pose?.frame && art.frames[pose.frame]) return place(paint(art, pose.frame, TEAM_OK.has(color) ? color : 'gray'), art);
+  return legacyCompose(job, pose?.legacy ?? pose, color);
+}
+function legacyCompose(job, pose, color = null) {
   const c = Object.hasOwn(CREW, job ?? '') ? CREW[job] : CREW.villager;
   const ramp = Object.hasOwn(RAMPS, color ?? '') ? RAMPS[color] : null;
   const pal = { ...c.pal, i: mix(c.pal.I, '#ffffff', 0.45), ...(ramp ? { C: ramp[0], c: ramp[1], e: ramp[2] } : {}) };
@@ -670,8 +697,8 @@ export function compose(job, pose, color = null) {
   return outline(buf);
 }
 
-// 全部のポーズ
-export const POSES = {
+// 全部のポーズ（frame = 描き下ろしの絵の名前。legacy = 前の絵での組み立て図）
+const L = {
   idle0: { legs: 'stand', arm: 'downfront', weapon: 32 },
   idle1: { legs: 'stand', bob: 1, arm: 'downfront', weapon: 32 },
   blink: { legs: 'stand', arm: 'downfront', weapon: 32, expr: 'blink' },
@@ -688,13 +715,54 @@ export const POSES = {
   cheer0: { legs: 'stand', arm: 'upfront', backArm: 'back', weapon: 12, expr: 'happy' },
   cheer1: { legs: 'run', run: 1, bob: -3, arm: 'upfront', backArm: 'back', weapon: 12, expr: 'happy', tail: 1 },
 };
+const P = (frame, legacy) => ({ frame, legacy, ...legacy });
+export const POSES = {
+  idle0: P('idle0', L.idle0),
+  idle1: P('idle1', L.idle1),
+  idle2: P('idle2', L.idle0),
+  idle3: P('idle3', L.idle1),
+  blink: P('blink', L.blink),
+  run0: P('run0', L.run0),
+  run1: P('run1', L.run1),
+  run2: P('run2', L.run2),
+  run3: P('run3', L.run3),
+  run4: P('run4', L.run0),
+  run5: P('run5', L.run1),
+  wind: P('wind', L.wind),
+  strike: P('strike', L.strike),
+  follow: P('follow', L.follow),
+  hurt: P('hurt', L.hurt),
+  down: P('down', L.hurt),
+  sit0: P('sit0', L.sit0),
+  sit1: P('sit1', L.sit1),
+  cheer0: P('cheer0', L.cheer0),
+  cheer1: P('cheer1', L.cheer1),
+};
+/** その職業が描き下ろしの絵を持っているか（走りのコマ数・倒れの絵を決める） */
+export const hasArt = (job) => !!artOf(job);
 
-// 札に出す顔（胸から上）
-export const BUST = { w: 30, h: 28 };
+
+// 札に出す顔（胸から上）。描き下ろしは 32×32、前の絵は 30×28 を真ん中に置く
+export const BUST = { w: 32, h: 32 };
 export function bust(job, expr = 'normal', color = null) {
-  const buf = compose(job, { legs: 'stand', arm: 'down', backArm: 'down', expr, tail: 'idle' }, color);
+  const j = job ?? '';
+  const art = (Object.hasOwn(ART_BUSTS, j) ? ART_BUSTS[j] : null) ?? (Object.hasOwn(ART_ALIAS, j) && Object.hasOwn(ART_BUSTS, ART_ALIAS[j]) ? ART_BUSTS[ART_ALIAS[j]] : null);
+  if (art) return paint(art, art.frames[expr] ? expr : 'normal', TEAM_OK.has(color) ? color : 'gray');
+  const fig = artOf(job);
+  if (fig) {
+    const fr = { normal: 'idle0', blink: 'blink', happy: 'cheer0', fierce: 'wind', hurt: 'hurt' }[expr] ?? 'idle0';
+    const buf = paint(fig, fig.frames[fr] ? fr : 'idle0');
+    const out = blank(BUST.w, BUST.h);
+    const dx = Math.floor((BUST.w - fig.w) / 2), dy = BUST.h - fig.h - 1;
+    buf.forEach((r, y) => r.forEach((c, x) => { const X = x + dx, Y = y + dy; if (c && X >= 0 && X < BUST.w && Y >= 0 && Y < BUST.h) out[Y][X] = c; }));
+    return out;
+  }
+  const buf = legacyCompose(job, { legs: 'stand', arm: 'down', backArm: 'down', expr, tail: 'idle' }, color);
   const ty = FOOT - 17 - 16 - 8;
-  return buf.slice(ty, ty + BUST.h).map((r) => r.slice(CENTER - 15, CENTER + 15));
+  const crop = buf.slice(ty, ty + 28).map((r) => r.slice(CENTER - 15, CENTER + 15));
+  const out = blank(BUST.w, BUST.h);
+  crop.forEach((r, y) => r.forEach((c, x) => { out[y + 4][x + 1] = c; }));
+  return out;
 }
 
 // ---- 敵（左を向く）。C c x は色替え、W K は目、m は口
@@ -1014,9 +1082,32 @@ const toBuf = (grid, pal) => {
   stamp(buf, grid, 1, 1, pal);
   return outline(buf);
 };
-export const mob = (kind, tint, f) => toBuf(MOB_GRIDS[kind].frames[f], MOB_TINT[tint]);
-export const flies = (kind) => !!MOB_GRIDS[kind].fly;
-export const boss = (kind) => toBuf(BOSS_GRIDS[kind], BOSS_PAL[kind]);
+/** 描き下ろしの敵: 足の裏の行が下から2行目になるように切る（盤面は img.height - 2 を足もとに合わせる） */
+function footed(buf, ay) {
+  const out = buf.slice(0, ay + 1);
+  out.push(new Array(buf[0].length).fill(null));
+  return out;
+}
+const mobArt = (kind, strong) => (strong && Object.hasOwn(ART_STRONG, kind) ? ART_STRONG[kind] : null) ?? (Object.hasOwn(ART_MOBS, kind) ? ART_MOBS[kind] : null);
+/** f = 0〜3 は歩き（待機）の輪、'hit' はのけぞり。strong は強いテストの絵 */
+export function mob(kind, tint, f, strong = false) {
+  const art = mobArt(kind, strong);
+  if (art) {
+    let name = f === 'hit' && art.frames.hit ? 'hit' : `move${(Number(f) || 0) % 4}`;
+    if (!art.frames[name] && name !== 'hit') name = (Number(f) || 0) % 2 ? 'idle1' : 'idle0';
+    return footed(paint(art, art.frames[name] ? name : Object.keys(art.frames)[0], 'gray', art.tints?.[tint] ?? null), art.ay ?? art.h - 1);
+  }
+  const g = MOB_GRIDS[kind] ?? MOB_GRIDS.slime;
+  return toBuf(g.frames[(Number(f) || 0) % g.frames.length] ?? g.frames[0], MOB_TINT[tint] ?? MOB_TINT.green);
+}
+export const flies = (kind) => (Object.hasOwn(ART_MOBS, kind) ? !!ART_MOBS[kind].fly : !!MOB_GRIDS[kind]?.fly);
+/** 描き下ろしの敵か（コマ数・のけぞりの絵を決める） */
+export const mobHasArt = (kind) => Object.hasOwn(ART_MOBS, kind);
+export function boss(kind, frame = 'idle0') {
+  const art = Object.hasOwn(ART_BOSSES, kind) ? ART_BOSSES[kind] : null;
+  if (art) return paint(art, art.frames[frame] ? frame : Object.keys(art.frames)[0]);
+  return toBuf(BOSS_GRIDS[kind], BOSS_PAL[kind]);
+}
 
 /** 組み立てた絵をキャンバスに（ブラウザ用） */
 export function toCanvas(buf) {

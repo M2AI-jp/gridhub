@@ -261,6 +261,10 @@ body.drawer-open #rail > #party { display: none; }
 .march-cmd:hover { background: #3c30a0; }
 .march-cmd:disabled { opacity: 0.5; cursor: wait; }
 .march-cmd.sub { background: #14121f; border-color: #6c6888; color: #c8c4dc; font-size: 13px; }
+/* 小さな手はふだん隠す。通り切った判定と、キーボードで選んだときは出す。マウスの無い画面では常に出す */
+@media (hover: hover) { .march-cmd.sub:not(.show):not(:focus-visible):not([data-ready="true"]) { opacity: 0; } }
+.march-cmd.sub[data-kind="check"][data-ready="false"] { color: #ff9a8a; border-color: #b83c34; }
+.march-cmd.sub[data-kind="check"][data-ready="true"] { background: linear-gradient(#f4dc98, #d8a848); color: #14121f; border-color: #fff; }
 .march-cmd[data-kind="watch"] { background: #14121f; border-color: #6c6888; color: #c8c4dc; }
 .march-cmd[data-next="true"] { background: #ffd84a; color: #14121f; border-color: #fff; animation: march-pulse 0.9s steps(2) infinite; }
 .march-cmd[data-kind="battle"] { background: #d8342c; color: #fff; border-color: #ffd84a; }
@@ -272,6 +276,8 @@ body.drawer-open #rail > #party { display: none; }
 .march-btn:disabled { background: #1c1a2c; color: #6c6888; border-color: #3c3858; cursor: default; }
 .march-btn[data-next="true"], .pr-merge[data-next="true"] { background: linear-gradient(#f4dc98, #d8a848); color: #14121f; border-color: #fff; animation: march-pulse 0.9s steps(2) infinite; }
 @media (prefers-reduced-motion: reduce) { .march-btn[data-next="true"], .pr-merge[data-next="true"] { animation: none; } }
+.march-keys { font-size: 12px; color: #8c88a8; white-space: nowrap; }
+@media (hover: none), (max-width: 900px) { .march-keys { display: none; } }
 #march-prs { flex: none; display: flex; flex-wrap: wrap; gap: 4px; padding: 4px 8px; background: #14121f; border-top: 1px solid #3c3858; }
 #march-prs[hidden] { display: none; }
 .pr-chip { display: flex; align-items: center; gap: 4px; min-width: 0; max-width: 100%; padding: 2px 6px; font-size: 13px; color: #fff; background: #1c1a2c; border: 1px solid #3c3858; }
@@ -305,7 +311,8 @@ body[data-mode="march"] .your-turn { display: none; }
 body[data-mode="march"] .flip-stage { display: none; }
 /* 進軍では知らせを左下（札の上）に寄せて、戦場を隠さない */
 body[data-mode="march"] #toast { top: auto; bottom: 58px; left: 8px; transform: none; align-items: flex-start; gap: 4px; max-width: 250px; }
-body[data-mode="march"] .toast { font-size: 12px; padding: 4px 8px; }
+body[data-mode="march"] .toast { font-size: 12px; padding: 4px 8px; width: 240px; max-width: 100%; box-sizing: border-box; }
+body[data-mode="march"] #fanfare { top: 56px; right: 8px; bottom: auto; left: auto; transform: none; flex-direction: column; }
 body[data-mode="march"] .pager, body[data-mode="march"] .zoom, body[data-mode="march"] .legend, body[data-mode="march"] #boss-meter { display: none; }
 .zoom { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 6px; z-index: 3; align-items: center; }
 .zoom button {
@@ -998,6 +1005,8 @@ body.in-lobby #stage { min-height: 70vh; }
 #ending-stats b { display: block; font-family: var(--marker); font-size: 20px; font-weight: 400; color: var(--ink); }
 #ending-stats small { font-family: var(--hand); font-size: 11px; color: var(--ink-soft); }
 #ending-close { background: var(--ink); color: #fff; }
+.ending-next { display: block; margin-bottom: 8px; text-align: center; text-decoration: none; background: var(--highlight-yellow, #ffe27a); color: var(--ink, #1d2b5c); }
+.ending-next[hidden] { display: none; }
 @media (prefers-reduced-motion: no-preference) {
   #ending.show .ending-card { animation: endingin 0.7s cubic-bezier(0.2, 1.3, 0.4, 1) both; }
   #ending.show .ending-stamp { animation: bigstamp 0.7s cubic-bezier(0.2, 1.6, 0.4, 1) 0.5s both; }
@@ -1173,6 +1182,8 @@ body.start-page { overflow: auto; min-height: 100%; display: flex; align-items: 
   font-family: var(--hand);
 }
 .start-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 18px; margin-bottom: 22px; }
+.start-march { margin: 0 0 14px; border: 2px solid var(--ink, #1d2b5c); line-height: 0; overflow: hidden; background: #bfe6f6; }
+#start-march-canvas { width: 100%; height: auto; display: block; image-rendering: pixelated; }
 .start-head .logo { font-size: 30px; margin: 0; }
 .start-tagline { margin: 0; color: var(--ink-soft); font-size: 14px; }
 .start-actions { display: grid; gap: 14px; }

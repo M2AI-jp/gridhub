@@ -1,6 +1,7 @@
 // はじめの画面（CONTRACTS §70）。盤面の担当。フォルダを選ぶ・最近のフォルダ・チュートリアルで遊ぶ。
 // アプリ（GridHub.app）の中では、フォルダのダイアログを Mac の標準のものにまかせる（window.webkit.messageHandlers.gridhub）。
 import { t, initWords, isDev, onWords, pair, said } from './words.js';
+import { startMarch } from './start-march.js';
 
 const $ = (sel) => document.querySelector(sel);
 const bridge = window.webkit?.messageHandlers?.gridhub ?? null;
@@ -263,3 +264,5 @@ onWords(() => {
   window.__gridhubStart = { ready: true };
   askHandFonts();
 })();
+
+startMarch(document.querySelector('#start-march'));

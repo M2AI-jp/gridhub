@@ -661,8 +661,10 @@ export function initHero({ live, post, toast, sound, setView, monsters = {}, boa
     setTimeout(() => item.remove(), 5400);
   }
   function celebrateAchievements(list) {
-    list.slice(0, 4).forEach((a, i) => setTimeout(() => fanfare('ach', `${pair('称号', '実績')}「${said(a, 'name')}」`, said(a, 'desc'), 'achieve'), i * 700));
-    if (list.length > 4) setTimeout(() => fanfare('ach', `ほかに${pair('称号', '実績')}を ${list.length - 4} つ`, `手帳の「${pair('称号', '実績')}」で見られます`, null), 4 * 700);
+    // 進軍では戦場を隠さないよう、一度に出す枚数を減らす
+    const cap = document.body.dataset.mode === 'march' ? 2 : 4;
+    list.slice(0, cap).forEach((a, i) => setTimeout(() => fanfare('ach', `${pair('称号', '実績')}「${said(a, 'name')}」`, said(a, 'desc'), 'achieve'), i * 700));
+    if (list.length > cap) setTimeout(() => fanfare('ach', `ほかに${pair('称号', '実績')}を ${list.length - cap} つ`, `手帳の「${pair('称号', '実績')}」で見られます`, null), 4 * 700);
     for (const a of list) shownAch.add(a.id);
     if (list.length) attention();
   }

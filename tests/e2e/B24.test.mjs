@@ -229,6 +229,83 @@ test('§80.1 盤面を開くと進軍。レーンを押すと欄が開き、ノ�
   }
 });
 
+test('§80.20 エンディングの次: アプリの中だけ、はじめの画面への導線が出る', async () => {
+  const srv = await serveStatic(join(ROOT, 'web'));
+  const page = await openBrowser({ width: 1440, height: 900 });
+  try {
+    await page.goto(`${srv.url}/index.html?fixture=demo`);
+    await page.waitFor(READY, { timeout: 20000 });
+    assert.equal(await page.eval(`document.querySelector('#ending-next').hidden`), true, '外では出さない');
+    const home = encodeURIComponent(`${srv.url}/start.html`);
+    await page.goto(`${srv.url}/index.html?fixture=demo&home=${home}`);
+    await page.waitFor(READY, { timeout: 20000 });
+    assert.equal(await page.eval(`document.querySelector('#ending-next').hidden`), false, 'アプリの中では出す');
+    assert.match(await page.eval(`document.querySelector('#ending-next').href`), /start\.html/);
+  } finally {
+    await page.close();
+    await srv.close();
+  }
+});
+
+test('§80.21 キー操作: Space で次の一手、欄を開いているあいだや入力中は何もしない', async () => {
+  const srv = await serveStatic(join(ROOT, 'web'));
+  const page = await openBrowser({ width: 1440, height: 900 });
+  try {
+    await page.goto(`${srv.url}/index.html?fixture=demo&mode=march`);
+    await page.waitFor(READY, { timeout: 20000 });
+    // 押されたボタンを数える（見本の盤面でも click は届く）
+    await page.eval(`window.__clicks = []; document.addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) window.__clicks.push(b.id || b.dataset.kind); }, true);`);
+    const key = (k) => page.eval(`document.body.dispatchEvent(new KeyboardEvent('keydown', { key: ${JSON.stringify(k)}, bubbles: true, cancelable: true }))`);
+    await page.waitFor(`document.querySelector('.march-cmd[data-next="true"]')`, { timeout: 5000 });
+    const next = await page.eval(`document.querySelector('.march-cmd[data-next="true"]').dataset.kind`);
+    await key(' ');
+    assert.deepEqual(await page.eval('window.__clicks'), [next], 'Space で光っているボタンを押す');
+    // 光っているのが起動なら Space では押さない
+    await page.eval(`window.__clicks = []; for (const b of document.querySelectorAll('.march-cmd[data-next="true"]')) { b.dataset.next = 'false'; } const s = document.querySelector('.march-cmd[data-kind=sortie]'); s.dataset.next = 'true';`);
+    await key(' ');
+    assert.deepEqual(await page.eval('window.__clicks'), [], '起動は Space で押さない');
+    await page.eval(`document.querySelector('.march-cmd[data-kind=sortie]').dataset.next = 'false'`);
+    // 詳細の欄を開いているあいだは反応しない
+    await page.eval(`document.querySelector('.march-cmd[data-kind=stamp], .march-cmd[data-next]').dataset.next = 'true'; document.body.classList.add('drawer-open')`);
+    await key(' ');
+    assert.deepEqual(await page.eval('window.__clicks'), [], '欄を開いているあいだは押さない');
+    await page.eval(`document.body.classList.remove('drawer-open')`);
+    // 入力中は反応しない
+    await page.eval(`window.__clicks = []; const i = document.createElement('input'); i.id = 'tmp-input'; document.body.append(i);`);
+    await page.eval(`document.querySelector('#tmp-input').dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }))`);
+    assert.deepEqual(await page.eval('window.__clicks'), [], '入力中は押さない');
+    assert.deepEqual(exceptions(page), []);
+  } finally {
+    await page.close();
+    await srv.close();
+  }
+});
+
+test('§80.18 敵をクリックすると殴れて、記録は変わらない。敵のいない所では欄が開く', async () => {
+  const srv = await serveStatic(join(ROOT, 'web'));
+  const page = await openBrowser({ width: 1440, height: 900 });
+  try {
+    await page.goto(`${srv.url}/index.html?fixture=demo&mode=march`);
+    await page.waitFor(READY, { timeout: 20000 });
+    await page.waitFor('window.__masume.marchFoeAt()', { timeout: 5000 });
+    const seq = await page.eval('window.__masume.view.head.seq');
+    const click = `(() => { const p = window.__masume.marchFoeAt(); const c = document.querySelector('#march-canvas'); c.dispatchEvent(new MouseEvent('click', { bubbles: true, clientX: p.x, clientY: p.y })); })()`;
+    for (let k = 0; k < 4; k++) await page.eval(click);
+    assert.equal(await page.eval('window.__masume.marchCombo.combo'), 4, '続けて押すとコンボが伸びる');
+    assert.equal(await page.eval('window.__masume.view.head.seq'), seq, '記録は変わらない');
+    // 知らせは上の帯の上に見える（帯の下に隠れない）。帯の色でない字の点が、真ん中あたりにある
+    await new Promise((r) => setTimeout(r, 150));
+    const lit = await page.eval(`(() => { const c = document.querySelector('#march-canvas'); const d = c.getContext('2d').getImageData(Math.floor(c.width / 2) - 60, 2, 120, 18).data; let n = 0; for (let i = 0; i < d.length; i += 4) if (d[i] > 220 && d[i + 1] > 180 && d[i + 2] < 120) n++; return n; })()`);
+    assert.ok(lit > 20, `HIT の字が上の帯に見える（${lit}）`);
+    assert.equal(await page.eval(`document.body.classList.contains('drawer-open')`), false, '敵を押しても欄は開かない');
+    assert.ok(await page.eval(`Number(localStorage.getItem('gridhub.bestCombo')) >= 4`), '最高を覚える');
+    assert.deepEqual(exceptions(page), []);
+  } finally {
+    await page.close();
+    await srv.close();
+  }
+});
+
 test('§80.4・§80.5 ビューが進むと敵が減り、失敗すると倒れる。ことばが切り替わる', async () => {
   const srv = await serveStatic(join(ROOT, 'web'));
   const page = await openBrowser({ width: 1200, height: 800 });
