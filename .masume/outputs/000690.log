@@ -1,0 +1,16 @@
+=== W2: node --test --test-reporter=spec tests/e2e/W2.test.mjs ===
+✔ §81.3 site/ の中は HTML・CSS・画像だけ（スクリプト・Web フォントなし）。入口は site/index.html、もう1つのページは site/engineers.html (2.463833ms)
+✔ §81.3 リンクと画像が壊れていない: site/ の中のファイル・ページの中の #id・GitHub のリンクだけ。site/ の外（../）を指さない (0.644584ms)
+✔ §81.3 タブで行き来できる: どちらのページのタブも、もう1つのページを指す（相対パス） (0.324083ms)
+✔ §81.3 Chrome で開くと、読み込むのは同じ場所のものだけ。画像は全部読めて、コンソールにエラーが無い（http でも file でも、2ページとも） (1674.109625ms)
+✔ §81.3 Chrome でタブを押すと、もう1つのページが開き、またタブで戻れる（http でも file でも） (1426.51375ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3251.488959
+
+(exit 0, 3373ms)

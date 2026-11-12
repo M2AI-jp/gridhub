@@ -44,7 +44,7 @@ const HEAD = {
   },
 };
 
-test('§81.1 2ページ（site/index.html・site/engineers.html）は、どちらも日本語のページ（lang="ja"・utf-8・viewport・title・description・og・アイコン）で、スクリプトを使わない。ヘッダーの目次はそのページの節へ', () => {
+test('§81.1 2ページ（site/index.html・site/engineers.html）はlang="ja"・utf-8・viewport・title・description・og・アイコン。スクリプトなし。ヘッダー目次はページの節へ', () => {
   for (const k of KEYS) {
     const at = `site/${PAGES[k]}`;
     assert.ok(html[k], `${at} がある`);
@@ -218,7 +218,13 @@ test('§81.2 はじめての方へ: 地図のつくり（#map）: AI の得意�
   for (const w of ['1マス（数分）', 'ダンジョン（タスク）は 2〜6 マス', '町は 2〜3 ダンジョンごと', '地方（数時間）', '大陸（数日）', 'あがりの手前には必ず1つ', '余白のマスは進みを止めない']) assert.ok(design.includes(w), `GAME_DESIGN に「${w}」`);
   assert.match(guide, /目安 30〜90分/u, 'GM_GUIDE の目安');
   assert.match(guide, /`check` は \*\*E2E\*\*（外から叩く）/u, 'テストは外から確かめる');
-  assert.match(read('src', 'engine', 'margins.js'), /テスト \$\{passed\} 件、通ってきたね/u, '宿屋の主人のせりふ');
+  const margins = read('src', 'engine', 'margins.js');
+  const words = read('src', 'engine', 'words.js');
+  assert.match(margins, /const NPC = \(\) => t\('margin\.npc'\)/u, '宿屋の主人の名前は辞書から読む');
+  assert.match(margins, /t\('margin\.npc\.hello', name, passed\)/u, '宿屋の主人のせりふは辞書から読む');
+  assert.match(words, /'margin\.npc': \{ game: '宿屋の主人', dev: '宿の人' \}/u, '宿屋の主人の名前');
+  assert.match(words, /'margin\.npc\.hello'.*テスト \$\{passed\} 件、通ってきたね/u, '宿屋の主人のせりふ');
+  assert.match(words, /'margin\.extra\.cleared'.*号外: /u, '余白の号外');
 });
 
 test('§81.2 はじめての方へ: ゲームとして、ここが楽しい（#fun）: 絵つきのカード6〜8枚・1枚2文まで。書いてある仕組みはルールのとおり', () => {
@@ -260,7 +266,7 @@ test('§81.2 はじめての方へ: 遊び方（#how）3ステップ（メモア
   ]);
 });
 
-test('§81.2 はじめての方へ: はじめる（#start）の頭に「必要なもの」を名前つきで（Mac・Node.js・Command Line Tools・Claude Code か Codex・GitHub・Linear や Jira）。Mac アプリとコマンドライン。書いてある事実がリポジトリと合う', () => {
+test('§81.2 はじめての方へ: #start の頭に必要なもの（Mac・Node.js・Command Line Tools・Claude Code か Codex・GitHub・Linear や Jira）を列挙。事実がリポジトリと合う', () => {
   const start = part('index', 'start');
   assert.ok(start.indexOf('class="needs"') < start.indexOf('class="starts"'), '「必要なもの」が頭に');
   const needs = /<div class="needs"[\s\S]*?<\/ul>/u.exec(start)?.[0] ?? '';
@@ -279,7 +285,7 @@ test('§81.2 はじめての方へ: はじめる（#start）の頭に「必要�
   assert.deepEqual(items.map((i) => i.opt), [false, false, false, false, true, true], 'GitHub と Linear・Jira は、無くても遊べる');
   assert.deepEqual(codes(items[3].html), [], 'Claude Code と Codex は公式の手順を指す');
   for (const w of ['https://claude.com/claude-code', 'https://github.com/openai/codex', '公式手順']) assert.ok(textOf(items[3].html).includes(w), `公式の手順「${w}」`);
-  assert.deepEqual(codes(start).slice(2), [
+  assert.deepEqual(codes(start), [
     ['git clone https://github.com/M2AI-jp/gridhub.git', 'cd gridhub', 'sh mac/build.sh'],
     ['git clone https://github.com/M2AI-jp/gridhub.git', 'cd gridhub', 'ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub', 'gridhub --help'],
   ]);
@@ -325,7 +331,17 @@ test('§81.2 エンジニアの方へ: ファーストビュー（#hero）: ラ�
   assert.equal(lines[2 + cases.length], `いちばん手前のモンスター: ${cases.find((c) => !c.ok).name}`);
   assert.equal(lines[3 + cases.length], '--- 判定の出力（末尾） ---', '落ちていれば、判定の出力の末尾が続く');
   const step = read('src', 'commands', 'step.js');
-  for (const w of ["{ true: '✔', false: '✖'", '`歩いた: ${data.character} ${data.node} テスト ', '`  ${MARK[c.ok]} ${c.name}`', '`いちばん手前のモンスター: ${next.name}`', "'--- 判定の出力（末尾） ---'"]) assert.ok(step.includes(w), `step.js に ${w}`);
+  const casesSource = read('src', 'engine', 'cases.js');
+  const words = read('src', 'engine', 'words.js');
+  assert.match(step, /import \{ MARK \} from '\.\.\/engine\/cases\.js';/u, 'step.js は cases.js の印を使う');
+  assert.match(casesSource, /export const MARK = \{ true: '✔', false: '✖', null: '・' \};/u, '判定の印');
+  assert.match(step, /console\.log\(t\('step\.walked'/u, 'step の先頭行は辞書から読む');
+  assert.match(step, /console\.log\(`  \$\{MARK\[c\.ok\]\} \$\{c\.name\}`\)/u, 'step の印とテスト名');
+  assert.match(step, /console\.log\(t\('step\.next', next\.name\)\)/u, '次のテストは辞書から読む');
+  assert.match(step, /console\.log\(t\('check\.output'\)\)/u, '末尾の見出しは辞書から読む');
+  assert.match(words, /'step\.walked': \{ game: \(who, node, ok, all\) => `歩いた: \$\{who\} \$\{node\} テスト \$\{ok\}\/\$\{all\}`, dev: \(who, node, ok, all\) => `テストを走らせた: \$\{who\} \$\{node\} テスト \$\{ok\}\/\$\{all\}` \}/u, 'step の先頭行の game/dev');
+  assert.match(words, /'step\.next': \{ game: \(name\) => `いちばん手前のモンスター: \$\{name\}`, dev: \(name\) => `次に通すテスト: \$\{name\}` \}/u, 'step の次のテストの game/dev');
+  assert.match(words, /'check\.output': \{ game: '--- 判定の出力（末尾） ---', dev: '--- テストの出力（末尾） ---' \}/u, 'step の末尾見出しの game/dev');
   // テストの名前は、サンプルの冒険の判定のとおり（同じ順）
   assert.ok(memo.characters.find((c) => c.id === head[1])?.path.includes(head[2]), `${head[1]} の道に ${head[2]}`);
   const names = [...read('examples', 'memo', 'checks', `${head[2]}.mjs`).matchAll(/^ {2}\['([^']+)', \(\) =>/gmu)].map((m) => m[1]);
@@ -400,7 +416,9 @@ test('§81.2 エンジニアの方へ: ゲームの言葉と、実際に起き�
   says.forEach((ws, i) => { for (const w of ws) assert.ok(terms[i].dd.includes(w), `${terms[i].word} に「${w}」`); });
   // ルールと src のとおり
   const rules = read('docs', 'RULEBOOK.md');
-  for (const w of ['終了コード 0 なら成功', 'TAP の `ok`/`not ok`', '自分の道のダンジョンの判定を**古い順にすべて**走らせる', 'MASUME_BLAME: <id>', '**視界** = `min(レベル − 1, 4)`', 'あがりの手前には必ず1つ', '`.masume/log.jsonl` に**追記だけ**', '各行は前の行のハッシュを含む']) assert.ok(rules.includes(w), `RULEBOOK に「${w}」`);
+  const contracts = read('docs', 'CONTRACTS.md');
+  for (const w of ['判定はすべて**判定のファイル**（テスト）で行います。通れば成功です。', '自分の道のダンジョンの判定を**古い順にすべて**走らせます。', 'MASUME_BLAME: <ID>,<ID>', '**視界**は「レベル − 1」マス先まで（最大 4）', 'あがりの手前には必ず1つ', '冒険の書には**追記だけ**されます。', '各行は前の行の指紋（ハッシュ）を含みます']) assert.ok(rules.includes(w), `RULEBOOK に「${w}」`);
+  for (const w of ['終了コード: `0` 成功', 'TAP:', '`ok <n> - 名前` 成功 / `not ok <n> - 名前` 失敗']) assert.ok(contracts.includes(w), `CONTRACTS に「${w}」`);
   assert.match(read('src', 'engine', 'canonical.js'), /createHash\('sha256'\)/u, 'ハッシュは SHA-256');
   assert.match(read('src', 'engine', 'checks.js'), /sha256\(readFileSync\(file\)\)/u, '判定ファイルの SHA-256');
   assert.match(read('src', 'engine', 'save.js'), /core\.hooksPath=\/dev\/null/u, 'フックは走らない');
@@ -408,7 +426,10 @@ test('§81.2 エンジニアの方へ: ゲームの言葉と、実際に起き�
   assert.match(read('docs', 'GM_GUIDE.md'), /重ならない glob/u);
   assert.match(read('docs', 'GM_GUIDE.md'), /共有ファイル（[^）]*）は GM の縄張り/u);
   const margins = read('src', 'engine', 'margins.js');
-  for (const w of ["'宿屋の主人'", '号外: ']) assert.ok(margins.includes(w), `余白のマスに ${w}`);
+  const words = read('src', 'engine', 'words.js');
+  assert.match(margins, /t\('margin\.npc'\)/u, '余白のマスの主人の名前は辞書から読む');
+  assert.match(words, /'margin\.npc': \{ game: '宿屋の主人', dev: '宿の人' \}/u, '余白のマスの主人の名前');
+  assert.match(words, /'margin\.extra\.cleared'.*号外: /u, '余白のマスの号外');
 });
 
 test('§81.2 エンジニアの方へ: 例: メモアプリの地図（#example）。願い・キャラクター・道の図・中ボス・大ボス・王様の城が、サンプルの冒険（examples/memo）の地図のとおり', () => {
@@ -472,7 +493,7 @@ test('§81.2 エンジニアの方へ: エージェントの1ターン（#turn�
   assert.ok(textOf(turn).includes('check に2回落ちたら止まって知らせます。'));
   assert.match(help.stdout, /--tactic careful\|balanced\|bold/u);
   const rules = read('docs', 'RULEBOOK.md');
-  for (const w of ['`balanced`、既定', '町に着いたら（セーブしたら）・砦で待機になったら', 'どの作戦でも、宣言に2回失敗したら止まって報告する', '変わるのは、エージェントの動き方と1回の出撃の長さ（利用料）']) assert.ok(rules.includes(w), `RULEBOOK に「${w}」`);
+  for (const w of ['`balanced`、既定', '町に着いたら（セーブしたら）・砦で待機になったら', 'どの作戦でも、宣言判定に2回失敗したら止まって報告します。', '変わるのは、キャラクターの動き方と1回の出撃の長さ（かかる時間と利用料）です。']) assert.ok(rules.includes(w), `RULEBOOK に「${w}」`);
 });
 
 test('§81.2 エンジニアの方へ: 主なコマンド（#commands）。どれも gridhub --help にある', () => {
