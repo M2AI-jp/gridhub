@@ -7,6 +7,9 @@ import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+// 判定の子プロセスが遊ぶ人の手帳を使わないよう、未指定時は判定用の場所にする
+process.env.GRIDHUB_APP_HOME ??= mkdtempSync(join(tmpdir(), 'masume-home-'));
+
 // 字を確かめる判定の多くは冒険のことばで書いてある。既定そのものを確かめる判定は、この環境変数を外す
 process.env.GRIDHUB_WORDS ??= 'game';
 

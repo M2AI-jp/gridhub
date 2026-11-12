@@ -45,3 +45,8 @@ test('§76.7 web 側: boot.js と words.js が window.__gridhubWords を読み�
   assert.match(words, /type:\s*'words'/, 'postMessage({type: "words"})');
   assert.match(words, /messageHandlers\?\.gridhub\?\.postMessage/, 'アプリの外では何もしない（窓口が無ければ呼ばない）');
 });
+
+test('§76.7 Mac アプリの覚えたことばが無い既定は開発のことば', () => {
+  assert.match(src(), /UserDefaults\.standard\.string\(forKey:\s*key\)\s*\?\?\s*""\)\s*\?\?\s*\.dev/,
+    '覚えたことばが無いときは .dev');
+});
