@@ -61,9 +61,18 @@ function brokenSeal(root, state, segment) {
   return null;
 }
 
-function requireSealed(root, state, segment, { actor, character, previous }) {
+function requireSealed(root, state, segment, {
+  actor, character, previous, startSeq = null, events = [], target = character,
+}) {
   const broken = brokenSeal(root, state, segment);
-  if (!broken) return;
+  const resealed = startSeq !== null && events.some((event) => event.seq > startSeq
+    && event.type === 'sealed' && segment.includes(event.data?.node));
+  if (!broken) {
+    if (resealed) {
+      throw new MasumeError('E_CONFLICT', `${target} の封印が判定中に更新されました。もう一度判定してください`);
+    }
+    return;
+  }
   appendEventsLocked(root, [{ type: 'seal_broken', data: { character, ...broken } }],
     { actor, previous });
   throw new MasumeError('E_SEAL_BROKEN', t('err.seal_broken', broken.node));
@@ -116,26 +125,34 @@ async function fightReady(root, result, gates, { actor, boss }) {
 const positions = (state) => Object.fromEntries(Object.entries(state.characters).map(([id, c]) => [id, c.pos]));
 const hasTerritory = (map, id) => (map.characters.find((c) => c.id === id)?.territory ?? []).length > 0;
 
-// 町・ゲートのセーブと、設定がオンならそのすぐ後に GitHub へ送った結果（§59.2）。送れなくても判定は変えない。
+// 町・ゲートのセーブと、あとで GitHub へ送る対象（§59.2）。送れなくても判定は変えない。
 function savedAndPushed(root, saved) {
-  const specs = [{ type: 'saved', data: saved }];
-  if (saved.commit && gitSettings(root).auto_push) specs.push({ type: 'pushed', data: autoPush(root, saved) });
-  return specs;
+  return {
+    specs: [{ type: 'saved', data: saved }],
+    pushes: saved.commit && gitSettings(root).auto_push ? [saved] : [],
+  };
 }
 
 // 判定の記録のすぐ後に続く、Git のセーブ（町・ゲート）と巻き戻し（負け）。quest.save が "git" の冒険だけ（§43）。
 function saveFollowUps(root, state, before, event, history) {
   const map = state.map;
-  if (map.quest.save !== 'git') return [];
+  if (map.quest.save !== 'git') return { specs: [], pushes: [] };
   const { type, data, seq } = event;
   const specs = [];
+  const pushes = [];
   if (type === 'check_passed' || type === 'stamped') {
     const path = map.characters.find(({ id }) => id === data.character).path;
     const camps = path.slice(before[data.character] + 1, state.characters[data.character].pos)
       .filter((id) => map.nodes[id]?.type === 'camp');
-    if (camps.length) specs.push(...savedAndPushed(root, saveTerritory(root, map, [data.character], camps.at(-1))));
+    if (camps.length) {
+      const saved = savedAndPushed(root, saveTerritory(root, map, [data.character], camps.at(-1)));
+      specs.push(...saved.specs);
+      pushes.push(...saved.pushes);
+    }
   } else if (type === 'gate_cleared') {
-    specs.push(...savedAndPushed(root, saveTerritory(root, map, data.members, data.gate)));
+    const saved = savedAndPushed(root, saveTerritory(root, map, data.members, data.gate));
+    specs.push(...saved.specs);
+    pushes.push(...saved.pushes);
   } else if (type === 'check_failed' || type === 'gate_failed') {
     const losers = type === 'check_failed' ? [data.character] : data.blamed ?? [];
     for (const id of losers.filter((member) => hasTerritory(map, member))) {
@@ -145,7 +162,23 @@ function saveFollowUps(root, state, before, event, history) {
       });
     }
   }
-  return specs;
+  return { specs, pushes };
+}
+
+async function appendPushes(root, actor, savedEvents, requireRunning) {
+  const events = [];
+  for (const saved of savedEvents) {
+    requireRunning();
+    const data = autoPush(root, saved);
+    requireRunning();
+    const event = await withLockAsync(root, actor, () => {
+      const snapshot = requireHealthy(inspectLog(root));
+      return appendEventsLocked(root, [{ type: 'pushed', data }],
+        { actor, previous: snapshot.events.at(-1) })[0];
+    }, requireRunning);
+    events.push(event);
+  }
+  return events;
 }
 
 async function runCheck(root, target, { actor = defaultActor(), boss = true }, requireRunning) {
@@ -160,6 +193,7 @@ async function runCheck(root, target, { actor = defaultActor(), boss = true }, r
     return {
       ...selection, map: state.map, revision: state.revision, sealState: state,
       epochs: Object.fromEntries(selection.members.map((id) => [id, state.characters[id].epoch])),
+      startSeq: snapshot.events.at(-1).seq,
     };
   }, requireRunning);
 
@@ -171,8 +205,9 @@ async function runCheck(root, target, { actor = defaultActor(), boss = true }, r
         const snapshot = requireHealthy(inspectLog(root));
         const state = replay(root, snapshot.events);
         requireUnchanged(state, before, target);
-        requireSealed(root, before.sealState, [node], {
+        requireSealed(root, state, [node], {
           actor, character: before.gate ? null : target, previous: snapshot.events.at(-1),
+          startSeq: before.startSeq, events: snapshot.events, target,
         });
       }, requireRunning);
     },
@@ -184,8 +219,9 @@ async function runCheck(root, target, { actor = defaultActor(), boss = true }, r
     const state = replay(root, snapshot.events);
     requireUnchanged(state, before, target);
     // 判定開始時の封印と比較し、実行中の書き換えを再封印でも隠せないようにする。
-    requireSealed(root, before.sealState, before.segment, {
+    requireSealed(root, state, before.segment, {
       actor, character: before.gate ? null : target, previous: snapshot.events.at(-1),
+      startSeq: before.startSeq, events: snapshot.events, target,
     });
     const seq = snapshot.events.at(-1).seq + 1;
     const output = `outputs/${String(seq).padStart(6, '0')}.log`;
@@ -218,14 +254,17 @@ async function runCheck(root, target, { actor = defaultActor(), boss = true }, r
     }], { actor, previous: snapshot.events.at(-1) });
     const positionsBefore = positions(state);
     reduceEvent(state, events[0]);
+    const followUps = saveFollowUps(root, state, positionsBefore, events[0], [...snapshot.events, ...events]);
     events.push(...appendEventsLocked(root,
-      saveFollowUps(root, state, positionsBefore, events[0], [...snapshot.events, ...events]),
+      followUps.specs,
       { actor, previous: events[0] }));
     return {
       result: { exitCode: passed ? 0 : 1, events },
       gates: passed ? readyAfter(state, before.members) : [],
+      pushes: followUps.pushes,
     };
   }, requireRunning);
+  committed.result.events.push(...await appendPushes(root, actor, committed.pushes, requireRunning));
   return fightReady(root, committed.result, committed.gates, { actor, boss });
 }
 
@@ -255,11 +294,14 @@ async function runStamp(root, nodeId, { actor = defaultActor(), as = actor, boss
     }], { actor, previous: snapshot.events.at(-1) });
     const positionsBefore = positions(state);
     reduceEvent(state, events[0]);
+    const followUps = saveFollowUps(root, state, positionsBefore, events[0], [...snapshot.events, ...events]);
     events.push(...appendEventsLocked(root,
-      saveFollowUps(root, state, positionsBefore, events[0], [...snapshot.events, ...events]),
+      followUps.specs,
       { actor, previous: events[0] }));
-    return { exitCode: 0, events, ready: readyGate(state, owner.id) };
+    return { exitCode: 0, events, ready: readyGate(state, owner.id), pushes: followUps.pushes };
   }, requireRunning);
+  result.events.push(...await appendPushes(root, actor, result.pushes, requireRunning));
+  delete result.pushes;
   return fightReady(root, result, result.ready === null ? [] : [result.ready], { actor, boss });
 }
 
@@ -298,6 +340,7 @@ async function runStep(root, characterId, { actor = defaultActor() }, requireRun
     return {
       ...selection, map: state.map, revision: state.revision, sealState: state,
       epochs: { [characterId]: state.characters[characterId].epoch },
+      startSeq: snapshot.events.at(-1).seq,
     };
   }, requireRunning);
   const result = await runChecks(root, characterId, before.segment, before.map, {
@@ -309,8 +352,9 @@ async function runStep(root, characterId, { actor = defaultActor() }, requireRun
     const snapshot = requireHealthy(inspectLog(root));
     const state = replay(root, snapshot.events);
     requireUnchanged(state, before, characterId);
-    requireSealed(root, before.sealState, before.segment, {
+    requireSealed(root, state, before.segment, {
       actor, character: characterId, previous: snapshot.events.at(-1),
+      startSeq: before.startSeq, events: snapshot.events, target: characterId,
     });
     const seq = snapshot.events.at(-1).seq + 1;
     const output = `outputs/${String(seq).padStart(6, '0')}.log`;
