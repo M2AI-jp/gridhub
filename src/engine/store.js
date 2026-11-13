@@ -53,6 +53,57 @@ function removeOwnedLock(file, identity) {
   }
 }
 
+function processIsAlive(pid) {
+  if (!Number.isSafeInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    return error.code === 'EPERM';
+  }
+}
+
+function lockPid(file) {
+  try {
+    const value = JSON.parse(readFileSync(file, 'utf8'));
+    return Number.isSafeInteger(value?.pid) ? value.pid : null;
+  } catch {
+    return null;
+  }
+}
+
+function claimBreak(file) {
+  const marker = `${file}.break`;
+  try {
+    const descriptor = openSync(marker, 'wx');
+    try {
+      writeFileSync(descriptor, JSON.stringify({ pid: process.pid, ts: new Date().toISOString() }));
+      fsyncSync(descriptor);
+    } finally {
+      closeSync(descriptor);
+    }
+    return marker;
+  } catch (error) {
+    if (error.code !== 'EEXIST') throw error;
+    try {
+      const info = lstatSync(marker);
+      if (Date.now() - info.mtimeMs >= 30_000 && !processIsAlive(lockPid(marker))) unlinkSync(marker);
+    } catch (staleError) {
+      if (staleError.code !== 'ENOENT') throw staleError;
+    }
+    return null;
+  }
+}
+
+function releaseBreak(marker) {
+  if (!marker) return;
+  try {
+    unlinkSync(marker);
+  } catch (error) {
+    if (error.code !== 'ENOENT') throw error;
+  }
+}
+
 function tryLock(file) {
   try {
     const descriptor = openSync(file, 'wx');
@@ -63,8 +114,20 @@ function tryLock(file) {
     try {
       const old = lstatSync(file);
       if (Date.now() - old.mtimeMs >= 30_000) {
-        const current = lstatSync(file);
-        if (sameFile(old, current) && current.mtimeMs === old.mtimeMs) unlinkSync(file);
+        // 古いと判断した待ち手が同時に unlink しないよう、break を一人だけ取得する。
+        const marker = claimBreak(file);
+        if (marker) {
+          try {
+            const current = lstatSync(file);
+            const stillStale = Date.now() - current.mtimeMs >= 30_000;
+            if (sameFile(old, current) && current.mtimeMs === old.mtimeMs
+              && stillStale && !processIsAlive(lockPid(file))) {
+              unlinkSync(file);
+            }
+          } finally {
+            releaseBreak(marker);
+          }
+        }
       }
     } catch (staleError) {
       if (staleError.code !== 'ENOENT') throw staleError;
