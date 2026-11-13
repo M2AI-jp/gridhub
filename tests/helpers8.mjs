@@ -28,7 +28,7 @@ export function appEnv(extra = {}) {
     if (k.startsWith('npm_') || k.startsWith('GRIDHUB_') || (k.startsWith('MASUME_') && k !== 'MASUME_CHROME')) delete env[k];
   }
   delete env.NODE_TEST_CONTEXT;
-  return { ...env, ...extra };
+  return { ...env, ...extra, GRIDHUB_APP_HOME: extra.GRIDHUB_APP_HOME || tmp('gridhub-home-') };
 }
 
 /** gridhub <command> … を起こし、1行目の URL（pattern の1番目のかたまり）を待つ。stdin は管のまま（命綱の判定で閉じる） */

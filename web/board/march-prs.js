@@ -101,13 +101,14 @@ export function createPrs({ host, load, merge, open, march, every = 20000 }) {
     const number = Number(button.closest('.pr-chip')?.dataset.number);
     if (mergeButton && Number.isInteger(number) && armed === number) return;
     disarm();
-  });
+  }, true);
   // Space などで同じマージボタンを2回目に押す操作は通し、それ以外のキー操作は解く
-  document.addEventListener('keydown', () => {
-    const before = armed;
-    queueMicrotask(() => {
-      if (before !== null && armed === before) disarm();
-    });
+  document.addEventListener('keydown', (e) => {
+    if (armed === null) return;
+    // Space/Enter は、構えた一手の2回目やフォーカス中のマージボタンを確定するキー。
+    // それ以外のキーだけを、このイベントの中で同期して解除する。
+    if (e.key === ' ' || e.key === 'Enter') return;
+    disarm();
   }, true);
 
   async function onMerge(p) {

@@ -29,7 +29,7 @@ export function distEnv(extra = {}) {
   for (const k of Object.keys(env)) if (k.startsWith('npm_') || k.startsWith('NPM_') || k.startsWith('GRIDHUB_') || (k.startsWith('MASUME_') && k !== 'MASUME_CHROME')) delete env[k];
   delete env.NODE_TEST_CONTEXT;
   env.PATH = [dirnameDist(process.execPath), env.PATH].filter(Boolean).join(delimiterDist);
-  return { ...env, NO_COLOR: '1', ...extra };
+  return { ...env, NO_COLOR: '1', ...extra, GRIDHUB_APP_HOME: extra.GRIDHUB_APP_HOME || tmpDist('gridhub-dist-home-') };
 }
 
 let distCache = null;
