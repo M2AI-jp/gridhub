@@ -6,12 +6,21 @@ import { join } from 'node:path';
 import { chmodSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { startServeEnv } from '../helpers2.mjs';
 import {
-  waitUntil, tmp, masume, setupDungeon, dungeonMap, passAll, gitc, bareRemote, remoteHead, commitFile, openBrowser, NO_GH, GIT_ENV,
+  waitUntil, tmp, masume, setupDungeon, dungeonMap, passAll, gitc, bareRemote, remoteHead, commitFile, openBrowser, openBrowserWith, NO_GH, GIT_ENV,
 } from '../helpers6.mjs';
 
 const ENV = { ...GIT_ENV, MASUME_GH: NO_GH };
 const READY = 'window.__masume && window.__masume.ready';
 const state = `document.querySelector('#git-panel')?.dataset.state`;
+
+async function dispatchKey(page, key) {
+  const code = key === ' ' ? 'Space' : key === 'Enter' ? 'Enter' : key;
+  const windowsVirtualKeyCode = key === ' ' ? 32 : key === 'Enter' ? 13 : key.toUpperCase().charCodeAt(0);
+  const text = key === ' ' ? ' ' : key === 'Enter' ? '\r' : key;
+  const base = { key, code, windowsVirtualKeyCode, nativeVirtualKeyCode: windowsVirtualKeyCode };
+  await page.send('Input.dispatchKeyEvent', { type: 'keyDown', text, unmodifiedText: text, ...base });
+  await page.send('Input.dispatchKeyEvent', { type: 'keyUp', ...base });
+}
 
 test('盤面のセーブの欄から、手元の bare リポジトリに送れる（書記 × 伝令 × 盤面）', { timeout: 240000 }, async () => {
   const dir = tmp('gridhub-g10-');
@@ -228,6 +237,10 @@ echo done
     const normal = await page.eval(`${button()}.textContent`);
     await page.eval(`${button()}.click()`);
     assert.equal(await page.eval(`${button()}.dataset.armed`), 'true', '1回目は構えるだけ');
+    const laneButton = `document.querySelector('.march-cmd[data-kind="step"]')`;
+    await page.waitFor(laneButton, { timeout: 10000, message: 'レーンの手で進めるボタンが出る' });
+    await page.eval(`${laneButton}.click()`);
+    await page.waitFor(`${button()}.dataset.armed === 'false'`, { timeout: 2000, message: 'レーンのボタンで構えが解ける' });
     await page.eval(`document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'x', bubbles: true, cancelable: true }))`);
     await page.waitFor(`${button()}.dataset.armed === 'false'`, { timeout: 2000, message: 'キー操作で構えが解ける' });
     assert.equal(await page.eval(`${button()}.textContent`), normal, 'キー操作後に札の字が戻る');
@@ -284,7 +297,7 @@ echo '${first}'
   }
 });
 
-test('§80.23 光ったマージは Space 2回でマージを送り、間にほかのキーを押すと構えが解ける', { timeout: 120000 }, async () => {
+test('§80.23 本物の Space 2回とフォーカス中の Enter 2回でマージを送り、間にほかのキーを押すと構えが解ける', { timeout: 120000 }, async () => {
   const dir = tmp('gridhub-g10-pr-space-');
   assert.equal(gitc(dir, 'init', '-q', '-b', 'main').code, 0);
   setupDungeon(dir, { save: true });
@@ -292,14 +305,16 @@ test('§80.23 光ったマージは Space 2回でマージを送り、間にほ�
   const gh = join(tmp('gridhub-g10-gh-space-'), 'gh');
   const merged = `${gh}.merged`;
   const open = JSON.stringify([{ number: 7, title: 'Spaceでマージ', state: 'OPEN', isDraft: false, reviewDecision: 'APPROVED', statusCheckRollup: [{ status: 'COMPLETED', conclusion: 'SUCCESS' }], headRefName: 'feature/space', author: { login: 'a' } }]);
+  const refreshed = open.replace('Spaceでマージ', 'Spaceでマージ（更新）');
   writeFileSync(gh, `#!/bin/sh
+if [ "$2" = "list" ] && [ -f '${merged}' ]; then echo '${refreshed}'; exit 0; fi
 if [ "$2" = "list" ]; then echo '${open}'; exit 0; fi
-if [ "$2" = "merge" ]; then echo "$3" > '${merged}'; exit 0; fi
+if [ "$2" = "merge" ]; then echo "$3" >> '${merged}'; exit 0; fi
 `);
   chmodSync(gh, 0o755);
   assert.equal(gitc(dir, 'checkout', '-q', '-b', 'feature/space').code, 0);
   const srv = await startServeEnv(dir, { ...GIT_ENV, MASUME_GH: gh });
-  const page = await openBrowser({ width: 1440, height: 900 });
+  const page = await openBrowserWith({ width: 1440, height: 900 });
   try {
     await page.goto(`${srv.url}/`);
     await page.waitFor(READY, { timeout: 20000 });
@@ -310,18 +325,25 @@ if [ "$2" = "merge" ]; then echo "$3" > '${merged}'; exit 0; fi
     })()`);
     const button = () => `document.querySelector('.pr-chip[data-number="7"] .pr-merge')`;
     await page.waitFor(`${button()}?.dataset.next === 'true'`, { timeout: 10000, message: 'マージが次の一手として光る' });
-    const key = (keyName) => page.eval(`document.body.dispatchEvent(new KeyboardEvent('keydown', { key: ${JSON.stringify(keyName)}, bubbles: true, cancelable: true }))`);
-    await key(' ');
+    await dispatchKey(page, ' ');
     assert.equal(await page.eval(`${button()}.dataset.armed`), 'true', 'Space 1回目は構える');
     assert.equal(existsSync(merged), false, 'Space 1回目では送らない');
-    await key('x');
+    await dispatchKey(page, 'x');
     await page.waitFor(`${button()}.dataset.armed === 'false'`, { timeout: 2000, message: 'ほかのキーで構えが解ける' });
     assert.equal(existsSync(merged), false, '別キーでは送らない');
-    await key(' ');
+    await dispatchKey(page, ' ');
     assert.equal(await page.eval(`${button()}.dataset.armed`), 'true', 'もう一度Spaceで構える');
-    await key(' ');
+    await dispatchKey(page, ' ');
     await waitUntil(() => existsSync(merged), { timeout: 10000, message: 'Space 2回目でマージを送る' });
     assert.equal(readFileSync(merged, 'utf8').trim(), '7', 'マージされた番号');
+    const mergedCalls = () => readFileSync(merged, 'utf8').trim().split(/\s+/).filter(Boolean).length;
+    await page.waitFor(`${button()}?.dataset.armed === 'false' && !${button()}.disabled`, { timeout: 5000, message: 'Space のマージ後にボタンが戻る' });
+    await page.eval(`${button()}.focus()`);
+    await dispatchKey(page, 'Enter');
+    assert.equal(await page.eval(`${button()}.dataset.armed`), 'true', 'フォーカス中の Enter 1回目は構える');
+    await page.eval(`${button()}.focus()`);
+    await dispatchKey(page, 'Enter');
+    await waitUntil(() => mergedCalls() >= 2, { timeout: 10000, message: 'フォーカス中の Enter 2回目でマージを送る' });
     assert.deepEqual(page.console.filter((l) => l.startsWith('[exception]') || l.startsWith('[error]')), []);
   } finally {
     await page.close();
