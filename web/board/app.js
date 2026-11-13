@@ -572,8 +572,9 @@ function toast(e) {
   el.append(stamp, text);
   boxEl.appendChild(el);
   if (e.sticky) return;
-  setTimeout(() => el.classList.add('out'), 4200);
-  setTimeout(() => el.remove(), 5000);
+  const lifetime = e.ok === false ? 10000 : 4200;
+  setTimeout(() => el.classList.add('out'), lifetime);
+  setTimeout(() => el.remove(), lifetime + 800);
 }
 
 // ---- 見開きの操作 ----
@@ -1171,6 +1172,33 @@ function setTactic(value) {
 }
 const currentTactic = () => $('#march-tactic button[aria-pressed="true"]')?.dataset.tactic ?? 'balanced';
 
+/** 進軍のキー操作を、見えるボタンにも伝える（§80.21） */
+function updateMarchShortcuts() {
+  const keyButtons = [
+    ['#march-all', 'A', 'march.key.all'],
+    ['#march-push', 'P', 'march.key.push'],
+    ['#march-open-pr', 'R', 'march.key.pr'],
+  ];
+  for (const [selector, key, titleKey] of keyButtons) {
+    const button = $(selector);
+    if (!button) continue;
+    button.setAttribute('aria-keyshortcuts', key);
+    button.title = t(titleKey);
+  }
+
+  for (const button of document.querySelectorAll('#march .march-cmd, #march .pr-merge')) {
+    const isNext = button.dataset.next === 'true';
+    const isStart = button.dataset.kind === 'sortie' || button.dataset.kind === 'resortie';
+    if (isNext && !isStart) {
+      button.setAttribute('aria-keyshortcuts', 'Space');
+      button.title = t('march.key.space', button.textContent.trim());
+    } else {
+      button.removeAttribute('aria-keyshortcuts');
+      button.removeAttribute('title');
+    }
+  }
+}
+
 /** レーンの一手（§80.8）: どれも本物の窓口を呼ぶ */
 async function marchCommand(id, cmd, button) {
   // 操作を始めたら、おかえりのカードは片づける
@@ -1227,6 +1255,7 @@ function renderMarchBar() {
   push.dataset.next = String(barNext === 'push');
   $('#march-open-pr').dataset.next = String(barNext === 'open-pr');
   prs?.highlight(barNext?.startsWith('merge:') ? Number(barNext.slice(6)) : null);
+  updateMarchShortcuts();
 }
 
 /** 進軍のキー操作（§80.21）: Space 次の一手 / P git push / A 全員起動 / R PR を作成 / 欄の中では Enter 進める・Esc 閉じる */
@@ -1269,6 +1298,15 @@ function marchKey(e) {
 
 function setupMarch() {
   document.addEventListener('keydown', marchKey);
+  document.addEventListener(
+    'click',
+    (e) => {
+      if (e.detail <= 0) return;
+      const button = e.target.closest?.('#march button');
+      if (button) setTimeout(() => button.blur(), 0);
+    },
+    true,
+  );
   march = createMarch({ host: $('#march-lanes'), reserve: 150, sound, onPick: (id) => select('char', id), onCommand: marchCommand });
   if (LIVE) {
     prs = createPrs({
@@ -1283,6 +1321,12 @@ function setupMarch() {
     });
     prs.start();
   }
+  new MutationObserver(updateMarchShortcuts).observe($('#march'), {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-next'],
+  });
   setTactic(savedTactic());
   document.querySelectorAll('#march-tactic button').forEach((b) => b.addEventListener('click', () => setTactic(b.dataset.tactic)));
   $('#march-all').addEventListener('click', async (e) => {
@@ -1316,6 +1360,7 @@ function setupMarch() {
   setInterval(renderMarchBar, 1000);
   document.querySelectorAll('#mode-switch button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
   setMode(savedMode(), { save: false });
+  updateMarchShortcuts();
 }
 
 (async () => {
