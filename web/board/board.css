@@ -216,8 +216,8 @@ body.drawer-open #rail > #party { display: none; }
 .pc-medal { color: #b58500; font-weight: 700; }
 .pc-strong { color: #b25b00; font-weight: 700; }
 .pc-skill { color: #6a3fb0; font-weight: 700; }
-.pc-fight { font-family: var(--mono); font-size: 10.5px; color: #8a2b1e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pc-tests { color: var(--ink); font-family: var(--mono); font-size: 10.5px; }
+.pc-fight { font-family: var(--mono); font-size: 12px; color: #8a2b1e; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pc-tests { color: var(--ink); font-family: var(--mono); font-size: 12px; }
 .pc-tests.all { color: var(--red); }
 .pc-name { font-family: var(--marker); font-size: 14px; width: fit-content; max-width: 100%; padding: 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: linear-gradient(transparent 55%, color-mix(in srgb, var(--hl) 75%, transparent) 55% 92%, transparent 92%); }
 .pc-meta { font-size: 11px; color: var(--ink-soft); font-family: var(--hand); margin-top: 3px; }
@@ -261,8 +261,11 @@ body.drawer-open #rail > #party { display: none; }
 .march-cmd:hover { background: #3c30a0; }
 .march-cmd:disabled { opacity: 0.5; cursor: wait; }
 .march-cmd.sub { background: #14121f; border-color: #6c6888; color: #c8c4dc; font-size: 13px; }
-/* 小さな手はふだん隠す。通り切った判定と、キーボードで選んだときは出す。マウスの無い画面では常に出す */
-@media (hover: hover) { .march-cmd.sub:not(.show):not(:focus-visible):not([data-ready="true"]) { opacity: 0; } }
+/* 小さな手はふだん薄く見せ、乗せる・フォーカス・押せる判定でははっきり見せる。マウスの無い画面では常に見せる */
+@media (hover: hover) {
+  .march-cmd.sub:not(.show):not(:hover):not(:focus-visible):not([data-ready="true"]) { opacity: 0.55; }
+  .march-cmd.sub:hover, .march-cmd.sub.show, .march-cmd.sub:focus-visible, .march-cmd.sub[data-ready="true"] { opacity: 1; }
+}
 .march-cmd.sub[data-kind="check"][data-ready="false"] { color: #ff9a8a; border-color: #b83c34; }
 .march-cmd.sub[data-kind="check"][data-ready="true"] { background: linear-gradient(#f4dc98, #d8a848); color: #14121f; border-color: #fff; }
 .march-cmd[data-kind="watch"] { background: #14121f; border-color: #6c6888; color: #c8c4dc; }
@@ -310,8 +313,12 @@ body[data-mode="march"] .your-turn { display: none; }
 /* ノートのページめくりは、進軍の裏で済ませる */
 body[data-mode="march"] .flip-stage { display: none; }
 /* 進軍では知らせを左下（札の上）に寄せて、戦場を隠さない */
-body[data-mode="march"] #toast { top: auto; bottom: 58px; left: 8px; transform: none; align-items: flex-start; gap: 4px; max-width: 250px; }
+body[data-mode="march"] #toast {
+  top: auto; bottom: 58px; left: 8px; transform: none; align-items: flex-start; gap: 4px;
+  width: min(360px, calc(100vw - 16px)); max-width: min(360px, calc(100vw - 16px));
+}
 body[data-mode="march"] .toast { font-size: 12px; padding: 4px 8px; width: 240px; max-width: 100%; box-sizing: border-box; }
+body[data-mode="march"] .toast.ng { font-size: 13px; width: 100%; max-width: 100%; }
 body[data-mode="march"] #fanfare { top: 56px; right: 8px; bottom: auto; left: auto; transform: none; flex-direction: column; }
 body[data-mode="march"] .pager, body[data-mode="march"] .zoom, body[data-mode="march"] .legend, body[data-mode="march"] #boss-meter { display: none; }
 .zoom { position: absolute; right: 12px; bottom: 10px; display: flex; gap: 6px; z-index: 3; align-items: center; }
