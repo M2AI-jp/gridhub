@@ -29,7 +29,8 @@ function gameOf(root, characterId) {
   const character = view.characters.find(({ id }) => id === characterId);
   if (!character) return new MasumeError('E_UNKNOWN', `キャラクターが見つかりません: ${characterId}`);
   const clean = (path) => String(path).replace(/^\.\//u, '');
-  const sealed = new Set(Object.values(view.nodes).flatMap((node) => node.check?.seal ?? []).map(clean));
+  const protectedPath = (path) => clean(path).toLowerCase();
+  const sealed = new Set(Object.values(view.nodes).flatMap((node) => node.check?.seal ?? []).map(protectedPath));
   const territory = character.territory ?? [];
   const patterns = territory.map((glob) => globToRegExp(clean(glob)));
   const at = character.at ? view.nodes[character.at] : null;
@@ -49,8 +50,12 @@ function gameOf(root, characterId) {
   return {
     character,
     territory,
-    isProtected: (path) => path === '.masume' || path.startsWith('.masume/') || path === '.git' || path.startsWith('.git/')
-      || sealed.has(path) || path.endsWith('.map.json'),
+    isProtected: (path) => {
+      const normalized = protectedPath(path);
+      return normalized === '.masume' || normalized.startsWith('.masume/')
+        || normalized === '.git' || normalized.startsWith('.git/')
+        || sealed.has(normalized) || normalized.endsWith('.map.json');
+    },
     inTerritory: (path) => patterns.some((pattern) => pattern.test(path)),
     mentioned,
     ownerOf: (path) => owners.find(({ patterns: globs }) => globs.some((pattern) => pattern.test(path)))?.id ?? null,

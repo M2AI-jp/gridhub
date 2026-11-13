@@ -277,12 +277,16 @@
 
     <section id="start" class="sheet" aria-labelledby="start-title">
       <h2 id="start-title"><span class="ph mark">はじめる</span></h2>
+      <aside class="safety" aria-labelledby="engineers-safety-title">
+        <h3 id="engineers-safety-title"><span class="ph">実行権限に注意</span></h3>
+        <p>GM とエージェントは、確認なしにファイルを読み書きし、コマンドを実行する設定で起動します。Claude Code は <code>claude -p --permission-mode bypassPermissions</code> で起動し、箱や隔離はなく、実行中のユーザーと同じ権限で動きます。Codex は <code>codex exec -s workspace-write</code> で起動し、書き込めるのはそのフォルダだけです。大事なファイルを置かない新しいフォルダ、または専用の環境で始めてください。</p>
+      </aside>
       <ol class="setup">
         <li>
           <h3><span class="ph">GridHub を手元に置く</span></h3>
           <pre><code>git clone https://github.com/M2AI-jp/gridhub.git &amp;&amp; cd gridhub
 ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub</code></pre>
-          <p><code>~/.local/bin</code> が PATH に無ければ、<code>alias gridhub="node $PWD/bin/gridhub.js"</code> でも使えます。</p>
+          <p>リンクは PATH の通った場所に置きます。<code>~/.local/bin</code> が PATH に無ければ、<code>alias gridhub="node $PWD/bin/gridhub.js"</code> でも使えます。</p>
         </li>
         <li>
           <h3><span class="ph">Claude Code か</span> <span class="ph">Codex を用意する</span></h3>
