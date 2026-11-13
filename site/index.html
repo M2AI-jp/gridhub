@@ -262,6 +262,7 @@
       <h2 id="start-title"><span class="ph mark">はじめる</span></h2>
       <div class="needs" aria-labelledby="needs-title">
         <h3 id="needs-title"><img src="img/chest.svg" alt="" width="40" height="40"><span class="ph">必要なもの</span></h3>
+        <p class="platform-note"><b>Mac は Mac アプリを使う場合に必要です。</b> コマンドライン（<code>node bin/gridhub.js</code>）は Node.js 22 以上と Git だけで、macOS と Linux で動きます。Windows は WSL で使えます。</p>
         <ul class="needs-list">
           <li><b>Mac</b>（macOS 13 以上）</li>
           <li><b>Node.js 22 以上</b>（https://nodejs.org/）</li>
@@ -279,6 +280,10 @@
           <li class="opt"><b>Linear</b> や <b>Jira</b> を使っているチームは、進み具合をそちらにも映せます（任意。それぞれの API キーを使います）。</li>
         </ul>
       </div>
+      <aside class="safety" aria-labelledby="index-safety-title">
+        <h3 id="index-safety-title"><span class="ph">安全の注意</span></h3>
+        <p>地図を作る役割と AI の仲間は、確認なしでファイルを読み書きしたり、コマンドを実行します。Claude Code は確認を省く <code>bypassPermissions</code> 設定で、箱や隔離はありません。大事なものがない新しいフォルダ（遊び専用の環境）で始めてください。</p>
+      </aside>
       <div class="starts">
         <div class="start-box">
           <h3><img src="img/hero.svg" alt="" width="40" height="40"><span class="ph">Mac アプリで遊ぶ</span></h3>
@@ -299,6 +304,7 @@ sh mac/build.sh</code></pre>
 cd gridhub
 ln -s "$PWD/bin/gridhub.js" ~/.local/bin/gridhub
 gridhub --help</code></pre>
+          <p>リンクは PATH の通った場所に置きます。<code>~/.local/bin</code> が PATH に無ければ、<code>alias gridhub="node $PWD/bin/gridhub.js"</code> でも使えます。</p>
           <p>コマンドやしくみのくわしい話は、<a href="engineers.html">エンジニアの方へ</a>のページにあります。</p>
         </div>
       </div>
