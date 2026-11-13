@@ -121,7 +121,7 @@ export function createPrs({ host, load, merge, open, march, every = 20000 }) {
     disarm(false);
     busy = true;
     render();
-    await merge(p.number);
+    await merge(p.number, p.headRefOid);
     busy = false;
     await poll();
   }
