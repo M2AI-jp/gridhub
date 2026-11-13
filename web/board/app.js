@@ -1278,7 +1278,7 @@ function setupMarch() {
         const r = await fetch('api/prs', { cache: 'no-store' });
         return r.ok ? r.json() : null;
       },
-      merge: (number) => post('api/prs/merge', { number }),
+      merge: (number, head) => post('api/prs/merge', typeof head === 'string' && head ? { number, head } : { number }),
       open: () => post('api/prs/create', {}),
     });
     prs.start();

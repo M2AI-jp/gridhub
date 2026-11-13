@@ -187,6 +187,12 @@ async function readPartyDefaults(root) {
   };
 }
 
+/** 書き込み・起動の窓口（POST）は、この機械（ループバック）からだけ受ける（§80.33）。--host 0.0.0.0 でも、LAN の別の機械からは見るだけ */
+export function fromLoopback(request) {
+  const address = String(request.socket?.remoteAddress ?? '').toLowerCase();
+  return address === '::1' || /^(::ffff:)?127\.\d+\.\d+\.\d+$/u.test(address);
+}
+
 export function allowedOrigin(request) {
   if (request.headers.origin === undefined) return true;
   try {
@@ -359,7 +365,11 @@ export function createServer({
     postRoutes['/api/prs/merge'] = {
       parse(body) {
         if (!Number.isInteger(body.number) || body.number <= 0) throw badRequest('number を正の整数で指定してください');
-        return { number: body.number };
+        // 盤面が見ていた PR の先頭のコミット（§80.32）。あれば、そのコミットのときだけマージする
+        if (body.head !== undefined && (typeof body.head !== 'string' || !/^[0-9a-f]{40}$/iu.test(body.head))) {
+          throw badRequest('head はコミットの40桁の16進で指定してください');
+        }
+        return body.head === undefined ? { number: body.number } : { number: body.number, head: body.head.toLowerCase() };
       },
       call: (value) => onMerge(value),
       status: 200,
@@ -518,7 +528,7 @@ export function createServer({
   if (typeof getWords === 'function') getRoutes['/api/words'] = getWords;
 
   async function handlePost(request, response, pathname) {
-    if (request.headers['x-masume'] !== '1' || !allowedOrigin(request)) {
+    if (request.headers['x-masume'] !== '1' || !allowedOrigin(request) || !fromLoopback(request)) {
       sendError(response, 403, apiError('E_FORBIDDEN', 'このリクエストは許可されていません'));
       return;
     }
@@ -1144,12 +1154,12 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
         openingPr = false;
       }
     },
-    onMerge: async ({ number }) => {
+    onMerge: async ({ number, head }) => {
       requireOpen();
       if (mergingPr) throw apiError('E_BUSY', t('err.server.merge.busy'));
       mergingPr = true;
       try {
-        const { code, stderr, timedOut } = await runGh(['pr', 'merge', String(number), '--merge']);
+        const { code, stderr, timedOut } = await runGh(['pr', 'merge', String(number), '--merge', ...(head ? ['--match-head-commit', head] : [])]);
         prCache = null;
         if (code === 0) return { ok: true, number };
         if (timedOut) {
