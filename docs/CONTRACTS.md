@@ -1658,7 +1658,7 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
      - groups: 担当の territory。
      - markers: 落ちた・まだのマスの record（通ったマスは出さない）と、担当ごとの board。
      - people: 担当の現在地。
-     - goal: quest.goal を役場に。
+     - goal: quest.goal を役場に。`look: "castle"` で、codecity に魔王の城の候補の絵を頼む（codecity の goal.look。絵は天野さんの承認待ちの候補）。goal.at と goal.look を変えると codecity は町を作り直すので、変えない（quest.goal が決まったら固定）。城の場所が無い町では、codecity は名札だけを残して城の絵を unplaced（part: "landmark"）に出す。
      - title: 冒険の名前とテスト N/M。
      - ハンコのマスは役場。
    - 字は辞書（§76）のいまのことば。上限を超えた物と置き場所を作れない物は、`.masume/world-overlay.diagnostics.json` に書く。

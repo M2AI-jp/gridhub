@@ -243,7 +243,7 @@ export function adventureOverlay({ dir, map, view }, { seed = worldSeed(dir) } =
     version: 1, source: { tool: 'gridhub', name: 'GridHub', seq: view.head.seq }, seed, groups,
     title: { text: map.quest.title, sub: t('brief.tests', view.bestiary.defeated, view.bestiary.total) },
     markers, people,
-    goal: { id: unique('goal'), at: { landmark: 'town_hall' }, label: t('goal'),
+    goal: { id: unique('goal'), at: { landmark: 'town_hall' }, look: 'castle', label: t('goal'),
       lines: [`${map.quest.goal}: ${goal.title}`, t('brief.tests', tests.pass, tests.total)] },
   }, diagnostics);
 }
