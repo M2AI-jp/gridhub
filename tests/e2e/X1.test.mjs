@@ -321,7 +321,7 @@ test('POST /api/world は不在なら404、ヘッダ・Origin・JSON とルー�
   assert.equal((await fetch(`http://${lan}:${server.port}/api/state`)).status, 200);
 });
 
-test('Chrome の「世界」は POST を送り、新しいタブを開く。レーン・ノートを保ち、失敗を知らせる', { timeout: 60_000 }, async t => {
+test('Chrome の「世界」は POST を送り、新しいタブを開く。レーン・ノートを保ち、不在時は設定欄を出す', { timeout: 60_000 }, async t => {
   const dir = game(t), fake = fakeCodecity();
   t.after(() => rmSync(fake, { recursive: true, force: true }));
   const server = await startServeEnv(dir, { GRIDHUB_CODECITY: fake, MASUME_GH: '/does/not/exist' });
@@ -363,7 +363,193 @@ test('Chrome の「世界」は POST を送り、新しいタブを開く。レ�
   await page.goto(`${missing.url}/`);
   await page.waitFor('window.__masume?.ready', { timeout: 20_000 });
   await clickWorld();
-  await page.waitFor(`document.querySelector('#toast').textContent.includes('codecity が見つかりません。--codecity か GRIDHUB_CODECITY で場所を渡してください')`);
+  await page.waitFor(`document.querySelector('#world-codecity')?.hidden === false`);
+  assert.equal(await page.eval(`document.querySelector('#toast').textContent.includes('codecity が見つかりません')`), false);
   assert.equal(await page.eval(`document.querySelector('#world-open').disabled`), false);
+  assert.deepEqual(page.console.filter(line => line.startsWith('[exception]')), []);
+});
+
+// §83.6: それぞれ専用の置き場所で、ほかの判定の設定とも混ざらないようにする。
+function settingsHome(t) {
+  const home = tmp('gridhub-x1-settings-');
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  return home;
+}
+const remember = (url, body, headers) => fetch(`${url.replace(/\/$/u, '')}/api/world/codecity`, {
+  method: 'POST', headers: { 'content-type': 'application/json', 'x-masume': '1', ...headers }, body: JSON.stringify(body),
+});
+async function click(page, selector) {
+  const { x, y } = await page.eval(`(() => { const r = document.querySelector(${JSON.stringify(selector)}).getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; })()`);
+  for (const type of ['mousePressed', 'mouseReleased']) await page.send('Input.dispatchMouseEvent', { type, x, y, button: 'left', clickCount: 1 });
+}
+
+test('§83.6 CLI の場所は --codecity → 環境変数 → settings.json。上位が無効なら下位で起動しない', { timeout: 30_000 }, async t => {
+  const dir = game(t), home = settingsHome(t);
+  const flag = fakeCodecity(), environment = fakeCodecity(), saved = fakeCodecity();
+  for (const fake of [flag, environment, saved]) t.after(() => rmSync(fake, { recursive: true, force: true }));
+  const settings = join(home, 'settings.json');
+  const contents = JSON.stringify({ codecity: saved, other: { keep: true } });
+  writeFileSync(settings, contents);
+  const env = { GRIDHUB_APP_HOME: home, GRIDHUB_CODECITY: environment };
+  for (const [extra, variables, expected] of [
+    [['--codecity', flag], env, flag],
+    [[], env, environment],
+    [[], { ...env, GRIDHUB_CODECITY: '' }, saved],
+  ]) {
+    const session = launchWorld(dir, extra, variables);
+    t.after(() => session.stop());
+    const url = await session.ready();
+    assert.equal(url, readFileSync(join(expected, 'url'), 'utf8'));
+    assert.match(await (await fetch(url)).text(), /偽の町/u);
+    await session.stop();
+  }
+  for (const [extra, variables] of [
+    [['--codecity', join(home, 'missing')], env],
+    [[], { ...env, GRIDHUB_CODECITY: join(home, 'missing') }],
+  ]) {
+    const session = launchWorld(dir, extra, variables);
+    t.after(() => session.stop());
+    assert.equal((await session.exited).code, 2);
+    assert.match(session.error(), /\[E_NO_CODECITY\]/u);
+  }
+  assert.equal(readFileSync(settings, 'utf8'), contents, '読むだけでは設定を書き換えない');
+  for (const fake of [flag, environment, saved]) assert.equal(readFileSync(join(fake, 'starts'), 'utf8'), 'start\n');
+});
+
+test('§83.6 保存 API は200・400、ほかの設定を保ち、同じサーバーと再起動後の世界が保存先を使う', { timeout: 25_000 }, async t => {
+  const dir = game(t), home = settingsHome(t), fake = fakeCodecity();
+  t.after(() => rmSync(fake, { recursive: true, force: true }));
+  const file = join(home, 'settings.json');
+  const before = { words: 'dev', future: { nested: [1, 2] }, codecity: '/old/missing' };
+  writeFileSync(file, JSON.stringify(before));
+  const env = { GRIDHUB_APP_HOME: home, GRIDHUB_CODECITY: '', MASUME_GH: '/does/not/exist' };
+  const server = await startServeEnv(dir, env);
+  t.after(() => server.stop());
+  assert.equal((await post(server.url)).status, 404);
+  const folderEntry = join(home, 'directory-entry');
+  mkdirSync(join(folderEntry, 'codecity.mjs'), { recursive: true });
+  for (const path of [undefined, null, false, 42, {}, [], '', ' ', join(home, 'missing'), folderEntry]) {
+    const result = await remember(server.url, { path });
+    assert.equal(result.status, 400, JSON.stringify(path));
+    assert.equal((await result.json()).code, 'E_NO_CODECITY');
+    assert.deepEqual(readJson(file), before);
+  }
+  for (const body of [[], null, 'folder']) assert.equal((await remember(server.url, body)).status, 400);
+  const result = await remember(server.url, { path: fake });
+  assert.equal(result.status, 200);
+  assert.deepEqual(await result.json(), { ok: true, path: fake });
+  assert.deepEqual(readJson(file), { ...before, codecity: fake });
+  assert.equal(existsSync(join(fake, 'starts')), false, '覚えるだけでは起動しない');
+  const world = await post(server.url);
+  assert.equal(world.status, 200);
+  assert.match(await (await fetch((await world.json()).url)).text(), /偽の町/u);
+  await server.stop();
+  const restarted = await startServeEnv(dir, env);
+  t.after(() => restarted.stop());
+  assert.equal((await post(restarted.url)).status, 200);
+  assert.equal(readFileSync(join(fake, 'starts'), 'utf8'), 'start\nstart\n');
+});
+
+test('§83.6 保存 API は X-Masume・Origin・JSON・ループバックを守り、startServer の home にだけ書く', { timeout: 20_000 }, async t => {
+  const dir = game(t), home = settingsHome(t), fake = fakeCodecity();
+  t.after(() => rmSync(fake, { recursive: true, force: true }));
+  const server = await startServer({ root: dir, port: 0, host: '0.0.0.0', home });
+  t.after(() => server.stop());
+  const url = `http://127.0.0.1:${server.port}`;
+  assert.equal((await remember(url, { path: fake }, { 'x-masume': '' })).status, 403);
+  assert.equal((await remember(url, { path: fake }, { origin: 'http://example.invalid' })).status, 403);
+  assert.equal((await fetch(`${url}/api/world/codecity`, { method: 'POST', headers: { 'x-masume': '1' }, body: '{' })).status, 400);
+  const lan = Object.values(networkInterfaces()).flat().find(i => i && i.family === 'IPv4' && !i.internal)?.address;
+  if (lan) {
+    const remote = await remember(`http://${lan}:${server.port}`, { path: fake });
+    assert.equal(remote.status, 403);
+    assert.equal((await remote.json()).code, 'E_FORBIDDEN');
+  } else t.diagnostic('LAN IPv4 が無いため LAN 実接続だけ未実施');
+  assert.equal(existsSync(join(home, 'settings.json')), false, '拒否したリクエストは書かない');
+  assert.equal((await remember(url, { path: fake }, { origin: url })).status, 200);
+  assert.deepEqual(readJson(join(home, 'settings.json')), { codecity: fake });
+  const world = await post(url);
+  assert.equal(world.status, 200, '指定した home を世界の起動も使う');
+  assert.equal((await world.json()).url, readFileSync(join(fake, 'url'), 'utf8'));
+});
+
+test('§83.6 壊れた settings.json を保存で消さず、上位の明示指定なら設定を読まずに開ける', { timeout: 20_000 }, async t => {
+  const dir = game(t), home = settingsHome(t), fake = fakeCodecity();
+  t.after(() => rmSync(fake, { recursive: true, force: true }));
+  const file = join(home, 'settings.json');
+  const server = await startServeEnv(dir, { GRIDHUB_APP_HOME: home, GRIDHUB_CODECITY: '' });
+  t.after(() => server.stop());
+  for (const text of ['{"keep":', '[]', 'null']) {
+    writeFileSync(file, text);
+    const reply = await remember(server.url, { path: fake });
+    assert.equal(reply.ok, false);
+    assert.equal((await reply.json()).code, 'E_WORLD');
+    assert.equal(readFileSync(file, 'utf8'), text);
+  }
+  const session = launchWorld(dir, ['--codecity', fake], { GRIDHUB_APP_HOME: home });
+  t.after(() => session.stop());
+  assert.match(await session.ready(), /^http:\/\/127\.0\.0\.1:/u);
+});
+
+test('§83.6 Chrome で不在時の欄に入力して覚えると、世界を再試行して新しいタブで開く', { timeout: 60_000 }, async t => {
+  const dir = game(t), home = settingsHome(t), fake = fakeCodecity();
+  t.after(() => rmSync(fake, { recursive: true, force: true }));
+  const server = await startServeEnv(dir, { GRIDHUB_APP_HOME: home, GRIDHUB_CODECITY: '', MASUME_GH: '/does/not/exist' });
+  t.after(() => server.stop());
+  const page = await openBrowserWith({ width: 1280, height: 820 });
+  t.after(() => page.close());
+  await page.goto(`${server.url}/?words=game`);
+  await page.waitFor('window.__masume?.ready');
+  await click(page, '#world-open');
+  await page.waitFor(`document.querySelector('#world-codecity')?.hidden === false && !document.querySelector('#world-open').disabled`);
+  assert.equal(await page.eval(`document.querySelector('#world-codecity-choose').hidden`), true);
+  assert.equal(await page.eval(`document.querySelector('#world-codecity-title').textContent`), '世界を開く準備');
+  assert.equal(await page.eval(`document.querySelector('#world-codecity-save').textContent`), '覚える');
+  assert.equal(await page.eval(`document.querySelector('#world-codecity a').href`), 'https://github.com/M2AI-jp/codecity-inspector');
+  assert.match(await page.eval(`document.querySelector('#world-codecity').textContent`), /git clone/u);
+  await click(page, '#words-toggle');
+  assert.equal(await page.eval(`document.querySelector('#world-codecity-title').textContent`), 'codecity の場所を設定');
+  await click(page, '#world-codecity-path');
+  await page.send('Input.insertText', { text: join(home, 'missing') });
+  await click(page, '#world-codecity-save');
+  await page.waitFor(`!document.querySelector('#world-codecity-error').hidden && !document.querySelector('#world-open').disabled`);
+  assert.equal(existsSync(join(home, 'settings.json')), false);
+  await page.eval(`document.querySelector('#world-codecity-path').value = ''`);
+  await click(page, '#world-codecity-path');
+  await page.send('Input.insertText', { text: fake });
+  await click(page, '#world-codecity-save');
+  await page.waitFor(`document.querySelector('#world-codecity').hidden && !document.querySelector('#world-open').disabled`);
+  assert.deepEqual(readJson(join(home, 'settings.json')), { codecity: fake });
+  const url = readFileSync(join(fake, 'url'), 'utf8');
+  await waitUntil(async () => (await page.send('Target.getTargets')).targetInfos.some(target => target.type === 'page' && target.url === url));
+  assert.deepEqual(page.console.filter(line => line.startsWith('[exception]')), []);
+});
+
+test('§83.6 Chrome のアプリ印ではフォルダ選択を通知し、選択結果を保存して外部ブラウザへ世界を渡す', { timeout: 60_000 }, async t => {
+  const dir = game(t), home = settingsHome(t), fake = fakeCodecity();
+  t.after(() => rmSync(fake, { recursive: true, force: true }));
+  const chosen = join(home, `codecity の "町" 'フォルダ'`);
+  symlinkSync(fake, chosen, 'dir');
+  const server = await startServeEnv(dir, { GRIDHUB_APP_HOME: home, GRIDHUB_CODECITY: '', MASUME_GH: '/does/not/exist' });
+  t.after(() => server.stop());
+  const preload = `window.__posted = []; window.webkit = { messageHandlers: { gridhub: { postMessage(m) { window.__posted.push(JSON.parse(JSON.stringify(m))); } } } };`;
+  const page = await openBrowserWith({ width: 1280, height: 820, preload });
+  t.after(() => page.close());
+  await page.goto(`${server.url}/?app=1`);
+  await page.waitFor('window.__masume?.ready');
+  await click(page, '#world-open');
+  await page.waitFor(`document.querySelector('#world-codecity')?.hidden === false && !document.querySelector('#world-open').disabled`);
+  assert.equal(await page.eval(`document.querySelector('#world-codecity-choose').hidden`), false);
+  assert.equal(await page.eval(`document.querySelector('#world-codecity-choose').textContent`), 'フォルダを選ぶ');
+  await click(page, '#world-codecity-choose');
+  assert.deepEqual(await page.eval(`window.__posted.filter(m => m.type === 'codecity')`), [{ type: 'codecity' }]);
+  assert.equal(existsSync(join(home, 'settings.json')), false, '選択を通知しただけでは保存しない');
+  await page.eval(`window.gridhubApp.codecityChosen(${JSON.stringify(chosen)})`);
+  await page.waitFor(`window.__posted.some(m => m.type === 'openExternal')`);
+  assert.deepEqual(readJson(join(home, 'settings.json')), { codecity: chosen });
+  assert.deepEqual(await page.eval(`window.__posted.filter(m => m.type === 'openExternal')`), [
+    { type: 'openExternal', url: readFileSync(join(fake, 'url'), 'utf8') },
+  ]);
+  assert.equal(await page.eval(`document.querySelector('#world-codecity').hidden`), true);
   assert.deepEqual(page.console.filter(line => line.startsWith('[exception]')), []);
 });

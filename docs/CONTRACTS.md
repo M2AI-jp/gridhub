@@ -1678,3 +1678,17 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - codecity が見つからないときは 404 `E_NO_CODECITY` で、盤面は §3 と同じ字を知らせに出す。
    - POST の作法は §8・§80.33（ループバックだけ）のとおり。
 5. **やらないこと**: codecity の絵・描画・町の作りを gridhub に写さない。art/game の絵は承認待ち（ユーザー本人の OK が要る）。
+6. **codecity の場所を覚える**（Mac のアプリからも世界を開けるように）:
+   - codecity の場所は、次の順で最初にあるものを使う（§83.3 に足す）。
+     - `--codecity`
+     - 環境変数 `GRIDHUB_CODECITY`
+     - 遊ぶ人の置き場所（§79。`GRIDHUB_APP_HOME`）の `settings.json` の `codecity`
+   - 伝令 `POST /api/world/codecity` 本文 `{"path": "<フォルダ>"}`:
+     - そのフォルダに `codecity.mjs` があれば、`settings.json` に書いて 200 `{ok: true, path}`。
+     - 無ければ 400 `E_NO_CODECITY`。
+     - POST の作法とループバックの決まり（§8・§80.33）を守る。
+   - 盤面: 「世界」を押して `E_NO_CODECITY` のときは、知らせのかわりに小さな欄を出す。
+     - 欄には、codecity のフォルダの入力と「覚える」のボタン、codecity の GitHub（https://github.com/M2AI-jp/codecity-inspector）を clone する案内の 1 行を置く。
+     - 覚えたら、もう一度世界を開く。
+     - Mac のアプリの中（`?app=1` など今のアプリの印）では、フォルダを選ぶダイアログ（`postMessage({type: "codecity"})` → アプリが NSOpenPanel で選び、`POST /api/world/codecity` に送る）も使えるようにする。
+   - 判定は `X1` に足す。本物の手帳には書かない（判定用の置き場所）。

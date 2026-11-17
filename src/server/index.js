@@ -5,7 +5,7 @@ import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ChildJob, tailLines } from './jobs.js';
-import { startWorld } from './world.js';
+import { rememberCodecity, startWorld } from './world.js';
 import { t } from '../engine/words.js';
 
 const MIME = {
@@ -270,7 +270,7 @@ export function createServer({
   onQuest, getQuest, onSortie, getParty, onPartyStop,
   getGit, onPush, onAutoPush, getPrs, onMerge, onOpenPr,
   getHand, getFile, onFile, onStep, onCheck, onNote,
-  getWords, onWords, onWorld,
+  getWords, onWords, onWorld, onCodecity,
   getHero, onHeroOpen, onHeroSeen, onHeroPaste, onHeroPeel, onHeroTrade, onHeroTitle, onHeroTheme,
 }) {
   const root = resolve(webRoot);
@@ -355,6 +355,9 @@ export function createServer({
   }
   if (typeof onWorld === 'function') {
     postRoutes['/api/world'] = { parse: () => ({}), call: () => onWorld(), status: 200, optionalBody: true };
+  }
+  if (typeof onCodecity === 'function') {
+    postRoutes['/api/world/codecity'] = { parse: body => ({ path: body.path }), call: value => onCodecity(value), status: 200 };
   }
   // GitHub につなぐ導線（§56.3）: 送る
   if (typeof onPush === 'function') {
@@ -965,8 +968,12 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       requireOpen();
       requireGame();
       // 起動中も同じ ready を待つ。同時に押されても子プロセスは1つ。
-      if (!world?.running) world = startWorld({ root: gameRoot });
+      if (!world?.running) world = startWorld({ root: gameRoot, home: heroHome });
       return { ok: true, url: await world.ready };
+    },
+    onCodecity: ({ path }) => {
+      requireOpen();
+      return rememberCodecity(path, { home: heroHome });
     },
     outputFor: async (seq) => {
       if (!hasGame()) return null;

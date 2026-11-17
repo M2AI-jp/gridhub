@@ -85,6 +85,7 @@ const T = {
   'world.out.invalid': { game: '.masume 内の出力先には world-overlay.json だけを指定できます' },
   'world.write.failed': { game: why => `overlay を書き出せません: ${why}` },
   'world.no_codecity': { game: 'codecity が見つかりません。--codecity か GRIDHUB_CODECITY で場所を渡してください' },
+  'world.settings.failed': { game: why => `settings.json を読めません: ${why}`, dev: why => `settings.json を読めません: ${why}` },
   'world.start.failed': { game: tail => `codecity を起動できませんでした${tail ? `\n${tail}` : ''}` },
   'world.start.timeout': { game: 'codecity が30秒以内に「街を開く: <URL>」を出しませんでした' },
   'world.stopped': { game: 'codecity が終了しました' },

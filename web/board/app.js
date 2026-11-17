@@ -13,7 +13,7 @@ import { showBoss } from './boss.js';
 import { createMarch } from './march.js';
 import { createPrs } from './march-prs.js';
 import { nextBarAction } from './march-status.js';
-import { t, initWords, onWords, adoptServerWords, isDev } from './words.js';
+import { t, initWords, onWords, adoptServerWords, isDev, applyWords } from './words.js';
 
 // 外の字（Google Fonts）を待たずに描く（§37）。手元の書体で先に描き、盤面が落ち着いてから読みはじめ、届いたら全部の画面に効かせて差し替える
 // （字が届くたび・届かないと分かるたびに、ノート全体の字を組み直すので、最初の描画とは重ねない）
@@ -681,7 +681,7 @@ function setView(name) {
   if (name === 'techo') hero.shown();
 }
 
-async function post(path, body) {
+async function post(path, body, { quietCodes = [] } = {}) {
   if (!LIVE) {
     toast({ text: t('demo.readonly'), ok: null });
     return null;
@@ -696,7 +696,7 @@ async function post(path, body) {
   const got = await r.json().catch(() => null);
   const j = got && typeof got === 'object' ? got : {};
   if (!r.ok || !got || j.ok === false) {
-    toast({ text: t('post.fail', j.error || `HTTP ${r.status}`), ok: false });
+    if (!quietCodes.includes(j.code)) toast({ text: t('post.fail', j.error || `HTTP ${r.status}`), ok: false });
     return { ...j, ok: false };
   }
   return j;
@@ -1296,6 +1296,125 @@ function marchKey(e) {
   target.click();
 }
 
+// 世界の入口と codecity の場所の設定（CONTRACTS §83.6）。
+function initWorld({ live, app, post, toast }) {
+  const modes = document.querySelector('#mode-switch');
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.id = 'world-open';
+  button.dataset.t = 'mode.world';
+  button.textContent = t('mode.world');
+  modes.append(button);
+
+  const form = document.createElement('form');
+  form.id = 'world-codecity';
+  form.hidden = true;
+  form.setAttribute('aria-labelledby', 'world-codecity-title');
+  form.innerHTML = `
+    <strong id="world-codecity-title" data-t="world.setup.title"></strong>
+    <label for="world-codecity-path" data-t="world.setup.path"></label>
+    <input id="world-codecity-path" type="text" required autocomplete="off" spellcheck="false" data-t-placeholder="world.setup.placeholder">
+    <div class="world-codecity-actions">
+      <button id="world-codecity-choose" type="button" data-t="world.setup.choose"></button>
+      <button id="world-codecity-save" type="submit" data-t="world.setup.save"></button>
+      <button id="world-codecity-close" type="button" data-t="cut.close"></button>
+    </div>
+    <p class="world-codecity-clone"><span data-t="world.setup.clone.before"></span><a href="https://github.com/M2AI-jp/codecity-inspector" target="_blank" rel="noopener">GitHub</a><span data-t="world.setup.clone.after"></span></p>
+    <p id="world-codecity-error" role="status" hidden></p>`;
+  modes.parentElement.append(form);
+  applyWords(form);
+  const input = form.querySelector('input');
+  const choose = form.querySelector('#world-codecity-choose');
+  const error = form.querySelector('#world-codecity-error');
+  const bridge = () => window.webkit?.messageHandlers?.gridhub;
+  choose.hidden = !app && !bridge();
+
+  function showSetup(invalid = false) {
+    form.hidden = false;
+    error.hidden = !invalid;
+    error.dataset.t = 'world.setup.invalid';
+    applyWords(form);
+    input.focus();
+  }
+
+  // 通常のブラウザはクリック中にタブを予約する。Mac は URL が決まってから既定のブラウザへ渡す。
+  function reserveTab() {
+    if (!live || bridge()) return null;
+    const tab = window.open('about:blank', '_blank');
+    if (tab) tab.opener = null;
+    return tab;
+  }
+  function busy(value) {
+    button.disabled = value;
+    input.disabled = value;
+    for (const control of form.querySelectorAll('button')) control.disabled = value;
+  }
+
+  async function open(tab) {
+    const result = await post('api/world', {}, { quietCodes: ['E_NO_CODECITY'] });
+    if (result?.ok && result.url) {
+      form.hidden = true;
+      if (bridge()) bridge().postMessage({ type: 'openExternal', url: result.url });
+      else if (tab && !tab.closed) tab.location.replace(result.url);
+      else toast({ text: t('world.popup'), ok: false });
+    } else {
+      tab?.close();
+      if (result?.code === 'E_NO_CODECITY') showSetup();
+    }
+  }
+
+  async function run(path) {
+    if (button.disabled) return;
+    const tab = reserveTab();
+    busy(true);
+    error.hidden = true;
+    try {
+      if (path !== undefined) {
+        const saved = await post('api/world/codecity', { path }, { quietCodes: ['E_NO_CODECITY'] });
+        if (!saved?.ok) {
+          tab?.close();
+          showSetup(saved?.code === 'E_NO_CODECITY');
+          return;
+        }
+        input.value = saved.path;
+      }
+      await open(tab);
+    } catch (cause) {
+      tab?.close();
+      toast({ text: t('post.fail', String(cause?.message || cause)), ok: false });
+    } finally {
+      busy(false);
+      if (!form.hidden) input.focus();
+    }
+  }
+
+  button.addEventListener('click', () => run());
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    void run(input.value);
+  });
+  form.querySelector('#world-codecity-close').addEventListener('click', () => {
+    form.hidden = true;
+    button.focus();
+  });
+  form.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && !button.disabled) {
+      form.hidden = true;
+      button.focus();
+    }
+  });
+  choose.addEventListener('click', () => bridge()?.postMessage({ type: 'codecity' }));
+  // NSOpenPanel が返した場所も、入力欄と同じ保存・再起動の手順を通す。
+  window.gridhubApp = {
+    ...window.gridhubApp,
+    codecityChosen(path) {
+      if (typeof path !== 'string' || !path.trim()) return;
+      input.value = path;
+      return run(path);
+    },
+  };
+}
+
 function setupMarch() {
   document.addEventListener('keydown', marchKey);
   document.addEventListener(
@@ -1359,31 +1478,7 @@ function setupMarch() {
   });
   setInterval(renderMarchBar, 1000);
   document.querySelectorAll('#mode-switch button[data-mode]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
-  const world = document.createElement('button');
-  world.type = 'button';
-  world.id = 'world-open';
-  world.dataset.t = 'mode.world';
-  world.textContent = t('mode.world');
-  $('#mode-switch').append(world);
-  world.addEventListener('click', async () => {
-    if (world.disabled) return;
-    world.disabled = true;
-    // 利用者が押したその場でタブを予約する。30秒まで待つ起動後にも開けるようにする。
-    const tab = LIVE ? window.open('about:blank', '_blank') : null;
-    if (tab) tab.opener = null;
-    try {
-      const result = await post('api/world', {});
-      if (result?.ok && result.url) {
-        if (tab && !tab.closed) tab.location.replace(result.url);
-        else toast({ text: t('world.popup'), ok: false });
-      } else tab?.close();
-    } catch (error) {
-      tab?.close();
-      toast({ text: t('post.fail', String(error?.message || error)), ok: false });
-    } finally {
-      world.disabled = false;
-    }
-  });
+  initWorld({ live: LIVE, app: APP || params.get('app') === '1', post, toast });
   setMode(savedMode(), { save: false });
   updateMarchShortcuts();
 }

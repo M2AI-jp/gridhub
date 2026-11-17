@@ -456,6 +456,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         switch type {
         case "chooseFolder":
             chooseFolder()
+        case "codecity":
+            chooseCodecity()
         case "retry":
             start()
         case "words":
@@ -494,6 +496,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, WKNa
         guard let data = try? JSONSerialization.data(withJSONObject: path, options: [.fragmentsAllowed]),
               let json = String(data: data, encoding: .utf8) else { return }
         webView.evaluateJavaScript("window.gridhubApp && window.gridhubApp.folderChosen(\(json))", completionHandler: nil)
+    }
+
+    private func chooseCodecity() {
+        let panel = NSOpenPanel()
+        panel.canChooseDirectories = true
+        panel.canChooseFiles = false
+        panel.canCreateDirectories = false
+        panel.allowsMultipleSelection = false
+        panel.prompt = words.say("このフォルダを覚える", "このフォルダを保存")
+        panel.message = words.say("世界を開くための codecity.mjs があるフォルダを選んでください。",
+                                  "codecity.mjs があるフォルダを選んでください。")
+        let pageURL = webView.url
+        panel.beginSheetModal(for: window) { [weak self] response in
+            guard response == .OK, let path = panel.url?.path,
+                  let self, self.webView.url == pageURL,
+                  let data = try? JSONSerialization.data(withJSONObject: path, options: [.fragmentsAllowed]),
+                  let json = String(data: data, encoding: .utf8) else { return }
+            self.webView.evaluateJavaScript("window.gridhubApp && window.gridhubApp.codecityChosen(\(json))", completionHandler: nil)
+        }
     }
 
     // MARK: WKUIDelegate（alert・confirm・新しい窓）
