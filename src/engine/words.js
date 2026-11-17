@@ -68,6 +68,30 @@ export function resolveWords({ root = null, env = process.env, flag = null } = {
 // 判定（tests/e2e）が見ている冒険のことば（game）の字は変えない（§76.5）。
 
 const T = {
+  // 世界（§83）。codecity との URL 行と、見つからないときの字は両方で同じ。
+  'world.url': { game: url => `世界: ${url}` },
+  'world.written': { game: file => `重ね書き: ${file}`, dev: file => `overlay: ${file}` },
+  'world.board': { game: name => `${name}の進み`, dev: name => `${name}の進捗` },
+  'world.passed': { game: (n, total) => `通ったマス ${n}/${total}`, dev: (n, total) => `通ったタスク ${n}/${total}` },
+  'world.seed.invalid': { game: 'world.json には空でない文字列の seed が必要です' },
+  'world.seed.read': { game: why => `世界の種を読み書きできません: ${why}` },
+  'world.group.invalid': { game: id => `地区 ${id} の paths にはリポジトリ内の相対 glob が必要です` },
+  'world.unplaced': { game: 'check.run の実在ファイルも、担当 territory の代表ファイルもありません' },
+  'world.limit.text': { game: max => `文字数の上限 ${max} 字を超えた部分を省略` },
+  'world.limit.lines': { game: '6行を超えた行を省略' },
+  'world.limit.count': { game: (key, max) => `${key} の件数上限 ${max} を超過` },
+  'world.limit.bytes': { game: 'ファイルの1MB上限を超過' },
+  'world.limit.base': { game: 'seed と groups だけで1MBを超えるため、overlay を書き出せません' },
+  'world.out.invalid': { game: '.masume 内の出力先には world-overlay.json だけを指定できます' },
+  'world.write.failed': { game: why => `overlay を書き出せません: ${why}` },
+  'world.no_codecity': { game: 'codecity が見つかりません。--codecity か GRIDHUB_CODECITY で場所を渡してください' },
+  'world.start.failed': { game: tail => `codecity を起動できませんでした${tail ? `\n${tail}` : ''}` },
+  'world.start.timeout': { game: 'codecity が30秒以内に「街を開く: <URL>」を出しませんでした' },
+  'world.stopped': { game: 'codecity が終了しました' },
+  'world.cancelled': { game: '世界の起動を中止しました' },
+  'world.url.invalid': { game: 'codecity がループバックの HTTP URL を返しませんでした' },
+  'world.usage': { game: '使い方: gridhub world [--overlay [--out F] | --port N --codecity D --lifeline]' },
+  'world.port.invalid': { game: '--port には 0 から 65535 までの整数を指定してください' },
   // 役（受付係の --help と、知らせの主語）
   'role.engine': { game: '書記', dev: 'engine' },
   'role.server': { game: '伝令', dev: 'server' },

@@ -38,6 +38,7 @@ const COMMANDS = {
   party: ['party', { game: 'キャラクターごとにエージェントを出撃させる', dev: '担当ごとにエージェントを起動する' }, 'party [--agent claude|codex] [--tactic careful|balanced|bold] [--allow-listen]'],
   init: ['quest', { game: 'よそのプロジェクトに GridHub の支度をする（AGENTS.md ほか）', dev: 'よそのプロジェクトに GridHub の支度をする（AGENTS.md ほか）' }, 'init [--agent claude|codex] [--allow-listen]'],
   serve: ['server', { game: '盤面（5mm方眼ノート）を開く', dev: '盤面（5mm方眼ノート）を開く' }, 'serve [--port 5005] [--host 127.0.0.1] [--dir D] [--no-open] [--lifeline]'],
+  world: ['engine', { game: 'codecity の町に冒険を重ねる', dev: 'codecity の町に進捗を重ねる' }, 'world [--overlay [--out F]] [--port N] [--codecity D] [--lifeline]'],
   app: ['server', { game: 'アプリの起動役（はじめの画面・フォルダを開く・チュートリアル）', dev: 'アプリの起動役（はじめの画面・フォルダを開く・チュートリアル）' }, 'app [--port 0] [--home D] [--play D] [--lifeline]'],
   mcp: ['server', { game: 'LLM の道具箱（MCP サーバー、標準入出力）', dev: 'MCP サーバー（標準入出力）' }, 'mcp [--dir D]'],
   export: ['linear', { game: 'Linear形式で書き出す', dev: 'Linear 形式で書き出す' }, 'export linear [--format csv|json] [--out file]'],

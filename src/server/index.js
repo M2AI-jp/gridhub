@@ -5,6 +5,7 @@ import { readFile, realpath, stat } from 'node:fs/promises';
 import { extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ChildJob, tailLines } from './jobs.js';
+import { startWorld } from './world.js';
 import { t } from '../engine/words.js';
 
 const MIME = {
@@ -269,7 +270,7 @@ export function createServer({
   onQuest, getQuest, onSortie, getParty, onPartyStop,
   getGit, onPush, onAutoPush, getPrs, onMerge, onOpenPr,
   getHand, getFile, onFile, onStep, onCheck, onNote,
-  getWords, onWords,
+  getWords, onWords, onWorld,
   getHero, onHeroOpen, onHeroSeen, onHeroPaste, onHeroPeel, onHeroTrade, onHeroTitle, onHeroTheme,
 }) {
   const root = resolve(webRoot);
@@ -351,6 +352,9 @@ export function createServer({
   }
   if (typeof onPartyStop === 'function') {
     postRoutes['/api/party/stop'] = { parse: () => ({}), call: () => onPartyStop(), status: 200, optionalBody: true };
+  }
+  if (typeof onWorld === 'function') {
+    postRoutes['/api/world'] = { parse: () => ({}), call: () => onWorld(), status: 200, optionalBody: true };
   }
   // GitHub につなぐ導線（§56.3）: 送る
   if (typeof onPush === 'function') {
@@ -738,6 +742,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   const quest = new ChildJob();
   const party = new ChildJob();
   const battles = new Map();
+  let world = null;
   let shuttingDown = false;
   let pushing = false;
   let openingPr = false;
@@ -956,6 +961,13 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
       return engine.buildView(gameRoot);
     },
     watchFile: engine.logFile(gameRoot),
+    onWorld: async () => {
+      requireOpen();
+      requireGame();
+      // 起動中も同じ ready を待つ。同時に押されても子プロセスは1つ。
+      if (!world?.running) world = startWorld({ root: gameRoot });
+      return { ok: true, url: await world.ready };
+    },
     outputFor: async (seq) => {
       if (!hasGame()) return null;
       const file = await engine.outputFile(gameRoot, seq);
@@ -1220,6 +1232,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
 
   // 伝令が突然終わるときも、子を置き去りにしない（最後の手段。待てないので SIGINT を送るだけ）
   const onExit = () => {
+    world?.interruptNow();
     quest.interruptNow();
     party.interruptNow();
     for (const battle of battles.values()) battle.interruptNow();
@@ -1251,7 +1264,7 @@ export async function startServer({ root, port = 5005, host = '127.0.0.1', webRo
   let stopping;
   const stop = () => {
     shuttingDown = true;
-    stopping ??= Promise.all([stopHttp(), quest.terminate(), party.terminate(),
+    stopping ??= Promise.all([stopHttp(), quest.terminate(), party.terminate(), world?.stop(),
       ...[...battles.values()].map((battle) => battle.terminate())])
       .then(() => {})
       .finally(() => process.off('exit', onExit));
