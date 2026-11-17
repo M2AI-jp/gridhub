@@ -117,6 +117,7 @@ test('overlay は v1。通過を除き、落ちた・まだ・担当の掲示板
   assert.equal(original.markers.find(m => m.id === 'A1').at.path, 'a/store.js');
   assert.deepEqual(original.markers.find(m => m.id === 'H1').at, { landmark: 'town_hall' });
   assert.deepEqual(original.goal.at, { landmark: 'town_hall' });
+  assert.equal(original.goal.look, 'castle', '§83.2: 目的地には魔王の城の候補の絵を頼む');
   assert.equal(original.markers.filter(m => m.kind === 'board').length, 3);
   setCases(dir, 'A1', { 'x が 1': true, 'y が 2': false });
   assert.equal(gridhub(['step', 'a', '--dir', dir]).code, 1);
