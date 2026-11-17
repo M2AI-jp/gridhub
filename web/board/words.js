@@ -158,6 +158,8 @@ const T = {
   'tab.board': { game: '盤面', dev: '盤面' },
   'mode.march': { game: '進軍', dev: 'レーン' },
   'mode.note': { game: 'ノート', dev: 'ノート' },
+  'mode.world': { game: '世界', dev: '世界' },
+  'world.popup': { game: '新しいタブを開けませんでした。ポップアップを許可して、もう一度「世界」を押してください' },
   'mode.aria': { game: '盤面の見方', dev: '盤面の見方' },
   'march.cmd.sortie': { game: '▶ 出撃', dev: '▶ 起動' },
   'march.cmd.resortie': { game: '▶ 再出撃', dev: '▶ 再起動' },

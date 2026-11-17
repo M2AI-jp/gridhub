@@ -1638,3 +1638,43 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
 3. **守られた場所は大文字・小文字を区別しない**: `.masume`・`.git`・封印した判定ファイル・`*.map.json` に当たるかは、大文字・小文字を区別せずに比べる（macOS では `.MASUME/log.jsonl`・`Tests/…`・`.Git/config` が本物と同じファイルなので）。
 4. **判定の途中の正当な封印し直し**: 判定の途中に冒険の書に封印し直し（`sealed`）が記録され、いまのファイルがその新しい封印と合うときは、封印破り（`seal_broken`）として記録せず、`E_CONFLICT`（判定をやり直す）で止める。新しい封印とも合わなければ、これまでどおり封印破り。
 5. **仕組みの限界**（直さない。記録として残す）: `seal` は GM がいつでも封印し直せる（`game.js`）。`amend` で、まだ通っていないマスの `check.run` を変えられる。封印は中身のハッシュだけなので、シンボリックリンクで差し替えられる余地がある。冒険の書のハッシュの鎖には鍵が無く、ファイルを書ける人は鎖ごと書き直せる。
+
+## 83. 世界（codecity の町に冒険を重ねる・ユーザーの指示）
+
+ユーザーの言葉は「（進軍の絵は）ごみ。codecity と根本的に違うじゃん何もかも」「codecity の開発担当と相談してアドバイスもらいな」。
+そこで、codecity の開発担当と相談して、冒険を codecity の町の上に重ねて見せることにした。
+- 町の描画は codecity が持つ。gridhub は町に重ねる物（札・掲示板・担当・目的地）を `overlay.json` で渡すだけで、codecity の部品は写さない。
+- `overlay.json` の形は codecity と合わせた v1（design/world-proto/OVERLAY.md。codecity の側の入口 `--overlay` は codecity の担当が作る）。
+- 書記と伝令の担当。判定は `X1`。
+
+1. **世界の種**:
+   - 初めて世界を開くとき、種を 1 回だけ決めて `.masume/world.json`（`{"seed": "<文字列>"}`）に書く。元は package.json の name、無ければフォルダ名。
+   - 以後はそれを使う。題を直しても、記録が進んでも、町の並びは変わらない。
+   - `.masume/world.json` は冒険の書（log.jsonl）の外の、壊れても作り直せる設定。読めない・形が違うときは、作り直さずに `E_WORLD` で止める。
+2. **重ね書きを作る**:
+   - `gridhub world --overlay [--out <ファイル>]` は、地図と冒険の書から overlay.json（v1）を作る。
+   - 既定の出し先は `.masume/world-overlay.json`。
+   - 中身は OVERLAY.md の §1〜§8 のとおり。
+     - groups: 担当の territory。
+     - markers: 落ちた・まだのマスの record（通ったマスは出さない）と、担当ごとの board。
+     - people: 担当の現在地。
+     - goal: quest.goal を役場に。
+     - title: 冒険の名前とテスト N/M。
+     - ハンコのマスは役場。
+   - 字は辞書（§76）のいまのことば。上限を超えた物と置き場所を作れない物は、`.masume/world-overlay.diagnostics.json` に書く。
+3. **codecity を開く**:
+   - `gridhub world [--port N] [--codecity <フォルダ>]` は、overlay.json を作り、codecity を `node <codecity>/codecity.mjs <冒険のフォルダ> --overlay <overlay.json> --port <N>` で起こす。
+   - codecity の stdout の `街を開く: ` で始まる行から URL を取る（その行の前に解析の要約などの行が出る。1 行目とは限らない）。
+   - codecity は、--port が使用中なら別の番号にずれるので、gridhub が渡した番号ではなく、必ずこの行の URL を使う。
+   - URL を取れたら、gridhub は stdout の 1 行目に `世界: <その URL>` を出して動き続ける。
+   - codecity が 30 秒以内にその行を出さないか、先に終わったときは `E_WORLD`（codecity の出力の最後の数行を添える）。
+   - codecity の場所は、`--codecity`、無ければ環境変数 `GRIDHUB_CODECITY`。
+   - 見つからない（codecity.mjs が無い）ときは `E_NO_CODECITY` を出して終わる。字は「codecity が見つかりません。--codecity か GRIDHUB_CODECITY で場所を渡してください」。
+   - 動いているあいだは記録（.masume/log.jsonl）の変化を見て overlay.json を書き直す。codecity は物だけを入れ替える。
+   - `--lifeline` なら標準入力が閉じたら（§68.2 の命綱と同じ）止まる。止まるとき（SIGINT・SIGTERM・命綱）、起こした codecity も止める。
+4. **盤面**:
+   - 上の見方の切り替え（`#mode-switch`）に「世界」を足す。
+   - 押すと伝令の `POST /api/world` が §3 と同じやり方で codecity を起こし（すでに動いていればそれを使う）、`{ ok, url }` を返す。盤面はその url を新しいタブで開く。
+   - codecity が見つからないときは 404 `E_NO_CODECITY` で、盤面は §3 と同じ字を知らせに出す。
+   - POST の作法は §8・§80.33（ループバックだけ）のとおり。
+5. **やらないこと**: codecity の絵・描画・町の作りを gridhub に写さない。art/game の絵は承認待ち（ユーザー本人の OK が要る）。

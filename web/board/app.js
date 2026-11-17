@@ -1140,7 +1140,7 @@ function savedMode() {
 }
 function setMode(mode, { save = true } = {}) {
   document.body.dataset.mode = mode;
-  document.querySelectorAll('#mode-switch button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
+  document.querySelectorAll('#mode-switch button[data-mode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === mode)));
   $('#march').hidden = mode !== 'march';
   march?.show(mode === 'march');
   window.__masume.mode = mode;
@@ -1358,7 +1358,32 @@ function setupMarch() {
     setView('techo');
   });
   setInterval(renderMarchBar, 1000);
-  document.querySelectorAll('#mode-switch button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  document.querySelectorAll('#mode-switch button[data-mode]').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
+  const world = document.createElement('button');
+  world.type = 'button';
+  world.id = 'world-open';
+  world.dataset.t = 'mode.world';
+  world.textContent = t('mode.world');
+  $('#mode-switch').append(world);
+  world.addEventListener('click', async () => {
+    if (world.disabled) return;
+    world.disabled = true;
+    // 利用者が押したその場でタブを予約する。30秒まで待つ起動後にも開けるようにする。
+    const tab = LIVE ? window.open('about:blank', '_blank') : null;
+    if (tab) tab.opener = null;
+    try {
+      const result = await post('api/world', {});
+      if (result?.ok && result.url) {
+        if (tab && !tab.closed) tab.location.replace(result.url);
+        else toast({ text: t('world.popup'), ok: false });
+      } else tab?.close();
+    } catch (error) {
+      tab?.close();
+      toast({ text: t('post.fail', String(error?.message || error)), ok: false });
+    } finally {
+      world.disabled = false;
+    }
+  });
   setMode(savedMode(), { save: false });
   updateMarchShortcuts();
 }
