@@ -1,7 +1,6 @@
-// CLI と POST /api/world が共有する codecity の寿命（CONTRACTS §83.3）。
+// CLI の `gridhub world` が使う codecity の寿命（CONTRACTS §83.3）。盤面の入口は 2026-11-19 に外した（§83.4）。
 import { spawn } from 'node:child_process';
-import { randomUUID } from 'node:crypto';
-import { mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { MasumeError } from '../engine/errors.js';
 import { appHome } from '../engine/home.js';
@@ -25,23 +24,6 @@ function codecityEntry(directory, status = 404) {
     try { if (statSync(file).isFile()) return file; } catch { /* 下の同じエラーへ */ }
   }
   throw Object.assign(new MasumeError('E_NO_CODECITY', t('world.no_codecity')), { status });
-}
-
-/** ほかの設定を保ったまま、確かめた codecity のフォルダだけを覚える（§83.6）。 */
-export function rememberCodecity(path, { env = process.env, home = appHome(env) } = {}) {
-  codecityEntry(path, 400);
-  const directory = resolve(path);
-  const settings = { ...readSettings(home), codecity: directory };
-  mkdirSync(home, { recursive: true });
-  const file = join(home, 'settings.json');
-  const temporary = `${file}.${randomUUID()}.tmp`;
-  try {
-    writeFileSync(temporary, `${JSON.stringify(settings, null, 2)}\n`, { flag: 'wx' });
-    renameSync(temporary, file);
-  } finally {
-    rmSync(temporary, { force: true });
-  }
-  return { ok: true, path: directory };
 }
 
 function localUrl(text) {

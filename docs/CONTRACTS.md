@@ -1672,23 +1672,16 @@ RULEBOOK §4 で最大は Lv9。Lv9 でも経験値は貯まる（ルールど�
    - 見つからない（codecity.mjs が無い）ときは `E_NO_CODECITY` を出して終わる。字は「codecity が見つかりません。--codecity か GRIDHUB_CODECITY で場所を渡してください」。
    - 動いているあいだは記録（.masume/log.jsonl）の変化を見て overlay.json を書き直す。codecity は物だけを入れ替える。
    - `--lifeline` なら標準入力が閉じたら（§68.2 の命綱と同じ）止まる。止まるとき（SIGINT・SIGTERM・命綱）、起こした codecity も止める。
-4. **盤面**:
-   - 上の見方の切り替え（`#mode-switch`）に「世界」を足す。
-   - 押すと伝令の `POST /api/world` が §3 と同じやり方で codecity を起こし（すでに動いていればそれを使う）、`{ ok, url }` を返す。盤面はその url を新しいタブで開く。
-   - codecity が見つからないときは 404 `E_NO_CODECITY` で、盤面は §3 と同じ字を知らせに出す。
-   - POST の作法は §8・§80.33（ループバックだけ）のとおり。
+4. **盤面**（2026-11-19 に外した）:
+   - ユーザーは、盤面の「世界」で開いた町を見て「丸パクリ」「横スクロールじゃなくなってる」と言った。ユーザーが 11/01 に決めた横スクロールの進軍の画面が正本なので、遊ぶ人の入口から外す。進軍の絵は、その画面のまま作り直す（§80.13）。
+   - 盤面の見方の切り替え（`#mode-switch`）は「レーン（進軍）」と「ノート」だけ。「世界」のボタンは置かない。
+   - 伝令は `POST /api/world` を受けない。知らない窓口と同じ 404 を返し、codecity を起こさない。
+   - §1〜§3 の CLI（`gridhub world`）は、開発者が codecity で冒険を見るための道具として残す。
 5. **やらないこと**: codecity の絵・描画・町の作りを gridhub に写さない。art/game の絵は承認待ち（ユーザー本人の OK が要る）。
-6. **codecity の場所を覚える**（Mac のアプリからも世界を開けるように）:
+6. **codecity の場所**（CLI）:
    - codecity の場所は、次の順で最初にあるものを使う（§83.3 に足す）。
      - `--codecity`
      - 環境変数 `GRIDHUB_CODECITY`
      - 遊ぶ人の置き場所（§79。`GRIDHUB_APP_HOME`）の `settings.json` の `codecity`
-   - 伝令 `POST /api/world/codecity` 本文 `{"path": "<フォルダ>"}`:
-     - そのフォルダに `codecity.mjs` があれば、`settings.json` に書いて 200 `{ok: true, path}`。
-     - 無ければ 400 `E_NO_CODECITY`。
-     - POST の作法とループバックの決まり（§8・§80.33）を守る。
-   - 盤面: 「世界」を押して `E_NO_CODECITY` のときは、知らせのかわりに小さな欄を出す。
-     - 欄には、codecity のフォルダの入力と「覚える」のボタン、codecity の GitHub（https://github.com/M2AI-jp/codecity-inspector）を clone する案内の 1 行を置く。
-     - 覚えたら、もう一度世界を開く。
-     - Mac のアプリの中（`?app=1` など今のアプリの印）では、フォルダを選ぶダイアログ（`postMessage({type: "codecity"})` → アプリが NSOpenPanel で選び、`POST /api/world/codecity` に送る）も使えるようにする。
+   - 覚える伝令（`POST /api/world/codecity`）・盤面の欄・Mac のアプリのフォルダを選ぶ窓は、§4 と同じく 2026-11-19 に外した。`settings.json` の `codecity` は、CLI が読むだけ（手で書く）。
    - 判定は `X1` に足す。本物の手帳には書かない（判定用の置き場所）。
